@@ -105,20 +105,26 @@ def from_farside():
         page = r.read().decode("utf-8", "replace")
     p = Tables()
     p.feed(page)
+    import re
+    is_date = lambda c: re.match(r"^\d{1,2} [A-Za-z]{3} \d{4}$", c.strip()) is not None
     for table in p.tables:
-        head_i = next((i for i, row in enumerate(table) if row and row[0].strip().lower() == "date" and any(c.strip().lower() == "total" for c in row)), None)
+        # 表頭列：最後一格是 Total，第一格是空白或 Date（不是 Total／Average 這類統計列）
+        head_i = next((i for i, row in enumerate(table)
+                       if any(c.strip().lower() == "total" for c in row[1:]) and row[0].strip().lower() in ("", "date")), None)
         if head_i is None:
             continue
         head = table[head_i]
-        tot_i = [c.strip().lower() for c in head].index("total")
+        tot_i = [c.strip().lower() for c in head].index("total", 1)
+        names = head[:]
+        for row in table[head_i + 1:head_i + 4]:          # 表頭下面那列是代號（IBIT、FBTC…）
+            if not is_date(row[0]) and sum(bool(re.match(r"^[A-Z]{2,5}$", c.strip())) for c in row[1:]) >= 3:
+                names = row
+                break
         daily, last_row = [], None
         for row in table[head_i + 1:]:
-            if len(row) <= tot_i:
-                continue
-            try:
-                d = datetime.datetime.strptime(row[0].strip(), "%d %b %Y").date().isoformat()
-            except ValueError:
-                continue                       # 跳過 Total／Average／Maximum 這類統計列
+            if len(row) <= tot_i or not is_date(row[0]):
+                continue                                    # 跳過 Fee、Total、Average 等非日期列
+            d = datetime.datetime.strptime(row[0].strip(), "%d %b %Y").date().isoformat()
             tot = farside_num(row[tot_i])
             if tot is None:
                 continue
@@ -128,12 +134,21 @@ def from_farside():
             continue
         daily.sort(key=lambda x: x["date"])
         daily = daily[-60:]
+        cum = None
+        for row in table[head_i + 1:]:
+            if row and row[0].strip().lower() == "total" and len(row) > tot_i:
+                v = farside_num(row[tot_i])
+                cum = v * 1e6 if v is not None else None
+        if cum is not None:
+            daily[-1]["cum"] = cum
         funds = None
         if last_row:
             d, row = last_row
-            rows = [{"ticker": head[i].strip(), "net": farside_num(row[i]) * 1e6} for i in range(1, tot_i) if farside_num(row[i]) is not None]
+            rows = [{"ticker": (names[i].strip() if i < len(names) and names[i].strip() else f"#{i}"), "net": farside_num(row[i]) * 1e6}
+                    for i in range(1, tot_i) if farside_num(row[i]) is not None]
             funds = {"date": d, "rows": rows} if rows else None
         return {"source": "Farside Investors", "daily": daily, "funds": funds}
+    print("Farside 頁面開頭內容：", page[:300].replace("\n", " "))
     raise RuntimeError("Farside 頁面裡找不到 ETF 流入表格")
 
 
