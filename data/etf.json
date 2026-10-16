@@ -63,6 +63,26 @@
    "cum": 57032000000.0
   }
  ],
- "funds": null,
- "updated": "2026-10-16T16:42:36+00:00"
+ "funds": {
+  "date": "2026-10-16",
+  "rows": [
+   {
+    "ticker": "ARKB",
+    "net": 0.0
+   },
+   {
+    "ticker": "MSBT",
+    "net": 0.0
+   },
+   {
+    "ticker": "GBTC",
+    "net": 0.0
+   },
+   {
+    "ticker": "BTC",
+    "net": 0.0
+   }
+  ]
+ },
+ "updated": "2026-10-16T23:39:36+00:00"
 }
