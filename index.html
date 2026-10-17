@@ -871,6 +871,7 @@ body.mode-pat #qModePat,body.mode-news #qModeNews{background:var(--accent);color
   <div class="qdh">
     <h2 id="qRepTitle">📊 回測報告（每兩週結算一次）</h2>
     <span class="spacer"></span>
+    <label class="tzsel">本金 <select id="qRepMode"><option value="chain">累積（上期期末＝本期期初）</option><option value="fixed">每期都從 100U 重新開始</option></select></label>
     <button class="btn" id="qRepHist">抓取歷史 15 期</button>
     <button class="btn" id="qRepNow">立即結算一次</button>
     <button class="btn" id="qRepClose">關閉</button>
@@ -3776,31 +3777,58 @@ function repCurve(r) {                               // 選取那一期的資金
     ${line(r.bt.curve, 'var(--green)')}${r.live ? line(r.live.curve, '#3b82f6') : ''}</svg>
     <div style="font-size:12px;color:var(--muted)"><span style="color:var(--green)">━</span> 回測　<span style="color:#3b82f6">━</span> 即時</div>`;
 }
+/* 累積模式：照時間順序，上一期的期末資金＝這一期的期初資金
+   固定保證金時，每筆賺賠的 U 跟本金大小無關，所以期末＝期初＋這期損益；用「本金的 %」時，照這期報酬率等比例放大縮小 */
+let REPMODE = LS.get('quantRepMode', 'chain');
+function rebase(x, start, mode) {
+  if (!(start > 0)) return Object.assign({}, x, { cap: 0, endCap: 0, pnl: 0, ret: 0, fees: 0, mdd: 100, bust: true, curve: [] });
+  const pct = mode === 'pct', f = start / x.cap, sh = start - x.cap;
+  const curve = x.curve.map(([t, v]) => [t, pct ? v * f : v + sh]);
+  let peak = -Infinity, mdd = 0; curve.forEach(([, v]) => { peak = Math.max(peak, v); if (peak > 0) mdd = Math.max(mdd, (peak - v) / peak); });
+  const endCap = Math.max(0, pct ? x.endCap * f : x.endCap + sh);
+  return Object.assign({}, x, { cap: start, endCap, pnl: endCap - start, ret: (endCap / start - 1) * 100, fees: pct ? x.fees * f : x.fees, mdd: Math.round(mdd * 1000) / 10, curve, bust: endCap <= 0 });
+}
+function chainView(L) {
+  if (REPMODE !== 'chain') return L.map(r => Object.assign({}, r, { skip: false }));
+  const cap0 = SRVREP.rep ? SRVREP.rep.cap : 100, st = { bt: null, live: null }, out = new Map();
+  const asc = L.slice().sort((a, b) => a.start - b.start || (a.manual ? 1 : 0) - (b.manual ? 1 : 0));
+  let lastEnd = -Infinity;
+  for (const r of asc) {
+    if (r.start < lastEnd - 60000) { out.set(r.id, Object.assign({}, r, { skip: true })); continue; }   // 跟前一期重疊（例如手動結算）就不計入累積
+    lastEnd = r.end;
+    const v = Object.assign({}, r, { skip: false });
+    for (const k of ['bt', 'live']) { if (!r[k]) continue; v[k] = rebase(r[k], st[k] === null ? cap0 : st[k], r.cfg.mode); st[k] = v[k].endCap; }
+    out.set(r.id, v);
+  }
+  return L.map(r => out.get(r.id));
+}
 function repCells(x) {
-  if (!x) return '<td colspan="7" style="text-align:center;color:var(--muted)">那時伺服器還沒在跑</td>';
+  if (!x) return '<td colspan="8" style="text-align:center;color:var(--muted)">那時伺服器還沒在跑</td>';
   const c = v => v > 0 ? 'pos' : v < 0 ? 'neg' : '';
-  return `<td class="${c(x.pnl)}">${x.endCap.toFixed(2)}</td><td class="${c(x.pnl)}">${sgU(x.pnl)}</td><td class="${c(x.ret)}">${sgP(x.ret)}</td><td>${x.rate === null ? '—' : x.rate + '%'}</td><td>${x.n}${x.marked ? `<small style="color:var(--muted)">（${x.marked} 筆期末平倉）</small>` : ''}</td><td>${x.fees.toFixed(2)}</td><td class="neg">${x.mdd}%</td>`;
+  return `<td>${x.cap.toFixed(2)}</td><td class="${c(x.pnl)}">${x.endCap.toFixed(2)}${x.bust ? ' 💥' : ''}</td><td class="${c(x.pnl)}">${sgU(x.pnl)}</td><td class="${c(x.ret)}">${sgP(x.ret)}</td><td>${x.rate === null ? '—' : x.rate + '%'}</td><td>${x.n}${x.marked ? `<small style="color:var(--muted)">（${x.marked} 筆期末平倉）</small>` : ''}</td><td>${x.fees.toFixed(2)}</td><td class="neg">${x.mdd}%</td>`;
 }
 function renderRep() {
   const el = $('qRepBody');
   if (!SRV.on) { el.innerHTML = '<p class="qrepnote">回測報告由雲端伺服器每兩週自動結算，請先在「☁ 雲端伺服器」連線。</p>'; return; }
-  const L = SRVREP.list, R = SRVREP.rep;
-  const head = R ? `每期本金 <b>${R.cap}U</b>、回測成交額前 ${R.btN || '全部'} 個幣、每 ${R.days} 天結算一次。${R.busy ? `<b>${esc(R.msg || '結算中…')}</b>` : R.next ? `下次結算：<b>${fmtT(R.next)}</b>（${tzName()}）。` : ''}${R.msg && !R.busy ? `<b class="neg">${esc(R.msg)}</b>` : ''}` : '';
+  const R = SRVREP.rep, L = chainView(SRVREP.list), LC = L.filter(r => !r.skip);
+  $('qRepMode').value = REPMODE;
+  const head = R ? `${REPMODE === 'chain' ? '起始本金' : '每期本金'} <b>${R.cap}U</b>、回測成交額前 ${R.btN || '全部'} 個幣、每 ${R.days} 天結算一次。${R.busy ? `<b>${esc(R.msg || '結算中…')}</b>` : R.next ? `下次結算：<b>${fmtT(R.next)}</b>（${tzName()}）。` : ''}${R.msg && !R.busy ? `<b class="neg">${esc(R.msg)}</b>` : ''}` : '';
   if (!R) { el.innerHTML = '<div class="qempty">伺服器還是舊版，沒有結算功能。請照步驟更新 quant-server.js 並重新啟動伺服器。</div>'; return; }
   if (!L.length) { el.innerHTML = `<p class="qrepnote">${head}</p><div class="qempty">還沒有結算紀錄。伺服器更新後一分鐘內會先結算一期（最近 14 天）；也可以按「抓取歷史 15 期」補算過去的期數。</div>`; return; }
-  const has = k => L.filter(r => r[k]), sum = k => has(k).reduce((a, r) => a + r[k].pnl, 0), avg = k => has(k).length ? sum(k) / has(k).length : 0, posN = k => has(k).filter(r => r[k].pnl > 0).length;
+  const has = k => LC.filter(r => r[k]), sum = k => has(k).reduce((a, r) => a + r[k].pnl, 0), avg = k => has(k).length ? sum(k) / has(k).length : 0, posN = k => has(k).filter(r => r[k].pnl > 0).length;
   repSel = Math.min(repSel, L.length - 1);
-  el.innerHTML = `<p class="qrepnote">${head}<br>每一期都從 ${L[0].bt.cap}U 重新開始，標「歷史」的是一次往回補算的期數；幣安的持倉歷史只保留 30 天，更早的期間只用其他四項指標判斷。只算那 14 天內「進場」的單；期末還沒出場的單用結算當下的價格平倉。<b>回測</b>是結算時對那 14 天重新跑的模擬；<b>即時</b>是伺服器那段期間實際記錄到的訊號。結算後的數字會固定保存，不會再變。沒有算滑價，只供參考。</p>
+  el.innerHTML = `<p class="qrepnote">${head}<br>${REPMODE === 'chain' ? `<b>累積模式</b>：最早一期從 ${R.cap}U 開始，之後每一期的期初資金＝上一期的期末資金（回測、即時各自累積）。` : `每一期都從 ${R.cap}U 重新開始，`}標「歷史」的是一次往回補算的期數；幣安的持倉歷史只保留 30 天，更早的期間只用其他四項指標判斷。只算那 14 天內「進場」的單；期末還沒出場的單用結算當下的價格平倉。<b>回測</b>是結算時對那 14 天重新跑的模擬；<b>即時</b>是伺服器那段期間實際記錄到的訊號。結算後的數字會固定保存，不會再變。沒有算滑價，只供參考。</p>
     <div class="qrepsum">
       <div><span>結算期數</span><b>${L.length} 期</b><em>最早 ${dOnly(L[L.length - 1].start)}</em></div>
-      <div><span>回測：每期平均</span><b class="${avg('bt') >= 0 ? 'pos' : 'neg'}">${sgU(avg('bt'))}</b><em>賺錢 ${posN('bt')}／${has('bt').length} 期・合計 ${sgU(sum('bt'))}</em></div>
-      <div><span>即時：每期平均</span><b class="${avg('live') >= 0 ? 'pos' : 'neg'}">${has('live').length ? sgU(avg('live')) : '—'}</b><em>${has('live').length ? `賺錢 ${posN('live')}／${has('live').length} 期・合計 ${sgU(sum('live'))}` : '還沒有即時的結算'}</em></div>
+      ${REPMODE === 'chain' ? ['bt', 'live'].map(k => { const H = has(k), a = H[0], z = H[H.length - 1]; return `<div><span>${k === 'bt' ? '回測' : '即時'}：累積到現在</span>${H.length ? `<b class="${a[k].endCap >= z[k].cap ? 'pos' : 'neg'}">${a[k].endCap.toFixed(2)}U</b><em>從 ${z[k].cap.toFixed(0)}U 開始・${sgP((a[k].endCap / z[k].cap - 1) * 100)}・賺錢 ${posN(k)}／${H.length} 期</em>` : '<b>—</b><em>還沒有即時的結算</em>'}</div>`; }).join('')
+      : `<div><span>回測：每期平均</span><b class="${avg('bt') >= 0 ? 'pos' : 'neg'}">${sgU(avg('bt'))}</b><em>賺錢 ${posN('bt')}／${has('bt').length} 期・合計 ${sgU(sum('bt'))}</em></div>
+      <div><span>即時：每期平均</span><b class="${avg('live') >= 0 ? 'pos' : 'neg'}">${has('live').length ? sgU(avg('live')) : '—'}</b><em>${has('live').length ? `賺錢 ${posN('live')}／${has('live').length} 期・合計 ${sgU(sum('live'))}` : '還沒有即時的結算'}</em></div>`}
     </div>
-    <div class="qrepbars">${repBars(L)}</div>
+    <div class="qrepbars">${repBars(LC)}</div>
     <div class="tablewrap qtw"><table class="stat qtab" id="qRepTab"><thead>
-      <tr><th rowspan="2">期間（${tzName()}）</th><th colspan="7" style="text-align:center">回測</th><th colspan="7" style="text-align:center">即時</th></tr>
-      <tr class="qsub"><th>期末資金</th><th>損益</th><th>報酬率</th><th>成功率</th><th>筆數</th><th>手續費</th><th>最大回撤</th><th>期末資金</th><th>損益</th><th>報酬率</th><th>成功率</th><th>筆數</th><th>手續費</th><th>最大回撤</th></tr></thead>
-      <tbody>${L.map((r, i) => `<tr data-i="${i}" class="${i === repSel ? 'sel' : ''}" title="點一下看這期的資金曲線"><td>${dOnly(r.start)} ～ ${dOnly(r.end)}${r.manual ? ' <small style="color:var(--muted)">手動</small>' : ''}${r.hist ? ` <small style="color:var(--muted)">歷史${r.cfg.noOI ? '・無持倉資料' : ''}</small>` : ''}</td>${repCells(r.bt)}${repCells(r.live)}</tr>`).join('')}</tbody></table></div>
+      <tr><th rowspan="2">期間（${tzName()}）</th><th colspan="8" style="text-align:center">回測</th><th colspan="8" style="text-align:center">即時</th></tr>
+      <tr class="qsub"><th>期初資金</th><th>期末資金</th><th>損益</th><th>報酬率</th><th>成功率</th><th>筆數</th><th>手續費</th><th>最大回撤</th><th>期初資金</th><th>期末資金</th><th>損益</th><th>報酬率</th><th>成功率</th><th>筆數</th><th>手續費</th><th>最大回撤</th></tr></thead>
+      <tbody>${L.map((r, i) => `<tr data-i="${i}" class="${i === repSel ? 'sel' : ''}" title="點一下看這期的資金曲線"><td>${dOnly(r.start)} ～ ${dOnly(r.end)}${r.manual ? ' <small style="color:var(--muted)">手動</small>' : ''}${r.hist ? ` <small style="color:var(--muted)">歷史${r.cfg.noOI ? '・無持倉資料' : ''}</small>` : ''}${r.skip ? ' <small style="color:var(--orange)">跟上一期重疊，不計入累積</small>' : ''}</td>${repCells(r.bt)}${repCells(r.live)}</tr>`).join('')}</tbody></table></div>
     <div class="qrepcurve">${repCurve(L[repSel])}</div>
     <p class="qrepnote" style="margin-top:8px">這期設定：每筆 ${L[repSel].cfg.mode === 'pct' ? L[repSel].cfg.amt + '%' : L[repSel].cfg.amt + 'U'}・${L[repSel].cfg.lev}x・+${L[repSel].cfg.tp}%／−${L[repSel].cfg.sl}%・最長持有 ${L[repSel].cfg.hold} 小時・手續費 ${L[repSel].cfg.fee}%${L[repSel].cfg.max ? `・最多同時 ${L[repSel].cfg.max} 筆` : ''}</p>`;
 }
@@ -3814,6 +3842,7 @@ $('qRepHist').onclick = async () => {
   if (!confirm('伺服器會往回抓 15 期（每期 14 天，約 7 個月）的 K 線，用目前的設定重新模擬，每期一樣從 ' + (SRVREP.rep ? SRVREP.rep.cap : 100) + 'U 開始。\n\n要注意：\n・大約需要 5～10 分鐘，可以關掉網頁，跑完會自動出現。\n・幣安的持倉歷史只保留 30 天，更早的期間只用其他四項指標判斷。\n・用的是「現在」成交額前 ' + (SRVREP.rep ? SRVREP.rep.btN : 50) + ' 的幣，已經下架的幣不會算到，結果可能偏樂觀。\n\n要開始嗎？')) return;
   try { await srvFetch('/api/report/history', { periods: 15 }); setTimeout(srvPull, 1500); } catch (e) { alert(e.message); }
 };
+$('qRepMode').onchange = () => { REPMODE = $('qRepMode').value; LS.set('quantRepMode', REPMODE); repSel = 0; renderRep(); };
 $('qRepNow').onclick = async () => {
   if (!SRV.on) { alert('請先連線到雲端伺服器。'); return; }
   if (!CANW()) { alert('需要管理員帳號才能手動結算。'); return; }
