@@ -735,16 +735,17 @@ const BX = { pos: [], acct: null, at: 0, err: '', seeded: false, warned: {} };
 const sideDir = v => { const x = String(v || '').toUpperCase(); return x === 'LONG' || x === 'BUY' ? 1 : x === 'SHORT' || x === 'SELL' ? -1 : 0; };
 const num = v => { const n = +v; return Number.isFinite(n) ? n : 0; };
 const bxEquity = () => { const A = BX.acct; return A ? A.avail + A.frozen + A.margin + A.cross + A.iso : 0; };
+const bxMapPos = data => (Array.isArray(data) ? data : []).map(p => ({
+  id: String(p.positionId), sym: p.symbol, dir: sideDir(p.side), side: p.side, qty: num(p.qty), lev: num(p.leverage), mode: p.marginMode,
+  entry: num(p.avgOpenPrice), margin: num(p.margin), upnl: num(p.unrealizedPNL), rpnl: num(p.realizedPNL), fee: num(p.fee), funding: num(p.funding),
+  liq: num(p.liqPrice), ctime: num(p.ctime), mtime: num(p.mtime), pmode: p.positionMode
+}));
 async function bxPoll() {
   const C = ST.bx; if (!C.key || !C.secret) { BX.pos = []; BX.acct = null; BX.err = ''; return; }
   try {
     const data = await bxGet('/api/v1/futures/position/get_pending_positions');
     const acct = await bxGet('/api/v1/futures/account', { marginCoin: 'USDT' }).catch(() => null);
-    const pos = (Array.isArray(data) ? data : []).map(p => ({
-      id: String(p.positionId), sym: p.symbol, dir: sideDir(p.side), side: p.side, qty: num(p.qty), lev: num(p.leverage), mode: p.marginMode,
-      entry: num(p.avgOpenPrice), margin: num(p.margin), upnl: num(p.unrealizedPNL), rpnl: num(p.realizedPNL), fee: num(p.fee), funding: num(p.funding),
-      liq: num(p.liqPrice), ctime: num(p.ctime), mtime: num(p.mtime), pmode: p.positionMode
-    }));
+    const pos = bxMapPos(data);
     const prev = new Map(BX.pos.map(p => [p.id, p])), now = new Map(pos.map(p => [p.id, p]));
     if (BX.seeded && C.notify && ST.notify.enabled) {                 // 第一次讀到的持倉不算「新開倉」
       const botPos = p => ST.ltTrades.some(t => t.positionId === p.id || (t.sym === p.sym && t.dir === p.dir && Date.now() - t.et < 60000));   // 自動交易的單另外通知
@@ -858,10 +859,10 @@ function closeBody(p, q) {
     ? { symbol: p.sym, qty: String(q), side: p.dir > 0 ? 'BUY' : 'SELL', tradeSide: 'CLOSE', positionId: p.id, orderType: 'MARKET' }   // 官方文件：雙向持倉平多用 BUY＋CLOSE
     : { symbol: p.sym, qty: String(q), side: p.dir > 0 ? 'SELL' : 'BUY', orderType: 'MARKET', reduceOnly: true };
 }
-async function fullClose(p) {                          // 三種方法依序試，前一種失敗才用下一種
+async function fullClose(p, onlyThis) {                // 三種方法依序試，前一種失敗才用下一種；onlyThis＝只能動這一筆（不用整個幣種全平，免得平到同幣種的手動單）
   const errs = [];
   try { await bxPost('/api/v1/futures/trade/flash_close_position', { positionId: p.id }); return; } catch (e) { errs.push('閃電平倉：' + e.message); }
-  try { await bxPost('/api/v1/futures/trade/close_all_position', { symbol: p.sym }); return; } catch (e) { errs.push('單幣全平：' + e.message); }
+  if (!onlyThis) try { await bxPost('/api/v1/futures/trade/close_all_position', { symbol: p.sym }); return; } catch (e) { errs.push('單幣全平：' + e.message); }
   try { await bxPost('/api/v1/futures/trade/place_order', closeBody(p, p.qty)); return; } catch (e) { errs.push('市價平倉：' + e.message); }
   throw new Error(errs.join('；'));
 }
@@ -945,7 +946,7 @@ async function ltReconcile(pos) {
     const prevPart = t.closes.reduce((a, c) => a + c.pnl, 0);
     t.closes.push({ t: Date.now(), qty: t.qty, pnl: (t.realized || 0) - prevPart, by: reason });
     Object.assign(t, { status: 'closed', exitAt: Date.now(), reason, qty: 0, upnl: 0 }); ch = true;
-    const net = ltNet(t), nm = '🤖 **實盤平倉**｜' + ({ win: '✅ 達標出場', lock: `🔒 鎖利出場（鎖利線 +${t.lockLv || ST.trade.tp}%）`, fail: '❌ 失敗線出場', timeout: '⏱ 持有到期出場', manual: '🖐 手動平倉', all: '🛑 一鍵全部平倉', liq: '💥 強平', exchange: '📤 交易所平倉（止損或在 App 平倉）' }[reason] || reason);
+    const net = ltNet(t), nm = '🤖 **實盤平倉**｜' + ({ win: '✅ 達標出場', lock: `🔒 鎖利出場（鎖利線 +${t.lockLv || ST.trade.tp}%）`, fail: '❌ 失敗線出場', timeout: '⏱ 持有到期出場', manual: '🖐 手動平倉', all: '🛑 一鍵平倉（自動單）', liq: '💥 強平', exchange: '📤 交易所平倉（止損或在 App 平倉）' }[reason] || reason);
     dcSend(`${nm} **${mdEsc(t.sym)}** ${t.dir > 0 ? '做多' : '做空'}\n淨損益 **${net >= 0 ? '+' : '−'}${Math.abs(net).toFixed(2)}U**（${(net / (t.m0 || ST.lt.margin) * 100).toFixed(0)}%）・持有 ${durTxt(Date.now() - t.et)}${t.closePx ? `・平倉均價 ${fpx(t.closePx)}` : ''}`);
   }
   // 單日虧損上限（台北時間每天 00:00 重算）
@@ -1327,7 +1328,7 @@ http.createServer(async (req, res) => {
     }
     if (req.method === 'GET' && u.pathname === '/api/state') {
       const out = {
-        time: Date.now(), ver: '2026-10-18i', cv: CV, bv: BV, set: ST.set, trade: ST.trade, canWrite: !!ADMIN_KEY,
+        time: Date.now(), ver: '2026-10-18j', cv: CV, bv: BV, set: ST.set, trade: ST.trade, canWrite: !!ADMIN_KEY,
         scan: { ...SCAN, pause: RL.pause }, bt: { at: ST.bt.at, coins: ST.bt.coins, n: ST.bt.trades.length }, btp: BTP,
         notify: { enabled: ST.notify.enabled, entry: ST.notify.entry, exit: ST.notify.exit, hasHook: !!ST.notify.webhook, name: ST.notify.name },
         eq: ST.eq, rep: { ...ST.rep, busy: REP.busy, msg: REP.msg }, rv: RV,
@@ -1419,18 +1420,21 @@ http.createServer(async (req, res) => {
         catch (e) { return send(res, 400, { error: e.message }); }
       }
       if (u.pathname === '/api/lt/closeAll') {
+        // 只平自動下單的倉位：手動開的單（含「符合訊號」）一律不動
         if (b.pause) ST.lt.on = false;
-        for (const t of ltOpenTrades()) { t.pendReason = 'all'; t.pendAt = Date.now(); }
+        let pos = BX.pos;
+        try { pos = bxMapPos(await bxGet('/api/v1/futures/position/get_pending_positions')); } catch (e) {}   // 先重新讀一次，剛開的自動單也平得到
+        const open = ltOpenTrades(), ids = new Set(open.map(t => t.positionId).filter(Boolean));
+        const mine = pos.filter(p => ids.has(p.id) || open.some(t => !t.positionId && t.sym === p.sym && t.dir === p.dir && Math.abs((p.ctime || 0) - t.et) < 5 * 60000));
+        for (const t of open) { t.pendReason = 'all'; t.pendAt = Date.now(); }
         let ok = 0; const fails = [];
-        try { await bxPost('/api/v1/futures/trade/close_all_position', {}); ok = BX.pos.length; }
-        catch (e) {                                   // 一次全平被拒絕，就一筆一筆平
-          for (const p of BX.pos.slice()) {
-            try { await fullClose(p); ok++; } catch (e2) { fails.push(`${p.sym}（${e2.message}）`); }
-            await sleep(300);
-          }
+        for (const p of mine) {
+          try { await fullClose(p, true); ok++; } catch (e2) { fails.push(`${p.sym}（${e2.message}）`); }
+          await sleep(300);
         }
+        const nMan = pos.length - mine.length;
         touchLT(); setTimeout(bxPoll, 1500);
-        dcSend(`🛑 **一鍵全部平倉**：成功 ${ok} 筆${fails.length ? `，失敗 ${fails.length} 筆：${mdEsc(fails.join('、'))}` : ''}${b.pause ? '，並暫停自動交易' : ''}`);
+        dcSend(`🛑 **一鍵平倉（自動單）**：成功 ${ok} 筆${fails.length ? `，失敗 ${fails.length} 筆：${mdEsc(fails.join('、'))}` : ''}${nMan ? `；手動單 ${nMan} 筆沒有動` : ''}${b.pause ? '，並暫停自動交易' : ''}`);
         if (fails.length) return send(res, 400, { error: `平倉成功 ${ok} 筆，失敗 ${fails.length} 筆：${fails.join('、')}` });
         return send(res, 200, { ok: true, n: ok });
       }
