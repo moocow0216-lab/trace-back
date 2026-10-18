@@ -675,7 +675,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg">⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">☁ 雲端伺服器</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-18h</div>
+      <div class="qver" id="qVer">網站版本 2026-10-18i</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qcfg" id="qSrv" hidden>
@@ -711,7 +711,17 @@ header{align-items:center}
             <button class="btn primary" id="qbx_save">儲存並測試</button>
             <button class="btn" id="qbx_clear">刪除金鑰</button>
           </div>
-          <div class="qcfgnote">建立 API 時權限選<b>「交易」</b>（會包含讀取），<b>不要開提現</b>，IP 白名單填 <b>3.107.254.240</b>。<br>換新帳號或新金鑰：直接貼上新的兩串按「儲存並測試」，會自動<b>暫停自動交易</b>，實盤統計也會等讀到新帳戶的資金後重新開始計算。</div>
+          <div class="qcfgnote" id="qbx_note">建立 API 時權限選<b>「交易」</b>（會包含讀取），<b>不要開提現</b>，IP 白名單填 <b>3.107.254.240</b>。<br>換新帳號或新金鑰：直接貼上新的兩串按「儲存並測試」，會自動<b>暫停自動交易</b>，實盤統計也會等讀到新帳戶的資金後重新開始計算。</div>
+        </div>
+        <div class="qtg">
+          <b>💰 AWS 帳單提醒</b><span id="qaws_stat">（連上伺服器後可以設定）</span>
+          <div class="params">
+            <label class="field">主機建立日（台北）<input id="qaws_date" type="date"></label>
+            <label class="field">每月費用（美元）<input id="qaws_price" type="number" min="1" max="999" step="0.5"></label>
+            <label class="field">提醒<span class="qtgck"><label><input type="checkbox" id="qaws_on"> 傳到 Discord</label></span></label>
+          </div>
+          <div class="qbt" style="margin:8px 0 0"><button class="btn" id="qaws_auto">改回自動偵測建立日</button></div>
+          <div class="qcfgnote">伺服器讀不到 AWS 帳單，是用「主機建立日＋90 天」推算免費期，請跟 Lightsail 主機頁面上的建立時間對一下。會在免費期結束前 7 天、前 1 天、結束當天，之後每月 1 號，早上 10 點（台北）傳到 Discord。</div>
         </div>
       </div>
       <div class="qcfg" id="qCfg" hidden>
@@ -1774,107 +1784,61 @@ setInterval(refresh, 10 * 60 * 1000);   // 開著的時候每 10 分鐘重抓一
 
 </script>
 <script>
+/* ---------- 🐋 鯨魚大單：雲端伺服器 24 小時收集幣安逐筆成交，這裡每 2 秒去拿新的大單 ---------- */
 (() => {
 'use strict';
 const $ = id => document.getElementById(id);
-const API = 'https://fapi.binance.com';
 const sym = () => window.appSymbol || 'BTCUSDT';
 const MIN = 60000, KEEP = 60;
 let GEN = 0;
-const W = { ws: null, wsOk: false, dirty: false, lastRatio: 0, retry: 0, lastId: null, trades: [], buckets: new Map(), ratio: [], next: 0, last: 0, busy: false, ok: null, err: '', gap: false };
+const W = { ok: null, err: '', busy: false, dirty: false, aid: 0, trades: [], bk: [], ratio: [], since: 0, last: 0, live: false, srvErr: '', gaps: [], at: 0, next: 0 };
 const p2 = x => String(x).padStart(2, '0');
 const tpe = (t, sec) => { const d = new Date(t + (window.appTz ? window.appTz.off(t) : 8 * 3600000)); return p2(d.getUTCHours()) + ':' + p2(d.getUTCMinutes()) + (sec ? ':' + p2(d.getUTCSeconds()) : ''); };
-const usd = v => { const a = Math.abs(v); const s = a >= 1e8 ? (a / 1e8).toFixed(2) + ' 億' : (a / 1e4).toLocaleString('en-US', { maximumFractionDigits: 0 }) + ' 萬'; return s; };
+const tzn = () => (window.appTz ? window.appTz.name() : '台北');
+const usd = v => { const a = Math.abs(v); return a >= 1e8 ? (a / 1e8).toFixed(2) + ' 億' : (a / 1e4).toLocaleString('en-US', { maximumFractionDigits: 0 }) + ' 萬'; };
 const thr = () => +$('wThr').value;
+const escH = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-async function getJSON(url) {
-  const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 10000);
-  try { const r = await fetch(url, { signal: ctl.signal }); if (!r.ok) throw new Error('HTTP ' + r.status); return await r.json(); }
-  finally { clearTimeout(tm); }
-}
-function ingest(rows) {
-  for (const r of rows) {
-    const id = +r.a, t = +r.T, p = +r.p, q = +r.q, v = p * q, sell = !!r.m;
-    if (W.lastId !== null && id <= W.lastId) continue;
-    W.lastId = id;
-    const k = Math.floor(t / MIN) * MIN;
-    let b = W.buckets.get(k); if (!b) { b = { buy: 0, sell: 0 }; W.buckets.set(k, b); }
-    sell ? b.sell += v : b.buy += v;
-    if (v >= 250000) W.trades.push({ id, t, p, q, v, sell });
-  }
-}
-function prune() {
-  const cut = Date.now() - KEEP * MIN;
-  W.trades = W.trades.filter(x => x.t >= cut);
-  for (const k of [...W.buckets.keys()]) if (k < cut - MIN) W.buckets.delete(k);
-}
-async function pullTrades() {
-  let url = W.lastId === null
-    ? `${API}/fapi/v1/aggTrades?symbol=${sym()}&startTime=${Date.now() - 15 * MIN}&limit=1000`
-    : `${API}/fapi/v1/aggTrades?symbol=${sym()}&fromId=${W.lastId + 1}&limit=1000`;
-  for (let page = 0; page < 40; page++) {
-    const rows = await getJSON(url);
-    ingest(rows);
-    if (rows.length < 1000) return;
-    url = `${API}/fapi/v1/aggTrades?symbol=${sym()}&fromId=${W.lastId + 1}&limit=1000`;
-  }
-  W.gap = true; W.lastId = null; // 成交太多，下次從最近 15 分鐘重抓
-}
-async function pullRatio() {
-  const rows = await getJSON(`${API}/futures/data/topLongShortPositionRatio?symbol=${sym()}&period=5m&limit=12`);
-  W.ratio = rows.map(r => ({ t: +r.timestamp, r: +r.longShortRatio, L: +r.longAccount, S: +r.shortAccount }));
-}
 async function cycle() {
-  if (W.busy) return; W.busy = true; const g = GEN;
+  const f = window.qWhaleFetch;                        // 登入完成後主程式才會提供
+  if (W.busy || !f) return;
+  W.busy = true; const g = GEN, s = sym();
   try {
-    if (!W.wsOk) await pullTrades();
-    if (g !== GEN) { W.busy = false; return cycle(); }           // 首次補資料；WebSocket 斷線時改用 REST 每 2 秒補
-    if (Date.now() - W.lastRatio > MIN) { try { await pullRatio(); W.lastRatio = Date.now(); } catch (e) { /* 多空比失敗不影響大單 */ } }
-    prune(); W.ok = true; W.err = ''; W.last = Date.now();
-    if (!W.ws) connectWS();
+    const j = await f(s, W.aid);
+    if (g !== GEN) return;                             // 中途換了幣種，這次的結果不要
+    if (j.full) W.trades = j.trades; else if (j.trades.length) W.trades = W.trades.concat(j.trades);
+    Object.assign(W, { aid: j.aid, bk: j.bk, ratio: j.ratio || [], since: j.since, last: j.last, live: j.live, srvErr: j.err || '', gaps: j.gaps || [], ok: true, err: '', at: Date.now() });
+    const cut = Date.now() - KEEP * MIN; W.trades = W.trades.filter(x => x.t >= cut);
+    W.dirty = true;
   } catch (e) {
-    W.ok = W.trades.length ? true : false; W.err = e.message || '連線失敗';
+    if (g === GEN) { W.err = e.message || '連線失敗'; if (W.ok === null) W.ok = false; W.dirty = true; }
+  } finally {
+    W.busy = false;
+    W.next = Date.now() + (document.hidden ? 15000 : W.ok === false ? 10000 : 2000);   // 分頁在背景就放慢，省流量
   }
-  W.busy = false; W.next = Date.now() + (W.wsOk ? MIN : W.ok ? 2000 : MIN); render();
-}
-function connectWS() {
-  let ws;
-  try { ws = new WebSocket(`wss://fstream.binance.com/ws/${sym().toLowerCase()}@aggTrade`); } catch (e) { return; }
-  W.ws = ws;
-  ws.onopen = () => { W.retry = 0; };
-  ws.onmessage = ev => {
-    let m; try { m = JSON.parse(ev.data); } catch (e) { return; }
-    if (m.e !== 'aggTrade') return;
-    if (!W.wsOk) { W.wsOk = true; }
-    ingest([m]); W.last = Date.now(); W.dirty = true;
-  };
-  ws.onclose = () => {
-    W.ws = null; W.wsOk = false; W.retry++;
-    setTimeout(() => { if (!W.ws) connectWS(); }, Math.min(30, 2 * W.retry) * 1000);
-  };
-  ws.onerror = () => {};
 }
 
 function render() {
   const el = $('whaleBody');
-  if (W.ok === null) { el.innerHTML = '<div class="wempty">正在連線幣安…</div>'; return; }
+  if (!window.qWhaleFetch) { el.innerHTML = '<div class="wempty">登入後會顯示雲端伺服器收集的大單。</div>'; return; }
+  if (W.ok === null) { el.innerHTML = '<div class="wempty">正在向雲端伺服器讀取…</div>'; return; }
   if (!W.ok) {
-    el.innerHTML = `<div class="wempty err"><b>無法連線到幣安。</b><br>claude.ai 的線上頁面會擋掉對外連線，所以這裡抓不到大單資料。請下載這個網頁檔案，用 Chrome 或 Edge 直接開啟，就會每分鐘自動更新。<br><span class="wsmall">錯誤訊息：${W.err}</span><br><button class="iconbtn" id="wRetry">重新連線</button></div>`;
-    $('wRetry').onclick = () => { W.ok = null; render(); cycle(); };
+    el.innerHTML = `<div class="wempty err"><b>讀不到大單資料。</b><br>${escH(W.err)}<br><span class="wsmall">每 10 秒會自動重試。</span></div>`;
     return;
   }
   const T = thr(), list = W.trades.filter(x => x.v >= T);
   const bigBuy = list.filter(x => !x.sell), bigSell = list.filter(x => x.sell);
   const sb = bigBuy.reduce((a, x) => a + x.v, 0), ss = bigSell.reduce((a, x) => a + x.v, 0), net = sb - ss;
-  // 每分鐘大單柱狀
   const now = Math.floor(Date.now() / MIN) * MIN, mins = [];
   for (let k = now - 29 * MIN; k <= now; k += MIN) {
     let b = 0, s = 0; for (const x of list) if (x.t >= k && x.t < k + MIN) x.sell ? s += x.v : b += x.v;
     mins.push({ k, b, s });
   }
   const mx = Math.max(1, ...mins.map(m => Math.max(m.b, m.s)));
-  let allB = 0, allS = 0; for (const b of W.buckets.values()) { allB += b.buy; allS += b.sell; }
+  let allB = 0, allS = 0; for (const [, b, s] of W.bk) { allB += b; allS += s; }
   const R = W.ratio[W.ratio.length - 1];
+  const fresh = W.since && Date.now() - W.since < KEEP * MIN;
+  const gaps = W.gaps.filter(g => g[1] - g[0] > 5000).map(g => `${tpe(g[0])}～${tpe(g[1])}`);
   el.innerHTML = `
     <div class="wkpi">
       <div><span>大單買進</span><b class="pos">${usd(sb)}</b><em>${bigBuy.length} 筆</em></div>
@@ -1887,30 +1851,35 @@ function render() {
     ${R ? `<div class="wratio"><div class="wrh"><span>大戶多空比（持倉，幣安前 20% 帳戶）</span><b>${R.r.toFixed(2)}</b></div>
       <div class="wrbar"><div style="width:${(R.L * 100).toFixed(1)}%">多 ${(R.L * 100).toFixed(1)}%</div><div style="width:${(R.S * 100).toFixed(1)}%">空 ${(R.S * 100).toFixed(1)}%</div></div>
       <div class="wsmall">每 5 分鐘一筆，最新為 ${tpe(R.t)}。近一小時：${W.ratio.map(x => x.r.toFixed(2)).join(' → ')}</div></div>` : ''}
-    <div class="wsmall">全市場主動成交（近 ${Math.min(KEEP, W.buckets.size)} 分鐘）：主動買 ${usd(allB)}、主動賣 ${usd(allS)}。${W.gap ? '上一輪成交量過大，已從最近 15 分鐘重新抓取。' : ''}</div>
-    <div class="wcap">大單明細（${window.appTz ? window.appTz.name() : '台北'}時間，最新在上）</div>
+    <div class="wsmall">全市場主動成交（近 ${Math.min(KEEP, W.bk.length)} 分鐘）：主動買 ${usd(allB)}、主動賣 ${usd(allS)}。${fresh ? `伺服器從 ${tpe(W.since)} 開始收集這個幣，還不滿 1 小時。` : ''}${gaps.length ? `${gaps.join('、')} 伺服器和幣安的連線中斷過，這段沒有資料。` : ''}</div>
+    <div class="wcap">大單明細（${tzn()}時間，最新在上）</div>
     <div class="wlist">${list.length ? list.slice().reverse().slice(0, 150).map(x => `<div class="wr"><span class="wt">${tpe(x.t, true)}</span><span class="chip ${x.sell ? 'short' : 'long'}">${x.sell ? '主動賣' : '主動買'}</span><span class="wp">${x.p.toLocaleString('en-US', { maximumFractionDigits: x.p >= 1000 ? 1 : x.p >= 1 ? 3 : 6 })}</span><span class="wq">${x.q >= 1000 ? Math.round(x.q).toLocaleString() : x.q.toFixed(3)} ${sym().replace('USDT', '')}</span><b class="${x.sell ? 'neg' : 'pos'}">${usd(x.v)}</b></div>`).join('') : '<div class="wempty">這段時間還沒有超過門檻的大單。</div>'}</div>`;
 }
 function tick() {
   const s = $('wStat'); if (!s) return;
-  if (W.ok) s.innerHTML = W.wsOk
-    ? `<span class="wlive"></span>即時連線中，每秒更新。幣安 ${sym()} 永續合約，最新成交 ${tpe(W.last, true)}（${window.appTz ? window.appTz.name() : '台北'}）`
-    : `幣安 ${sym()} 永續合約，即時連線重試中，暫時每 2 秒補抓一次，最後更新 ${tpe(W.last, true)}（${window.appTz ? window.appTz.name() : '台北'}）${W.err ? '（上次更新失敗，會自動重試）' : ''}`;
-  else if (W.ok === false) s.textContent = '未連線';
-  else s.textContent = '連線中…';
+  if (!window.qWhaleFetch) { s.textContent = '等待登入'; return; }
+  if (W.ok === null) { s.textContent = '讀取中…'; return; }
+  if (W.ok === false && !W.at) { s.textContent = '讀不到雲端伺服器'; return; }
+  const stale = Date.now() - W.at > 20000;
+  s.innerHTML = stale
+    ? `連不到雲端伺服器，顯示的是 ${tpe(W.at, true)} 的資料，會自動重試${W.err ? `（${escH(W.err)}）` : ''}`
+    : W.live
+      ? `<span class="wlive"></span>雲端伺服器即時收集中，每 2 秒更新。幣安 ${sym()} 永續合約，最新成交 ${W.last ? tpe(W.last, true) : '—'}（${tzn()}）`
+      : `伺服器正在重新連線幣安${W.srvErr ? `（${escH(W.srvErr)}）` : ''}，連上後會繼續收集`;
+}
+function reset() {
+  GEN++;
+  Object.assign(W, { ok: null, err: '', aid: 0, trades: [], bk: [], ratio: [], since: 0, last: 0, live: false, srvErr: '', gaps: [], at: 0, next: 0 });
+  render(); tick();
 }
 $('wThr').onchange = render;
 window.addEventListener('tzchange', () => { render(); tick(); });
-window.addEventListener('symbolchange', () => {
-  GEN++;
-  if (W.ws) { W.ws.onclose = null; W.ws.close(); W.ws = null; }
-  W.wsOk = false; W.lastId = null; W.trades = []; W.buckets = new Map(); W.ratio = []; W.lastRatio = 0; W.gap = false; W.next = 0;
-  if (W.ok) { W.ok = null; } render(); cycle();
-});
-render(); cycle();
+window.addEventListener('symbolchange', reset);
+window.addEventListener('whaleready', () => { W.next = 0; cycle(); });
+render(); tick();
 setInterval(() => {
   if (Date.now() >= W.next && !W.busy) cycle();
-  if (W.dirty) { W.dirty = false; prune(); render(); }
+  if (W.dirty) { W.dirty = false; render(); }
   tick();
 }, 1000);
 })();
@@ -3041,8 +3010,9 @@ async function srvPull() {
     if (j.lt) { SRVLT.cfg = j.lt.cfg; SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; }
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) renderEco(j.eco);
-    $('qVer').textContent = `網站版本 2026-10-18h・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-18i・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
+    if (j.aws) renderAws(j.aws);
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
     if ($('qRepDlg').open) renderRep();   // 連線後先把這台的浮盈／槓桿設定同步給伺服器
     $('qsv_stat').textContent = `已連線到 ${SRV.url}。${CANW() ? '你是管理員，可以改設定、回測、移除卡片。' : '這個帳號只能看，不能改。'}`;
@@ -3907,6 +3877,30 @@ $('qRepNow').onclick = async () => {
   if (!confirm('伺服器會先重新回測最近 14 天，再結算一期（手動結算不會改變每兩週自動結算的時間）。大約需要 1～3 分鐘，要繼續嗎？')) return;
   try { await srvFetch('/api/report/settle', {}); setTimeout(srvPull, 1500); alert('已開始結算，完成後會自動出現在報告裡。'); } catch (e) { alert(e.message); }
 };
+/* ---------- 💰 AWS 帳單提醒（伺服器推算日期，傳到 Discord） ---------- */
+const TPE = 8 * HOUR_MS;
+const ymd = t => { const d = new Date(t + TPE); return `${d.getUTCFullYear()}-${p2(d.getUTCMonth() + 1)}-${p2(d.getUTCDate())}`; };
+function renderAws(a) {
+  if (document.activeElement !== $('qaws_on')) $('qaws_on').checked = a.on;
+  if (document.activeElement !== $('qaws_price')) $('qaws_price').value = a.price;
+  if (document.activeElement !== $('qaws_date')) $('qaws_date').value = a.created ? ymd(a.created) : '';
+  $('qaws_auto').hidden = a.auto || !a.detected;
+  const now = Date.now(), left = a.end ? Math.ceil((a.end - now) / (24 * HOUR_MS)) : 0;
+  $('qaws_stat').textContent = !a.created ? '請填主機建立日'
+    : (a.end > now ? `免費期預計到 ${ymd(a.end).replace(/-/g, '/')}（剩 ${left} 天）` : `免費期已在 ${ymd(a.end).replace(/-/g, '/')} 結束`)
+      + (a.on ? (a.next ? `・下一次提醒 ${fmtT(a.next)}` : '') : '・提醒已關閉') + (a.auto ? '・建立日自動偵測' : '');
+}
+$('qaws_on').onchange = () => tgCall('/api/aws', { on: $('qaws_on').checked });
+$('qaws_price').onchange = () => tgCall('/api/aws', { price: +$('qaws_price').value });
+let awsDT = 0;
+$('qaws_date').onchange = () => {                     // 用鍵盤輸入時每改一個數字都會觸發，停手 1.5 秒才送出
+  clearTimeout(awsDT);
+  awsDT = setTimeout(() => {
+    const m = $('qaws_date').value.match(/^(\d{4})-(\d{2})-(\d{2})$/); if (!m || +m[1] < 2020) return;
+    tgCall('/api/aws', { created: Date.UTC(+m[1], +m[2] - 1, +m[3]) - TPE }, '已更新，Discord 會收到一則確認訊息。');
+  }, 1500);
+};
+$('qaws_auto').onclick = () => tgCall('/api/aws', { created: 'auto' }, '已改回自動偵測。');
 /* ---------- 💼 Bitunix 持倉（伺服器用唯讀金鑰讀取） ---------- */
 var SRVBX = null;
 function renderBx(b) {
@@ -3966,6 +3960,8 @@ function gateHide() {
   document.body.classList.remove('gated'); $('qGate').hidden = true;
   $('qUserBox').hidden = false; $('qUid').textContent = SRV.uid || '管理金鑰';
   $('qAdmBtn').hidden = !CANW();
+  window.qWhaleFetch = (sym, a) => srvFetch(`/api/whale?sym=${encodeURIComponent(sym)}&a=${a || 0}`);   // 🐋 鯨魚大單改由伺服器收集
+  window.dispatchEvent(new Event('whaleready'));
 }
 $('qg_go').onclick = async () => {
   const url = ($('qg_url').value.normalize('NFKC').trim() || DEFAULT_SRV).replace(/\/+$/, '').replace(/^(https?):\/*/i, (m, p) => p.toLowerCase() + '://');
