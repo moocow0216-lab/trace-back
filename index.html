@@ -674,7 +674,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg">⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">☁ 雲端伺服器</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-18d</div>
+      <div class="qver" id="qVer">網站版本 2026-10-18e</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qcfg" id="qSrv" hidden>
@@ -777,7 +777,7 @@ header{align-items:center}
       <div id="qHist" hidden>
         <div class="qdsrc"><label class="tzsel">資料 <select id="qDataSrc"><option value="real">🤖 實盤（Bitunix 真實下單）</option><option value="sim">模擬（訊號＋回測）</option></select></label><button class="iconbtn" id="qLtReset">從現在重新開始計算</button><span class="qltmsg" id="qDataNote"></span></div>
         <div id="qPnl"></div>
-        <div class="qltmsg" id="qRecon" style="margin:-4px 0 10px"></div>
+        <div id="qRecon" hidden></div>
         <div class="qeq">
           <div class="qeqh"><b>資金曲線</b><span id="qEqTitle"></span></div>
           <div class="qeqset">
@@ -3040,7 +3040,7 @@ async function srvPull() {
     if (j.lt) { SRVLT.cfg = j.lt.cfg; SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; }
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) renderEco(j.eco);
-    $('qVer').textContent = `網站版本 2026-10-18d・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-18e・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
     if ($('qRepDlg').open) renderRep();   // 連線後先把這台的浮盈／槓桿設定同步給伺服器
