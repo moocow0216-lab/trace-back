@@ -28,7 +28,9 @@ const log = (...a) => console.log(new Date().toISOString(), ...a);
 
 /* ---------------- 狀態與存檔 ---------------- */
 const DEF_SET = { flat: 2, range: 6, minVol: 500, win: 4, sens: 1, minN: 2, logic: 'follow', everyS: 10 };
-const DEF_TRADE = { tp: 250, sl: 250, lev: 100, hold: 24, exit: 'lock' };
+const DEF_TRADE = { tp: 250, sl: 250, lev: 100, hold: 24, exit: 'lock', step: 50 };   // step：達標後浮盈每多幾 %，鎖利線就往上調一格（0＝固定鎖在達標線）
+// 鎖利線：最高浮盈 peak（%）→ 鎖在哪裡（%）。例：達標 250、間距 50 → 最高 260 鎖 250、最高 300 鎖 300、最高 349 鎖 300
+const lockAt = (peak, T = ST.trade) => (T.step > 0 && peak > T.tp ? T.tp + Math.floor((peak - T.tp) / T.step + 1e-9) * T.step : T.tp);
 const DEF_NOTIFY = { webhook: '', name: '', enabled: true, entry: true, exit: true };
 const DEF_EQ = { mode: 'fixed', amt: 0.3, fee: 0.05, max: 0 };
 const DEF_BX = { key: '', secret: '', notify: true, liq: true, liqPct: 3 };
@@ -260,14 +262,22 @@ function evalTrade(c) {
     if (hL) return { st: hT && r[3] ? 'amb' : 'fail', at: r[0], exitAt: r[0], pnl: -T.sl };
     if (hT) {
       if (T.exit === 'fixed') return { st: 'win', at: r[0], exitAt: r[0], pnl: T.tp, how: 'fixed' };
+      // 鎖利：只有逐小時的最高、最低價，同一小時裡先高還是先低不知道 → 保守算法：
+      //   先用「這小時開始前」的鎖利線檢查最低價；沒碰到，再把這小時的最高價算進去，若最低價低於新的鎖利線，就當作先衝高再跑回、以新鎖利線出場
+      let lockP = T.tp;
       if (tr.hl && !tr.noHL) {
-        const H0 = Math.floor((r[0] - c.et) / HOUR), nH = Math.min(T.hold, tr.hl.length);
+        const H0 = Math.floor((r[0] - c.et) / HOUR), nH = Math.min(T.hold, tr.hl.length), R = f => f * T.lev * 100;
+        const hiAt = h => (c.dir > 0 ? tr.hh[h] : -tr.hl[h]), loAt = h => (c.dir > 0 ? tr.hl[h] : -tr.hh[h]);
+        let pk = R(r[1]); if (Number.isFinite(hiAt(H0))) pk = Math.max(pk, R(hiAt(H0)));   // 達標那一小時：只把最高價算進去（最低價可能在達標之前）
         for (let h = H0 + 1; h < nH; h++) {
-          const lo = c.dir > 0 ? tr.hl[h] : -tr.hh[h];
-          if (Number.isFinite(lo) && lo <= tp) return { st: 'win', at: r[0], exitAt: c.et + h * HOUR, pnl: T.tp, how: 'lock' };
+          const lo = loAt(h), hi = hiAt(h); if (!Number.isFinite(lo)) continue;
+          const l0 = lockAt(pk); if (R(lo) <= l0) return { st: 'win', at: r[0], exitAt: c.et + h * HOUR, pnl: l0, how: 'lock' };
+          if (Number.isFinite(hi)) pk = Math.max(pk, R(hi));
+          const l1 = lockAt(pk); if (R(lo) <= l1) return { st: 'win', at: r[0], exitAt: c.et + (h + 1) * HOUR, pnl: l1, how: 'lock' };
         }
+        lockP = lockAt(pk);
       }
-      if (done) { const v = hcAt(); return { st: 'win', at: r[0], exitAt: lim, pnl: v === null ? T.tp : Math.max(T.tp, v), how: 'hold' }; }
+      if (done) { const v = hcAt(); return { st: 'win', at: r[0], exitAt: lim, pnl: v === null ? lockP : Math.max(lockP, v), how: 'hold' }; }
       return { st: 'win', at: r[0], open: true };      // 達標後持有中，還沒結單
     }
   }
@@ -327,7 +337,7 @@ function notifyEntry(c) {
 function notifyExit(c, E) {
   const N = ST.notify, T = ST.trade; if (!N.enabled || !N.exit) return;
   const head = E.st === 'win' ? '✅ **成功**' : E.st === 'timeout' ? '⏱ **逾時**' : '❌ **失敗**';
-  const how = E.how === 'lock' ? '（跑回達標線，保本鎖利出場）' : E.how === 'hold' ? `（持有到 ${T.hold} 小時到期）` : E.st === 'amb' ? '（同一根 K 棒兩邊都碰到，保守算失敗）' : '';
+  const how = E.how === 'lock' ? `（跑回鎖利線 +${E.pnl}% 出場）` : E.how === 'hold' ? `（持有到 ${T.hold} 小時到期）` : E.st === 'amb' ? '（同一根 K 棒兩邊都碰到，保守算失敗）' : '';
   const pnl = (E.pnl > 0 ? '+' : E.pnl < 0 ? '−' : '') + Math.abs(E.pnl).toFixed(0) + '%';
   dcSend(`📡 **訊號模擬結果**｜${head} ${c.dir > 0 ? '做多' : '做空'} **${mdEsc(c.sym)}** **${pnl}**${how}\n` +
     `訊號價 ${fpx(c.entry)}（${tw(c.et)}）\n持有 ${durTxt((E.exitAt || Date.now()) - c.et)}・${T.lev}x\n-# 這是訊號的模擬結果，不代表交易所的倉位已經平倉`);
@@ -764,7 +774,7 @@ setInterval(bxPoll, 10000); setTimeout(bxPoll, 3000);
 
 /* ================= 自動下單（Bitunix 實盤） =================
    • 新訊號出現時，用市價開倉；開倉單同時帶交易所止損（失敗線），伺服器掛掉也有保護
-   • 伺服器每 3 秒看一次價格：碰到成功線＝保本鎖利（或固定出場）；跑回成功線、持有到期、碰到失敗線就平倉
+   • 伺服器每 3 秒看一次價格：碰到成功線＝開始鎖利（或固定出場），之後浮盈每多 step% 鎖利線上調一格；跑回鎖利線、持有到期、碰到失敗線就平倉
    • 每 10 秒對一次交易所持倉：手動平倉、部分平倉、交易所止損、強平都會被記錄下來
    • 預設暫停；單日虧損超過上限自動暫停；伺服器重開也會先暫停 */
 const LT = { pairs: new Map(), pairsAt: 0, lev: {}, busy: new Set(), msg: '', dayHit: '' };
@@ -886,8 +896,14 @@ async function ltManage() {
     t.cur = px; t.roe = roe; t.fav = Math.max(t.fav || 0, roe); t.adv = Math.min(t.adv || 0, roe);
     let why = '';
     if (roe <= -T.sl) why = 'fail';
-    else if (roe >= T.tp) { if (T.exit === 'fixed') why = 'win'; else if (!t.locked) { t.locked = true; touchLT(); dcSend(`🤖 **實盤**｜🔒 **達標鎖利** ${mdEsc(t.sym)}（${t.lev}x）：浮盈 +${roe.toFixed(0)}%，之後跑回 +${T.tp}% 就平倉`); } }
-    else if (t.locked && roe < T.tp) why = 'lock';
+    else if (T.exit === 'fixed') { if (roe >= T.tp) why = 'win'; }
+    else if (t.fav >= T.tp) {                            // 鎖利：最高浮盈每多 step%，鎖利線就往上調一格，只升不降
+      const lv = Math.max(lockAt(t.fav), t.lockLv || 0);
+      if (!t.locked) { t.locked = true; touchLT(); dcSend(`🤖 **實盤**｜🔒 **達標鎖利** ${mdEsc(t.sym)}（${t.lev}x）：浮盈 +${roe.toFixed(0)}%，鎖利線 **+${lv}%**${T.step > 0 ? `\n之後浮盈每多 ${T.step}% 鎖利線就往上調一次，跑回鎖利線就平倉` : `，之後跑回 +${lv}% 就平倉`}`); }
+      else if (lv > (t.lockLv || T.tp)) { touchLT(); dcSend(`🤖 **實盤**｜🔒 **鎖利上調** ${mdEsc(t.sym)}：浮盈 +${roe.toFixed(0)}%，鎖利線調到 **+${lv}%**`); }
+      t.lockLv = lv;
+      if (roe < lv) why = 'lock';
+    }
     if (!why && now - t.et >= T.hold * HOUR) why = 'timeout';
     if (!why) continue;
     t.closing = true;
@@ -929,7 +945,7 @@ async function ltReconcile(pos) {
     const prevPart = t.closes.reduce((a, c) => a + c.pnl, 0);
     t.closes.push({ t: Date.now(), qty: t.qty, pnl: (t.realized || 0) - prevPart, by: reason });
     Object.assign(t, { status: 'closed', exitAt: Date.now(), reason, qty: 0, upnl: 0 }); ch = true;
-    const net = ltNet(t), nm = '🤖 **實盤平倉**｜' + ({ win: '✅ 達標出場', lock: '🔒 保本鎖利出場', fail: '❌ 失敗線出場', timeout: '⏱ 持有到期出場', manual: '🖐 手動平倉', all: '🛑 一鍵全部平倉', liq: '💥 強平', exchange: '📤 交易所平倉（止損或在 App 平倉）' }[reason] || reason);
+    const net = ltNet(t), nm = '🤖 **實盤平倉**｜' + ({ win: '✅ 達標出場', lock: `🔒 鎖利出場（鎖利線 +${t.lockLv || ST.trade.tp}%）`, fail: '❌ 失敗線出場', timeout: '⏱ 持有到期出場', manual: '🖐 手動平倉', all: '🛑 一鍵全部平倉', liq: '💥 強平', exchange: '📤 交易所平倉（止損或在 App 平倉）' }[reason] || reason);
     dcSend(`${nm} **${mdEsc(t.sym)}** ${t.dir > 0 ? '做多' : '做空'}\n淨損益 **${net >= 0 ? '+' : '−'}${Math.abs(net).toFixed(2)}U**（${(net / (t.m0 || ST.lt.margin) * 100).toFixed(0)}%）・持有 ${durTxt(Date.now() - t.et)}${t.closePx ? `・平倉均價 ${fpx(t.closePx)}` : ''}`);
   }
   // 單日虧損上限（台北時間每天 00:00 重算）
@@ -1311,7 +1327,7 @@ http.createServer(async (req, res) => {
     }
     if (req.method === 'GET' && u.pathname === '/api/state') {
       const out = {
-        time: Date.now(), ver: '2026-10-18h', cv: CV, bv: BV, set: ST.set, trade: ST.trade, canWrite: !!ADMIN_KEY,
+        time: Date.now(), ver: '2026-10-18i', cv: CV, bv: BV, set: ST.set, trade: ST.trade, canWrite: !!ADMIN_KEY,
         scan: { ...SCAN, pause: RL.pause }, bt: { at: ST.bt.at, coins: ST.bt.coins, n: ST.bt.trades.length }, btp: BTP,
         notify: { enabled: ST.notify.enabled, entry: ST.notify.entry, exit: ST.notify.exit, hasHook: !!ST.notify.webhook, name: ST.notify.name },
         eq: ST.eq, rep: { ...ST.rep, busy: REP.busy, msg: REP.msg }, rv: RV,
