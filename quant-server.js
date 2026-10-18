@@ -37,7 +37,7 @@ const DEF_REP = { cap: 100, btN: 50, days: 14, next: 0 };                   // �
 let ST = { cards: [], bt: { at: 0, coins: 0, trades: [] }, set: { ...DEF_SET }, trade: { ...DEF_TRADE }, notify: { ...DEF_NOTIFY }, eq: { ...DEF_EQ }, rep: { ...DEF_REP }, reports: [], bx: { ...DEF_BX }, users: [], sessions: [], lt: { ...DEF_LT }, ltTrades: [] };
 try {
   const j = JSON.parse(fs.readFileSync(FILE, 'utf8'));
-  ST = { cards: j.cards || [], bt: j.bt || ST.bt, set: { ...DEF_SET, ...(j.set || {}) }, trade: { ...DEF_TRADE, ...(j.trade || {}) }, notify: { ...DEF_NOTIFY, ...(j.notify || {}) }, eq: { ...DEF_EQ, ...(j.eq || {}) }, rep: { ...DEF_REP, ...(j.rep || {}) }, reports: j.reports || [], bx: { ...DEF_BX, ...(j.bx || {}) }, users: j.users || [], sessions: j.sessions || [], lt: { ...DEF_LT, ...(j.lt || {}), on: false }, ltTrades: j.ltTrades || [] };
+  ST = { cards: j.cards || [], bt: j.bt || ST.bt, set: { ...DEF_SET, ...(j.set || {}) }, trade: { ...DEF_TRADE, ...(j.trade || {}) }, notify: { ...DEF_NOTIFY, ...(j.notify || {}) }, eq: { ...DEF_EQ, ...(j.eq || {}) }, rep: { ...DEF_REP, ...(j.rep || {}) }, reports: j.reports || [], bx: { ...DEF_BX, ...(j.bx || {}) }, users: j.users || [], sessions: j.sessions || [], lt: { ...DEF_LT, ...(j.lt || {}), on: false }, ltTrades: j.ltTrades || [], aws: j.aws || {} };
   // 舊版預設把起始本金寫死成 100U：還沒有任何實盤交易的話，改回「等偵測到帳戶資金再開始」
   if (ST.lt.startCap === 100 && !ST.ltTrades.length) { ST.lt.startCap = 0; ST.lt.startAt = 0; }   // 伺服器重開後自動交易一律先暫停
   log(`讀入存檔：${ST.cards.length} 張卡片、${ST.bt.trades.length} 筆回測`);
@@ -997,6 +997,220 @@ setTimeout(ecoFetch, 4000);
 setInterval(() => { const now = Date.now(), near = ECO.list.some(e => e.imp === 'H' && Math.abs(e.t - now) < 30 * 60000); if (now - ECO.at > (near ? 5 : 30) * 60000) ecoFetch(); }, 60000);
 setInterval(ecoTick, 30000);
 
+/* ---------------- 🐋 鯨魚大單（伺服器用 WebSocket 收幣安逐筆成交，網頁只來讀結果） ----------------
+   幣安 2026/03 起合約 WebSocket 分成 /public、/market、/private，aggTrade 在 /market；舊的 /ws 網址連得上但收不到成交。
+   Node 20 沒有內建 WebSocket 用戶端，所以自己寫一個最小的（只做這裡需要的：連線、收文字訊息、回 pong、送訂閱）。 */
+const tls = require('tls'), net = require('net');
+const { EventEmitter } = require('events');
+class MiniWS extends EventEmitter {
+  constructor(url) {
+    super();
+    const u = new URL(url), sec = u.protocol === 'wss:', port = +u.port || (sec ? 443 : 80);
+    const key = crypto.randomBytes(16).toString('base64');
+    this.accept = crypto.createHash('sha1').update(key + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11').digest('base64');
+    this.open = false; this.closed = false; this.buf = Buffer.alloc(0); this.frag = null;
+    const s = this.sock = sec ? tls.connect({ host: u.hostname, port, servername: u.hostname }) : net.connect({ host: u.hostname, port });
+    s.setNoDelay(true);
+    s.setTimeout(20000, () => this.kill('連線逾時'));          // 只管握手階段，連上後改由外面的看門狗判斷
+    s.once(sec ? 'secureConnect' : 'connect', () => s.write(`GET ${u.pathname}${u.search} HTTP/1.1\r\nHost: ${u.host}\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: ${key}\r\nSec-WebSocket-Version: 13\r\nUser-Agent: quant-server\r\n\r\n`));
+    s.on('data', d => { try { this.onData(d); } catch (e) { this.kill('解析失敗：' + e.message); } });
+    s.on('error', e => this.kill(e.message));
+    s.on('close', () => this.kill('連線中斷'));
+  }
+  onData(d) {
+    this.buf = this.buf.length ? Buffer.concat([this.buf, d]) : d;
+    if (!this.open) {
+      const i = this.buf.indexOf('\r\n\r\n');
+      if (i < 0) { if (this.buf.length > 16384) this.kill('握手失敗'); return; }
+      const head = this.buf.subarray(0, i).toString('latin1'); this.buf = this.buf.subarray(i + 4);
+      const st = head.match(/^HTTP\/1\.[01] (\d+)/);
+      if (!st || st[1] !== '101') return this.kill('握手失敗（' + (st ? 'HTTP ' + st[1] : head.slice(0, 40)) + '）');
+      const acc = head.match(/sec-websocket-accept:\s*(\S+)/i);
+      if (!acc || acc[1] !== this.accept) return this.kill('握手驗證失敗');
+      this.open = true; this.sock.setTimeout(0); this.emit('open');
+    }
+    while (!this.closed) {
+      const b = this.buf; if (b.length < 2) return;
+      const fin = b[0] & 0x80, op = b[0] & 0x0f, masked = b[1] & 0x80;
+      let len = b[1] & 0x7f, off = 2;
+      if (len === 126) { if (b.length < 4) return; len = b.readUInt16BE(2); off = 4; }
+      else if (len === 127) { if (b.length < 10) return; len = Number(b.readBigUInt64BE(2)); off = 10; }
+      if (len > 16 * 1024 * 1024) return this.kill('訊息太大');
+      let mk = null; if (masked) { if (b.length < off + 4) return; mk = b.subarray(off, off + 4); off += 4; }
+      if (b.length < off + len) return;
+      let p = b.subarray(off, off + len); this.buf = b.subarray(off + len);
+      if (mk) { p = Buffer.from(p); for (let j = 0; j < p.length; j++) p[j] ^= mk[j & 3]; }
+      if (op === 8) { this.frame(8, p.subarray(0, 2)); return this.kill('幣安關閉連線'); }
+      if (op === 9) { this.frame(10, p); continue; }        // 幣安每 3 分鐘 ping 一次，要回 pong
+      if (op === 10) continue;
+      if (op === 0) { if (!this.frag) continue; this.frag.push(Buffer.from(p)); if (fin) { const all = Buffer.concat(this.frag); this.frag = null; this.emit('message', all.toString('utf8')); } continue; }
+      if (op === 1 || op === 2) { if (fin) this.emit('message', p.toString('utf8')); else this.frag = [Buffer.from(p)]; }
+    }
+  }
+  frame(op, payload = Buffer.alloc(0)) {                // 用戶端送出的資料一定要加遮罩
+    if (!this.open || this.sock.destroyed) return;
+    const n = payload.length, mk = crypto.randomBytes(4);
+    let h;
+    if (n < 126) h = Buffer.from([0x80 | op, 0x80 | n]);
+    else if (n < 65536) { h = Buffer.alloc(4); h[0] = 0x80 | op; h[1] = 0x80 | 126; h.writeUInt16BE(n, 2); }
+    else { h = Buffer.alloc(10); h[0] = 0x80 | op; h[1] = 0x80 | 127; h.writeBigUInt64BE(BigInt(n), 2); }
+    const p = Buffer.from(payload); for (let j = 0; j < n; j++) p[j] ^= mk[j & 3];
+    this.sock.write(Buffer.concat([h, mk, p]));
+  }
+  send(text) { this.frame(1, Buffer.from(text, 'utf8')); }
+  kill(why) { if (this.closed) return; this.closed = true; this.open = false; try { this.sock.destroy(); } catch (e) {} this.emit('close', why); }
+}
+
+const WH_WS = (process.env.BINANCE_WS || 'wss://fstream.binance.com/market').replace(/\/+$/, '');
+const WH_BASE = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'DOGEUSDT', 'ADAUSDT', 'AVAXUSDT', 'LINKUSDT', 'SUIUSDT', 'LTCUSDT', 'TRXUSDT', 'HYPEUSDT'];   // 網站幣種選單上的幣，24 小時一直收
+const WH_KEEP = 60 * 60000, WH_MIN = 250000, WH_EXTRA = 10, WH_IDLE = 15 * 60000;
+const WH = { ws: null, open: false, connAt: 0, msgAt: 0, retry: 0, err: '', subs: new Set(), d: new Map(), want: new Map(), id: 1, downAt: 0, gaps: [], timer: null };
+function whData(sym) {
+  let d = WH.d.get(sym);
+  if (!d) { d = { since: WH.open ? Date.now() : 0, trades: [], bk: new Map(), lastId: 0, last: 0, ratio: [], ratioAt: 0, ratioBusy: false }; WH.d.set(sym, d); }
+  return d;
+}
+function whSyms() { return [...new Set([...WH_BASE, ...WH.want.keys()])]; }
+function whConnect() {
+  clearTimeout(WH.timer); WH.timer = null;
+  const syms = whSyms(); WH.subs = new Set(syms);
+  let ws;
+  try { ws = new MiniWS(`${WH_WS}/stream?streams=${syms.map(s => s.toLowerCase() + '@aggTrade').join('/')}`); }
+  catch (e) { WH.err = e.message; WH.retry++; WH.timer = setTimeout(whConnect, Math.min(60, 2 * WH.retry) * 1000); return; }
+  WH.ws = ws;
+  ws.on('open', () => {
+    const now = Date.now();
+    WH.open = true; WH.connAt = now; WH.msgAt = now; WH.retry = 0; WH.err = '';
+    if (WH.downAt) { WH.gaps.push([WH.downAt, now]); WH.downAt = 0; }
+    for (const s of syms) { const d = whData(s); if (!d.since) d.since = now; }
+    log('鯨魚大單：已連上幣安 WebSocket，', syms.length, '個幣');
+  });
+  ws.on('message', txt => {
+    WH.msgAt = Date.now();
+    let m; try { m = JSON.parse(txt); } catch (e) { return; }
+    const t = m && m.data;
+    if (!t || t.e !== 'aggTrade') return;
+    whIngest(String(t.s), t);
+  });
+  ws.on('close', why => {
+    if (WH.ws !== ws) return;
+    if (WH.open) { WH.downAt = Date.now(); log('鯨魚大單：WebSocket 斷線，', why); }
+    WH.ws = null; WH.open = false; WH.err = why; WH.retry++;
+    WH.timer = setTimeout(whConnect, Math.min(60, 2 * WH.retry) * 1000);   // 2、4、6…最多 60 秒後重連
+  });
+}
+function whIngest(sym, r) {
+  const d = WH.d.get(sym); if (!d) return;
+  const id = +r.a, t = +r.T, p = +r.p, q = +r.q, v = p * q, sell = !!r.m;
+  if (!(id > d.lastId) || !Number.isFinite(v)) return;
+  d.lastId = id; d.last = t;
+  const k = Math.floor(t / 60000) * 60000;
+  let b = d.bk.get(k); if (!b) { b = [0, 0]; d.bk.set(k, b); }
+  b[sell ? 1 : 0] += v;
+  if (v >= WH_MIN) d.trades.push({ id, t, p, q, v, sell });
+}
+function whSub(method, syms) {
+  if (!WH.open || !syms.length) return;
+  WH.ws.send(JSON.stringify({ method, params: syms.map(s => s.toLowerCase() + '@aggTrade'), id: WH.id++ }));
+  for (const s of syms) method === 'SUBSCRIBE' ? WH.subs.add(s) : WH.subs.delete(s);
+}
+function whPrune() {
+  const now = Date.now(), cut = now - WH_KEEP;
+  for (const d of WH.d.values()) {
+    if (d.trades.length && d.trades[0].t < cut) d.trades = d.trades.filter(x => x.t >= cut);
+    for (const k of d.bk.keys()) if (k < cut - 60000) d.bk.delete(k);
+  }
+  WH.gaps = WH.gaps.filter(g => g[1] >= cut);
+  const drop = [];                                       // 自己輸入的幣：15 分鐘沒人看就停止收集
+  for (const [s, at] of WH.want) if (now - at > WH_IDLE && !WH_BASE.includes(s)) { WH.want.delete(s); WH.d.delete(s); drop.push(s); }
+  whSub('UNSUBSCRIBE', drop.filter(s => WH.subs.has(s)));
+  if (WH.open && now - WH.msgAt > 90000) WH.ws.kill('90 秒沒有收到成交');      // 13 個主流幣同時 90 秒沒成交，代表連線卡住了
+  if (WH.open && now - WH.connAt > 23 * HOUR) WH.ws.kill('定期重連');           // 幣安 24 小時會強制斷線，提前自己重連
+}
+function whWant(sym) {
+  const now = Date.now();
+  if (WH_BASE.includes(sym)) return whData(sym);
+  if (!WH.want.has(sym) && WH.want.size >= WH_EXTRA) {   // 太多自己輸入的幣：把最久沒人看的那個停掉
+    const old = [...WH.want.entries()].sort((a, b) => a[1] - b[1])[0][0];
+    WH.want.delete(old); WH.d.delete(old); whSub('UNSUBSCRIBE', [old]);
+  }
+  WH.want.set(sym, now);
+  const d = whData(sym);
+  if (!WH.subs.has(sym)) whSub('SUBSCRIBE', [sym]);
+  return d;
+}
+async function whRatio(sym, d) {
+  if (d.ratioBusy || Date.now() - d.ratioAt < 60000) return;
+  d.ratioBusy = true;
+  try {
+    const rows = await getJSON(`${BF}/futures/data/topLongShortPositionRatio?symbol=${sym}&period=5m&limit=12`);
+    d.ratio = rows.map(r => ({ t: +r.timestamp, r: +r.longShortRatio, L: +r.longAccount, S: +r.shortAccount }));
+  } catch (e) {}
+  d.ratioAt = Date.now(); d.ratioBusy = false;
+}
+function whOut(sym, after) {
+  const d = whWant(sym); whRatio(sym, d);
+  const full = !(after > 0) || after > d.lastId;      // 第一次或幣安重新編號：整包重傳；之後只傳新的大單
+  return {
+    sym, live: WH.open, err: WH.open ? '' : WH.err, since: d.since, last: d.last, aid: d.lastId, full,
+    trades: full ? d.trades : d.trades.filter(x => x.id > after),
+    bk: [...d.bk.entries()].map(([k, b]) => [k, Math.round(b[0]), Math.round(b[1])]),
+    ratio: d.ratio, gaps: WH.gaps
+  };
+}
+setInterval(whPrune, 15000);
+setTimeout(whConnect, 2000);
+
+/* ---------------- 💰 AWS 帳單提醒（傳到 Discord） ----------------
+   伺服器沒有 AWS 帳號權限，讀不到真正的帳單，所以是用「主機建立日」推算：
+   Lightsail $5 方案從建立起大約 90 天免費 → 結束前 7 天、前 1 天、結束當天各提醒一次；之後每月 1 號提醒一次。 */
+const DEF_AWS = { on: true, created: 0, auto: true, price: 5, sent: {} };
+ST.aws = { ...DEF_AWS, ...(ST.aws || {}) };
+const AWS_FREE_DAYS = 90, DAY = 24 * HOUR;
+function awsDetect() {                                  // 主機第一次開機時 cloud-init 會建立這個資料夾，它的建立時間≈主機建立日
+  for (const p of ['/var/lib/cloud/instance', '/etc/machine-id']) {
+    try { const t = fs.statSync(p).birthtimeMs; if (t > Date.UTC(2024, 0, 1) && t <= Date.now()) return Math.round(t); } catch (e) {}
+  }
+  return 0;
+}
+if (ST.aws.auto) { const t = awsDetect(); if (t && t !== ST.aws.created) { ST.aws.created = t; dirty = true; } }
+const twDate = t => { const d = new Date(t + TZ); return `${d.getUTCFullYear()}/${p2(d.getUTCMonth() + 1)}/${p2(d.getUTCDate())}`; };
+function awsPlan(now = Date.now()) {                   // 列出所有提醒時間點（台北時間早上 10 點送）
+  const A = ST.aws, ev = [], at10 = t => { const d = new Date(t + TZ); return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 10) - TZ; };
+  const end = A.created ? A.created + AWS_FREE_DAYS * DAY : 0;
+  if (end) {
+    ev.push({ k: 'free-7', at: at10(end - 7 * DAY), win: 6 * DAY, msg: `💰 **AWS 帳單提醒**｜Lightsail 免費期剩 **${Math.max(1, Math.ceil((end - now) / DAY))} 天**\n預計 **${twDate(end)}** 結束，之後每月約 **$${A.price} 美元**（雪梨主機＋固定 IP）。\n還要繼續跑就不用做任何事；不用了請到 Lightsail 把**主機和固定 IP 都刪掉**（只刪主機，固定 IP 還是會收錢）。` });
+    ev.push({ k: 'free-1', at: at10(end - DAY), win: DAY - HOUR, msg: `💰 **AWS 帳單提醒**｜Lightsail 免費期**明天**（${twDate(end)}）結束\n之後每月約 **$${A.price} 美元**。不用了請今天把主機和固定 IP 都刪掉。` });
+    ev.push({ k: 'free-0', at: Math.max(end, at10(end)), win: 3 * DAY, msg: `💰 **AWS 帳單提醒**｜Lightsail 免費期已結束，從今天開始計費（每月約 **$${A.price} 美元**）\n之後每月 1 號會提醒一次。實際金額請以 AWS Billing 為準。` });
+  }
+  const d = new Date(now + TZ), m1 = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1, 10) - TZ;
+  if (!end || m1 >= end + DAY) ev.push({ k: 'm-' + twDate(m1).slice(0, 7), at: m1, win: 3 * DAY, msg: `💰 **AWS 帳單提醒**｜${d.getUTCMonth() + 1} 月\nLightsail 雪梨主機這個月約 **$${A.price} 美元**（流量超過方案額度才會多收）。\n建議到 AWS Billing 看一下上個月的帳單；不用了請把**主機和固定 IP 都刪掉**。` });
+  return { end, ev };
+}
+function awsTick() {
+  const A = ST.aws; if (!A.on || !ST.notify.enabled || !ST.notify.webhook) return;
+  const now = Date.now(), { ev } = awsPlan(now);
+  if (!A.sent.hello) {
+    A.sent.hello = now; dirty = true;
+    const { end, next } = awsNext();
+    dcSend(`💰 **AWS 帳單提醒已開啟**\n${end ? `Lightsail 免費期預計到 **${twDate(end)}**（主機建立日 ${twDate(A.created)} ＋ 90 天）` : '還不知道主機建立日，請到網站「☁ 雲端伺服器」填寫'}\n${next ? `下一次提醒：${tw(next)}（台北）` : ''}\n-# 伺服器讀不到真正的帳單，日期是推算的；實際金額以 AWS Billing 為準`);
+  }
+  for (const e of ev) {
+    if (A.sent[e.k] || now < e.at) continue;
+    A.sent[e.k] = now; dirty = true;                     // 錯過太久（例如伺服器當時沒開）就不補發舊的
+    if (now - e.at <= e.win) dcSend(e.msg);
+  }
+}
+function awsNext() {                                    // 給網頁顯示「下一次提醒」
+  const now = Date.now(), { end, ev } = awsPlan(now), A = ST.aws;
+  const nx = ev.filter(e => !A.sent[e.k] && e.at > now).map(e => e.at);
+  const d = new Date(now + TZ), m2 = Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1, 10) - TZ;
+  if (!end || m2 >= end + DAY) nx.push(m2);
+  return { end, next: nx.length ? Math.min(...nx) : 0 };
+}
+let AWS_T = setTimeout(awsTick, 60000);
+setInterval(awsTick, 10 * 60000);
+
 /* ---------------- 匯入（網頁的「匯出紀錄」檔） ---------------- */
 function importData(data) {
   const inCards = Array.isArray(data.quantCards) ? data.quantCards : [];
@@ -1089,16 +1303,23 @@ http.createServer(async (req, res) => {
       if (!admin) return send(res, 403, { error: '只有管理員可以看' });
       return send(res, 200, { users: ST.users.map(x => ({ uid: x.uid, role: x.role, created: x.created, last: x.last || 0, sessions: ST.sessions.filter(s => s.uid === x.uid && s.exp > Date.now()).length })) });
     }
+    if (req.method === 'GET' && u.pathname === '/api/whale') {          // 🐋 鯨魚大單：?sym=BTCUSDT&a=上次收到的最後一筆成交編號
+      const sym = String(u.searchParams.get('sym') || 'BTCUSDT').toUpperCase();
+      if (!/^[A-Z0-9]{2,30}USDT$/.test(sym)) return send(res, 400, { error: '幣種格式不對' });
+      if (!WH_BASE.includes(sym) && !WH.want.has(sym) && BN.meta && !BN.meta.ok.has(sym)) return send(res, 400, { error: `幣安沒有 ${sym} 永續合約` });
+      return send(res, 200, whOut(sym, +u.searchParams.get('a') || 0));
+    }
     if (req.method === 'GET' && u.pathname === '/api/state') {
       const out = {
-        time: Date.now(), ver: '2026-10-18g', cv: CV, bv: BV, set: ST.set, trade: ST.trade, canWrite: !!ADMIN_KEY,
+        time: Date.now(), ver: '2026-10-18h', cv: CV, bv: BV, set: ST.set, trade: ST.trade, canWrite: !!ADMIN_KEY,
         scan: { ...SCAN, pause: RL.pause }, bt: { at: ST.bt.at, coins: ST.bt.coins, n: ST.bt.trades.length }, btp: BTP,
         notify: { enabled: ST.notify.enabled, entry: ST.notify.entry, exit: ST.notify.exit, hasHook: !!ST.notify.webhook, name: ST.notify.name },
         eq: ST.eq, rep: { ...ST.rep, busy: REP.busy, msg: REP.msg }, rv: RV,
         bx: { set: !!(ST.bx.key && ST.bx.secret), notify: ST.bx.notify, liq: ST.bx.liq, liqPct: ST.bx.liqPct, at: BX.at, err: BX.err, acct: BX.acct,
           pos: BX.pos.map(p => ({ ...p, px: PX.map[p.sym] || null, sig: !!ST.cards.find(c => c.sym === p.sym && c.dir === p.dir && c.et && isLive(c)), bot: !!ST.ltTrades.find(t => t.status === 'open' && t.positionId === p.id) })) },
         eco: { list: ECO.list.filter(e => e.t > Date.now() - 7 * 24 * HOUR), at: ECO.at, err: ECO.err, hasNext: !!ECO.hasNext },
-        lt: { cfg: ST.lt, msg: LT.msg, dayPnl: LT.dayPnl || 0, v: LTV, bot: ltBotEq(), acctEq: bxEquity() }
+        lt: { cfg: ST.lt, msg: LT.msg, dayPnl: LT.dayPnl || 0, v: LTV, bot: ltBotEq(), acctEq: bxEquity() },
+        aws: { on: ST.aws.on, created: ST.aws.created, auto: ST.aws.auto, price: ST.aws.price, detected: awsDetect(), ...awsNext() }
       };
       if (+u.searchParams.get('cv') !== CV) out.cards = ST.cards;
       if (+u.searchParams.get('bv') !== BV) out.trades = ST.bt.trades;
@@ -1213,6 +1434,20 @@ http.createServer(async (req, res) => {
         if (b.clear) Object.assign(N, DEF_NOTIFY);
         dirty = true;
         return send(res, 200, { ok: true, name: N.name });
+      }
+      if (u.pathname === '/api/aws') {                 // 💰 AWS 帳單提醒：開關、主機建立日（auto＝自動偵測）
+        const A = ST.aws;
+        if (typeof b.on === 'boolean') { A.on = b.on; if (b.on) delete A.sent.hello; }
+        if (b.created === 'auto') { A.auto = true; A.created = awsDetect() || A.created; }
+        else if (b.created !== undefined) {
+          const t = +b.created;
+          if (!(t > Date.UTC(2020, 0, 1) && t <= Date.now() + DAY)) return send(res, 400, { error: '日期不對' });
+          A.auto = false; A.created = t;
+        }
+        if (b.created !== undefined) { for (const k of Object.keys(A.sent)) if (k.startsWith('free-')) delete A.sent[k]; delete A.sent.hello; }   // 改了日期：免費期提醒重新算
+        if (b.price !== undefined) { const v = +b.price; if (!(v > 0 && v < 1000)) return send(res, 400, { error: '金額不對' }); A.price = v; }
+        dirty = true; clearTimeout(AWS_T); AWS_T = setTimeout(awsTick, 8000);   // 連續改好幾次只發一則確認
+        return send(res, 200, { ok: true, ...awsNext() });
       }
       if (u.pathname === '/api/notify/test') {
         const ok = await dcSend('🔔 **合約量化進場**：通知測試成功！之後每次有新訊號進場、結單，都會傳到這個頻道。');
