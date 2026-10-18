@@ -543,6 +543,8 @@ body.mode-pat #qModePat,body.mode-news #qModeNews{background:var(--accent);color
 .qltmsg{font-size:12px;color:var(--muted)}
 .btn.qdanger{border-color:var(--red);color:var(--red)}
 .qbxtab td .iconbtn{padding:2px 7px;font-size:12px}
+.qbxtab tr.qman td{color:var(--muted)}.qbxtab tr.qman td:first-child b{color:var(--muted)}
+.qmnote{font-size:11px;color:var(--muted)}
 .qdsrc{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin:0 0 10px}
 /* 標題列：時區、下面那排灰字拿掉 */
 header .gtz,header #meta{display:none!important}
@@ -678,7 +680,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg">⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">☁ 雲端伺服器</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-18j</div>
+      <div class="qver" id="qVer">網站版本 2026-10-18l</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qcfg" id="qSrv" hidden>
@@ -767,7 +769,7 @@ header{align-items:center}
         <div class="qlt" id="qLt" hidden>
           <span class="qltst" id="qLtSt"></span>
           <button class="btn" id="qLtToggle"></button>
-          <button class="btn qdanger" id="qLtAll">🛑 一鍵全部平倉</button>
+          <button class="btn qdanger" id="qLtAll">🛑 一鍵平倉（自動單）</button>
           <button class="btn" id="qLtCfgBtn">⚙ 交易設定</button>
           <span class="qltmsg" id="qLtMsg"></span>
         </div>
@@ -3023,7 +3025,7 @@ async function srvPull() {
     if (j.lt) { SRVLT.cfg = j.lt.cfg; SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; }
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) renderEco(j.eco);
-    $('qVer').textContent = `網站版本 2026-10-18j・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-18l・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     if (j.aws) renderAws(j.aws);
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -3935,23 +3937,26 @@ function renderBx(b) {
   if (!b.set) return;
   const u2 = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(2);
   $('qBxInfo').textContent = b.err ? '⚠ ' + b.err : b.at ? `每 10 秒更新・上次 ${hm(b.at)}（${tzName()}）・現價用幣安` : '讀取中…';
-  const up = b.pos.reduce((a, p) => a + p.upnl, 0), mg = b.pos.reduce((a, p) => a + p.margin, 0), A = b.acct;
+  // 上面的數字只算自動下單的倉位；手動單（含「符合訊號」）照樣列在表格裡，但不計入
+  const bot = b.pos.filter(p => p.bot), nMan = b.pos.length - bot.length, B = SRVLT.bot;
+  const up = bot.reduce((a, p) => a + p.upnl, 0), mg = bot.reduce((a, p) => a + p.margin, 0), A = b.acct;
   const C0 = SRVLT.cfg || {}, feeSum = (SRVLT.trades || []).filter(t => t.et >= (C0.startAt || 0)).reduce((a, t) => a + Math.abs(t.fee || 0), 0);
-  $('qBxSum').innerHTML = `<div><span>持倉數</span><b>${b.pos.length} 筆</b></div>
-    <div><span>未實現損益</span><b class="${up >= 0 ? 'pos' : 'neg'}">${u2(up)}U</b></div>
-    <div><span>已用保證金</span><b>${mg.toFixed(2)}U</b></div>
-    ${A ? `<div><span>可用餘額</span><b>${A.avail.toFixed(2)}U</b></div><div><span>帳戶權益（約）</span><b>${(A.avail + A.frozen + A.margin + A.cross + A.iso).toFixed(2)}U</b></div>` : ''}
+  const sub = t => `<em style="font-style:normal;font-size:11.5px;color:var(--muted)">${t}</em>`;
+  $('qBxSum').innerHTML = `<div><span>持倉數（自動）</span><b>${bot.length} 筆</b>${nMan ? sub(`另有 ${nMan} 筆非自動單，不計入`) : ''}</div>
+    <div><span>未實現損益（自動）</span><b class="${up >= 0 ? 'pos' : 'neg'}">${u2(up)}U</b></div>
+    <div><span>已用保證金（自動）</span><b>${mg.toFixed(2)}U</b></div>
+    ${B ? `<div><span>可用資金（自動）</span><b>${B.free.toFixed(2)}U</b>${sub('自動交易的資金扣掉持倉保證金')}</div><div><span>自動交易權益</span><b>${B.eq.toFixed(2)}U</b>${sub(A ? `整個帳戶約 ${(A.avail + A.frozen + A.margin + A.cross + A.iso).toFixed(2)}U（含手動單）` : '起始本金＋自動單損益')}</div>` : ''}
     <div><span>手續費合計</span><b>${feeSum.toFixed(2)}U</b><em style="font-style:normal;font-size:11.5px;color:var(--muted)">自動交易的單，從 ${C0.startAt ? fmtT(C0.startAt) : '一開始'} 起算</em></div>`;
   renderLt();
   if (!b.pos.length) { $('qBxTab').innerHTML = '<tbody><tr><td style="text-align:center;color:var(--muted);padding:14px">目前沒有持倉</td></tr></tbody>'; return; }
   $('qBxTab').innerHTML = `<thead><tr><th>幣種</th><th>方向</th><th>槓桿</th><th>數量</th><th>開倉價</th><th>現價</th><th>未實現損益</th><th>報酬率</th><th>保證金</th><th>強平價</th><th>距離強平</th><th>開倉時間</th><th>來源</th><th>操作</th></tr></thead><tbody>` +
     b.pos.map(p => {
       const im = p.entry > 0 && p.qty > 0 && p.lev > 0 ? p.entry * p.qty / p.lev : p.margin, roe = im > 0 ? p.upnl / im * 100 : null, d = p.px > 0 && p.liq > 0 ? Math.abs(p.px - p.liq) / p.px * 100 : null;
-      return `<tr class="${d !== null && d <= b.liqPct ? 'warn' : ''}"><td><b>${esc(p.sym)}</b></td><td><span class="chip ${p.dir > 0 ? 'long' : 'short'}">${p.dir > 0 ? '做多' : '做空'}</span></td>
+      return `<tr class="${d !== null && d <= b.liqPct ? 'warn' : ''}${p.bot ? '' : ' qman'}"><td><b>${esc(p.sym)}</b></td><td><span class="chip ${p.dir > 0 ? 'long' : 'short'}">${p.dir > 0 ? '做多' : '做空'}</span></td>
         <td>${p.lev}x ${p.mode === 'CROSS' ? '全倉' : '逐倉'}</td><td>${p.qty}</td><td>${fpx(p.entry)}</td><td>${p.px ? fpx(p.px) : '—'}</td>
         <td class="${p.upnl >= 0 ? 'qg' : 'qr'}">${u2(p.upnl)}U</td><td class="${roe >= 0 ? 'qg' : 'qr'}">${roe === null ? '—' : spct(roe, 1)}</td><td>${p.margin.toFixed(2)}U</td>
         <td>${p.liq > 0 ? fpx(p.liq) : '低風險'}</td><td class="${d !== null && d <= b.liqPct ? 'qr' : ''}">${d === null ? '—' : d.toFixed(2) + '%'}</td>
-        <td>${p.ctime ? fmtT(p.ctime) : '—'}</td><td>${p.bot ? '<span class="chip win">🤖 自動</span>' : p.sig ? '<span class="chip open">符合訊號</span>' : '<span style="color:var(--muted)">手動</span>'}</td>
+        <td>${p.ctime ? fmtT(p.ctime) : '—'}</td><td>${p.bot ? '<span class="chip win">🤖 自動</span>' : p.sig ? '<span class="chip open">符合訊號</span><br><span class="qmnote">不計入</span>' : '<span style="color:var(--muted)">手動</span><br><span class="qmnote">不計入</span>'}</td>
         <td>${CANW() ? `<button class="iconbtn" data-cl="1" data-id="${esc(p.id)}" data-s="${esc(p.sym)}">全部平倉</button> <button class="iconbtn" data-cl="part" data-id="${esc(p.id)}" data-s="${esc(p.sym)}">部分平倉</button>` : '—'}</td></tr>`;
     }).join('') + '</tbody>';
 }
@@ -4122,9 +4127,10 @@ $('qLtToggle').onclick = () => {
   ltCall('/api/lt/config', { on });
 };
 $('qLtAll').onclick = () => {
-  if (!confirm('確定要把 Bitunix「所有幣種」的持倉一次全部市價平倉嗎？（包括你手動開的倉位）')) return;
+  const nBot = SRVBX ? SRVBX.pos.filter(p => p.bot).length : 0, nMan = SRVBX ? SRVBX.pos.length - nBot : 0;
+  if (!confirm(`確定要把「自動下單」的 ${nBot} 筆持倉全部市價平倉嗎？${nMan ? `\n\n手動開的 ${nMan} 筆（含「符合訊號」）不會動。` : ''}`)) return;
   const pause = confirm('要不要同時暫停自動交易？\n按「確定」＝平倉並暫停；按「取消」＝只平倉，自動交易繼續。');
-  ltCall('/api/lt/closeAll', { pause }, '已送出一鍵全部平倉。');
+  ltCall('/api/lt/closeAll', { pause }, '已送出：自動單全部平倉。');
 };
 $('qLtCfgBtn').onclick = () => { $('qLtCfg').hidden = !$('qLtCfg').hidden; };
 ['margin', 'lev', 'maxOpen', 'dayLoss'].forEach(k => $('lt_' + k).onchange = () => ltCall('/api/lt/config', { [k]: +$('lt_' + k).value }));
