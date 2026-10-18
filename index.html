@@ -544,6 +544,10 @@ body.mode-pat #qModePat,body.mode-news #qModeNews{background:var(--accent);color
 .btn.qdanger{border-color:var(--red);color:var(--red)}
 .qbxtab td .iconbtn{padding:2px 7px;font-size:12px}
 .qbxtab tr.qman td{color:var(--muted)}.qbxtab tr.qman td:first-child b{color:var(--muted)}
+.qbxtab td.qblink{animation:qBlink 1.6s ease-in-out infinite}   /* 未實現損益、報酬率：綠／紅色一閃一閃 */
+.qbxtab td.qblink.qg{text-shadow:0 0 6px color-mix(in srgb,var(--green) 70%,transparent)}
+.qbxtab td.qblink.qr{text-shadow:0 0 6px color-mix(in srgb,var(--red) 70%,transparent)}
+@keyframes qBlink{0%,100%{opacity:1}50%{opacity:.35;text-shadow:none}}
 .qbxtab tr.qman td.qg{color:var(--green)}.qbxtab tr.qman td.qr{color:var(--red)}   /* 手動單的未實現損益、報酬率照樣用綠／紅色 */
 .qdsrc{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin:0 0 10px}
 /* 標題列：時區、下面那排灰字拿掉 */
@@ -680,7 +684,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg">⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">☁ 雲端伺服器</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-18m</div>
+      <div class="qver" id="qVer">網站版本 2026-10-18n</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qcfg" id="qSrv" hidden>
@@ -3025,7 +3029,7 @@ async function srvPull() {
     if (j.lt) { SRVLT.cfg = j.lt.cfg; SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; }
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) renderEco(j.eco);
-    $('qVer').textContent = `網站版本 2026-10-18m・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-18n・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     if (j.aws) renderAws(j.aws);
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -3949,12 +3953,13 @@ function renderBx(b) {
     <div><span>手續費合計</span><b>${feeSum.toFixed(2)}U</b><em style="font-style:normal;font-size:11.5px;color:var(--muted)">自動交易的單，從 ${C0.startAt ? fmtT(C0.startAt) : '一開始'} 起算</em></div>`;
   renderLt();
   if (!b.pos.length) { $('qBxTab').innerHTML = '<tbody><tr><td style="text-align:center;color:var(--muted);padding:14px">目前沒有持倉</td></tr></tbody>'; return; }
+  const bk = `animation-delay:-${Date.now() % 1600}ms`;   // 每 10 秒重畫表格時接著同一個節拍閃，不會跳一下
   $('qBxTab').innerHTML = `<thead><tr><th>幣種</th><th>方向</th><th>槓桿</th><th>數量</th><th>開倉價</th><th>現價</th><th>未實現損益</th><th>報酬率</th><th>保證金</th><th>強平價</th><th>距離強平</th><th>開倉時間</th><th>來源</th><th>操作</th></tr></thead><tbody>` +
     b.pos.map(p => {
       const im = p.entry > 0 && p.qty > 0 && p.lev > 0 ? p.entry * p.qty / p.lev : p.margin, roe = im > 0 ? p.upnl / im * 100 : null, d = p.px > 0 && p.liq > 0 ? Math.abs(p.px - p.liq) / p.px * 100 : null;
       return `<tr class="${d !== null && d <= b.liqPct ? 'warn' : ''}${p.bot ? '' : ' qman'}"><td><b>${esc(p.sym)}</b></td><td><span class="chip ${p.dir > 0 ? 'long' : 'short'}">${p.dir > 0 ? '做多' : '做空'}</span></td>
         <td>${p.lev}x ${p.mode === 'CROSS' ? '全倉' : '逐倉'}</td><td>${p.qty}</td><td>${fpx(p.entry)}</td><td>${p.px ? fpx(p.px) : '—'}</td>
-        <td class="${p.upnl >= 0 ? 'qg' : 'qr'}">${u2(p.upnl)}U</td><td class="${roe >= 0 ? 'qg' : 'qr'}">${roe === null ? '—' : spct(roe, 1)}</td><td>${p.margin.toFixed(2)}U</td>
+        <td class="qblink ${p.upnl >= 0 ? 'qg' : 'qr'}" style="${bk}">${u2(p.upnl)}U</td><td class="qblink ${roe >= 0 ? 'qg' : 'qr'}" style="${bk}">${roe === null ? '—' : spct(roe, 1)}</td><td>${p.margin.toFixed(2)}U</td>
         <td>${p.liq > 0 ? fpx(p.liq) : '低風險'}</td><td class="${d !== null && d <= b.liqPct ? 'qr' : ''}">${d === null ? '—' : d.toFixed(2) + '%'}</td>
         <td>${p.ctime ? fmtT(p.ctime) : '—'}</td><td>${p.bot ? '<span class="chip win">🤖 自動</span>' : p.sig ? '<span class="chip open">符合訊號</span>' : '<span style="color:var(--muted)">手動</span>'}</td>
         <td>${CANW() ? `<button class="iconbtn" data-cl="1" data-id="${esc(p.id)}" data-s="${esc(p.sym)}">全部平倉</button> <button class="iconbtn" data-cl="part" data-id="${esc(p.id)}" data-s="${esc(p.sym)}">部分平倉</button>` : '—'}</td></tr>`;
