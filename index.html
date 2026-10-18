@@ -495,7 +495,8 @@ body.quant-on #statPanel{display:none!important}
 .qbx{border:1px solid var(--line);border-radius:10px;background:var(--panel2);padding:10px 12px;margin:0 0 10px}
 .qbxh{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;margin-bottom:8px;font-size:13.5px}
 .qbxh span{font-size:12px;color:var(--muted)}
-.qbxsum{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:8px}
+.qbxsum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:8px}
+@media (max-width:560px){.qbxsum{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .qbxsum>div{border:1px solid var(--line);border-radius:8px;background:var(--panel);padding:6px 10px;display:flex;flex-direction:column}
 .qbxsum span{font-size:11.5px;color:var(--muted)}.qbxsum b{font-size:18px;font-weight:600}
 .qbxtab{min-width:860px}.qbxtab th,.qbxtab td{text-align:right;white-space:nowrap}
@@ -674,7 +675,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg">⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">☁ 雲端伺服器</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-18e</div>
+      <div class="qver" id="qVer">網站版本 2026-10-18f</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qcfg" id="qSrv" hidden>
@@ -3040,7 +3041,7 @@ async function srvPull() {
     if (j.lt) { SRVLT.cfg = j.lt.cfg; SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; }
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) renderEco(j.eco);
-    $('qVer').textContent = `網站版本 2026-10-18e・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-18f・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
     if ($('qRepDlg').open) renderRep();   // 連線後先把這台的浮盈／槓桿設定同步給伺服器
@@ -3917,10 +3918,12 @@ function renderBx(b) {
   const u2 = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(2);
   $('qBxInfo').textContent = b.err ? '⚠ ' + b.err : b.at ? `每 10 秒更新・上次 ${hm(b.at)}（${tzName()}）・現價用幣安` : '讀取中…';
   const up = b.pos.reduce((a, p) => a + p.upnl, 0), mg = b.pos.reduce((a, p) => a + p.margin, 0), A = b.acct;
+  const C0 = SRVLT.cfg || {}, feeSum = (SRVLT.trades || []).filter(t => t.et >= (C0.startAt || 0)).reduce((a, t) => a + Math.abs(t.fee || 0), 0);
   $('qBxSum').innerHTML = `<div><span>持倉數</span><b>${b.pos.length} 筆</b></div>
     <div><span>未實現損益</span><b class="${up >= 0 ? 'pos' : 'neg'}">${u2(up)}U</b></div>
     <div><span>已用保證金</span><b>${mg.toFixed(2)}U</b></div>
-    ${A ? `<div><span>可用餘額</span><b>${A.avail.toFixed(2)}U</b></div><div><span>帳戶權益（約）</span><b>${(A.avail + A.frozen + A.margin + A.cross + A.iso).toFixed(2)}U</b></div>` : ''}`;
+    ${A ? `<div><span>可用餘額</span><b>${A.avail.toFixed(2)}U</b></div><div><span>帳戶權益（約）</span><b>${(A.avail + A.frozen + A.margin + A.cross + A.iso).toFixed(2)}U</b></div>` : ''}
+    <div><span>手續費合計</span><b>${feeSum.toFixed(2)}U</b><em style="font-style:normal;font-size:11.5px;color:var(--muted)">自動交易的單，從 ${C0.startAt ? fmtT(C0.startAt) : '一開始'} 起算</em></div>`;
   renderLt();
   if (!b.pos.length) { $('qBxTab').innerHTML = '<tbody><tr><td style="text-align:center;color:var(--muted);padding:14px">目前沒有持倉</td></tr></tbody>'; return; }
   $('qBxTab').innerHTML = `<thead><tr><th>幣種</th><th>方向</th><th>槓桿</th><th>數量</th><th>開倉價</th><th>現價</th><th>未實現損益</th><th>報酬率</th><th>保證金</th><th>強平價</th><th>距離強平</th><th>開倉時間</th><th>來源</th><th>操作</th></tr></thead><tbody>` +
@@ -4318,7 +4321,7 @@ async function renderEquity(list, filtered) {
     <div><span>已實現資金</span><b class="${c(R.eq)}">${R.eq.toFixed(2)}U</b><em>${ret(R.eq)}・已出場 ${R.wins + R.losses} 筆</em></div>
     <div><span>含持有中（現價）</span><b class="qb">${tot.toFixed(2)}U</b><em>${ret(tot)}・持有中 ${R.liveN} 筆 ${R.unreal >= 0 ? '+' : '−'}${Math.abs(R.unreal).toFixed(2)}U</em></div>
     <div><span>最大回撤</span><b class="neg">${(R.mdd * 100).toFixed(1)}%</b><em>最低曾到 ${R.low.toFixed(2)}U</em></div>
-    <div><span>手續費合計</span><b>${R.fees.toFixed(2)}U</b><em>${R.skipped ? `${R.skipped} 筆因資金或持倉上限沒下` : '每筆訊號都有下'}</em></div>`;
+    ${REAL ? '' : `<div><span>手續費合計</span><b>${R.fees.toFixed(2)}U</b><em>${R.skipped ? `${R.skipped} 筆因資金或持倉上限沒下` : '每筆訊號都有下'}</em></div>`}`;
   $('qEqNote').textContent = `照進場、出場的時間順序模擬：進場時扣住保證金，出場時把損益和開平倉手續費入帳。綠線是已實現資金；藍線從最後一筆出場開始，每 3 秒用現價記一個點，會一直往前跑、上下跳動，代表把持有中的單算進去的即時資金。沒算滑價，也假設每個幣都能開 ${T.lev} 倍、下得了單。只是依過去紀錄的模擬，不代表未來。`;
   try { await loadLW(); } catch (e) { $('qEqChart').innerHTML = `<div class="loading">${esc(e.message)}</div>`; return; }
   const LWC = window.LightweightCharts, box = $('qEqChart');
