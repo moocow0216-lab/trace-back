@@ -544,9 +544,9 @@ body.mode-pat #qModePat,body.mode-news #qModeNews{background:var(--accent);color
 .btn.qdanger{border-color:var(--red);color:var(--red)}
 .qbxtab td .iconbtn{padding:2px 7px;font-size:12px}
 .qbxtab tr.qman td{color:var(--muted)}.qbxtab tr.qman td:first-child b{color:var(--muted)}
-.qbxtab td.qblink{animation:qBlink 1.6s ease-in-out infinite}   /* 未實現損益、報酬率：綠／紅色一閃一閃 */
-.qbxtab td.qblink.qg{text-shadow:0 0 6px color-mix(in srgb,var(--green) 70%,transparent)}
-.qbxtab td.qblink.qr{text-shadow:0 0 6px color-mix(in srgb,var(--red) 70%,transparent)}
+.qbxtab tr.qman td.qblink{animation:qBlink 1.6s ease-in-out infinite}   /* 只有手動單的未實現損益、報酬率一閃一閃；自動單不閃 */
+.qbxtab tr.qman td.qblink.qg{text-shadow:0 0 6px color-mix(in srgb,var(--green) 70%,transparent)}
+.qbxtab tr.qman td.qblink.qr{text-shadow:0 0 6px color-mix(in srgb,var(--red) 70%,transparent)}
 @keyframes qBlink{0%,100%{opacity:1}50%{opacity:.35;text-shadow:none}}
 .qbxtab tr.qman td.qg{color:var(--green)}.qbxtab tr.qman td.qr{color:var(--red)}   /* 手動單的未實現損益、報酬率照樣用綠／紅色 */
 .qdsrc{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin:0 0 10px}
@@ -684,7 +684,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg">⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">☁ 雲端伺服器</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-18n</div>
+      <div class="qver" id="qVer">網站版本 2026-10-18o</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qcfg" id="qSrv" hidden>
@@ -3029,7 +3029,7 @@ async function srvPull() {
     if (j.lt) { SRVLT.cfg = j.lt.cfg; SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; }
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) renderEco(j.eco);
-    $('qVer').textContent = `網站版本 2026-10-18n・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-18o・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     if (j.aws) renderAws(j.aws);
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
