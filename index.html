@@ -558,6 +558,7 @@ header{align-items:center}
 .qecol tr.past td{color:var(--muted)}
 .qecol .qecoh{font-size:12px;color:var(--muted);margin:2px 0 6px}
 .whead .coinsel{margin-left:auto}
+#drawPanel .whead{margin-bottom:10px}
 .qecow{margin:10px 0 4px;font-weight:700;color:#f5c518;font-size:13px}
 .qecol tr.qecod td{padding-top:8px;font-weight:600;color:var(--ink);border-bottom:1px solid var(--grid2)}
 .qecoi{display:inline-block;font-size:10.5px;border:1px solid var(--line);border-radius:4px;padding:0 4px;color:var(--muted);margin-left:4px}
@@ -601,7 +602,9 @@ header{align-items:center}
       <div class="qsideh"><h2>訊號卡片</h2><span>最新的在最上面</span></div>
     </div>
     <div class="panel" id="drawPanel">
-      <h2>畫出你要找的走勢</h2>
+      <div class="whead"><h2>畫出你要找的走勢</h2>
+        <label class="tzsel coinsel">幣種 <select id="coinSel2" aria-label="歷史走勢的幣種"></select>
+        <input id="coinCustom2" type="text" placeholder="例如 PEPEUSDT" hidden size="11" autocomplete="off"><button class="iconbtn" id="coinGo2" hidden>載入</button></label></div>
       <div class="tfpick"><span>1. 先選 K 線週期</span><div class="tfseg" id="tfSeg" role="group" aria-label="K 線週期"></div></div>
       <div class="tfhint" id="tfHint"></div>
       <div class="padwrap"><canvas id="pad" aria-label="畫線區：按住拖曳畫出走勢"></canvas></div>
@@ -675,7 +678,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg">⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">☁ 雲端伺服器</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-18i</div>
+      <div class="qver" id="qVer">網站版本 2026-10-18j</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qcfg" id="qSrv" hidden>
@@ -730,7 +733,8 @@ header{align-items:center}
           <label class="field">浮盈目標（%）<input id="qt_tp" type="number" min="1" max="10000" step="10"></label>
           <label class="field">槓桿（倍）<input id="qt_lev" type="number" min="1" max="200" step="1"></label>
           <label class="field">浮虧多少算失敗（%，超過 100 要全倉）<input id="qt_sl" type="number" min="1" max="1000" step="10"></label>
-          <label class="field">達標後怎麼出場<select id="qt_exit"><option value="lock">保本鎖利：跑回達標線就出場</option><option value="fixed">固定：一碰到就出場</option></select></label>
+          <label class="field">達標後怎麼出場<select id="qt_exit"><option value="lock">鎖利：跑回鎖利線就出場</option><option value="fixed">固定：一碰到就出場</option></select></label>
+          <label class="field">鎖利線每多幾 % 往上調（0＝固定在達標線）<input id="qt_step" type="number" min="0" max="1000" step="10"></label>
           <label class="field">最長持有<select id="qt_hold"><option value="4">4 小時</option><option value="12">12 小時</option><option value="24">24 小時</option><option value="48">48 小時</option><option value="72">72 小時</option><option value="168">7 天</option></select></label>
         </div>
         <div class="qcfgnote" id="qCfgNote"></div>
@@ -2583,7 +2587,17 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () 
 /* ---------- 幣種切換 ---------- */
 const COINS = [['BTCUSDT', 'BTC 比特幣'], ['ETHUSDT', 'ETH 以太坊'], ['SOLUSDT', 'SOL'], ['BNBUSDT', 'BNB'], ['XRPUSDT', 'XRP'], ['DOGEUSDT', 'DOGE'],
   ['ADAUSDT', 'ADA'], ['AVAXUSDT', 'AVAX'], ['LINKUSDT', 'LINK'], ['SUIUSDT', 'SUI'], ['LTCUSDT', 'LTC'], ['TRXUSDT', 'TRX'], ['HYPEUSDT', 'HYPE']];
-$('coinSel').innerHTML = COINS.map(([s, n]) => `<option value="${s}">${n}</option>`).join('') + '<option value="__custom">其他（自己輸入）…</option>';
+// 兩個幣種選單：首頁鯨魚大單旁一個、「📈 歷史走勢」畫線區一個，選的是同一個幣
+const COIN_UI = [['coinSel', 'coinCustom', 'coinGo'], ['coinSel2', 'coinCustom2', 'coinGo2']];
+COIN_UI.forEach(([s]) => { $(s).innerHTML = COINS.map(([v, n]) => `<option value="${v}">${n}</option>`).join('') + '<option value="__custom">其他（自己輸入）…</option>'; });
+function syncCoinUI(busy) {
+  const v = COINS.some(c => c[0] === SYM) ? SYM : '__custom', custom = v === '__custom';
+  for (const [s, ci, go] of COIN_UI) {
+    $(s).disabled = !!busy; if (busy) continue;
+    $(s).value = v; $(ci).hidden = !custom; $(go).hidden = !custom;
+    if (custom) $(ci).value = SYM;
+  }
+}
 function coinMsg(txt, ok) { const el = $('coinMsg'); el.hidden = !txt; el.textContent = txt || ''; el.classList.toggle('ok', !!ok); }
 async function downloadSymbol(sym) {
   const start = Date.UTC(2024, 0, 1), now = Date.now(), rowsAll = [];
@@ -2620,7 +2634,7 @@ async function switchCoin(sym) {
   if (!sym.endsWith('USDT')) sym += 'USDT';
   if (sym === SYM) return;
   const prev = SYM;
-  $('coinSel').disabled = true;
+  syncCoinUI(true);
   try {
     let nd = COIN_CACHE.get(sym);
     if (!nd) { coinMsg(`正在連線幣安下載 ${sym}…`, true); nd = await downloadSymbol(sym); COIN_CACHE.set(sym, nd); }
@@ -2635,19 +2649,18 @@ async function switchCoin(sym) {
     coinMsg(`無法載入 ${sym}：${e.name === 'AbortError' || e.message === 'Failed to fetch' ? '連不到幣安。claude.ai 的線上頁面會擋掉對外連線，這裡只能用內建的 BTC 資料；下載這個網頁檔案用 Chrome 或 Edge 開啟，就能切換其他幣。' : e.message}`);
     SYM = prev;
   }
-  $('coinSel').disabled = false;
-  $('coinSel').value = COINS.some(c => c[0] === SYM) ? SYM : '__custom';
-  const custom = $('coinSel').value === '__custom'; $('coinCustom').hidden = !custom; $('coinGo').hidden = !custom;
-  if (custom) $('coinCustom').value = SYM;
+  syncCoinUI(false);
 }
-$('coinSel').onchange = () => {
-  const v = $('coinSel').value, custom = v === '__custom';
-  $('coinCustom').hidden = !custom; $('coinGo').hidden = !custom;
-  if (custom) { $('coinCustom').focus(); return; }
-  switchCoin(v);
-};
-$('coinGo').onclick = () => switchCoin($('coinCustom').value);
-$('coinCustom').addEventListener('keydown', e => { if (e.key === 'Enter') switchCoin($('coinCustom').value); });
+for (const [s, ci, go] of COIN_UI) {
+  $(s).onchange = () => {
+    const v = $(s).value, custom = v === '__custom';
+    $(ci).hidden = !custom; $(go).hidden = !custom;
+    if (custom) { $(ci).focus(); return; }
+    switchCoin(v);
+  };
+  $(go).onclick = () => switchCoin($(ci).value);
+  $(ci).addEventListener('keydown', e => { if (e.key === 'Enter') switchCoin($(ci).value); });
+}
 
 /* ---------- 載入資料 ---------- */
 async function gunzip(bytes) {
@@ -3010,7 +3023,7 @@ async function srvPull() {
     if (j.lt) { SRVLT.cfg = j.lt.cfg; SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; }
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) renderEco(j.eco);
-    $('qVer').textContent = `網站版本 2026-10-18i・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-18j・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     if (j.aws) renderAws(j.aws);
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -3143,10 +3156,10 @@ function tradeLine(c) {
   const mx = `最大浮盈 <b class="qg">${spct(roe(E.peak || E.fav), 1)}</b>・最大浮虧 <b class="qr">${spct(-roe(E.adv), 1)}</b>`;
   if (E.st === 'open') return `<div class="qtr" data-tr>${head}<span>達標價 <b>${fpx(tpPx)}</b>（+${T.tp}%）・${slName()} <b>${fpx(slPx)}</b>（−${T.sl}%）</span>
     <span>目前浮盈 ${curS}・${mx}</span></div>`;
-  if (E.st === 'win' && E.exitHow === 'open') return `<div class="qtr" data-tr>${head}<span>${dur(E.at - c.et)}後碰到達標價 <b>${fpx(tpPx)}</b>，保本線 +${T.tp}%，持有中</span>
+  if (E.st === 'win' && E.exitHow === 'open') return `<div class="qtr" data-tr>${head}<span>${dur(E.at - c.et)}後碰到達標價 <b>${fpx(tpPx)}</b>，鎖利線 <b class="qg">+${E.lock || T.tp}%</b>，持有中</span>
     <span>目前浮盈 ${curS}・${mx}</span></div>`;
   const exit = E.st === 'win' ? (
-      E.exitHow === 'lock' ? `碰到達標價 <b>${fpx(tpPx)}</b> 後跑回達標線，保本鎖利以 <b class="qg">+${T.tp}%</b> 出場`
+      E.exitHow === 'lock' ? `碰到達標價 <b>${fpx(tpPx)}</b> 後跑回鎖利線，以 <b class="qg">${pnlS(E.pnl)}</b> 出場`
       : E.exitHow === 'hold' ? `碰到達標價後一直沒跑回來，抱到 ${T.hold} 小時到期，以 <b class="qg">${pnlS(E.pnl)}</b> 出場`
       : `碰到達標價 <b>${fpx(tpPx)}</b> 就出場 <b class="qg">+${T.tp}%</b>`)
     : E.st === 'timeout' ? `${T.hold} 小時內沒碰到 ${fpx(tpPx)} 或 ${fpx(slPx)}，以到期價結算 <b class="${E.pnl >= 0 ? 'qg' : 'qr'}">${pnlS(E.pnl)}</b>`
@@ -3245,7 +3258,8 @@ renderStat();
 if (SRV.on) setTimeout(srvPull, 200);              // 伺服器模式：打開網頁就開始讀，不用等打開面板
 
 /* ================= 成功率：浮盈目標、槓桿、追蹤與回測 ================= */
-var T = Object.assign({ tp: 250, lev: 100, sl: 250, hold: 24, exit: 'lock' }, LS.get('quantTrade', {}));
+var T = Object.assign({ tp: 250, lev: 100, sl: 250, hold: 24, exit: 'lock', step: 50 }, LS.get('quantTrade', {}));
+const lockAt = peak => (T.step > 0 && peak > T.tp ? T.tp + Math.floor((peak - T.tp) / T.step + 1e-9) * T.step : T.tp);   // 最高浮盈 % → 鎖利線 %（跟伺服器同一套）
 if (!T.exit || T.exit === 'peak') T.exit = 'lock';
 if (!LS.get('quantTradeV2', false)) { T.tp = 250; T.sl = 250; LS.set('quantTrade', T); LS.set('quantTradeV2', true); }  // 改成預設 ±250%
 function tpsl(c) { return [c.entry * (1 + c.dir * T.tp / 100 / T.lev), c.entry * (1 - c.dir * T.sl / 100 / T.lev), `成功 +${T.tp}%`, `失敗 −${T.sl}%`]; }
@@ -3333,18 +3347,21 @@ function evalTrade0(c) {
       }
       {
         // 保本鎖利：達標之後，只要價格跑回達標線就以 +tp 出場；沒跑回來就抱到最長持有時間，用到期價結算
+        // 鎖利線會跟著最高浮盈往上調；同一小時先高還是先低不知道，用保守算法（跟伺服器同一套）
         const H0 = Math.floor((r[0] - c.et) / HOUR), nH = Math.min(T.hold, tr.hl.length);
-        let pk = r[1];
+        const hiAt = h => (c.dir > 0 ? tr.hh[h] : -tr.hl[h]), loAt = h => (c.dir > 0 ? tr.hl[h] : -tr.hh[h]);
+        let pk = r[1]; if (Number.isFinite(hiAt(H0))) pk = Math.max(pk, hiAt(H0));
         for (let h = H0 + 1; h < nH; h++) {
-          const lo = c.dir > 0 ? tr.hl[h] : -tr.hh[h], hi = c.dir > 0 ? tr.hh[h] : -tr.hl[h];
+          const lo = loAt(h), hi = hiAt(h);
           if (!Number.isFinite(lo)) continue;
-          if (lo <= tp) return { st: 'win', at: r[0], fav, adv, pnl: T.tp, peak: pk, exitAt: c.et + h * HOUR, exitHow: 'lock' };
-          pk = Math.max(pk, hi);
+          const l0 = lockAt(roe(pk)); if (roe(lo) <= l0) return { st: 'win', at: r[0], fav, adv, pnl: l0, peak: pk, exitAt: c.et + h * HOUR, exitHow: 'lock' };
+          if (Number.isFinite(hi)) pk = Math.max(pk, hi);
+          const l1 = lockAt(roe(pk)); if (roe(lo) <= l1) return { st: 'win', at: r[0], fav, adv, pnl: l1, peak: pk, exitAt: c.et + (h + 1) * HOUR, exitHow: 'lock' };
         }
-        const done = tr.end && tr.end + (tr.step || 60000) >= lim;
-        if (done) { const hcv = tr.hc && tr.hc[T.hold - 1]; return { st: 'win', at: r[0], fav, adv, pnl: Number.isFinite(hcv) ? Math.max(T.tp, roe(c.dir * hcv)) : T.tp, peak: pk, exitAt: lim, exitHow: 'hold' }; }
-        // 持有中：損益跟著現價跑；現價跌回達標線以下等於已經保本出場
-        return { st: 'win', at: r[0], fav, adv, pnl: nowR === null ? T.tp : Math.max(T.tp, nowR), peak: pk, exitHow: 'open', live: nowR !== null };
+        const done = tr.end && tr.end + (tr.step || 60000) >= lim, lk = lockAt(roe(Math.max(pk, nowR === null ? 0 : nowR / T.lev / 100)));
+        if (done) { const hcv = tr.hc && tr.hc[T.hold - 1], lkD = lockAt(roe(pk)); return { st: 'win', at: r[0], fav, adv, pnl: Number.isFinite(hcv) ? Math.max(lkD, roe(c.dir * hcv)) : lkD, peak: pk, exitAt: lim, exitHow: 'hold', lock: lkD }; }
+        // 持有中：損益跟著現價跑，但不會低於目前的鎖利線
+        return { st: 'win', at: r[0], fav, adv, pnl: nowR === null ? lk : Math.max(lk, nowR), peak: pk, exitHow: 'open', live: nowR !== null, lock: lk };
       }
       return { st: 'win', at: r[0], fav, adv, pnl: roe(peak), peak, peakAt, peakOpen: !closed, oldRec: T.exit === 'lock' };
     }
@@ -3357,7 +3374,7 @@ function evalTrade0(c) {
 }
 function tradeNote() {
   const up = T.tp / T.lev, dn = T.sl / T.lev;
-  $('qCfgNote').innerHTML = `目前範圍：<b>+${T.tp}%</b> 算成功、<b>−${T.sl}%</b> 算失敗${T.tp === T.sl ? `（±${T.tp}%）` : ''}。${T.lev} 倍槓桿下，價格往你判斷的方向走 <b>${up.toFixed(2)}%</b> 就是浮盈 +${T.tp}%，算成功；先反向走 <b>${dn.toFixed(2)}%</b>（浮虧 −${T.sl}%）${T.sl > 100 ? '' : T.sl === 100 ? '等於爆倉' : '就停損'}，算失敗；${T.hold} 小時內兩邊都沒碰到算逾時。${T.exit === 'lock' ? `<br>達標後：保本鎖利，價格之後只要跑回 +${T.tp}% 就以 +${T.tp}% 出場（例如衝到 +300% 又回到 +250%，就算 +250%）；一直沒跑回來就抱到 ${T.hold} 小時，用到期價結算。` : T.exit === 'peak' ? '<br>達標後：理想狀況，算價格最遠跑到的浮盈。' : `<br>達標後：一碰到 +${T.tp}% 就出場。`}${T.sl > 100 ? `<br><b style="color:var(--orange)">注意：浮虧超過 −100% 只有「全倉」而且帳戶有足夠餘額才撐得住；逐倉在反向約 ${(100 / T.lev).toFixed(2)}%（−100%）時就已經爆倉了。</b>` : '爆倉線用保證金虧光估算，實際交易所會因維持保證金和手續費提早一點爆倉。'}`;
+  $('qCfgNote').innerHTML = `目前範圍：<b>+${T.tp}%</b> 算成功、<b>−${T.sl}%</b> 算失敗${T.tp === T.sl ? `（±${T.tp}%）` : ''}。${T.lev} 倍槓桿下，價格往你判斷的方向走 <b>${up.toFixed(2)}%</b> 就是浮盈 +${T.tp}%，算成功；先反向走 <b>${dn.toFixed(2)}%</b>（浮虧 −${T.sl}%）${T.sl > 100 ? '' : T.sl === 100 ? '等於爆倉' : '就停損'}，算失敗；${T.hold} 小時內兩邊都沒碰到算逾時。${T.exit === 'lock' ? `<br>達標後：鎖利，${T.step > 0 ? `碰到 +${T.tp}% 先鎖在 +${T.tp}%，之後浮盈每多 ${T.step}% 鎖利線就往上調一次（例如衝到 +${T.tp + T.step}% 就鎖在 +${T.tp + T.step}%、衝到 +${T.tp + T.step * 2 + 10}% 還是鎖在 +${T.tp + T.step * 2}%），只升不降；價格跑回鎖利線就以鎖利線出場` : `價格之後只要跑回 +${T.tp}% 就以 +${T.tp}% 出場`}；一直沒跑回來就抱到 ${T.hold} 小時，用到期價結算。<br>回測和訊號模擬只有逐小時的最高、最低價，同一小時裡分不出先漲還是先跌，所以用保守算法估鎖利出場；實盤是伺服器每 3 秒看一次價格，用市價平倉，成交價可能比鎖利線差一點。` : T.exit === 'peak' ? '<br>達標後：理想狀況，算價格最遠跑到的浮盈。' : `<br>達標後：一碰到 +${T.tp}% 就出場。`}${T.sl > 100 ? `<br><b style="color:var(--orange)">注意：浮虧超過 −100% 只有「全倉」而且帳戶有足夠餘額才撐得住；逐倉在反向約 ${(100 / T.lev).toFixed(2)}%（−100%）時就已經爆倉了。</b>` : '爆倉線用保證金虧光估算，實際交易所會因維持保證金和手續費提早一點爆倉。'}`;
 }
 [['tp', 1, 10000], ['lev', 1, 200], ['sl', 1, 1000], ['hold', 1, 168]].forEach(([k, lo, hi]) => {
   const el = $('qt_' + k); el.value = String(T[k]);
@@ -3376,11 +3393,16 @@ $('qt_rng').onchange = () => {
 };
 syncRng();
 $('qt_exit').value = T.exit;
+$('qt_step').value = String(T.step);
+$('qt_step').onchange = () => {
+  const v = +$('qt_step').value; if (!Number.isFinite(v) || v < 0 || v > 1000) { $('qt_step').value = T.step; return; }
+  T.step = v; LS.set('quantTrade', T); tradeNote(); renderCards(); renderHist(); pushTrade();
+};
 $('qt_exit').onchange = () => { T.exit = $('qt_exit').value; LS.set('quantTrade', T); tradeNote(); renderCards(); renderHist(); pushTrade(); };
 // 伺服器要用同一組浮盈／槓桿設定，才能判斷什麼時候「結單」、什麼時候可以再開下一單、什麼時候發結單通知
 function pushTrade() {
   if (!SRV.on || !CANW()) return;
-  srvFetch('/api/settings', { trade: { tp: T.tp, sl: T.sl, lev: T.lev, hold: T.hold, exit: T.exit } }).catch(() => {});
+  srvFetch('/api/settings', { trade: { tp: T.tp, sl: T.sl, lev: T.lev, hold: T.hold, exit: T.exit, step: T.step } }).catch(() => {});
 }
 $('qCfgBtn').onclick = () => { const h = !$('qCfg').hidden; $('qCfg').hidden = h; $('qCfgBtn').setAttribute('aria-expanded', String(!h)); };
 tradeNote();
@@ -3654,7 +3676,7 @@ const pnlS = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toLocaleStrin
 function pnlBox(list, title, view) {
   const R = rate(list), n = R.d, V = rate(view || list), filtered = view && view.length !== list.length;
   const cls = v => v > 0 ? 'pos' : v < 0 ? 'neg' : '';
-  return `<div class="qpnl"><div class="qpnlh">${title}<em>共 ${R.cnt} 筆，持有中的單用現價的浮動損益一起算（藍字），每 3 秒更新。成功單${T.exit === 'lock' ? `跑回 +${T.tp}% 就以 +${T.tp}% 出場` : `一律 +${T.tp}%`}，失敗單一律 −${T.sl}%，逾時用到期價格。單位是單筆保證金的 %，100% 就是一份保證金。沒扣手續費。</em></div>
+  return `<div class="qpnl"><div class="qpnlh">${title}<em>共 ${R.cnt} 筆，持有中的單用現價的浮動損益一起算（藍字），每 3 秒更新。成功單${T.exit === 'lock' ? (T.step > 0 ? `跑回鎖利線出場（+${T.tp}% 起，每多 ${T.step}% 上調一次）` : `跑回 +${T.tp}% 就以 +${T.tp}% 出場`) : `一律 +${T.tp}%`}，失敗單一律 −${T.sl}%，逾時用到期價格。單位是單筆保證金的 %，100% 就是一份保證金。沒扣手續費。</em></div>
     <div class="qpnlg"><div><span>累積浮盈</span><b class="pos">${pnlS(R.gain)}</b><em>＝ ${(R.gain / 100).toFixed(1)} 份保證金</em></div>
     <div><span>累積虧損</span><b class="neg">${pnlS(R.loss)}</b><em>＝ ${(Math.abs(R.loss) / 100).toFixed(1)} 份保證金</em></div>
     <div><span>總和</span><b class="${R.net >= 0 ? 'pos' : 'neg'}">${pnlS(R.net)}</b><em>${R.cnt ? `${R.cnt} 筆平均 ${pnlS(R.net / R.cnt)}` : '—'}</em></div></div>
@@ -4348,7 +4370,7 @@ async function renderEquity(list, filtered) {
   const realD = uniq(R.pts);
   const lastT = realD.length ? realD[realD.length - 1].time : sec(now) - 60;
   // 藍線：每次抓到現價就記一個點，畫成會一直往前跑、上下跳動的即時線
-  const sig = EQ.cap + '|' + EQ.mode + '|' + EQ.amt + '|' + EQ.fee + '|' + EQ.max + '|' + T.tp + '|' + T.sl + '|' + T.lev + '|' + T.exit + '|' + (filtered ? 1 : 0) + '|' + lastT;
+  const sig = EQ.cap + '|' + EQ.mode + '|' + EQ.amt + '|' + EQ.fee + '|' + EQ.max + '|' + T.tp + '|' + T.sl + '|' + T.lev + '|' + T.exit + '|' + T.step + '|' + (filtered ? 1 : 0) + '|' + lastT;
   if (EQC.sig !== sig) { EQC.sig = sig; EQC.ticks = []; }   // 設定或已實現資金變了，即時線從最後一筆出場重新開始
   const tnow = sec(now), v = Math.round(tot * 100) / 100;
   if (!EQC.ticks.length || tnow > EQC.ticks[EQC.ticks.length - 1].time) EQC.ticks.push({ time: tnow, value: v });
