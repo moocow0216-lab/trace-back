@@ -320,17 +320,17 @@ function notifyEntry(c) {
   const N = ST.notify, T = ST.trade; if (!N.enabled || !N.entry) return;
   const tpPx = c.entry * (1 + c.dir * T.tp / 100 / T.lev), slPx = c.entry * (1 - c.dir * T.sl / 100 / T.lev);
   const ab = (c.ind || []).filter(i => i.ab).map(i => `${i.n} z${i.z > 0 ? '+' : ''}${i.z.toFixed(1)}`).join('、');
-  dcSend(`${c.dir > 0 ? '🟢 **做多**' : '🔴 **做空**'} **${mdEsc(c.sym)}**（數據異常 ${c.abN}/5）\n` +
+  dcSend(`📡 **訊號**｜${c.dir > 0 ? '🟢 **做多**' : '🔴 **做空**'} **${mdEsc(c.sym)}**（數據異常 ${c.abN}/5）\n` +
     `進場 **${fpx(c.entry)}**・${T.lev}x\n達標 ${fpx(tpPx)}（+${T.tp}%）\n失敗 ${fpx(slPx)}（−${T.sl}%）\n` +
-    `${ab ? '異常：' + mdEsc(ab) + '\n' : ''}時間 ${tw(c.et)}（台北）\n-# 統計訊號，只供參考，不是投資建議`);
+    `${ab ? '異常：' + mdEsc(ab) + '\n' : ''}時間 ${tw(c.et)}（台北）\n-# 訊號模擬：用幣安訊號價、${T.lev}x 計算，不是你的實際倉位${ST.lt.on ? '；實際下單看 🤖 實盤通知' : ''}`);
 }
 function notifyExit(c, E) {
   const N = ST.notify, T = ST.trade; if (!N.enabled || !N.exit) return;
   const head = E.st === 'win' ? '✅ **成功**' : E.st === 'timeout' ? '⏱ **逾時**' : '❌ **失敗**';
   const how = E.how === 'lock' ? '（跑回達標線，保本鎖利出場）' : E.how === 'hold' ? `（持有到 ${T.hold} 小時到期）` : E.st === 'amb' ? '（同一根 K 棒兩邊都碰到，保守算失敗）' : '';
   const pnl = (E.pnl > 0 ? '+' : E.pnl < 0 ? '−' : '') + Math.abs(E.pnl).toFixed(0) + '%';
-  dcSend(`${head} ${c.dir > 0 ? '做多' : '做空'} **${mdEsc(c.sym)}** **${pnl}**${how}\n` +
-    `進場 ${fpx(c.entry)}（${tw(c.et)}）\n持有 ${durTxt((E.exitAt || Date.now()) - c.et)}・${T.lev}x`);
+  dcSend(`📡 **訊號模擬結果**｜${head} ${c.dir > 0 ? '做多' : '做空'} **${mdEsc(c.sym)}** **${pnl}**${how}\n` +
+    `訊號價 ${fpx(c.entry)}（${tw(c.et)}）\n持有 ${durTxt((E.exitAt || Date.now()) - c.et)}・${T.lev}x\n-# 這是訊號的模擬結果，不代表交易所的倉位已經平倉`);
 }
 function checkExits() {
   let ch = false;
@@ -886,7 +886,7 @@ async function ltManage() {
     t.cur = px; t.roe = roe; t.fav = Math.max(t.fav || 0, roe); t.adv = Math.min(t.adv || 0, roe);
     let why = '';
     if (roe <= -T.sl) why = 'fail';
-    else if (roe >= T.tp) { if (T.exit === 'fixed') why = 'win'; else if (!t.locked) { t.locked = true; touchLT(); dcSend(`🔒 **達標鎖利** ${mdEsc(t.sym)}：浮盈 +${roe.toFixed(0)}%，之後跑回 +${T.tp}% 就平倉`); } }
+    else if (roe >= T.tp) { if (T.exit === 'fixed') why = 'win'; else if (!t.locked) { t.locked = true; touchLT(); dcSend(`🤖 **實盤**｜🔒 **達標鎖利** ${mdEsc(t.sym)}（${t.lev}x）：浮盈 +${roe.toFixed(0)}%，之後跑回 +${T.tp}% 就平倉`); } }
     else if (t.locked && roe < T.tp) why = 'lock';
     if (!why && now - t.et >= T.hold * HOUR) why = 'timeout';
     if (!why) continue;
@@ -929,7 +929,7 @@ async function ltReconcile(pos) {
     const prevPart = t.closes.reduce((a, c) => a + c.pnl, 0);
     t.closes.push({ t: Date.now(), qty: t.qty, pnl: (t.realized || 0) - prevPart, by: reason });
     Object.assign(t, { status: 'closed', exitAt: Date.now(), reason, qty: 0, upnl: 0 }); ch = true;
-    const net = ltNet(t), nm = { win: '✅ 達標出場', lock: '🔒 保本鎖利出場', fail: '❌ 失敗線出場', timeout: '⏱ 持有到期出場', manual: '🖐 手動平倉', all: '🛑 一鍵全部平倉', liq: '💥 強平', exchange: '📤 交易所平倉（止損或在 App 平倉）' }[reason] || reason;
+    const net = ltNet(t), nm = '🤖 **實盤平倉**｜' + ({ win: '✅ 達標出場', lock: '🔒 保本鎖利出場', fail: '❌ 失敗線出場', timeout: '⏱ 持有到期出場', manual: '🖐 手動平倉', all: '🛑 一鍵全部平倉', liq: '💥 強平', exchange: '📤 交易所平倉（止損或在 App 平倉）' }[reason] || reason);
     dcSend(`${nm} **${mdEsc(t.sym)}** ${t.dir > 0 ? '做多' : '做空'}\n淨損益 **${net >= 0 ? '+' : '−'}${Math.abs(net).toFixed(2)}U**（${(net / (t.m0 || ST.lt.margin) * 100).toFixed(0)}%）・持有 ${durTxt(Date.now() - t.et)}${t.closePx ? `・平倉均價 ${fpx(t.closePx)}` : ''}`);
   }
   // 單日虧損上限（台北時間每天 00:00 重算）
@@ -1091,7 +1091,7 @@ http.createServer(async (req, res) => {
     }
     if (req.method === 'GET' && u.pathname === '/api/state') {
       const out = {
-        time: Date.now(), cv: CV, bv: BV, set: ST.set, trade: ST.trade, canWrite: !!ADMIN_KEY,
+        time: Date.now(), ver: '2026-10-18g', cv: CV, bv: BV, set: ST.set, trade: ST.trade, canWrite: !!ADMIN_KEY,
         scan: { ...SCAN, pause: RL.pause }, bt: { at: ST.bt.at, coins: ST.bt.coins, n: ST.bt.trades.length }, btp: BTP,
         notify: { enabled: ST.notify.enabled, entry: ST.notify.entry, exit: ST.notify.exit, hasHook: !!ST.notify.webhook, name: ST.notify.name },
         eq: ST.eq, rep: { ...ST.rep, busy: REP.busy, msg: REP.msg }, rv: RV,
