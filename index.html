@@ -675,7 +675,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg">⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">☁ 雲端伺服器</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-18f</div>
+      <div class="qver" id="qVer">網站版本 2026-10-18h</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qcfg" id="qSrv" hidden>
@@ -3041,7 +3041,7 @@ async function srvPull() {
     if (j.lt) { SRVLT.cfg = j.lt.cfg; SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; }
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) renderEco(j.eco);
-    $('qVer').textContent = `網站版本 2026-10-18f・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-18h・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
     if ($('qRepDlg').open) renderRep();   // 連線後先把這台的浮盈／槓桿設定同步給伺服器
@@ -3678,7 +3678,7 @@ function rate(list) {
 function kpi(name, list) {
   const R = rate(list);
   const bar = R.d ? `<div class="qrb"><i style="width:${R.w / R.d * 100}%;background:var(--green)"></i><i style="width:${R.f / R.d * 100}%;background:var(--red)"></i><i style="width:${R.to / R.d * 100}%;background:var(--gray)"></i></div>` : '';
-  return `<div><span>${name}</span><b>${Number.isFinite(R.r) ? R.r.toFixed(1) + '%' : '—'}</b><em>成功 ${R.w}／失敗 ${R.f}／逾時 ${R.to}${R.op ? `／進行中 ${R.op}` : ''}</em>${bar}<em class="qsum">總和 <b class="${R.net >= 0 ? 'pos' : 'neg'}">${pnlS(R.net)}</b></em></div>`;
+  return `<div><span>${name}</span><b>${Number.isFinite(R.r) ? R.r.toFixed(1) + '%' : '—'}</b><em>成功 ${R.w}／失敗 ${R.f}${R.to ? `／逾時 ${R.to}` : ''}${R.op ? `／進行中 ${R.op}` : ''}</em>${bar}<em class="qsum">總和 <b class="${R.net >= 0 ? 'pos' : 'neg'}">${pnlS(R.net)}</b></em></div>`;
 }
 const pnlS = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toLocaleString('en-US', { maximumFractionDigits: 0 }) + '%';
 function pnlBox(list, title, view) {
@@ -3693,6 +3693,7 @@ function pnlBox(list, title, view) {
     <div><span>進行中總和${filtered ? '（篩選後）' : ''}</span><b class="qb">${pnlS(V.liveS)}</b><em>${V.liveN} 筆持有中，每 3 秒跟著現價更新</em></div></div></div>`;
 }
 function holdTxt(E, c) {
+  if (E.real) return E.st === 'open' ? '持有中' : `${dur(E.exitAt - c.et)}・${E.reasonZh}`;
   if (E.st === 'win' && T.exit !== 'fixed') {
     const hit = `${dur(E.at - c.et)}達標`;
     if (E.exitHow === 'lock') return `${hit}・${dur(E.exitAt - c.et)}鎖利出場`;
@@ -3714,7 +3715,8 @@ function renderHist() {
     $('qPnl').innerHTML = w; $('qKpi').innerHTML = ''; $('qEqKpi').innerHTML = ''; return;
   }
   const all = allTrades();
-  $('qKpi').innerHTML = kpi(`整體成功率（${T.lev}x，+${T.tp}%／−${T.sl}%）`, all) + kpi('做多', all.filter(x => x.c.dir > 0)) + kpi('做空', all.filter(x => x.c.dir < 0)) + kpi('即時訊號', all.filter(x => x.live)) + kpi('歷史回測', all.filter(x => !x.live));
+  const RL = DATA === 'real' && SRV.on && SRVLT.cfg;
+  $('qKpi').innerHTML = kpi(RL ? '整體成功率（實盤：結單賺錢就算成功）' : `整體成功率（${T.lev}x，+${T.tp}%／−${T.sl}%）`, all) + kpi('做多', all.filter(x => x.c.dir > 0)) + kpi('做空', all.filter(x => x.c.dir < 0));
   const fs = $('qf_src').value, fd = $('qf_dir').value, fr = $('qf_res').value;
   HROWS = all.filter(x => (!fs || (fs === 'live') === x.live) && (!fd || +fd === x.c.dir) &&
     (!fr || (fr === 'fail' ? x.E.st === 'fail' || x.E.st === 'amb' : x.E.st === fr)));
@@ -3726,7 +3728,7 @@ function renderHist() {
   const FR = rate(HROWS);
   $('qFsum').innerHTML = (fs || fd || fr) ? `篩選後 ${HROWS.length} 筆：進行中 <b class="qb">${pnlS(FR.liveS)}</b>、已結算 <b class="${FR.doneS >= 0 ? 'pos' : 'neg'}">${pnlS(FR.doneS)}</b>；累積浮盈 <b class="pos">${pnlS(FR.gain)}</b>、累積虧損 <b class="neg">${pnlS(FR.loss)}</b>、總和 <b class="${FR.net >= 0 ? 'pos' : 'neg'}">${pnlS(FR.net)}</b>` : '';
   $('qTab').innerHTML = `<thead><tr><th>進場時間（${tzName()}）</th><th>幣種</th><th>方向</th><th>來源</th><th>異常項</th><th>進場價</th><th>結果</th><th>損益（藍＝現價）</th><th>最大浮盈</th><th>最大浮虧</th><th>用時／出場</th></tr></thead><tbody>` +
-    (rows.length ? rows.map((x, i) => { const c = x.c, L = resLabel(x.E.st); return `<tr data-i="${i}" title="點一下開啟圖表">
+    (rows.length ? rows.map((x, i) => { const c = x.c, L = x.E.real && x.E.st === 'fail' ? ['失敗', 'lose'] : resLabel(x.E.st); return `<tr data-i="${i}" title="點一下開啟圖表">
       <td>${fmtT(c.et)}</td><td>${esc(c.sym)}</td><td><span class="chip ${c.dir > 0 ? 'long' : 'short'}">${c.dir > 0 ? '做多' : '做空'}</span></td>
       <td>${x.live ? '即時' : '回測'}</td><td>${c.abN || '—'}／5</td><td>${fp(c.entry)}</td><td><span class="chip ${L[1]}">${L[0]}</span></td>
       <td class="${x.E.live ? 'qb' : x.E.pnl > 0 ? 'qg' : x.E.pnl < 0 ? 'qr' : ''}"${x.E.live ? ' title="持有中，跟著現價變動"' : x.E.noPx ? ' title="舊紀錄沒有逾時當下的價格，暫以 0 計"' : ''}>${x.E.pnl === null || x.E.pnl === undefined ? '—' : pnlS(x.E.pnl)}</td>
@@ -3928,7 +3930,7 @@ function renderBx(b) {
   if (!b.pos.length) { $('qBxTab').innerHTML = '<tbody><tr><td style="text-align:center;color:var(--muted);padding:14px">目前沒有持倉</td></tr></tbody>'; return; }
   $('qBxTab').innerHTML = `<thead><tr><th>幣種</th><th>方向</th><th>槓桿</th><th>數量</th><th>開倉價</th><th>現價</th><th>未實現損益</th><th>報酬率</th><th>保證金</th><th>強平價</th><th>距離強平</th><th>開倉時間</th><th>來源</th><th>操作</th></tr></thead><tbody>` +
     b.pos.map(p => {
-      const roe = p.margin > 0 ? p.upnl / p.margin * 100 : null, d = p.px > 0 && p.liq > 0 ? Math.abs(p.px - p.liq) / p.px * 100 : null;
+      const im = p.entry > 0 && p.qty > 0 && p.lev > 0 ? p.entry * p.qty / p.lev : p.margin, roe = im > 0 ? p.upnl / im * 100 : null, d = p.px > 0 && p.liq > 0 ? Math.abs(p.px - p.liq) / p.px * 100 : null;
       return `<tr class="${d !== null && d <= b.liqPct ? 'warn' : ''}"><td><b>${esc(p.sym)}</b></td><td><span class="chip ${p.dir > 0 ? 'long' : 'short'}">${p.dir > 0 ? '做多' : '做空'}</span></td>
         <td>${p.lev}x ${p.mode === 'CROSS' ? '全倉' : '逐倉'}</td><td>${p.qty}</td><td>${fpx(p.entry)}</td><td>${p.px ? fpx(p.px) : '—'}</td>
         <td class="${p.upnl >= 0 ? 'qg' : 'qr'}">${u2(p.upnl)}U</td><td class="${roe >= 0 ? 'qg' : 'qr'}">${roe === null ? '—' : spct(roe, 1)}</td><td>${p.margin.toFixed(2)}U</td>
@@ -4138,10 +4140,13 @@ function realRows() {
     // 百分比跟交易所的報酬率一樣：未實現損益 ÷ 目前保證金（＋已部分平倉的已實現 ÷ 開倉保證金）；不扣手續費，手續費另外算在資金曲線
     const partU = (t.closes || []).filter((c, i, a) => open || i < a.length - 1).reduce((a, c) => a + (c.pnl || 0), 0);
     const P = open && SRVBX && t.positionId ? SRVBX.pos.find(x => x.id === t.positionId) : null;   // 跟持倉表格用同一筆資料
-    const up = P ? P.upnl : (t.upnl || 0), mg = P ? (P.margin || m0) : (t.margin || m0);
-    const roePct = open ? (partU / m0 + up / mg) * 100 : (t.realized || 0) / m0 * 100;
-    const reason = t.reason || '', st = open ? (t.locked ? 'win' : 'open') : (reason === 'win' || reason === 'lock') ? 'win' : (reason === 'fail' || reason === 'liq') ? 'fail' : reason === 'timeout' ? 'timeout' : 'manual';
-    const E = { st, pnl: roePct, pnlU: netU, live: open, fav: Math.max(0, (t.fav || 0)) / 100 / T.lev, adv: Math.max(0, -(t.adv || 0)) / 100 / T.lev, at: open ? 0 : t.exitAt, exitAt: open ? 0 : t.exitAt, exitHow: open ? 'open' : '' };
+    // 收益率跟 Bitunix 一樣：損益 ÷ 起始保證金（開倉均價 × 數量 ÷ 槓桿）
+    const im0 = t.entry > 0 && (t.qty0 || t.qty) > 0 && t.lev > 0 ? t.entry * (t.qty0 || t.qty) / t.lev : m0;
+    const up = P ? P.upnl : (t.upnl || 0), imNow = P && P.entry > 0 && P.qty > 0 && P.lev > 0 ? P.entry * P.qty / P.lev : (t.entry > 0 && t.qty > 0 && t.lev > 0 ? t.entry * t.qty / t.lev : im0);
+    const roePct = open ? (partU / im0 + up / imNow) * 100 : (t.realized || 0) / im0 * 100;
+    const reason = t.reason || '', st = open ? 'open' : roePct > 0 ? 'win' : 'fail';   // 結單賺錢＝成功，虧錢＝失敗
+    const reasonZh = { win: '達標出場', lock: '保本鎖利', fail: '失敗線', timeout: '持有到期', manual: '手動平倉', all: '一鍵全平', liq: '強平', exchange: '交易所／App 平倉' }[reason] || '';
+    const E = { st, real: true, reasonZh, pnl: roePct, pnlU: netU, live: open, fav: Math.max(0, (t.fav || 0)) / 100 / T.lev, adv: Math.max(0, -(t.adv || 0)) / 100 / T.lev, at: open ? 0 : t.exitAt, exitAt: open ? 0 : t.exitAt, exitHow: open ? 'open' : '' };
     return { c: { id: t.id, sym: t.sym, pid: t.sym, src: 'binance', spot: null, dir: t.dir, et: t.et, entry: t.entry, abN: t.abN, real: true }, live: true, E, t, linked: !open || !!P, partU };
   }).sort((a, b) => b.c.et - a.c.et);
 }
@@ -4322,7 +4327,7 @@ async function renderEquity(list, filtered) {
     <div><span>含持有中（現價）</span><b class="qb">${tot.toFixed(2)}U</b><em>${ret(tot)}・持有中 ${R.liveN} 筆 ${R.unreal >= 0 ? '+' : '−'}${Math.abs(R.unreal).toFixed(2)}U</em></div>
     <div><span>最大回撤</span><b class="neg">${(R.mdd * 100).toFixed(1)}%</b><em>最低曾到 ${R.low.toFixed(2)}U</em></div>
     ${REAL ? '' : `<div><span>手續費合計</span><b>${R.fees.toFixed(2)}U</b><em>${R.skipped ? `${R.skipped} 筆因資金或持倉上限沒下` : '每筆訊號都有下'}</em></div>`}`;
-  $('qEqNote').textContent = `照進場、出場的時間順序模擬：進場時扣住保證金，出場時把損益和開平倉手續費入帳。綠線是已實現資金；藍線從最後一筆出場開始，每 3 秒用現價記一個點，會一直往前跑、上下跳動，代表把持有中的單算進去的即時資金。沒算滑價，也假設每個幣都能開 ${T.lev} 倍、下得了單。只是依過去紀錄的模擬，不代表未來。`;
+  $('qEqNote').textContent = REAL ? '實盤：每一筆自動交易結單時，把 Bitunix 的實際損益（扣手續費、加減資金費）加到資金裡；藍線是把持有中的單用現價算進去。' : `照進場、出場的時間順序模擬：進場時扣住保證金，出場時把損益和開平倉手續費入帳。綠線是已實現資金；藍線從最後一筆出場開始，每 3 秒用現價記一個點，會一直往前跑、上下跳動，代表把持有中的單算進去的即時資金。沒算滑價，也假設每個幣都能開 ${T.lev} 倍、下得了單。只是依過去紀錄的模擬，不代表未來。`;
   try { await loadLW(); } catch (e) { $('qEqChart').innerHTML = `<div class="loading">${esc(e.message)}</div>`; return; }
   const LWC = window.LightweightCharts, box = $('qEqChart');
   const css = getComputedStyle(document.documentElement), col = n => css.getPropertyValue(n).trim();
