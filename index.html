@@ -514,6 +514,15 @@ body.gated{overflow:hidden}
 .qgadv summary{cursor:pointer;color:var(--muted);font-size:12.5px}
 .qgatebox .btn.primary{padding:10px;font-size:15px}
 .quser{display:inline-flex;gap:6px;align-items:center}
+.qblabel{font-size:13px;color:var(--muted);margin:2px 0 6px}
+#qbGoogleBtn{min-height:44px}
+.qfind{display:flex;align-items:center;gap:8px;margin:0 0 8px;flex-wrap:wrap}
+.qfind input{flex:1 1 180px;max-width:280px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font:inherit}
+.qfind .qfnote{font-size:12.5px;color:var(--muted)}
+dialog#qViewDlg{padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);width:min(980px,96vw);max-width:96vw}
+dialog#qViewDlg::backdrop{background:rgba(4,7,12,.62)}
+.qvgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:8px 0}
+.qvgrid div{border:1px solid var(--line);border-radius:8px;padding:7px 9px}.qvgrid span{display:block;font-size:12px;color:var(--muted)}.qvgrid b{font-size:15px}
 dialog#qAdmDlg{padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);width:min(820px,96vw);max-width:96vw}
 dialog#qAdmDlg::backdrop{background:rgba(4,7,12,.62)}
 .qadm table td,.qadm table th{text-align:left;white-space:nowrap}
@@ -589,6 +598,17 @@ header{align-items:center}
     <details class="qgadv"><summary>伺服器網址</summary><label><input id="qg_url" type="url" autocapitalize="off" spellcheck="false"></label></details>
     <button class="btn primary" id="qg_go" type="submit">登入</button>
     <p class="qgerr" id="qgErr" role="alert"></p>
+  </form>
+  <form class="qgatebox" id="qBindForm" onsubmit="return false" hidden>
+    <h1>無量空處</h1>
+    <p class="qgsub">第一次登入：請綁定 Google 信箱和手機號碼</p>
+    <p class="qgnote">綁定完成後才能使用網站。同一個信箱、同一支手機只能綁定一個帳號；要更換請找管理員重設。</p>
+    <div id="qbGoogleBox" hidden><div class="qblabel">Google 信箱</div><div id="qbGoogleBtn"></div><p class="qgnote" id="qbGoogleOk" hidden></p></div>
+    <label id="qbEmailBox">Google 信箱（@gmail.com）<input id="qb_email" type="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="example@gmail.com"></label>
+    <label>手機號碼<input id="qb_phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="0912345678"></label>
+    <button class="btn primary" id="qb_go" type="submit">完成綁定</button>
+    <p class="qgerr" id="qbErr" role="alert"></p>
+    <button class="btn" id="qb_out" type="button">登出，換別的帳號</button>
   </form>
 </div>
 <header>
@@ -681,14 +701,14 @@ header{align-items:center}
       <div class="qsetrow">
         <button class="btn livebtn" id="qAuto" aria-pressed="true"><span class="dot"></span>自動掃描</button>
         <button class="btn" id="qScan">立即掃描</button>
-        <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg">⚙ 浮盈／槓桿設定</button>
-        <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">☁ 雲端伺服器</button>
+        <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
+        <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-18o</div>
+      <div class="qver" id="qVer">網站版本 2026-10-19b</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qcfg" id="qSrv" hidden>
-        <div class="params">
+        <div hidden><div class="params">
           <label class="field">伺服器網址<input id="qsv_url" type="url" placeholder="https://1-2-3-4.sslip.io" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
           <input id="qsv_key" type="hidden">
         </div>
@@ -696,25 +716,27 @@ header{align-items:center}
           <button class="btn primary" id="qsv_on">連線</button>
           <button class="btn" id="qsv_off">中斷連線，改回這台自己掃描</button>
           <button class="btn" id="qsv_up" title="把這台瀏覽器之前累積的卡片和回測合併到伺服器">上傳這台的紀錄到伺服器</button>
-        </div>
-        <div class="qcfgnote" id="qsv_stat"></div>
+        </div></div>
+        <div class="qcfgnote" id="qsv_stat" hidden></div>
         <div class="qtg">
-          <b>💬 Discord 通知</b><span id="qtg_stat">（連上伺服器並輸入管理金鑰後可以設定）</span>
+          <b>💬 Discord 通知</b><span id="qtg_stat">（還沒設定）</span>
           <div class="params">
             <label class="field">頻道的 Webhook 網址<input id="qtg_hook" type="password" autocomplete="new-password" data-lpignore="true" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="https://discord.com/api/webhooks/..."></label>
-            <label class="field">通知內容<span class="qtgck"><label><input type="checkbox" id="qtg_entry"> 進場</label><label><input type="checkbox" id="qtg_exit"> 結單</label><label><input type="checkbox" id="qtg_on"> 開啟通知</label></span></label>
+            <label class="field" hidden>通知內容<span class="qtgck"><label><input type="checkbox" id="qtg_entry"> 進場</label><label><input type="checkbox" id="qtg_exit"> 結單</label><label><input type="checkbox" id="qtg_on"> 開啟通知</label></span></label>
           </div>
           <div class="qbt" style="margin:8px 0 0">
             <button class="btn" id="qtg_save">1. 儲存 Webhook</button>
             <button class="btn primary" id="qtg_test">2. 傳測試訊息</button>
+            <button class="btn" id="qtg_clear">清除網址（不收通知）</button>
           </div>
+          <div class="qcfgnote">Discord 頻道設定 → 整合 → Webhook → 新增 → 複製 Webhook 網址，貼上後按「1. 儲存」，再按「2. 傳測試訊息」確認有收到。不想收通知就按「清除網址」。</div>
         </div>
         <div class="qtg">
-          <b>💼 Bitunix API（讀取＋交易）</b><span id="qbx_stat">（連上伺服器並輸入管理金鑰後可以設定）</span>
+          <b>💼 Bitunix API（讀取＋交易）</b><span id="qbx_stat">（還沒設定）</span>
           <div class="params">
             <label class="field">API Key<input id="qbx_key" type="password" autocomplete="new-password" data-lpignore="true" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
             <label class="field">Secret Key<input id="qbx_sec" type="password" autocomplete="new-password" data-lpignore="true" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
-            <label class="field">通知<span class="qtgck"><label><input type="checkbox" id="qbx_notify"> 開倉／平倉</label><label><input type="checkbox" id="qbx_liq"> 離強平價 <input id="qbx_pct" type="number" min="0.5" max="50" step="0.5" style="width:56px"> % 內提醒</label></span></label>
+            <label class="field" hidden>通知<span class="qtgck"><label><input type="checkbox" id="qbx_notify"> 開倉／平倉</label><label><input type="checkbox" id="qbx_liq"> 離強平價 <input id="qbx_pct" type="number" min="0.5" max="50" step="0.5" style="width:56px"> % 內提醒</label></span></label>
           </div>
           <div class="qbt" style="margin:8px 0 0">
             <button class="btn primary" id="qbx_save">儲存並測試</button>
@@ -722,7 +744,21 @@ header{align-items:center}
           </div>
           <div class="qcfgnote" id="qbx_note">建立 API 時權限選<b>「交易」</b>（會包含讀取），<b>不要開提現</b>，IP 白名單填 <b>3.107.254.240</b>。<br>換新帳號或新金鑰：直接貼上新的兩串按「儲存並測試」，會自動<b>暫停自動交易</b>，實盤統計也會等讀到新帳戶的資金後重新開始計算。</div>
         </div>
-        <div class="qtg">
+        <div class="qtg" id="qMyTrade">
+          <b>📈 我的交易設定</b><span id="qmt_stat"></span>
+          <div class="params">
+            <label class="field">合約投入資金（U，不能大於合約帳戶資金）<input id="lt_budget" type="number" min="0" step="10"></label>
+            <label class="field">每筆保證金（U）<input id="lt_margin" type="number" min="0.01" step="0.1"></label>
+            <label class="field">單日虧損上限（U，超過自動暫停）<input id="lt_dayLoss" type="number" min="0" step="1"></label>
+            <label class="field">槓桿倍率（幣不支援就用最高）<input id="lt_lev" type="number" min="1" max="125" step="1"></label>
+            <label class="field">鎖利線上調（浮盈每多幾 %，0＝不上調）<input id="lt_step" type="number" min="0" max="1000" step="10"></label>
+            <label class="field">持有天數（到期就平倉）<input id="lt_hold" type="number" min="0.5" max="30" step="0.5"></label>
+            <label class="field">浮虧 % 數（虧到這裡就平倉）<input id="lt_sl" type="number" min="10" max="1000" step="10"></label>
+            <input id="lt_maxOpen" type="hidden">
+          </div>
+          <div class="qcfgnote" id="qmt_note"></div>
+        </div>
+        <div class="qtg" id="qAwsBox" hidden>
           <b>💰 AWS 帳單提醒</b><span id="qaws_stat">（連上伺服器後可以設定）</span>
           <div class="params">
             <label class="field">主機建立日（台北）<input id="qaws_date" type="date"></label>
@@ -774,17 +810,10 @@ header{align-items:center}
           <span class="qltst" id="qLtSt"></span>
           <button class="btn" id="qLtToggle"></button>
           <button class="btn qdanger" id="qLtAll">🛑 一鍵平倉（自動單）</button>
-          <button class="btn" id="qLtCfgBtn">⚙ 交易設定</button>
+          <button class="btn" id="qLtCfgBtn">👤 我的設定</button>
           <span class="qltmsg" id="qLtMsg"></span>
         </div>
         <div class="qcfg" id="qLtCfg" hidden>
-          <div class="params">
-            <label class="field">投入資金（U，0＝整個合約帳戶）<input id="lt_budget" type="number" min="0" step="10"></label>
-            <label class="field">每筆保證金（U）<input id="lt_margin" type="number" min="0.01" step="0.1"></label>
-            <label class="field">槓桿（倍，幣不支援就用最高）<input id="lt_lev" type="number" min="1" max="125" step="1"></label>
-            <label class="field">最多同時持倉（筆，0＝不限）<input id="lt_maxOpen" type="number" min="0" step="1"></label>
-            <label class="field">單日虧損上限（U，超過自動暫停）<input id="lt_dayLoss" type="number" min="0" step="1"></label>
-          </div>
           <div class="qcfgnote"><b>投入資金</b>：例如帳戶有 153U、這裡填 100，自動交易只會用這 100U（加上它自己賺的、扣掉它自己虧的）來下單，用完會自動暫停；實盤統計也從 100U 開始算。注意全倉模式下，交易所還是用整個帳戶當保證金，極端行情時帳戶裡其他的錢也可能被拖累。<br>保證金模式：<b>全倉</b>。出場規則用「⚙ 浮盈／槓桿設定」裡的成功線、失敗線、出場方式和最長持有時間。開倉單會同時掛交易所止損（失敗線）。伺服器重新啟動後，自動交易一律先暫停。</div>
         </div>
         <div class="qbxsum" id="qBxSum"></div>
@@ -794,6 +823,7 @@ header{align-items:center}
         <button role="tab" id="qTabCards" aria-selected="true">訊號卡片</button>
         <button role="tab" id="qTabHist" aria-selected="false">成功率與歷史紀錄</button>
       </div>
+      <div class="qfind"><input id="qFind" type="search" placeholder="🔍 查幣種，例如 BTC、PEPE" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="查幣種"><span class="qfnote" id="qFindNote"></span></div>
       <div class="qcards" id="qCards"></div>
       <div id="qHist" hidden>
         <div class="qdsrc"><label class="tzsel">資料 <select id="qDataSrc"><option value="real">🤖 實盤（Bitunix 真實下單）</option><option value="sim">模擬（訊號＋回測）</option></select></label><button class="iconbtn" id="qLtReset">從現在重新開始計算</button><span class="qltmsg" id="qDataNote"></span></div>
@@ -924,16 +954,25 @@ header{align-items:center}
 <dialog id="qAdmDlg" aria-labelledby="qAdmTitle">
   <div class="qdh"><h2 id="qAdmTitle">🔐 帳號管理（後台）</h2><span class="spacer"></span><button class="btn" id="qAdmClose">關閉</button></div>
   <div class="qadm">
-    <p class="qrepnote">每個帳號用 Bitunix UID 登入。<b>管理員</b>可以改設定、回測、管理帳號；<b>一般</b>帳號只能看。改密碼後，那個帳號在其他裝置的登入會被登出。</p>
+    <p class="qrepnote">每個帳號用 Bitunix UID 登入，第一次登入要綁定 Google 信箱和手機號碼。<b>管理員</b>：管理帳號、改掃描條件、回測，可以「查看」每個帳號的持倉和狀況，但不能動別人的倉位和資金。<b>一般</b>：只能設定自己的 API、Discord 和交易參數。改密碼後，那個帳號在其他裝置的登入會被登出。</p>
     <div class="tablewrap"><table class="stat" id="qAdmTab"></table></div>
     <h3 style="font-size:14px;margin:14px 0 6px">新增帳號／修改密碼</h3>
     <div class="params">
       <label class="field">Bitunix UID<input id="qa_uid" inputmode="numeric" autocomplete="off"></label>
       <label class="field">新密碼（至少 8 個字）<input id="qa_pw" type="password" autocomplete="new-password"></label>
-      <label class="field">權限<select id="qa_role"><option value="">不變（新帳號預設一般）</option><option value="viewer">一般（只能看）</option><option value="admin">管理員</option></select></label>
+      <label class="field">權限<select id="qa_role"><option value="">不變（新帳號預設一般）</option><option value="viewer">一般（用自己的 API 交易）</option><option value="admin">管理員</option></select></label>
     </div>
     <div class="qbt" style="margin-top:8px"><button class="btn primary" id="qa_save">儲存</button></div>
+    <h3 style="font-size:14px;margin:16px 0 6px">Google 信箱驗證</h3>
+    <div class="params"><label class="field">Google 用戶端 ID（空白＝讓大家手動輸入 Gmail）<input id="qa_gid" autocomplete="off" spellcheck="false" placeholder="xxxx.apps.googleusercontent.com"></label></div>
+    <div class="qbt" style="margin-top:8px"><button class="btn" id="qa_gsave">儲存</button></div>
+    <p class="qrepnote" id="qa_gnote"></p>
   </div>
+</dialog>
+<dialog id="qViewDlg" aria-labelledby="qViewTitle">
+  <div class="qdh"><h2 id="qViewTitle">👁 查看帳號</h2><span class="spacer"></span><button class="btn" id="qViewRe">重新整理</button><button class="btn" id="qViewClose">關閉</button></div>
+  <p class="qrepnote">只能查看，不能動這個帳號的倉位、資金或設定。</p>
+  <div id="qViewBody"></div>
 </dialog>
 <dialog id="qRepDlg" aria-labelledby="qRepTitle">
   <div class="qdh">
@@ -2710,7 +2749,8 @@ const LS = {
 /* ---------- 雲端伺服器模式：掃描、追蹤、回測都交給伺服器，每台裝置讀同一份資料 ---------- */
 const DEFAULT_SRV = 'https://3-107-254-240.sslip.io';
 var SRV = Object.assign({ url: '', key: '', on: false, token: '', uid: '', role: '' }, LS.get('quantSrv', {}));
-const CANW = () => SRV.role === 'admin' && !!SRV.token;   // 只有用管理員帳號登入才能修改   // 管理員帳號（或舊的管理金鑰）才能修改
+const CANW = () => SRV.role === 'admin' && !!SRV.token;
+const MINE = () => !!SRV.on && !!SRV.token;   // 有登入就能設定「自己的」Bitunix、自動交易、平倉、Discord（每個帳號各自一份）   // 只有用管理員帳號登入才能修改   // 管理員帳號（或舊的管理金鑰）才能修改
 const _lsSet = LS.set;
 LS.set = (k, v) => { if (SRV.on && (k === 'quantCards' || k === 'quantBT')) return; _lsSet(k, v); };   // 伺服器模式不覆蓋這台自己的紀錄
 async function srvFetch(path, body) {
@@ -2719,6 +2759,7 @@ async function srvFetch(path, body) {
   const r = await fetch(url, body === undefined ? { cache: 'no-store', headers: h } : { method: 'POST', headers: Object.assign({ 'Content-Type': 'application/json' }, h), body: JSON.stringify(body) });
   let j = null; try { j = await r.json(); } catch (e) {}
   if (r.status === 401 && j && j.needLogin) { gateShow('登入已過期，請重新登入'); throw new Error('請重新登入'); }
+  if (r.status === 403 && j && j.needBind) { bindCheck(); throw new Error('請先綁定 Google 信箱和手機號碼'); }
   if (!r.ok) throw new Error((j && j.error) || ('HTTP ' + r.status));
   return j;
 }
@@ -3026,15 +3067,15 @@ async function srvPull() {
     if (j.notify) tgShow(j.notify);
     if (CANW() && !SV.pushed) { SV.pushed = true; pushTrade(); pushEq(); }
     if (j.rep) SRVREP.rep = j.rep;
-    if (j.lt) { SRVLT.cfg = j.lt.cfg; SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; }
+    if (j.lt) { SRVLT.cfg = j.lt.cfg; SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) renderEco(j.eco);
-    $('qVer').textContent = `網站版本 2026-10-18o・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-19b・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
-    if (j.aws) renderAws(j.aws);
+    $('qAwsBox').hidden = !j.aws; if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
     if ($('qRepDlg').open) renderRep();   // 連線後先把這台的浮盈／槓桿設定同步給伺服器
-    $('qsv_stat').textContent = `已連線到 ${SRV.url}。${CANW() ? '你是管理員，可以改設定、回測、移除卡片。' : '這個帳號只能看，不能改。'}`;
+    $('qsv_stat').textContent = `已連線到 ${SRV.url}。${CANW() ? '你是管理員，可以改共用設定、回測、移除卡片。' : '一般帳號：可以設定自己的 Bitunix API、自動交易和 Discord 通知；掃描條件、浮盈規則、回測只有管理員能改。'}`;
     if (!SRVREADY && !SV.priming) {
       SV.priming = true;
       Promise.resolve(pollPx()).catch(() => {}).finally(() => { SRVREADY = true; renderCards(); renderHist(); });
@@ -3120,14 +3161,23 @@ function indVal(i, c) {
   const u = (i.k === 'scvd' || i.k === 'sbar') && !c.unitOk ? '' : ' 美元';
   return samt(i.v) + u;
 }
+let QF = '';                                          // 🔍 查幣種：只顯示這個幣的訊號卡片和歷史紀錄
+const qfOk = sym => !QF || String(sym || '').toUpperCase().replace(/USDT$/, '').includes(QF);
+$('qFind').oninput = () => { QF = $('qFind').value.normalize('NFKC').toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/USDT$/, ''); renderCards(); renderHist(); };
 function renderCards() {
   const el = $('qCards');
+  if (QF) {
+    const nAll = Q.cards.filter(c => qfOk(c.sym)).length, nHist = SRVREADY ? allTrades().filter(x => qfOk(x.c.sym)).length : 0;
+    $('qFindNote').textContent = `${QF}：訊號卡片 ${nAll} 張・歷史紀錄 ${nHist} 筆（「成功率與歷史紀錄」也只算這個幣）`;
+  } else $('qFindNote').textContent = '';
+  if (QF && !Q.cards.some(c => qfOk(c.sym))) { el.innerHTML = `<div class="qempty">目前沒有 ${esc(QF)} 的訊號卡片。可以切到「成功率與歷史紀錄」看它以前的紀錄。</div>`; return; }
   if (!Q.cards.length) {
     el.innerHTML = `<div class="qempty">${Q.started ? '目前沒有符合條件的異常。掃描會持續進行，找到時會出現在這裡，最新的在第一張。' : '還沒有訊號。開始掃描後，會找出今天價格幾乎沒動、但資金數據異常的合約，並標出做多或做空。'}</div>`;
     return;
   }
-  const shown = Q.cards.filter(c => { const st = evalTrade(c).st; return st !== 'fail' && st !== 'amb'; });
-  const hid = Q.cards.length - shown.length;
+  const pool = Q.cards.filter(c => qfOk(c.sym));
+  const shown = pool.filter(c => { const st = evalTrade(c).st; return st !== 'fail' && st !== 'amb'; });
+  const hid = pool.length - shown.length;
   if (!shown.length) { el.innerHTML = `<div class="qempty">目前沒有進行中或獲利的訊號。${hid ? `已隱藏 ${hid} 張虧損的卡片，它們仍會計入「成功率與歷史紀錄」。` : ''}</div>`; return; }
   el.innerHTML = (hid ? `<div class="qempty" style="padding:0 2px">已隱藏 ${hid} 張虧損的卡片，它們仍會計入「成功率與歷史紀錄」。</div>` : '') + shown.map(c => `
     <article class="qcard ${c.dir > 0 ? 'up' : 'dn'}${Date.now() - c.t < 90000 ? ' fresh' : ''}" data-id="${esc(c.id)}">
@@ -3406,7 +3456,13 @@ $('qt_step').onchange = () => {
 };
 $('qt_exit').onchange = () => { T.exit = $('qt_exit').value; LS.set('quantTrade', T); tradeNote(); renderCards(); renderHist(); pushTrade(); };
 // 伺服器要用同一組浮盈／槓桿設定，才能判斷什麼時候「結單」、什麼時候可以再開下一單、什麼時候發結單通知
+function syncT(j) {                                   // 出場規則以伺服器上「我的設定」為準：成功線、出場方式全站共用，浮虧、鎖利上調、持有時間、槓桿用自己的
+  const C = j.lt && j.lt.cfg; if (!C || !(C.sl > 0)) return;
+  const nT = { tp: j.trade && j.trade.tp || T.tp, exit: j.trade && j.trade.exit || T.exit, sl: C.sl, step: C.step, hold: C.hold, lev: C.lev };
+  if (Object.keys(nT).some(k => nT[k] !== T[k])) { Object.assign(T, nT); tradeNote(); renderCards(); renderHist(); }
+}
 function pushTrade() {
+  return;                                             // 出場規則改成每個帳號在伺服器上各自設定，網站不再推送
   if (!SRV.on || !CANW()) return;
   srvFetch('/api/settings', { trade: { tp: T.tp, sl: T.sl, lev: T.lev, hold: T.hold, exit: T.exit, step: T.step } }).catch(() => {});
 }
@@ -3712,7 +3768,7 @@ function renderHist() {
     const w = '<div class="qempty">正在讀取伺服器的紀錄和最新價格…</div>';
     $('qPnl').innerHTML = w; $('qKpi').innerHTML = ''; $('qEqKpi').innerHTML = ''; return;
   }
-  const all = allTrades();
+  const all = allTrades().filter(x => qfOk(x.c.sym));
   const RL = DATA === 'real' && SRV.on && SRVLT.cfg;
   $('qKpi').innerHTML = kpi(RL ? '整體成功率（實盤：結單賺錢就算成功）' : `整體成功率（${T.lev}x，+${T.tp}%／−${T.sl}%）`, all) + kpi('做多', all.filter(x => x.c.dir > 0)) + kpi('做空', all.filter(x => x.c.dir < 0));
   const fs = $('qf_src').value, fd = $('qf_dir').value, fr = $('qf_res').value;
@@ -3781,7 +3837,7 @@ function tgShow(n) {
 }
 async function tgCall(path, body, okMsg) {
   if (!SRV.on) { alert('請先連線到雲端伺服器。通知是由伺服器發送的，關掉網頁也會收到。'); return; }
-  if (!CANW()) { alert('需要管理員帳號才能設定通知。'); return; }
+  if (!MINE()) { alert('請先登入。'); return; }
   try { const r = await srvFetch(path, body); if (okMsg) alert(typeof okMsg === 'function' ? okMsg(r) : okMsg); SV.cv = -1; srvPull(); return r; }
   catch (e) { alert(e.message); }
 }
@@ -3791,6 +3847,7 @@ $('qtg_save').onclick = () => {
   tgCall('/api/notify', { webhook, enabled: true, entry: true, exit: true }, r => `已儲存（${r.name}）。現在按「2. 傳測試訊息」試試看。`).then(r => { if (r) $('qtg_hook').value = ''; });
 };
 $('qtg_test').onclick = () => tgCall('/api/notify/test', {}, '已送出，看看 Discord 頻道有沒有收到。');
+$('qtg_clear').onclick = () => { if (confirm('要清除 Discord 網址嗎？清除後就不會收到任何通知。')) tgCall('/api/notify', { clear: true }, '已清除，之後不會再傳通知到 Discord。'); };
 ['entry', 'exit', 'on'].forEach(k => $('qtg_' + k).onchange = () => tgCall('/api/notify', { [k === 'on' ? 'enabled' : k]: $('qtg_' + k).checked }));
 /* ---------- 📊 回測報告：伺服器每兩週結算一次，每期都用固定本金重新開始 ---------- */
 var SRVREP = { list: [], rep: null };
@@ -3962,7 +4019,7 @@ function renderBx(b) {
         <td class="qblink ${p.upnl >= 0 ? 'qg' : 'qr'}" style="${bk}">${u2(p.upnl)}U</td><td class="qblink ${roe >= 0 ? 'qg' : 'qr'}" style="${bk}">${roe === null ? '—' : spct(roe, 1)}</td><td>${p.margin.toFixed(2)}U</td>
         <td>${p.liq > 0 ? fpx(p.liq) : '低風險'}</td><td class="${d !== null && d <= b.liqPct ? 'qr' : ''}">${d === null ? '—' : d.toFixed(2) + '%'}</td>
         <td>${p.ctime ? fmtT(p.ctime) : '—'}</td><td>${p.bot ? '<span class="chip win">🤖 自動</span>' : p.sig ? '<span class="chip open">符合訊號</span>' : '<span style="color:var(--muted)">手動</span>'}</td>
-        <td>${CANW() ? `<button class="iconbtn" data-cl="1" data-id="${esc(p.id)}" data-s="${esc(p.sym)}">全部平倉</button> <button class="iconbtn" data-cl="part" data-id="${esc(p.id)}" data-s="${esc(p.sym)}">部分平倉</button>` : '—'}</td></tr>`;
+        <td>${MINE() ? `<button class="iconbtn" data-cl="1" data-id="${esc(p.id)}" data-s="${esc(p.sym)}">全部平倉</button> <button class="iconbtn" data-cl="part" data-id="${esc(p.id)}" data-s="${esc(p.sym)}">部分平倉</button>` : '—'}</td></tr>`;
     }).join('') + '</tbody>';
 }
 $('qbx_save').onclick = () => {
@@ -4023,16 +4080,69 @@ $('qLogout').onclick = async () => {
     const r = await fetch(SRV.url.replace(/\/+$/, '') + '/api/me', { cache: 'no-store', headers: { Authorization: 'Bearer ' + SRV.token } });
     if (!r.ok) return gateShow(r.status === 401 ? '登入已過期，請重新登入' : '');
     const j = await r.json(); SRV.role = j.role; SRV.uid = j.uid; SRV.key = '';
-    LS.set('quantSrv', SRV); gateHide();
+    LS.set('quantSrv', SRV);
+    if (j.needBind) return bindShow(j);
+    gateHide();
   } catch (e) { gateShow('連不到伺服器，無法驗證登入'); }
 })();
+/* ---------- 帳號綁定：Google 信箱＋手機號碼，綁好才能用網站 ---------- */
+let BIND_ON = false, BIND_CRED = '';
+async function bindCheck() {
+  if (BIND_ON) return;
+  try { const j = await srvFetch('/api/me'); if (j.needBind) bindShow(j); } catch (e) {}
+}
+function bindShow(me) {
+  BIND_ON = true;
+  document.body.classList.add('gated'); $('qGate').hidden = false; $('qGateWait').hidden = true; $('qGateForm').hidden = true; $('qBindForm').hidden = false;
+  const g = me && me.google;
+  $('qbGoogleBox').hidden = !g; $('qbEmailBox').hidden = !!g;
+  if (g) loadGsi(g);
+  setTimeout(() => $(g ? 'qb_phone' : 'qb_email').focus(), 50);
+}
+function loadGsi(cid) {                               // Google 登入按鈕：選好帳號後拿到憑證，送到伺服器向 Google 確認
+  const go = () => {
+    try {
+      google.accounts.id.initialize({ client_id: cid, callback: r => {
+        BIND_CRED = r.credential; let em = '';
+        try { em = JSON.parse(decodeURIComponent(escape(atob(r.credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))))).email || ''; } catch (e) {}
+        $('qbGoogleOk').hidden = false; $('qbGoogleOk').textContent = `✅ 已選擇 ${em || 'Google 帳號'}，再填手機號碼按「完成綁定」。`;
+      } });
+      google.accounts.id.renderButton($('qbGoogleBtn'), { theme: 'outline', size: 'large', text: 'signin_with', locale: 'zh-TW' });
+    } catch (e) { $('qbErr').textContent = 'Google 按鈕載入失敗：' + e.message; }
+  };
+  if (window.google && google.accounts && google.accounts.id) return go();
+  const sc = document.createElement('script'); sc.src = 'https://accounts.google.com/gsi/client'; sc.async = true;
+  sc.onload = go; sc.onerror = () => { $('qbErr').textContent = '連不到 Google，請確認網路後重新整理。'; };
+  document.head.appendChild(sc);
+}
+$('qb_go').onclick = async () => {
+  const phone = $('qb_phone').value.normalize('NFKC').trim(), body = { phone };
+  if (!$('qbGoogleBox').hidden) {
+    if (!BIND_CRED) { $('qbErr').textContent = '請先按 Google 按鈕，選擇你的 Google 帳號。'; return; }
+    body.credential = BIND_CRED;
+  } else {
+    body.email = $('qb_email').value.normalize('NFKC').trim();
+    if (!/^[^\s@]+@(gmail|googlemail)\.com$/i.test(body.email)) { $('qbErr').textContent = '請輸入 Google 信箱（@gmail.com）。'; return; }
+  }
+  if (!phone) { $('qbErr').textContent = '請輸入手機號碼。'; return; }
+  $('qb_go').disabled = true; $('qbErr').textContent = '';
+  try { await srvFetch('/api/bind', body); location.reload(); }
+  catch (e) { $('qbErr').textContent = e.message; $('qb_go').disabled = false; }
+};
+$('qb_out').onclick = async () => {
+  try { await fetch(SRV.url.replace(/\/+$/, '') + '/api/logout', { method: 'POST', headers: { Authorization: 'Bearer ' + SRV.token } }); } catch (e) {}
+  LS.set('quantSrv', Object.assign({}, SRV, { token: '', role: '', key: '' })); location.reload();
+};
 /* ---------- 後台：帳號管理 ---------- */
 async function admLoad() {
   try {
     const j = await srvFetch('/api/users');
-    $('qAdmTab').innerHTML = '<thead><tr><th>UID</th><th>權限</th><th>建立時間</th><th>最後登入</th><th>登入中裝置</th><th>操作</th></tr></thead><tbody>' +
-      j.users.map(u => `<tr><td><b>${esc(u.uid)}</b>${u.uid === SRV.uid ? '（你）' : ''}</td><td>${u.role === 'admin' ? '管理員' : '一般'}</td><td>${u.created ? fmtT(u.created) : '—'}</td><td>${u.last ? fmtT(u.last) : '—'}</td><td>${u.sessions}</td>
-        <td><button class="iconbtn" data-a="pw" data-u="${esc(u.uid)}">改密碼</button> <button class="iconbtn" data-a="kick" data-u="${esc(u.uid)}">登出所有裝置</button> <button class="iconbtn" data-a="del" data-u="${esc(u.uid)}">刪除</button></td></tr>`).join('') + '</tbody>';
+    if (document.activeElement !== $('qa_gid')) $('qa_gid').value = j.google || '';
+    $('qa_gid').disabled = $('qa_gsave').disabled = !!j.googleEnv;
+    $('qa_gnote').innerHTML = j.googleEnv ? 'Google 用戶端 ID 是用伺服器的環境變數設定的，要在主機上改。' : j.google ? '已啟用 Google 驗證：之後綁定要按 Google 登入按鈕，伺服器會向 Google 確認信箱是真的。已經綁定的帳號不受影響。' : '目前是<b>手動輸入 Gmail</b>（沒有驗證）。到 Google Cloud 建立「OAuth 用戶端 ID（網頁應用程式）」，已授權的 JavaScript 來源填 <b>https://moocow0216-lab.github.io</b>，把拿到的 ID 貼在這裡，就會改成真正的 Google 驗證。';
+    $('qAdmTab').innerHTML = '<thead><tr><th>UID</th><th>權限</th><th>綁定（Google／手機）</th><th>Bitunix API</th><th>自動交易</th><th>自動單持倉</th><th>建立時間</th><th>最後登入</th><th>登入中裝置</th><th>操作</th></tr></thead><tbody>' +
+      j.users.map(u => `<tr><td><b>${esc(u.uid)}</b>${u.uid === SRV.uid ? '（你）' : ''}${u.owner ? '・擁有者' : ''}</td><td>${u.role === 'admin' ? '管理員' : '一般'}</td><td>${u.bind ? `${esc(u.bind.email)}${u.bind.google ? ' ✅' : ''}<br>${esc(u.bind.phone)}` : '<span style="color:var(--muted)">還沒綁定</span>'}</td><td>${u.api ? '已設定' : '<span style="color:var(--muted)">未設定</span>'}</td><td>${u.auto ? '<b class="qg">運作中</b>' : '暫停'}</td><td>${u.open || 0} 筆</td><td>${u.created ? fmtT(u.created) : '—'}</td><td>${u.last ? fmtT(u.last) : '—'}</td><td>${u.sessions}</td>
+        <td><button class="iconbtn" data-a="view" data-u="${esc(u.uid)}">👁 查看</button> <button class="iconbtn" data-a="pw" data-u="${esc(u.uid)}">改密碼</button>${u.bind ? ` <button class="iconbtn" data-a="unbind" data-u="${esc(u.uid)}">重設綁定</button>` : ''} <button class="iconbtn" data-a="kick" data-u="${esc(u.uid)}">登出所有裝置</button> <button class="iconbtn" data-a="del" data-u="${esc(u.uid)}">刪除</button></td></tr>`).join('') + '</tbody>';
   } catch (e) { $('qAdmTab').innerHTML = `<tbody><tr><td>${esc(e.message)}</td></tr></tbody>`; }
 }
 $('qAdmBtn').onclick = () => { $('qAdmDlg').showModal(); admLoad(); };
@@ -4041,12 +4151,48 @@ $('qAdmTab').addEventListener('click', async e => {
   const b = e.target.closest('button[data-a]'); if (!b) return;
   const uid = b.dataset.u;
   try {
+    if (b.dataset.a === 'view') return viewLoad(uid);
+    if (b.dataset.a === 'unbind') { if (!confirm(`要重設 ${uid} 的 Google 信箱和手機綁定嗎？\n對方會被登出，下次登入要重新綁定。`)) return; await srvFetch('/api/users', { uid, unbind: true }); }
     if (b.dataset.a === 'pw') { $('qa_uid').value = uid; $('qa_pw').value = ''; $('qa_pw').focus(); return; }
     if (b.dataset.a === 'kick') { if (!confirm(`要讓 ${uid} 在所有裝置登出嗎？`)) return; await srvFetch('/api/users/kick', { uid }); if (uid === SRV.uid) return location.reload(); }
     if (b.dataset.a === 'del') { if (!confirm(`確定要刪除帳號 ${uid}？`)) return; await srvFetch('/api/users/delete', { uid }); }
     admLoad();
   } catch (err) { alert(err.message); }
 });
+$('qa_gsave').onclick = async () => {
+  const clientId = $('qa_gid').value.normalize('NFKC').trim();
+  try { await srvFetch('/api/google', { clientId }); alert(clientId ? '已儲存，之後綁定會用 Google 驗證。' : '已清除，之後綁定改回手動輸入 Gmail。'); admLoad(); }
+  catch (e) { alert(e.message); }
+};
+/* ---------- 管理員查看帳號：只能看，沒有任何能動倉位或資金的按鈕 ---------- */
+let VIEW_UID = '';
+const vU = v => (v >= 0 ? '+' : '−') + Math.abs(v || 0).toFixed(2) + 'U';
+async function viewLoad(uid) {
+  VIEW_UID = uid; $('qViewTitle').textContent = `👁 查看帳號 ${uid}`;
+  if (!$('qViewDlg').open) $('qViewDlg').showModal();
+  $('qViewBody').innerHTML = '<p class="qrepnote">讀取中…</p>';
+  try { const v = await srvFetch('/api/users/view?uid=' + encodeURIComponent(uid)); if (VIEW_UID === uid) $('qViewBody').innerHTML = viewHtml(v); }
+  catch (e) { $('qViewBody').innerHTML = `<p class="qgerr">${esc(e.message)}</p>`; }
+}
+function viewHtml(v) {
+  const box = (k, val) => `<div><span>${k}</span><b>${val}</b></div>`, L = v.lt || {};
+  const head = box('權限', (v.role === 'admin' ? '管理員' : '一般') + (v.owner ? '・擁有者' : '')) + box('Google 信箱', v.bind ? esc(v.bind.email) + (v.bind.google ? ' ✅' : '') : '還沒綁定') + box('手機', v.bind ? esc(v.bind.phone) : '—') + box('最後登入', v.last ? fmtT(v.last) : '—');
+  if (v.empty || !v.api) return `<div class="qvgrid">${head}${box('Bitunix API', '還沒設定')}</div><p class="qrepnote">這個帳號還沒設定 Bitunix API，沒有持倉和交易紀錄。</p>`;
+  const B = v.bot || {}, S = v.stats || {};
+  const grid = head + box('Bitunix API', v.err ? '<span class="neg">讀取失敗</span>' : '已連上') + box('Discord', v.hook ? '已設定' : '沒設定') +
+    box('自動交易', L.on ? '<span class="qg">運作中</span>' : '暫停') + box('合約帳戶權益', (v.acctEq || 0).toFixed(2) + 'U') + box('投入資金', L.budget > 0 ? L.budget + 'U' : '整個帳戶') +
+    box('自動交易權益', (B.eq || 0).toFixed(2) + 'U') + box('今日損益', `<span class="${v.dayPnl >= 0 ? 'qg' : 'qr'}">${vU(v.dayPnl)}</span>`) +
+    box('已結單', `${S.n || 0} 筆・賺 ${S.win || 0} 筆`) + box('累計淨損益', `<span class="${S.net >= 0 ? 'qg' : 'qr'}">${vU(S.net)}</span>`) + box('手續費合計', (S.fee || 0).toFixed(2) + 'U');
+  const cfg = `每筆 ${L.margin}U・${L.lev}x・單日虧損上限 ${L.dayLoss}U・浮虧 −${L.sl}% 平倉・鎖利每 ${L.step}% 上調・最長持有 ${+(L.hold / 24).toFixed(1)} 天${v.msg ? '・' + esc(v.msg) : ''}`;
+  const pos = (v.pos || []).length ? `<div class="tablewrap"><table class="stat"><thead><tr><th>幣種</th><th>方向</th><th>槓桿</th><th>數量</th><th>開倉價</th><th>現價</th><th>未實現損益</th><th>保證金</th><th>強平價</th><th>開倉時間</th><th>來源</th></tr></thead><tbody>` +
+    v.pos.map(p => `<tr><td><b>${esc(p.sym)}</b></td><td>${p.dir > 0 ? '做多' : '做空'}</td><td>${p.lev}x</td><td>${p.qty}</td><td>${p.entry}</td><td>${p.px ?? '—'}</td><td class="${p.upnl >= 0 ? 'qg' : 'qr'}">${vU(p.upnl)}</td><td>${(+p.margin).toFixed(2)}U</td><td>${p.liq > 0 ? p.liq : '低風險'}</td><td>${p.ctime ? fmtT(p.ctime) : '—'}</td><td>${p.bot ? '🤖 自動' : '手動'}</td></tr>`).join('') + '</tbody></table></div>' : '<p class="qrepnote">目前沒有持倉。</p>';
+  const RS = { win: '達標', lock: '鎖利', fail: '失敗線', timeout: '到期', manual: '手動平倉', all: '一鍵平倉', liq: '強平', exchange: '交易所平倉' };
+  const tr = (v.trades || []).length ? `<div class="tablewrap"><table class="stat"><thead><tr><th>幣種</th><th>方向</th><th>開倉</th><th>平倉</th><th>結果</th><th>淨損益</th></tr></thead><tbody>` +
+    v.trades.map(t => `<tr><td><b>${esc(t.sym)}</b></td><td>${t.dir > 0 ? '做多' : '做空'}</td><td>${fmtT(t.et)}</td><td>${t.exitAt ? fmtT(t.exitAt) : '持有中'}</td><td>${t.status === 'open' ? '—' : esc(RS[t.reason] || t.reason)}</td><td class="${(t.status === 'open' ? t.net + t.upnl : t.net) >= 0 ? 'qg' : 'qr'}">${vU(t.status === 'open' ? t.net + t.upnl : t.net)}</td></tr>`).join('') + '</tbody></table></div>' : '<p class="qrepnote">還沒有自動交易紀錄。</p>';
+  return `<div class="qvgrid">${grid}</div><p class="qrepnote">交易設定：${cfg}</p><h3 style="font-size:14px;margin:12px 0 6px">持倉</h3>${pos}<h3 style="font-size:14px;margin:12px 0 6px">最近 30 筆自動交易</h3>${tr}`;
+}
+$('qViewRe').onclick = () => VIEW_UID && viewLoad(VIEW_UID);
+$('qViewClose').onclick = () => $('qViewDlg').close();
 $('qa_save').onclick = async () => {
   const uid = $('qa_uid').value.normalize('NFKC').replace(/\s+/g, ''), password = $('qa_pw').value, role = $('qa_role').value;
   if (!/^\d{4,20}$/.test(uid)) { alert('UID 應該是 4～20 位數字'); return; }
@@ -4116,13 +4262,17 @@ function renderLt() {
   $('qLtSt').className = 'qltst ' + (C.on ? 'on' : 'off');
   $('qLtSt').textContent = C.on ? '🤖 自動交易：運作中' : '⏸ 自動交易：暫停中';
   $('qLtToggle').textContent = C.on ? '⏸ 暫停交易' : '▶ 開始交易';
-  $('qLtToggle').hidden = $('qLtAll').hidden = $('qLtCfgBtn').hidden = !CANW();
+  $('qLtToggle').hidden = $('qLtAll').hidden = $('qLtCfgBtn').hidden = !MINE();
   const B = SRVLT.bot, AE = SRVLT.acctEq || 0;
   $('qLtMsg').textContent = `${C.budget > 0 ? `投入 ${C.budget}U（帳戶 ${AE.toFixed(2)}U）・目前 ${B ? B.eq.toFixed(2) : '—'}U、可用 ${B ? Math.max(0, B.free).toFixed(2) : '—'}U・` : `用整個帳戶（${AE.toFixed(2)}U）・`}每筆 ${C.margin}U・${C.lev}x 全倉・最多 ${C.maxOpen || '不限'} 筆・今日 ${SRVLT.day >= 0 ? '+' : '−'}${Math.abs(SRVLT.day).toFixed(2)}U（上限 −${C.dayLoss}U）${SRVLT.msg ? '・' + SRVLT.msg : ''}`;
-  ['budget', 'margin', 'lev', 'maxOpen', 'dayLoss'].forEach(k => { const el = $('lt_' + k); if (document.activeElement !== el) el.value = C[k] || 0; });
+  ['budget', 'margin', 'lev', 'maxOpen', 'dayLoss', 'sl', 'step'].forEach(k => { const el = $('lt_' + k); if (document.activeElement !== el) el.value = C[k] || 0; });
+  if (document.activeElement !== $('lt_hold')) $('lt_hold').value = +((C.hold || 168) / 24).toFixed(2);
+  const AE2 = SRVLT.acctEq || 0;
+  $('qmt_stat').textContent = SRVBX && SRVBX.set ? `合約帳戶目前 ${AE2.toFixed(2)}U` : '（先設定 Bitunix API）';
+  $('qmt_note').innerHTML = `<b>合約投入資金</b>：自動交易只用這筆錢（加上它自己賺的、扣掉它自己虧的）來下單，用完自動暫停；不能大於合約帳戶的資金，0＝用整個合約帳戶。<br>出場規則：浮盈碰到 <b>+${T.tp}%</b> 開始鎖利${C.step > 0 ? `，之後每多 <b>${C.step}%</b> 鎖利線往上調一次` : '（鎖在 +' + T.tp + '%）'}，跑回鎖利線就平倉；浮虧到 <b>−${C.sl}%</b> 平倉；最長持有 <b>${+((C.hold || 168) / 24).toFixed(1)} 天</b>，到期平倉。改了之後，已經開著的單也會照新規則管理。`;
 }
 async function ltCall(path, body, okMsg) {
-  if (!CANW()) { alert('需要管理員帳號。'); return; }
+  if (!MINE()) { alert('請先登入。'); return; }
   try { const r = await srvFetch(path, body); if (okMsg) alert(okMsg); SV.lv = 0; srvPull(); return r; }
   catch (e) { alert(e.message); }
 }
@@ -4137,12 +4287,22 @@ $('qLtAll').onclick = () => {
   const pause = confirm('要不要同時暫停自動交易？\n按「確定」＝平倉並暫停；按「取消」＝只平倉，自動交易繼續。');
   ltCall('/api/lt/closeAll', { pause }, '已送出：自動單全部平倉。');
 };
-$('qLtCfgBtn').onclick = () => { $('qLtCfg').hidden = !$('qLtCfg').hidden; };
-['margin', 'lev', 'maxOpen', 'dayLoss'].forEach(k => $('lt_' + k).onchange = () => ltCall('/api/lt/config', { [k]: +$('lt_' + k).value }));
+$('qLtCfgBtn').onclick = () => {                     // 打開「👤 我的設定」並捲到交易設定
+  $('qSetBox').hidden = false; $('qSetBtn').setAttribute('aria-expanded', 'true');
+  $('qSrv').hidden = false; $('qSrvBtn').setAttribute('aria-expanded', 'true');
+  $('qMyTrade').scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+['margin', 'lev', 'dayLoss', 'step', 'sl'].forEach(k => $('lt_' + k).onchange = () => ltCall('/api/lt/config', { [k]: +$('lt_' + k).value }));
+$('lt_hold').onchange = () => {
+  const d = +$('lt_hold').value;
+  if (!(d >= 0.5 && d <= 30)) { alert('持有天數要在 0.5～30 天之間'); renderLt(); return; }
+  ltCall('/api/lt/config', { hold: Math.round(d * 24) });
+};
 $('lt_budget').onchange = () => {
   const v = +$('lt_budget').value; if (!(v >= 0)) return;
   const AE = SRVLT.acctEq || 0;
-  if (v > 0 && AE > 0 && v > AE) { alert(`投入資金不能超過帳戶目前的資金 ${AE.toFixed(2)}U`); $('lt_budget').value = SRVLT.cfg.budget || 0; return; }
+  if (v > 0 && !(SRVBX && SRVBX.set)) { alert('請先設定 Bitunix API，才知道合約帳戶有多少資金。'); $('lt_budget').value = SRVLT.cfg.budget || 0; return; }
+  if (v > 0 && AE > 0 && v > AE) { alert(`合約投入資金不能大於合約帳戶目前的資金 ${AE.toFixed(2)}U`); $('lt_budget').value = SRVLT.cfg.budget || 0; return; }
   const reset = confirm(v > 0 ? `要從現在開始，用 ${v}U 重新計算實盤統計嗎？\n\n按「確定」＝從 ${v}U 重新起算；按「取消」＝只改投入上限，統計不重算。` : '改成用整個合約帳戶。要從現在開始，用目前帳戶資金重新計算實盤統計嗎？');
   ltCall('/api/lt/config', Object.assign({ budget: v }, reset ? { reset: true } : {}));
 };
