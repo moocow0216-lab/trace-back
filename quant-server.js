@@ -34,7 +34,7 @@ const lockAt = (peak, T = ST.trade) => (T.step > 0 && peak > T.tp ? T.tp + Math.
 const DEF_NOTIFY = { webhook: '', name: '', enabled: true, entry: true, exit: true };
 const DEF_EQ = { mode: 'fixed', amt: 0.3, fee: 0.05, max: 0 };
 const DEF_BX = { key: '', secret: '', notify: true, liq: true, liqPct: 3 };
-const DEF_LT = { on: false, margin: 0.3, lev: 100, mode: 'CROSS', maxOpen: 0, dayLoss: 20, startCap: 0, startAt: 0, budget: 0, sl: 250, step: 50, hold: 168 };   // sl：浮虧多少 % 平倉；step：鎖利線每多幾 % 上調；hold：最長持有（小時）——每個帳號自己設定   // budget：投入資金（0＝整個合約帳戶）   // startCap＝0 代表等偵測到帳戶資金再開始算   // 自動下單（預設暫停）   // Bitunix 唯讀 API 金鑰（只存在這台伺服器）            // 資金模擬：每筆保證金、手續費、最多同時持倉
+const DEF_LT = { on: false, margin: 0.3, lev: 100, mode: 'CROSS', maxOpen: 0, dayLoss: 20, startCap: 0, startAt: 0, budget: 0, sl: 250, step: 50, hold: 168, btcF: 1 };   // btcF：自己要不要用 BTC 方向過濾（預設開）   // sl：浮虧多少 % 平倉；step：鎖利線每多幾 % 上調；hold：最長持有（小時）——每個帳號自己設定   // budget：投入資金（0＝整個合約帳戶）   // startCap＝0 代表等偵測到帳戶資金再開始算   // 自動下單（預設暫停）   // Bitunix 唯讀 API 金鑰（只存在這台伺服器）            // 資金模擬：每筆保證金、手續費、最多同時持倉
 const DEF_REP = { cap: 100, btN: 50, days: 14, next: 0 };                   // 雙週結算：每期本金、回測幣數、幾天一期、下次結算時間
 let ST = { cards: [], bt: { at: 0, coins: 0, trades: [] }, set: { ...DEF_SET }, trade: { ...DEF_TRADE }, google: { clientId: '' }, eq: { ...DEF_EQ }, rep: { ...DEF_REP }, reports: [], users: [], sessions: [], accts: {}, owner: '' };
 try {
@@ -339,10 +339,10 @@ function notifyEntry(c) {
   const T = ST.trade;
   const tpPx = c.entry * (1 + c.dir * T.tp / 100 / T.lev), slPx = c.entry * (1 - c.dir * T.sl / 100 / T.lev);
   const ab = (c.ind || []).filter(i => i.ab).map(i => `${i.n} z${i.z > 0 ? '+' : ''}${i.z.toFixed(1)}`).join('、');
-  const bt = c.btcD !== undefined ? `\nBTC ${c.btcD > 0 ? '偏多' : c.btcD < 0 ? '偏空' : '讀不到'}${c.btcChg !== null && c.btcChg !== undefined ? `（${c.btcChg > 0 ? '+' : ''}${c.btcChg}%）` : ''}・${c.btcD === c.dir ? '順勢' : '逆勢'}（需要 ${c.btcNeed} 項）` : '';
+  const bt = c.btcD !== undefined ? `\nBTC ${c.btcD > 0 ? '偏多' : c.btcD < 0 ? '偏空' : '讀不到'}${c.btcChg !== null && c.btcChg !== undefined ? `（${c.btcChg > 0 ? '+' : ''}${c.btcChg}%）` : ''}・${c.btcD === c.dir ? '順勢' : '逆勢'}（需要 ${c.btcNeed} 項，${c.btcPass === false ? '**沒過 BTC 過濾**，有開過濾的人不會下單' : '有過 BTC 過濾'}）` : '';
   dcAll(X => `📡 **訊號**｜${c.dir > 0 ? '🟢 **做多**' : '🔴 **做空**'} **${mdEsc(c.sym)}**（數據異常 ${c.abN}/5）${bt}\n` +
     `進場 **${fpx(c.entry)}**・${T.lev}x\n達標 ${fpx(tpPx)}（+${T.tp}%）\n失敗 ${fpx(slPx)}（−${T.sl}%）\n` +
-    `${ab ? '異常：' + mdEsc(ab) + '\n' : ''}時間 ${tw(c.et)}（台北）\n-# 訊號模擬：用幣安訊號價、${T.lev}x 計算，不是你的實際倉位${X.A.lt.on ? '；實際下單看 🤖 實盤通知' : ''}`, N => N.enabled && N.entry);
+    `${ab ? '異常：' + mdEsc(ab) + '\n' : ''}時間 ${tw(c.et)}（台北）\n-# 訊號模擬：用幣安訊號價、${T.lev}x 計算，不是你的實際倉位${X.A.lt.on ? '；實際下單看 🤖 實盤通知' : ''}`, (N, X) => N.enabled && N.entry && !(X.A.lt.btcF && c.btcPass === false));
 }
 function notifyExit(c, E) {
   const T = ST.trade;
@@ -350,7 +350,7 @@ function notifyExit(c, E) {
   const how = E.how === 'lock' ? `（跑回鎖利線 +${E.pnl}% 出場）` : E.how === 'hold' ? `（持有到 ${T.hold} 小時到期）` : E.st === 'amb' ? '（同一根 K 棒兩邊都碰到，保守算失敗）' : '';
   const pnl = (E.pnl > 0 ? '+' : E.pnl < 0 ? '−' : '') + Math.abs(E.pnl).toFixed(0) + '%';
   dcAll(`📡 **訊號模擬結果**｜${head} ${c.dir > 0 ? '做多' : '做空'} **${mdEsc(c.sym)}** **${pnl}**${how}\n` +
-    `訊號價 ${fpx(c.entry)}（${tw(c.et)}）\n持有 ${durTxt((E.exitAt || Date.now()) - c.et)}・${T.lev}x\n-# 這是訊號的模擬結果，不代表交易所的倉位已經平倉`, N => N.enabled && N.exit);
+    `訊號價 ${fpx(c.entry)}（${tw(c.et)}）\n持有 ${durTxt((E.exitAt || Date.now()) - c.et)}・${T.lev}x\n-# 這是訊號的模擬結果，不代表交易所的倉位已經平倉`, (N, X) => N.enabled && N.exit && !(X.A.lt.btcF && c.btcPass === false));
 }
 function checkExits() {
   let ch = false;
@@ -411,17 +411,19 @@ async function analyze(u) {
 }
 function addCard(r) {
   const now = Date.now();
-  if (ST.set.btcF) {                                   // 🧭 BTC 方向過濾：沒過就不算訊號（不開卡片、不通知、不下單）
-    const B = btcNow(), need = btcNeed(r.dir, B.d);
-    r.btcD = B.d; r.btcChg = B.chg; r.btcNeed = need;
-    if (r.abN < need) { SCAN.btcSkip++; return; }
+  {                                                    // 🧭 BTC 方向過濾：訊號照樣產生，記下有沒有過；開著過濾的帳號才擋（不通知、不下單、不算成功率）
+    const B = btcNow(), need = btcNeed(r.dir, B.d, { ...ST.set, btcF: 1 });
+    r.btcD = B.d; r.btcChg = B.chg; r.btcNeed = need; r.btcPass = r.abN >= need;
   }
   r.why = reason(r);
   // 同一個幣還有單沒結單 → 不開新單。同方向就更新一下「最後偵測」的數字；反方向直接忽略
   const live = ST.cards.find(c => c.sym === r.sym && c.et && isLive(c));
   if (live) {
     if (live.dir === r.dir) {
-      const { entry, et, id, t0, ...rest } = r;
+      // 原本沒過 BTC 過濾、這次異常項數夠了：開著過濾的帳號現在才進場（沒開過濾的帳號當初就進了）
+      const late = live.btcPass === false && r.btcPass;
+      const { entry, et, id, t0, btcPass, ...rest } = r;
+      if (late) { live.btcPass = true; live.btcLate = now; for (const X of allX()) if (X.A.lt.on && X.A.lt.btcF) ltOpen(X, live); }
       Object.assign(live, rest, now - live.t >= 300000 ? { t: now, hits: (live.hits || 1) + 1 } : {});
       touchCards();
     }
@@ -432,6 +434,7 @@ function addCard(r) {
   ST.cards.unshift(c);
   ST.cards = ST.cards.slice(0, 300);
   touchCards();
+  if (c.btcPass === false) SCAN.btcSkip++;
   notifyEntry(c);
   for (const X of allX()) if (X.A.lt.on) ltOpen(X, c);   // 每個「開始交易」的帳號各自用自己的金鑰下單
 }
@@ -695,7 +698,7 @@ async function settle(manual) {
     await backtest(ST.rep.btN);
     const r = {
       id: end, start, end, manual: !!manual, cfg: { ...ST.eq, ...ST.trade, btc: ST.set.btcF ? { mode: ST.set.btcMode, w: ST.set.btcWith, a: ST.set.btcAgainst } : null, cap: ST.rep.cap, btN: ST.rep.btN },
-      bt: simReport(btActive(), start, end, ST.rep.cap), live: simReport(ST.cards, start, end, ST.rep.cap)
+      bt: simReport(btActive(), start, end, ST.rep.cap), live: simReport(ST.cards.filter(c => !(ST.set.btcF && c.btcPass === false)), start, end, ST.rep.cap)
     };
     ST.reports.unshift(r); ST.reports = ST.reports.slice(0, 60);
     if (!manual) ST.rep.next = end + ST.rep.days * 24 * HOUR;
@@ -794,7 +797,8 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
-function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）
+function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
+  if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   const a = ST.users.find(u => u.role === 'admin'); return a ? a.uid : '__owner';
@@ -808,7 +812,7 @@ function ctx(uid) {
   return X;
 }
 const allX = () => Object.keys(ST.accts).map(ctx);
-{ const o = ST.users.find(u => u.uid === OWNER_UID); if (o) { o.role = 'admin'; ST.owner = OWNER_UID; } }
+{ if (!ST.owner && ST.users.some(u => u.uid === OWNER_UID)) ST.owner = OWNER_UID; const o = ST.users.find(u => u.uid === ownerUid()); if (o) o.role = 'admin'; }
 // 這個帳號實盤用的規則：成功線、出場方式跟大家一樣；浮虧失敗線、鎖利上調間距、最長持有用自己的設定
 const TT = X => ({ ...ST.trade, sl: X.A.lt.sl, step: X.A.lt.step, hold: X.A.lt.hold });
 const hasKey = X => !!(X.A.bx.key && X.A.bx.secret);
@@ -816,7 +820,7 @@ const dcX = (X, msg) => dcSend(msg, X.A.notify);                // 只傳到這�
 function dcAll(content, ok = () => true) {             // 大家共用的通知（訊號、數據公布、結算）：每個帳號自己的 Discord 各傳一次，同一個 Webhook 不重複
   const seen = new Set();
   for (const X of allX()) {
-    const N = X.A.notify; if (!N.webhook || !ok(N) || seen.has(N.webhook)) continue;
+    const N = X.A.notify; if (!N.webhook || !ok(N, X) || seen.has(N.webhook)) continue;
     seen.add(N.webhook); dcSend(typeof content === 'function' ? content(X) : content, N);
   }
 }
@@ -920,6 +924,7 @@ function ltBotEq(X) {
 async function ltOpen(X, c) {
   const C = X.A.lt, K = X.A.bx, LT = X.LT, BX = X.BX;
   if (!C.on || !hasKey(X) || LT.busy.has(c.sym)) return;
+  if (C.btcF && c.btcPass === false) { LT.msg = `${c.sym} 沒過 BTC 方向過濾（${c.abN} 項，需要 ${c.btcNeed} 項），不下單`; return; }
   LT.busy.add(c.sym);
   try {
     if (C.maxOpen && ltOpenTrades(X).length >= C.maxOpen) { LT.msg = `已達最多同時持倉 ${C.maxOpen} 筆，${c.sym} 這次不下單`; return; }
@@ -1446,11 +1451,11 @@ http.createServer(async (req, res) => {
       FAILS.delete(ip);
       return send(res, 200, { token: newSession(usr), uid: usr.uid, role: usr.role });
     }
-    const me = who(req), admin = keyOk(req) || (me && me.role === 'admin');
+    const me = who(req), admin = keyOk(req) || (me && me.role === 'admin'), owner = keyOk(req) || (me && me.uid === ownerUid());   // 擁有者 ⊃ 灰色管理員 ⊃ 一般
     if (u.pathname.startsWith('/api/') && !me && !keyOk(req)) return send(res, 401, { error: '請先登入', needLogin: true, needSetup: !ST.users.length });
     if (me && needBind(me) && u.pathname !== '/api/me' && u.pathname !== '/api/bind') return send(res, 403, { error: '請先綁定 Google 信箱和手機號碼', needBind: true });
     const X = ctx(me ? me.uid : ownerUid());          // 這次請求的「自己」：每個帳號只看得到、改得到自己的 Bitunix／自動交易／Discord（用管理金鑰登入＝擁有者）
-    if (req.method === 'GET' && u.pathname === '/api/me') return send(res, 200, { uid: me ? me.uid : '管理金鑰', role: admin ? 'admin' : 'viewer', owner: X.uid === ownerUid(), needBind: needBind(me), bind: bindOut(me), google: gClient() });
+    if (req.method === 'GET' && u.pathname === '/api/me') return send(res, 200, { uid: me ? me.uid : '管理金鑰', role: admin ? 'admin' : 'viewer', owner: !!owner, needBind: needBind(me), bind: bindOut(me), google: gClient() });
     if (req.method === 'GET' && u.pathname === '/api/users') {
       if (!admin) return send(res, 403, { error: '只有管理員可以看' });
       return send(res, 200, { users: ST.users.map(x => { const A = ST.accts[x.uid]; return { uid: x.uid, role: x.role, created: x.created, last: x.last || 0, sessions: ST.sessions.filter(s => s.uid === x.uid && s.exp > Date.now()).length,
@@ -1480,10 +1485,10 @@ http.createServer(async (req, res) => {
     }
     if (req.method === 'GET' && u.pathname === '/api/state') {
       const out = {
-        time: Date.now(), ver: '2026-10-19e', cv: CV, bv: BV, set: ST.set, trade: ST.trade, canWrite: !!ADMIN_KEY,
+        time: Date.now(), ver: '2026-10-19f', cv: CV, bv: BV * 2 + (X.A.lt.btcF ? 1 : 0), set: ST.set, trade: ST.trade, canWrite: !!ADMIN_KEY,
         scan: { ...SCAN, pause: RL.pause }, bt: { at: ST.bt.at, coins: ST.bt.coins, n: btActive().length, cmp: btCompare() }, btp: BTP,
         notify: { enabled: X.A.notify.enabled, entry: X.A.notify.entry, exit: X.A.notify.exit, hasHook: !!X.A.notify.webhook, name: X.A.notify.name },
-        me: { uid: me ? me.uid : '管理金鑰', admin, owner: X.uid === ownerUid() },
+        me: { uid: me ? me.uid : '管理金鑰', admin: !!admin, owner: !!owner },
         eq: ST.eq, rep: { ...ST.rep, busy: REP.busy, msg: REP.msg }, rv: RV,
         bx: { set: hasKey(X), notify: X.A.bx.notify, liq: X.A.bx.liq, liqPct: X.A.bx.liqPct, at: X.BX.at, err: X.BX.err, acct: X.BX.acct,
           pos: X.BX.pos.map(p => ({ ...p, px: PX.map[p.sym] || null, sig: !!ST.cards.find(c => c.sym === p.sym && c.dir === p.dir && c.et && isLive(c)), bot: !!X.A.ltTrades.find(t => t.status === 'open' && t.positionId === p.id) })) },
@@ -1492,19 +1497,26 @@ http.createServer(async (req, res) => {
         aws: !(X.uid === ownerUid()) ? null : { on: ST.aws.on, created: ST.aws.created, auto: ST.aws.auto, price: ST.aws.price, detected: awsDetect(), ...awsNext() }
       };
       if (+u.searchParams.get('cv') !== CV) out.cards = ST.cards;
-      if (+u.searchParams.get('bv') !== BV) out.trades = btActive();
+      if (+u.searchParams.get('bv') !== BV * 2 + (X.A.lt.btcF ? 1 : 0)) out.trades = ST.bt.trades.filter(t => (X.A.lt.btcF ? t.c1 : t.c0) !== false);   // 自己開著 BTC 過濾就看有過濾的那條
       if (+u.searchParams.get('rv') !== RV) out.reports = ST.reports;
       if (+u.searchParams.get('lv') !== X.v) out.ltTrades = X.A.ltTrades.map(({ closing, ...t }) => t);
       return send(res, 200, out);
     }
     if (req.method === 'POST' && u.pathname.startsWith('/api/')) {
       // 個人設定：每個帳號都能改「自己的」；其他（掃描條件、浮盈規則、回測、帳號管理、AWS）只有管理員能改
+      // 個人（每個帳號）：自己的 API、Discord、交易設定、平倉；管理員（灰色）：帳號管理；其他全站設定只有擁有者能改
       const PERSONAL = ['/api/bind', '/api/bitunix', '/api/lt/config', '/api/lt/testOpen', '/api/lt/close', '/api/lt/closeAll', '/api/notify', '/api/notify/test'];
-      if (!PERSONAL.includes(u.pathname) && !admin) return send(res, 403, { error: '這個設定只有管理員可以改' });
+      const ADMIN = ['/api/users', '/api/users/delete', '/api/users/kick', '/api/google', '/api/check'];
+      if (ADMIN.includes(u.pathname) && !admin) return send(res, 403, { error: '這個功能只有管理員可以用' });
+      if (!PERSONAL.includes(u.pathname) && !ADMIN.includes(u.pathname) && !owner) return send(res, 403, { error: '這個設定只有擁有者可以改' });
       const b = await readBody(req);
       if (u.pathname === '/api/users') {               // 後台：新增帳號／改密碼／改權限
         if (!validUid(b.uid)) return send(res, 400, { error: 'UID 應該是 4～20 位數字' });
         let usr = ST.users.find(x => x.uid === String(b.uid));
+        const isNew = !usr, self = !!(me && usr && usr.uid === me.uid);
+        if (usr && usr.uid === ownerUid() && !owner) return send(res, 403, { error: '不能修改擁有者帳號' });
+        if (!isNew && b.password && !self && !owner) return send(res, 403, { error: '只有擁有者可以改別人的密碼（灰色管理員只能幫新帳號設定密碼）' });
+        if (b.role && usr && usr.uid === ownerUid() && b.role !== 'admin') return send(res, 400, { error: '擁有者帳號一定是管理員；要換擁有者請用「轉讓擁有者」' });
         if (!usr) { if (!validPw(b.password)) return send(res, 400, { error: '新帳號要設定密碼，至少 8 個字' }); usr = { uid: String(b.uid), role: 'viewer', created: Date.now() }; ST.users.push(usr); }
         if (b.password) { if (!validPw(b.password)) return send(res, 400, { error: '密碼至少 8 個字' }); Object.assign(usr, hashPw(b.password)); ST.sessions = ST.sessions.filter(s => s.uid !== usr.uid || (me && s.uid === me.uid)); }
         if (b.unbind) { delete usr.bind; ST.sessions = ST.sessions.filter(s => s.uid !== usr.uid); }   // 重設綁定：對方下次登入要重新綁定
@@ -1540,6 +1552,23 @@ http.createServer(async (req, res) => {
         if (id && !/^[\w-]+\.apps\.googleusercontent\.com$/.test(id)) return send(res, 400, { error: '格式不對，應該是 xxxx.apps.googleusercontent.com' });
         ST.google.clientId = id; dirty = true; return send(res, 200, { ok: true, google: gClient() });
       }
+      if (u.pathname === '/api/owner/transfer') {      // 👑 轉讓擁有者：一定要用 Google 驗證「擁有者綁定的信箱」才能轉
+        const cid = gClient(), O = ST.users.find(x => x.uid === ownerUid());
+        if (!me || !O || me.uid !== O.uid) return send(res, 403, { error: '只有擁有者本人登入才能轉讓' });
+        if (!cid) return send(res, 400, { error: '要先設定 Google 用戶端 ID，轉讓一定要用 Google 驗證信箱' });
+        const to = ST.users.find(x => x.uid === String(b.uid || ''));
+        if (!to) return send(res, 404, { error: '找不到要轉讓的帳號' });
+        if (to.uid === O.uid) return send(res, 400, { error: '已經是擁有者了' });
+        if (needBind(to)) return send(res, 400, { error: '對方還沒綁定 Google 信箱和手機，請他先登入完成綁定' });
+        const email = b.credential ? await googleEmail(String(b.credential), cid) : '';
+        if (!email) return send(res, 400, { error: 'Google 驗證失敗，請重新按 Google 按鈕' });
+        if (!O.bind || email !== O.bind.email) return send(res, 400, { error: `要用擁有者綁定的信箱（${O.bind ? O.bind.email : '還沒綁定'}）驗證，你剛剛選的是 ${email}` });
+        ST.owner = to.uid; to.role = 'admin'; dirty = true;      // 原本的擁有者變成灰色管理員
+        log('擁有者轉讓', O.uid, '→', to.uid);
+        dcX(ctx(O.uid), `👑 **擁有者已轉讓**：${O.uid} → **${to.uid}**（用 ${email} 驗證）。你現在是管理員。`);
+        dcX(ctx(to.uid), `👑 **你現在是這台伺服器的擁有者**（由 ${O.uid} 轉讓）。`);
+        return send(res, 200, { ok: true, owner: to.uid });
+      }
       if (u.pathname === '/api/users/delete') {
         const usr = ST.users.find(x => x.uid === String(b.uid)); if (!usr) return send(res, 404, { error: '找不到這個帳號' });
         if (usr.uid === ownerUid()) return send(res, 400, { error: '擁有者帳號不能刪除' });
@@ -1550,7 +1579,10 @@ http.createServer(async (req, res) => {
         delete ST.accts[usr.uid]; RT.delete(usr.uid); dirty = true;            // 他的金鑰、紀錄、Webhook 一起刪掉
         return send(res, 200, { ok: true });
       }
-      if (u.pathname === '/api/users/kick') { ST.sessions = ST.sessions.filter(s => s.uid !== String(b.uid)); dirty = true; return send(res, 200, { ok: true }); }
+      if (u.pathname === '/api/users/kick') {
+        if (String(b.uid) === ownerUid() && !owner) return send(res, 403, { error: '不能讓擁有者登出' });
+        ST.sessions = ST.sessions.filter(s => s.uid !== String(b.uid)); dirty = true; return send(res, 200, { ok: true });
+      }
       if (u.pathname === '/api/settings') {
         if (b.set) {
           const was = ST.set.btcF; Object.assign(ST.set, pick(b.set, Object.keys(DEF_SET)));
@@ -1608,6 +1640,11 @@ http.createServer(async (req, res) => {
           if (+b.budget > 0 && !(e > 0)) return send(res, 400, { error: '還沒讀到合約帳戶的資金，請等 10 秒再試' });
           if (+b.budget > e + 1e-9) return send(res, 400, { error: `投入資金不能大於合約帳戶目前的資金 ${e.toFixed(2)}U` });
           C.budget = +b.budget;
+        }
+        if (typeof b.btcF === 'boolean') {               // 🧭 自己要不要用 BTC 方向過濾
+          C.btcF = b.btcF ? 1 : 0;
+          if (X.uid === ownerUid() && ST.set.btcF !== C.btcF) { ST.set.btcF = C.btcF; touchBT(); }   // 擁有者的選擇也用在共用的結算報告
+          dcX(X, b.btcF ? '🧭 **BTC 方向過濾已開啟**：順勢、逆勢的異常項數不夠就不下單' : '🧭 **BTC 方向過濾已關閉**：所有訊號都會下單');
         }
         let rule = false;                                // 個人的出場規則
         if (b.sl !== undefined) { const v = +b.sl; if (!(v >= 10 && v <= 1000)) return send(res, 400, { error: '浮虧 % 要在 10～1000 之間' }); C.sl = v; rule = true; }
