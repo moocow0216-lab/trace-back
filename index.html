@@ -516,10 +516,14 @@ body.gated{overflow:hidden}
 .quser{display:inline-flex;gap:6px;align-items:center}
 .qblabel{font-size:13px;color:var(--muted);margin:2px 0 6px}
 #qbGoogleBtn{min-height:44px}
+.qnetbox{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:10px 0}
+.qnet td,.qnet th{text-align:right;white-space:nowrap}.qnet td:first-child,.qnet th:first-child{text-align:left}
+@media (max-width:520px){.qnetbox{padding:8px}.qnet{font-size:12px;min-width:0}.qnet td,.qnet th{padding:6px 3px}.qnet small{font-size:10px}.qnet td:first-child{white-space:normal;min-width:4.6em}}
 .qcmp{margin:10px 0 4px;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
 .qcmp h3{font-size:14px;margin:0 0 6px}.qcmp table{width:100%;border-collapse:collapse;font-size:13px}
 .qcmp th,.qcmp td{padding:5px 6px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}.qcmp th:first-child,.qcmp td:first-child{text-align:left}
 .qcmp .qcn{font-size:12.5px;color:var(--muted);margin:6px 0 0;line-height:1.6}
+@media (max-width:520px){.qcmp{padding:8px}.qcmp table{font-size:12px}.qcmp th,.qcmp td{white-space:normal;padding:5px 3px}.qcmp td:first-child{min-width:4.5em}}
 .qfind{display:flex;align-items:center;gap:8px;margin:0 0 8px;flex-wrap:wrap}
 .qfind input{flex:1 1 180px;max-width:280px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font:inherit}
 .qfind .qfnote{font-size:12.5px;color:var(--muted)}
@@ -708,7 +712,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-19d</div>
+      <div class="qver" id="qVer">網站版本 2026-10-19e</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3081,7 +3085,7 @@ async function srvPull() {
     if (j.lt) { SRVLT.cfg = j.lt.cfg; SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) renderEco(j.eco);
-    $('qVer').textContent = `網站版本 2026-10-19d・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-19e・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -3944,8 +3948,8 @@ function rebase(x, start, mode) {
   const endCap = Math.max(0, pct ? x.endCap * f : x.endCap + sh);
   return Object.assign({}, x, { cap: start, endCap, pnl: endCap - start, ret: (endCap / start - 1) * 100, fees: pct ? x.fees * f : x.fees, mdd: Math.round(mdd * 1000) / 10, curve, bust: endCap <= 0 });
 }
-function chainView(L) {
-  if (REPMODE !== 'chain') return L.map(r => Object.assign({}, r, { skip: false }));
+function chainView(L, mode = REPMODE) {
+  if (mode !== 'chain') return L.map(r => Object.assign({}, r, { skip: false }));
   const cap0 = SRVREP.rep ? SRVREP.rep.cap : 100, st = { bt: null, live: null }, out = new Map();
   const asc = L.slice().sort((a, b) => a.start - b.start || (a.manual ? 1 : 0) - (b.manual ? 1 : 0));
   let lastEnd = -Infinity;
@@ -3962,6 +3966,21 @@ function repCells(x) {
   if (!x) return '<td colspan="8" style="text-align:center;color:var(--muted)">那時伺服器還沒在跑</td>';
   const c = v => v > 0 ? 'pos' : v < 0 ? 'neg' : '';
   return `<td>${x.cap.toFixed(2)}</td><td class="${c(x.pnl)}">${x.endCap.toFixed(2)}${x.bust ? ' 💥' : ''}</td><td class="${c(x.pnl)}">${sgU(x.pnl)}</td><td class="${c(x.ret)}">${sgP(x.ret)}</td><td>${x.rate === null ? '—' : x.rate + '%'}</td><td>${x.n}${x.marked ? `<small style="color:var(--muted)">（${x.marked} 筆期末平倉）</small>` : ''}</td><td>${x.fees.toFixed(2)}</td><td class="neg">${x.mdd}%</td>`;
+}
+// 💰 每期淨賺（一律用累積：上一期期末＝這一期期初），手機也看得清楚的精簡表
+function repNet(list, cap0) {
+  const L = chainView(list, 'chain').filter(r => !r.skip).sort((a, b) => a.start - b.start);
+  const one = (k, title) => {
+    const H = L.filter(r => r[k]); if (!H.length) return '';
+    let run = 0; const rows = H.map(r => { run += r[k].pnl; return { r, x: r[k], run }; }).reverse();
+    const last = rows[0], c = v => v > 0 ? 'pos' : v < 0 ? 'neg' : '', win = H.filter(r => r[k].pnl > 0).length;
+    return `<h4 style="margin:10px 0 4px">${title}：從 ${cap0}U 開始，累積淨賺 <b class="${c(last.run)}">${sgU(last.run)}</b>（現在 ${last.x.endCap.toFixed(2)}U・${sgP(last.run / cap0 * 100)}・賺錢 ${win}／${H.length} 期）</h4>
+      <div class="tablewrap"><table class="stat qnet"><thead><tr><th>期間</th><th>期初</th><th>這期淨賺</th><th>期末</th><th>累積淨賺</th></tr></thead><tbody>
+      ${rows.map(({ r, x, run }) => `<tr><td>${dOnly(r.start).slice(5)}～<wbr>${dOnly(r.end).slice(5)}${r.hist ? ' <small style="color:var(--muted)">歷史</small>' : ''}${r.cfg && r.cfg.btc ? ' <small style="color:var(--muted)">🧭</small>' : ''}</td><td>${x.cap.toFixed(2)}</td><td class="${c(x.pnl)}"><b>${sgU(x.pnl)}</b></td><td>${x.endCap.toFixed(2)}${x.bust ? ' 💥' : ''}</td><td class="${c(run)}">${sgU(run)}</td></tr>`).join('')}
+      </tbody></table></div>`;
+  };
+  const out = one('bt', '回測') + one('live', '即時（伺服器實際記錄到的訊號）');
+  return out ? `<div class="qnetbox"><h3 style="font-size:15px;margin:0">💰 每期淨賺（累積）</h3><p class="qrepnote" style="margin:4px 0 0">淨賺＝已扣手續費。上一期的期末資金就是這一期的期初資金；最新的一期在最上面。🧭＝這期有用 BTC 方向過濾。</p>${out}</div>` : '';
 }
 function renderRep() {
   const el = $('qRepBody');
@@ -3980,13 +3999,14 @@ function renderRep() {
       : `<div><span>回測：每期平均</span><b class="${avg('bt') >= 0 ? 'pos' : 'neg'}">${sgU(avg('bt'))}</b><em>賺錢 ${posN('bt')}／${has('bt').length} 期・合計 ${sgU(sum('bt'))}</em></div>
       <div><span>即時：每期平均</span><b class="${avg('live') >= 0 ? 'pos' : 'neg'}">${has('live').length ? sgU(avg('live')) : '—'}</b><em>${has('live').length ? `賺錢 ${posN('live')}／${has('live').length} 期・合計 ${sgU(sum('live'))}` : '還沒有即時的結算'}</em></div>`}
     </div>
+    ${repNet(SRVREP.list, R.cap)}
     <div class="qrepbars">${repBars(LC)}</div>
     <div class="tablewrap qtw"><table class="stat qtab" id="qRepTab"><thead>
       <tr><th rowspan="2">期間（${tzName()}）</th><th colspan="8" style="text-align:center">回測</th><th colspan="8" style="text-align:center">即時</th></tr>
       <tr class="qsub"><th>期初資金</th><th>期末資金</th><th>損益</th><th>報酬率</th><th>成功率</th><th>筆數</th><th>手續費</th><th>最大回撤</th><th>期初資金</th><th>期末資金</th><th>損益</th><th>報酬率</th><th>成功率</th><th>筆數</th><th>手續費</th><th>最大回撤</th></tr></thead>
       <tbody>${L.map((r, i) => `<tr data-i="${i}" class="${i === repSel ? 'sel' : ''}" title="點一下看這期的資金曲線"><td>${dOnly(r.start)} ～ ${dOnly(r.end)}${r.manual ? ' <small style="color:var(--muted)">手動</small>' : ''}${r.hist ? ` <small style="color:var(--muted)">歷史${r.cfg.noOI ? '・無持倉資料' : ''}</small>` : ''}${r.skip ? ' <small style="color:var(--orange)">跟上一期重疊，不計入累積</small>' : ''}</td>${repCells(r.bt)}${repCells(r.live)}</tr>`).join('')}</tbody></table></div>
     <div class="qrepcurve">${repCurve(L[repSel])}</div>
-    <p class="qrepnote" style="margin-top:8px">這期設定：每筆 ${L[repSel].cfg.mode === 'pct' ? L[repSel].cfg.amt + '%' : L[repSel].cfg.amt + 'U'}・${L[repSel].cfg.lev}x・+${L[repSel].cfg.tp}%／−${L[repSel].cfg.sl}%・最長持有 ${L[repSel].cfg.hold} 小時・手續費 ${L[repSel].cfg.fee}%${L[repSel].cfg.max ? `・最多同時 ${L[repSel].cfg.max} 筆` : ''}</p>`;
+    <p class="qrepnote" style="margin-top:8px">這期設定：每筆 ${L[repSel].cfg.mode === 'pct' ? L[repSel].cfg.amt + '%' : L[repSel].cfg.amt + 'U'}・${L[repSel].cfg.lev}x・+${L[repSel].cfg.tp}%／−${L[repSel].cfg.sl}%・最長持有 ${L[repSel].cfg.hold} 小時・手續費 ${L[repSel].cfg.fee}%${L[repSel].cfg.max ? `・最多同時 ${L[repSel].cfg.max} 筆` : ''}・${L[repSel].cfg.btc ? `🧭 BTC 方向過濾（順勢 ${L[repSel].cfg.btc.w} 項／逆勢 ${L[repSel].cfg.btc.a} 項）` : '沒有 BTC 方向過濾'}</p>`;
 }
 $('qRepBody').addEventListener('click', e => { const tr = e.target.closest('tr[data-i]'); if (!tr) return; repSel = +tr.dataset.i; renderRep(); });
 $('qRepBtn').onclick = () => { renderRep(); $('qRepDlg').showModal(); if (SRV.on) { SV.rv = 0; srvPull(); } };
