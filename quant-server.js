@@ -370,9 +370,10 @@ const SCAN = { running: false, last: 0, dur: 0, total: 0, flatN: 0, done: 0, tod
    順勢（訊號方向跟 BTC 一樣）至少 btcWith 項異常；逆勢至少 btcAgainst 項。讀不到 BTC 資料時保守處理：兩個方向都要用逆勢的門檻。
    判斷方式：24h＝現價比 24 小時前；day＝現價比今天開盤（台北 08:00）；4h＝現價比 4 小時前 */
 const BTCL = { k: [], at: 0, busy: false };
-const btcRef = (k, t, mode) => {                       // k：BTC 1 小時 K 線（舊→新）；t：判斷的時間點 → 參考價（多久以前的價格）
-  if (mode === 'day') { const d0 = Math.floor((t - 1) / (24 * HOUR)) * 24 * HOUR, b = k.find(x => x.t === d0); return b ? b.o : null; }
-  const back = mode === '4h' ? 4 : 24, b = k.find(x => x.t === Math.floor(t / HOUR) * HOUR - (back + 1) * HOUR);   // 這根 K 棒的收盤＝back 小時前的價格
+const btcRef = (k, t, mode) => {                       // k：BTC 1 小時 K 線（陣列或「開盤時間→K 棒」的 Map）；t：判斷的時間點 → 參考價（多久以前的價格）
+  const get = t0 => (k instanceof Map ? k.get(t0) : k.find(x => x.t === t0));
+  if (mode === 'day') { const b = get(Math.floor((t - 1) / (24 * HOUR)) * 24 * HOUR); return b ? b.o : null; }
+  const back = mode === '4h' ? 4 : 24, b = get(Math.floor(t / HOUR) * HOUR - (back + 1) * HOUR);   // 這根 K 棒的收盤＝back 小時前的價格
   return b ? b.c : null;
 };
 function btcDirFrom(px, ref) { if (!(px > 0 && ref > 0)) return { d: 0, chg: null }; const chg = (px / ref - 1) * 100; return { d: chg > 0 ? 1 : chg < 0 ? -1 : 0, chg: Math.round(chg * 100) / 100 }; }
@@ -693,7 +694,7 @@ async function settle(manual) {
     const end = Date.now(), start = end - ST.rep.days * 24 * HOUR;
     await backtest(ST.rep.btN);
     const r = {
-      id: end, start, end, manual: !!manual, cfg: { ...ST.eq, ...ST.trade, cap: ST.rep.cap, btN: ST.rep.btN },
+      id: end, start, end, manual: !!manual, cfg: { ...ST.eq, ...ST.trade, btc: ST.set.btcF ? { mode: ST.set.btcMode, w: ST.set.btcWith, a: ST.set.btcAgainst } : null, cap: ST.rep.cap, btN: ST.rep.btN },
       bt: simReport(btActive(), start, end, ST.rep.cap), live: simReport(ST.cards, start, end, ST.rep.cap)
     };
     ST.reports.unshift(r); ST.reports = ST.reports.slice(0, 60);
@@ -729,6 +730,9 @@ async function historyReports(periods) {
     const uni = await BN.universe();
     const list = uni.sort((a, b) => b.qv - a.qv).slice(0, ST.rep.btN || uni.length);
     const trades = []; let idx = 0, done = 0;
+    // 🧭 BTC 方向過濾：跟即時進場用同一套規則（BTC 1 小時 K 線多抓 2 天，才算得到最前面的 24 小時漲跌）
+    const bkm = new Map((await getRange(`${BF}/fapi/v1/klines?symbol=BTCUSDT&interval=1h`, HOUR, from - 2 * 24 * HOUR, anchor)).map(r => [+r[0], { t: +r[0], o: +r[1], c: +r[4] }]));
+    const btcAt = et => { const b = bkm.get(et - HOUR); return btcDirFrom(b ? b.c : 0, btcRef(bkm, et, S.btcMode)); };
     const one = async u => {
       const kr = await getRange(`${BF}/fapi/v1/klines?symbol=${u.id}&interval=1h`, HOUR, from, anchor);
       const k = kr.map(r => ({ t: +r[0], o: +r[1], h: +r[2], l: +r[3], c: +r[4], qv: +r[7], d: 2 * +r[10] - +r[7] }));
@@ -752,7 +756,9 @@ async function historyReports(periods) {
       let free = 0;
       for (const { i, D: Dt } of sig) {
         const et = k[i].t + HOUR; if (et < free) continue;
-        const tr = { bt: 1, sym: u.sym, pid: u.id, dir: Dt.dir, abN: Dt.abN, et, entry: k[i].c, recs: [], fav: 0, adv: 0, end: 0, step: 900000 };
+        const B = S.btcF ? btcAt(et) : null;
+        if (B && Dt.abN < btcNeed(Dt.dir, B.d)) continue;      // 沒過 BTC 過濾：不進場，也不擋後面的訊號
+        const tr = { bt: 1, sym: u.sym, pid: u.id, dir: Dt.dir, abN: Dt.abN, et, entry: k[i].c, recs: [], fav: 0, adv: 0, end: 0, step: 900000, btcD: B ? B.d : undefined };
         const seg = bars.filter(b => b.t >= et && b.t - et < TRACK_MAX);
         extend(tr, seg); hourClose(tr, tr, seg, 900000);
         delete tr.fav; delete tr.adv;
@@ -771,7 +777,7 @@ async function historyReports(periods) {
     const out = [];
     for (let p = 0; p < periods; p++) {
       const start = t0 + p * D, end = start + D;
-      out.push({ id: end, start, end, hist: true, cfg: { ...ST.eq, ...ST.trade, cap, btN: ST.rep.btN, noOI: end < now - 30 * 24 * HOUR }, bt: simReport(trades, start, end, cap), live: null });
+      out.push({ id: end, start, end, hist: true, cfg: { ...ST.eq, ...ST.trade, btc: ST.set.btcF ? { mode: ST.set.btcMode, w: ST.set.btcWith, a: ST.set.btcAgainst } : null, cap, btN: ST.rep.btN, noOI: end < now - 30 * 24 * HOUR }, bt: simReport(trades, start, end, cap), live: null });
     }
     ST.reports = ST.reports.filter(r => !r.hist).concat(out).sort((a, b) => b.end - a.end).slice(0, 80);
     if (!live.length) ST.rep.next = anchor + D;                       // 下一次正式結算接在歷史的後面
@@ -1474,7 +1480,7 @@ http.createServer(async (req, res) => {
     }
     if (req.method === 'GET' && u.pathname === '/api/state') {
       const out = {
-        time: Date.now(), ver: '2026-10-19d', cv: CV, bv: BV, set: ST.set, trade: ST.trade, canWrite: !!ADMIN_KEY,
+        time: Date.now(), ver: '2026-10-19e', cv: CV, bv: BV, set: ST.set, trade: ST.trade, canWrite: !!ADMIN_KEY,
         scan: { ...SCAN, pause: RL.pause }, bt: { at: ST.bt.at, coins: ST.bt.coins, n: btActive().length, cmp: btCompare() }, btp: BTP,
         notify: { enabled: X.A.notify.enabled, entry: X.A.notify.entry, exit: X.A.notify.exit, hasHook: !!X.A.notify.webhook, name: X.A.notify.name },
         me: { uid: me ? me.uid : '管理金鑰', admin, owner: X.uid === ownerUid() },
