@@ -520,6 +520,8 @@ body.gated{overflow:hidden}
 .rbadge.adm{color:var(--muted);border:1px solid var(--muted)}
 .rbadge.usr{color:var(--muted);border:1px dashed var(--line)}
 @keyframes ownGlow{0%,100%{box-shadow:0 0 0 0 rgba(255,77,79,.0);color:#ff4d4f}50%{box-shadow:0 0 9px 2px rgba(255,77,79,.55);color:#ff7a7c}}
+.qglink{background:none;border:none;color:var(--muted);text-decoration:underline;padding:6px 0;margin-top:2px;cursor:pointer;width:auto;align-self:center}
+#qgCodeBox{display:flex;flex-direction:column;gap:8px;margin-top:6px}
 .qblabel{font-size:13px;color:var(--muted);margin:2px 0 6px}
 #qbGoogleBtn{min-height:44px}
 .qnetbox{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:10px 0}
@@ -611,8 +613,29 @@ header{align-items:center}
     <label id="qgPw2" hidden>再輸入一次密碼<input id="qg_pw2" type="password" autocomplete="new-password"></label>
     <details class="qgadv"><summary>伺服器網址</summary><label><input id="qg_url" type="url" autocapitalize="off" spellcheck="false"></label></details>
     <button class="btn primary" id="qg_go" type="submit">登入</button>
-    <div id="qg2fa" hidden><p class="qgnote" id="qg2faNote"></p><div id="qg2faBtn"></div></div>
+    <div id="qg2fa" hidden><p class="qgnote" id="qg2faNote"></p><div id="qg2faBtn"></div>
+      <div id="qgCodeBox" hidden><label>信箱收到的 6 位數驗證碼<input id="qg_code" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></label><button class="btn primary" id="qg_codeGo" type="button">確認登入</button></div></div>
     <p class="qgerr" id="qgErr" role="alert"></p>
+    <button class="btn qglink" id="qg_forgot" type="button">忘記密碼？</button>
+  </form>
+  <form class="qgatebox" id="qForgotForm" onsubmit="return false" hidden>
+    <h1>無量空處</h1>
+    <p class="qgsub">忘記密碼</p>
+    <p class="qgnote">輸入你的 Bitunix UID 和綁定的 Gmail，兩個都正確的話，會寄一封重設密碼的信到那個信箱。</p>
+    <label>Bitunix UID<input id="qf_uid" inputmode="numeric" autocomplete="username" autocapitalize="off" spellcheck="false"></label>
+    <label>綁定的 Gmail<input id="qf_email" type="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="example@gmail.com"></label>
+    <button class="btn primary" id="qf_go" type="submit">寄重設密碼的信</button>
+    <p class="qgnote" id="qfMsg" role="status"></p>
+    <button class="btn qglink" id="qf_back" type="button">← 回到登入</button>
+  </form>
+  <form class="qgatebox" id="qResetForm" onsubmit="return false" hidden>
+    <h1>無量空處</h1>
+    <p class="qgsub">設定新密碼</p>
+    <p class="qgnote">設定好之後，這個帳號在所有裝置的登入都會被登出，請用新密碼重新登入。</p>
+    <label>新密碼（至少 8 個字）<input id="qr_pw" type="password" autocomplete="new-password"></label>
+    <label>再輸入一次<input id="qr_pw2" type="password" autocomplete="new-password"></label>
+    <button class="btn primary" id="qr_go" type="submit">設定新密碼</button>
+    <p class="qgerr" id="qrErr" role="alert"></p>
   </form>
   <form class="qgatebox" id="qBindForm" onsubmit="return false" hidden>
     <h1>無量空處</h1>
@@ -719,7 +742,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-20b</div>
+      <div class="qver" id="qVer">網站版本 2026-10-20c</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -985,10 +1008,12 @@ header{align-items:center}
       <label class="field">權限<select id="qa_role"><option value="">不變（新帳號預設一般）</option><option value="viewer">一般（只設定自己的 API、DC、交易）</option><option value="admin">管理員（灰色）</option></select></label>
     </div>
     <div class="qbt" style="margin-top:8px"><button class="btn primary" id="qa_save">儲存</button></div>
-    <h3 style="font-size:14px;margin:16px 0 6px">Google 信箱驗證</h3>
-    <div class="params"><label class="field">Google 用戶端 ID（空白＝讓大家手動輸入 Gmail）<input id="qa_gid" autocomplete="off" spellcheck="false" placeholder="xxxx.apps.googleusercontent.com"></label></div>
+    <h3 style="font-size:14px;margin:16px 0 6px">📧 寄信功能（忘記密碼、擁有者驗證碼）</h3>
+    <p class="qrepnote" id="qa_mail"></p>
+    <details style="margin-top:10px"><summary class="qrepnote" style="cursor:pointer">進階：Google 用戶端 ID（不需要可以不用管）</summary>
+    <div class="params"><label class="field">Google 用戶端 ID（<b>不是</b>填你的 Gmail；空白＝不用 Google 按鈕）<input id="qa_gid" autocomplete="off" spellcheck="false" placeholder="123456789-xxxx.apps.googleusercontent.com"></label></div>
     <div class="qbt" style="margin-top:8px"><button class="btn" id="qa_gsave">儲存</button></div>
-    <p class="qrepnote" id="qa_gnote"></p>
+    <p class="qrepnote" id="qa_gnote"></p></details>
     <div id="qAllBox" hidden>
       <h3 style="font-size:14px;margin:16px 0 6px">👑 所有帳號的自動交易</h3>
       <p class="qrepnote">一鍵讓所有帳號一起暫停或開始。暫停後已經開著的單照常管理（鎖利、失敗線、到期）；開始只會開有設定 Bitunix API 的帳號。每個人的 Discord 都會收到通知。</p>
@@ -3107,7 +3132,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) renderEco(j.eco);
-    $('qVer').textContent = `網站版本 2026-10-20b・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-20c・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -4126,8 +4151,10 @@ $('qbx_clear').onclick = () => { if (confirm('要從伺服器刪除 Bitunix 金�
 $('qbx_pct').onchange = () => tgCall('/api/bitunix', { liqPct: +$('qbx_pct').value });
 /* ---------- 🔐 登入閘門：進網站前要輸入 Bitunix UID 和密碼（驗證在伺服器上做） ---------- */
 let GATE_SETUP = false;
+var RESET_ON = false;                                 // 從信裡的連結打開、正在設定新密碼：其他程式（背景更新）不能把畫面切回登入
 function gateShow(msg) {
-  document.body.classList.add('gated'); $('qGate').hidden = false; $('qGateWait').hidden = true; $('qGateForm').hidden = false;
+  if (RESET_ON) return;
+  document.body.classList.add('gated'); $('qGate').hidden = false; gateForm('qGateForm');
   $('qg_url').value = SRV.url || DEFAULT_SRV; $('qgErr').textContent = msg || '';
   const url = ($('qg_url').value || DEFAULT_SRV).replace(/\/+$/, '');
   fetch(url + '/api/auth', { cache: 'no-store' }).then(r => r.json()).then(j => {
@@ -4136,6 +4163,7 @@ function gateShow(msg) {
     if (GATE_SETUP && SRV.key && !$('qg_key').value) $('qg_key').value = SRV.key;
     $('qgSub').textContent = GATE_SETUP ? '建立第一個管理員帳號' : '請用 Bitunix UID 和密碼登入';
     $('qg_go').textContent = GATE_SETUP ? '建立並登入' : '登入';
+    $('qg_forgot').hidden = GATE_SETUP;
   }).catch(() => { $('qgErr').textContent = (msg ? msg + '　' : '') + '連不到伺服器，請確認網路或伺服器網址。'; });
   setTimeout(() => $(GATE_SETUP ? 'qg_key' : 'qg_uid').focus(), 50);
 }
@@ -4160,6 +4188,26 @@ $('qg_go').onclick = async () => {
     const r = await fetch(url + (GATE_SETUP ? '/api/setup' : '/api/login'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     const j = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(j.error || 'HTTP ' + r.status);
+    if (j.need2fa && j.via === 'mail') {               // 👑 擁有者：密碼對了，再輸入寄到信箱的驗證碼
+      $('qg2fa').hidden = false; $('qgCodeBox').hidden = false; $('qg_go').hidden = true;
+      $('qg2faNote').textContent = `擁有者登入要再輸入驗證碼：已寄到你綁定的信箱（${j.email}），10 分鐘內有效。沒收到請看垃圾郵件。`;
+      $('qg_code').value = ''; setTimeout(() => $('qg_code').focus(), 50);
+      $('qg_codeGo').onclick = async () => {
+        $('qgErr').textContent = ''; $('qg_codeGo').disabled = true;
+        try {
+          const r2 = await fetch(url + '/api/login/code', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pre: j.pre, code: $('qg_code').value.normalize('NFKC').trim() }) });
+          const j2 = await r2.json().catch(() => ({}));
+          if (!r2.ok) throw new Error(j2.error || 'HTTP ' + r2.status);
+          LS.set('quantSrv', Object.assign({}, SRV, { url, token: j2.token, uid: j2.uid, role: j2.role, on: true, key: '' }));
+          location.reload();
+        } catch (e) {
+          $('qgErr').textContent = e.message; $('qg_codeGo').disabled = false;
+          if (/過期|重新來/.test(e.message)) { $('qg2fa').hidden = true; $('qgCodeBox').hidden = true; $('qg_go').hidden = false; $('qg_go').disabled = false; }
+        }
+      };
+      $('qg_code').onkeydown = e => { if (e.key === 'Enter') $('qg_codeGo').click(); };
+      return;
+    }
     if (j.need2fa) {                                   // 👑 擁有者：密碼對了，還要用綁定的 Google 信箱驗證
       $('qg2fa').hidden = false; $('qg_go').hidden = true;
       $('qg2faNote').textContent = `擁有者登入要再用 Google 驗證：請選綁定的信箱（${j.email}），5 分鐘內有效。`;
@@ -4179,6 +4227,38 @@ $('qg_go').onclick = async () => {
     location.reload();
   } catch (e) { $('qgErr').textContent = e.message === 'Failed to fetch' ? '連不到伺服器' : e.message; $('qg_go').disabled = false; }
 };
+/* ---------- 🔑 忘記密碼：寄重設連結到綁定的信箱 ---------- */
+const gateUrl = () => (($('qg_url').value || SRV.url || DEFAULT_SRV).normalize('NFKC').trim()).replace(/\/+$/, '');
+const gateForm = id => { for (const f of ['qGateForm', 'qForgotForm', 'qResetForm', 'qBindForm', 'qGateWait']) $(f).hidden = f !== id; };
+$('qg_forgot').onclick = () => { gateForm('qForgotForm'); $('qf_uid').value = $('qg_uid').value; $('qfMsg').textContent = ''; setTimeout(() => $($('qf_uid').value ? 'qf_email' : 'qf_uid').focus(), 50); };
+$('qf_back').onclick = () => { gateForm('qGateForm'); };
+$('qf_go').onclick = async () => {
+  const uid = $('qf_uid').value.normalize('NFKC').replace(/\s+/g, ''), email = $('qf_email').value.normalize('NFKC').trim();
+  if (!/^\d{4,20}$/.test(uid)) { $('qfMsg').textContent = 'UID 應該是 4～20 位數字'; return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { $('qfMsg').textContent = '請輸入綁定的 Gmail'; return; }
+  $('qf_go').disabled = true; $('qfMsg').textContent = '寄送中…';
+  try {
+    const r = await fetch(gateUrl() + '/api/forgot', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ uid, email }) });
+    const j = await r.json().catch(() => ({}));
+    $('qfMsg').textContent = r.ok ? j.msg : (j.error || 'HTTP ' + r.status);
+  } catch (e) { $('qfMsg').textContent = '連不到伺服器'; }
+  setTimeout(() => { $('qf_go').disabled = false; }, 30000);   // 30 秒內不能連按
+};
+const RESET_TOK = (new URLSearchParams(location.search).get('reset') || '').replace(/[^0-9a-f]/gi, '');
+if (RESET_TOK) history.replaceState(null, '', location.pathname);   // 連結裡的憑證不要留在網址列
+$('qr_go').onclick = async () => {
+  const pw = $('qr_pw').value;
+  if (pw.length < 8) { $('qrErr').textContent = '新密碼至少 8 個字'; return; }
+  if (pw !== $('qr_pw2').value) { $('qrErr').textContent = '兩次輸入的密碼不一樣'; return; }
+  $('qr_go').disabled = true; $('qrErr').textContent = '';
+  try {
+    const r = await fetch((SRV.url || DEFAULT_SRV).replace(/\/+$/, '') + '/api/reset', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: RESET_TOK, password: pw }) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || 'HTTP ' + r.status);
+    LS.set('quantSrv', Object.assign({}, SRV, { token: '', role: '' })); SRV.token = ''; RESET_ON = false;
+    gateShow('✅ 密碼已經更新，請用新密碼登入'); $('qg_uid').value = j.uid || ''; setTimeout(() => $('qg_pw').focus(), 80);
+  } catch (e) { $('qrErr').textContent = e.message; $('qr_go').disabled = false; }
+};
 $('qLogout').onclick = async () => {
   if (!confirm('要登出嗎？')) return;
   try { await fetch(SRV.url.replace(/\/+$/, '') + '/api/logout', { method: 'POST', headers: { Authorization: 'Bearer ' + SRV.token } }); } catch (e) {}
@@ -4186,6 +4266,7 @@ $('qLogout').onclick = async () => {
 };
 (async () => {                                        // 打開網站先驗證，沒登入就擋在門口
   if (!SRV.url) SRV.url = DEFAULT_SRV;
+  if (RESET_TOK) { RESET_ON = true; document.body.classList.add('gated'); $('qGate').hidden = false; gateForm('qResetForm'); setTimeout(() => $('qr_pw').focus(), 50); return; }   // 從信裡的連結打開：先設定新密碼
   if (!SRV.token) return gateShow();                  // 沒有登入憑證一律要登入（以前存在瀏覽器的管理金鑰不能再直接進）
   try {
     const r = await fetch(SRV.url.replace(/\/+$/, '') + '/api/me', { cache: 'no-store', headers: { Authorization: 'Bearer ' + SRV.token } });
@@ -4260,8 +4341,29 @@ async function admLoad() {
     const j = await srvFetch('/api/users');
     if (document.activeElement !== $('qa_gid')) $('qa_gid').value = j.google || '';
     $('qOwnBox').hidden = $('qAllBox').hidden = !OWN();
-    if (OWN()) {                                       // 轉讓擁有者：要 Google 驗證
-      if (!j.google) { $('qo_note').innerHTML = '要先在上面設定 <b>Google 用戶端 ID</b>，才能用 Google 驗證轉讓。'; $('qoGoogle').innerHTML = ''; }
+    $('qa_mail').innerHTML = j.mail && j.mail.on ? `✅ 已設定，從 <b>${esc(j.mail.from)}</b> 寄出。忘記密碼、擁有者登入驗證碼、轉讓擁有者都會用它。`
+      : '❌ <b>還沒設定</b>：忘記密碼不能用、擁有者登入只靠密碼、不能轉讓擁有者。要在主機的 /opt/quant/.env 加上 SMTP_USER 和 SMTP_PASS（Gmail 應用程式密碼）。';
+    if (OWN()) {                                       // 轉讓擁有者：要驗證你綁定的信箱（寄驗證碼；有 Google 用戶端 ID 也可以用 Google 按鈕）
+      if (!j.google) {
+        if (!$('qoGoogle').dataset.mail) {
+          $('qoGoogle').dataset.mail = '1';
+          $('qoGoogle').innerHTML = j.mail && j.mail.on ? '<div class="qbt"><button class="btn" id="qo_send">寄驗證碼到我的信箱</button></div><div class="params" id="qoCodeBox" hidden><label class="field">信箱收到的 6 位數驗證碼<input id="qo_code" inputmode="numeric" maxlength="6"></label></div><div class="qbt" id="qoGoBox" hidden><button class="btn qdanger" id="qo_go">確認轉讓</button></div>' : '';
+          $('qo_note').innerHTML = j.mail && j.mail.on ? '填好 UID 後按「寄驗證碼到我的信箱」，收到後輸入驗證碼再按「確認轉讓」。' : '要先設定上面的<b>寄信功能</b>，才能轉讓（一定要驗證你的信箱）。';
+          let XPRE = '';
+          if ($('qo_send')) $('qo_send').onclick = async () => {
+            const uid = $('qo_uid').value.normalize('NFKC').replace(/\s+/g, '');
+            if (!/^\d{4,20}$/.test(uid)) { $('qo_note').textContent = '請先填要轉讓的 UID'; return; }
+            try { const r = await srvFetch('/api/owner/transfer', { uid }); XPRE = r.pre; $('qoCodeBox').hidden = $('qoGoBox').hidden = false; $('qo_note').textContent = `驗證碼已寄到 ${r.email}，10 分鐘內有效。`; }
+            catch (e) { $('qo_note').textContent = e.message; }
+          };
+          if ($('qo_go')) $('qo_go').onclick = async () => {
+            const uid = $('qo_uid').value.normalize('NFKC').replace(/\s+/g, '');
+            if (!confirm(`確定要把擁有者轉讓給 ${uid} 嗎？\n\n轉讓後你會變成管理員（灰色），不能再改掃描條件、回測、別人的密碼。`)) return;
+            try { await srvFetch('/api/owner/transfer', { uid, pre: XPRE, code: $('qo_code').value.normalize('NFKC').trim() }); alert('已轉讓。'); location.reload(); }
+            catch (e) { $('qo_note').textContent = e.message; }
+          };
+        }
+      }
       else if (!$('qoGoogle').dataset.ready) {
         $('qoGoogle').dataset.ready = '1'; $('qo_note').textContent = '填好 UID 後，按 Google 按鈕用你綁定的信箱驗證，就會完成轉讓。';
         gsiButton($('qoGoogle'), j.google, async cred => {
