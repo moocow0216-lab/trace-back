@@ -1,0 +1,39 @@
+# 🩺 伺服器監控：GitHub 每 15 分鐘從外面檢查一次雲端伺服器
+# 連續 3 次（約 2 分鐘）都連不上，或伺服器回報「掃描超過 10 分鐘沒成功」，就傳 Discord 通知。
+# 需要在 GitHub repo 的 Settings → Secrets and variables → Actions 新增一個 secret：
+#   名稱 DISCORD_WEBHOOK，內容是要收通知的 Discord Webhook 網址
+# 檔案要放在 repo 的 .github/workflows/server-monitor.yml
+name: 伺服器監控
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: 檢查伺服器
+        env:
+          HOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          URL: https://3-107-254-240.sslip.io/api/health
+        run: |
+          for i in 1 2 3; do
+            code=$(curl -s -o body.txt -w '%{http_code}' --max-time 20 "$URL" || echo 000)
+            if [ "$code" = "200" ]; then echo "伺服器正常：$(cat body.txt)"; exit 0; fi
+            echo "第 $i 次檢查失敗（HTTP $code）：$(cat body.txt 2>/dev/null)"
+            sleep 40
+          done
+          if [ "$code" = "503" ]; then
+            msg="🩺 **伺服器還在，但掃描超過 10 分鐘沒成功**（GitHub 外部檢查）\n新訊號會停住，已開的單照常管理。請在 SSH 打 journalctl -u quant -n 50 看原因"
+          else
+            msg="🚨 **伺服器連不到**（GitHub 外部檢查，連續 3 次失敗，HTTP $code）\n自動交易和持倉管理可能已經停止！請到 Lightsail 看主機有沒有在跑，或在 SSH 打 sudo systemctl status quant"
+          fi
+          if [ -n "$HOOK" ]; then
+            curl -s -H "Content-Type: application/json" -d "{\"username\":\"伺服器監控\",\"content\":\"$msg\"}" "$HOOK" || true
+          else
+            echo "沒有設定 DISCORD_WEBHOOK，只能靠 GitHub 寄信通知"
+          fi
+          exit 1
