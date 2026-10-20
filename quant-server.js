@@ -39,7 +39,7 @@ const DEF_REP = { cap: 100, btN: 50, days: 14, next: 0 };                   // �
 let ST = { cards: [], bt: { at: 0, coins: 0, trades: [] }, set: { ...DEF_SET }, trade: { ...DEF_TRADE }, google: { clientId: '' }, eq: { ...DEF_EQ }, rep: { ...DEF_REP }, reports: [], users: [], sessions: [], accts: {}, owner: '' };
 try {
   const j = JSON.parse(fs.readFileSync(FILE, 'utf8'));
-  ST = { cards: j.cards || [], bt: j.bt || ST.bt, set: { ...DEF_SET, ...(j.set || {}) }, trade: { ...DEF_TRADE, ...(j.trade || {}) }, google: { clientId: '', ...(j.google || {}) }, eq: { ...DEF_EQ, ...(j.eq || {}) }, rep: { ...DEF_REP, ...(j.rep || {}) }, reports: j.reports || [], users: j.users || [], sessions: j.sessions || [], aws: j.aws || {}, accts: j.accts || {}, owner: j.owner || '' };
+  ST = { cards: j.cards || [], bt: j.bt || ST.bt, set: { ...DEF_SET, ...(j.set || {}) }, trade: { ...DEF_TRADE, ...(j.trade || {}) }, google: { clientId: '', ...(j.google || {}) }, eq: { ...DEF_EQ, ...(j.eq || {}) }, rep: { ...DEF_REP, ...(j.rep || {}) }, reports: j.reports || [], users: j.users || [], sessions: j.sessions || [], aws: j.aws || {}, accts: j.accts || {}, owner: j.owner || '', bstat: j.bstat || null, hb: j.hb || '' };
   // 舊版（只有一個帳號）：原本的 Bitunix 金鑰、自動交易、實盤紀錄、Discord 搬到擁有者（第一個管理員）的帳號底下
   if (!j.accts && (j.bx || j.lt || j.ltTrades || j.notify)) {
     const a = ST.users.find(u => u.role === 'admin'), uid = a ? a.uid : '__owner';
@@ -852,7 +852,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-20d';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-20e';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1400,6 +1400,52 @@ function whOut(sym, after) {
 setInterval(whPrune, 15000);
 setTimeout(whConnect, 2000);
 
+/* ---------------- 📈 BTC 急漲急跌統計：抓過去 N 天的 BTC 1 分鐘 K 線，算「W 分鐘內漲跌超過 X%」多久發生一次 ----------------
+   一頁一頁抓、只留數字（13 萬根也只佔幾 MB）；同一波行情觸發後 30 分鐘內不重複算 */
+const BSTAT = { busy: false, msg: '', at: 0, v: null };
+async function btcStat(days = 90) {
+  if (BSTAT.busy) return; BSTAT.busy = true; BSTAT.msg = '開始抓 BTC 1 分鐘 K 線…';
+  try {
+    const M = 60000, end = Math.floor(Date.now() / M) * M, from = end - days * 24 * HOUR, N = Math.ceil((end - from) / M);
+    const T = new Float64Array(N), H = new Float64Array(N), L = new Float64Array(N), C = new Float64Array(N); let n = 0;
+    for (let f = from, pg = 0; f < end; f += 1000 * M, pg++) {
+      const rows = await getJSON(`${BF}/fapi/v1/klines?symbol=BTCUSDT&interval=1m&startTime=${f}&limit=1000`);
+      for (const r of rows) { const t = +r[0]; if (t >= end || (n && t <= T[n - 1])) continue; T[n] = t; H[n] = +r[2]; L[n] = +r[3]; C[n] = +r[4]; n++; }
+      BSTAT.msg = `抓 K 線中…${Math.min(100, Math.round((pg + 1) * 1000 / N * 100))}%`;
+    }
+    if (n < 1000) throw new Error('抓到的 K 線太少');
+    BSTAT.msg = '計算中…';
+    const span = (T[n - 1] - T[0]) / (7 * 24 * HOUR), COOL = 30;   // 幾週、觸發後冷卻幾分鐘
+    const scan = (W, thr, dir) => {                     // dir 1＝急漲（現在的高點比 W 分鐘內最低點高 thr%）；-1＝急跌
+      const ev = [];
+      for (let i = W; i < n; i++) {
+        let ext = dir > 0 ? Infinity : 0;
+        for (let k = i - W + 1; k <= i; k++) ext = dir > 0 ? Math.min(ext, L[k]) : Math.max(ext, H[k]);
+        const mv = dir > 0 ? H[i] / ext - 1 : 1 - L[i] / ext;
+        if (mv * 100 >= thr) { ev.push(i); i += COOL; }
+      }
+      return ev;
+    };
+    const Ws = [3, 5, 10, 15], Ts = [0.5, 0.75, 1, 1.5, 2], grid = [];
+    for (const W of Ws) for (const thr of Ts) {
+      const up = scan(W, thr, 1), dn = scan(W, thr, -1);
+      grid.push({ W, thr, up: up.length, dn: dn.length, upW: Math.round(up.length / span * 10) / 10, dnW: Math.round(dn.length / span * 10) / 10 });
+    }
+    // 以「5 分鐘 1%」為例：觸發後 30、60 分鐘是繼續往同方向，還是拉回來（用觸發那根 K 棒的收盤價當作「我們出手的價格」）
+    const after = (dir) => scan(5, 1, dir).map(i => {
+      const p0 = C[i], at = (m) => (i + m < n ? (C[i + m] / p0 - 1) * 100 * dir : null);
+      let more = 0, back = 0; for (let k = i + 1; k <= Math.min(n - 1, i + 60); k++) { more = Math.max(more, ((dir > 0 ? H[k] : L[k]) / p0 - 1) * 100 * dir); back = Math.min(back, ((dir > 0 ? L[k] : H[k]) / p0 - 1) * 100 * dir); }
+      return { t: T[i], px: p0, a30: at(30), a60: at(60), more: Math.round(more * 100) / 100, back: Math.round(back * 100) / 100 };
+    });
+    const sum = list => { const d = list.filter(x => x.a30 !== null); return { n: list.length, cont30: d.filter(x => x.a30 > 0).length, rev30: d.filter(x => x.a30 <= 0).length, avg30: d.length ? Math.round(d.reduce((a, x) => a + x.a30, 0) / d.length * 100) / 100 : null, avgMore: list.length ? Math.round(list.reduce((a, x) => a + x.more, 0) / list.length * 100) / 100 : null }; };
+    const up = after(1), dn = after(-1);
+    BSTAT.v = { at: Date.now(), from: T[0], to: T[n - 1], bars: n, weeks: Math.round(span * 10) / 10, cool: COOL, grid, up: { ...sum(up), list: up.slice(-15).reverse() }, dn: { ...sum(dn), list: dn.slice(-15).reverse() } };
+    BSTAT.at = Date.now(); BSTAT.msg = ''; ST.bstat = BSTAT.v; dirty = true;
+    log('BTC 急漲急跌統計完成', n, '根 K 線');
+  } catch (e) { BSTAT.msg = '統計失敗：' + e.message; log('BTC 急漲急跌統計失敗', e.message); }
+  BSTAT.busy = false;
+}
+
 /* ---------------- 🩺 伺服器健康：出問題就傳 Discord，每天早上回報一次 ---------------- */
 const BOOT = Date.now(), HL = { scanBad: 0, bx: {} };
 function healthTick() {
@@ -1732,7 +1778,7 @@ http.createServer(async (req, res) => {
     if (req.method === 'GET' && u.pathname === '/api/state') {
       const out = {
         time: Date.now(), ver: VER, cv: CV, bv: BV * 2 + (X.A.lt.btcF ? 1 : 0), set: ST.set, trade: ST.trade, canWrite: !!ADMIN_KEY,
-        scan: { ...SCAN, pause: RL.pause }, bt: { at: ST.bt.at, coins: ST.bt.coins, n: btActive().length, cmp: btCompare() }, btp: BTP,
+        scan: { ...SCAN, pause: RL.pause }, bt: { at: ST.bt.at, coins: ST.bt.coins, n: btActive().length, cmp: btCompare() }, btp: BTP, bstat: { busy: BSTAT.busy, msg: BSTAT.msg, v: BSTAT.v || ST.bstat || null },
         notify: { enabled: X.A.notify.enabled, entry: X.A.notify.entry, exit: X.A.notify.exit, hasHook: !!X.A.notify.webhook, name: X.A.notify.name },
         me: { uid: me ? me.uid : '管理金鑰', admin: !!admin, owner: !!owner },
         eq: ST.eq, rep: { ...ST.rep, busy: REP.busy, msg: REP.msg }, rv: RV,
@@ -1792,6 +1838,11 @@ http.createServer(async (req, res) => {
         me.bind = { email, phone, google, at: Date.now() }; dirty = true;
         log('帳號綁定', me.uid, email, google ? '（Google 驗證）' : '（手動輸入）');
         return send(res, 200, { ok: true, bind: bindOut(me) });
+      }
+      if (u.pathname === '/api/btcstat') {             // 📈 擁有者：統計 BTC 急漲急跌（背景跑，大約 1～2 分鐘）
+        if (BSTAT.busy) return send(res, 400, { error: '還在統計中' });
+        btcStat(Math.min(180, Math.max(7, +b.days || 90)));
+        return send(res, 200, { ok: true });
       }
       if (u.pathname === '/api/lt/all') {             // 👑 擁有者：所有帳號一起暫停／開始自動交易（沒有 API 的帳號跳過）
         if (typeof b.on !== 'boolean') return send(res, 400, { error: '要指定開始或暫停' });
