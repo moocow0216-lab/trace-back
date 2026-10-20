@@ -57,12 +57,55 @@ let CV = Date.now(), BV = Date.now();                  // 卡片、回測各自�
 let dirty = false;
 const touchCards = () => { CV++; dirty = true; };
 const touchBT = () => { BV++; dirty = true; };
+// 🔒 存檔時把 Bitunix 金鑰和 Discord Webhook 加密（AES-256-GCM）；解密的鑰匙放在 data/secret.key（權限 600），
+//    所以 state.json 或備份檔被複製走，也看不到金鑰。secret.key 不見的話，大家要重新輸入 API。
+const KEYFILE = path.join(path.dirname(FILE), 'secret.key');
+let SKEY = null;
+try { SKEY = Buffer.from(fs.readFileSync(KEYFILE, 'utf8').trim(), 'hex'); if (SKEY.length !== 32) SKEY = null; } catch (e) {}
+if (!SKEY) { SKEY = crypto.randomBytes(32); fs.writeFileSync(KEYFILE, SKEY.toString('hex'), { mode: 0o600 }); log('建立新的加密鑰匙', KEYFILE); }
+function enc(v) {
+  if (!v || String(v).startsWith('enc1:')) return v;
+  const iv = crypto.randomBytes(12), c = crypto.createCipheriv('aes-256-gcm', SKEY, iv), d = Buffer.concat([c.update(String(v), 'utf8'), c.final()]);
+  return 'enc1:' + Buffer.concat([iv, c.getAuthTag(), d]).toString('base64');
+}
+function dec(v) {
+  if (!v || !String(v).startsWith('enc1:')) return v;
+  const b = Buffer.from(String(v).slice(5), 'base64'), dc = crypto.createDecipheriv('aes-256-gcm', SKEY, b.subarray(0, 12));
+  dc.setAuthTag(b.subarray(12, 28)); return Buffer.concat([dc.update(b.subarray(28)), dc.final()]).toString('utf8');
+}
+function snapshot() {                                  // 要寫進檔案的內容：金鑰、Webhook 加密
+  const accts = {};
+  for (const [id, A] of Object.entries(ST.accts)) accts[id] = { ...A, bx: { ...A.bx, key: enc(A.bx.key), secret: enc(A.bx.secret) }, notify: { ...A.notify, webhook: enc(A.notify.webhook) } };
+  return JSON.stringify({ ...ST, accts });
+}
 function save() {
   if (!dirty) return; dirty = false;
   const tmp = FILE + '.tmp';
-  fs.writeFileSync(tmp, JSON.stringify(ST), { mode: 0o600 });   // 裡面有 Discord Webhook 和 Bitunix 金鑰，只給自己讀
+  fs.writeFileSync(tmp, snapshot(), { mode: 0o600 });   // 只給自己讀
   fs.renameSync(tmp, FILE);
 }
+// 讀檔時解密；解不開（secret.key 換了）就清掉，請那個帳號重新輸入
+for (const [id, A] of Object.entries(ST.accts)) {
+  for (const [o, k] of [[A.bx, 'key'], [A.bx, 'secret'], [A.notify, 'webhook']]) {
+    try { o[k] = dec(o[k]); } catch (e) { o[k] = ''; log('金鑰解不開，已清除，請重新輸入', id, k); }
+  }
+}
+if (Object.keys(ST.accts).length) dirty = true;   // 開機後馬上用加密格式重存一次（舊的明文存檔會被換掉）
+
+// ===== 🗂 每天自動備份（保留 7 天，金鑰一樣是加密的） =====
+const BACKUP_DIR = path.join(path.dirname(FILE), 'backups');
+function backupTick() {
+  try {
+    const day = new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 10), f = path.join(BACKUP_DIR, `state-${day}.json`);
+    if (fs.existsSync(f)) return;
+    fs.mkdirSync(BACKUP_DIR, { recursive: true, mode: 0o700 });
+    fs.writeFileSync(f, snapshot(), { mode: 0o600 });
+    const old = fs.readdirSync(BACKUP_DIR).filter(x => /^state-\d{4}-\d{2}-\d{2}\.json$/.test(x)).sort().slice(0, -7);
+    for (const x of old) fs.unlinkSync(path.join(BACKUP_DIR, x));
+    log('每日備份', f, old.length ? `，刪掉 ${old.length} 個舊備份` : '');
+  } catch (e) { log('備份失敗', e.message); }
+}
+setTimeout(backupTick, 5 * 60000); setInterval(backupTick, 6 * HOUR);   // 每 6 小時看一次，當天還沒備份就備份
 setInterval(() => { try { save(); } catch (e) { log('存檔失敗', e.message); } }, 10000);
 for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => { dirty = true; try { save(); } catch (e) {} process.exit(0); });
 
@@ -253,7 +296,14 @@ function stillOpen(c) {
 }
 
 /* ---------------- 判斷一筆單有沒有結單（跟網頁同一套規則） ---------------- */
+// 🔄 反手：同一個幣出現反方向訊號，舊訊號在 flipAt 那一刻用當時價格 flipPx 結束（之前已經結單的就照原本的結果）
 function evalTrade(c) {
+  const E = evalTrade1(c);
+  if (!c.flipAt || (!E.open && (E.exitAt || 0) <= c.flipAt)) return E;
+  const pnl = Math.round(c.dir * (c.flipPx / c.entry - 1) * ST.trade.lev * 1000) / 10;
+  return { st: E.st === 'win' ? 'win' : 'timeout', at: E.st === 'win' ? E.at : c.flipAt, exitAt: c.flipAt, pnl, how: 'flip' };
+}
+function evalTrade1(c) {
   const T = ST.trade, tr = c.trk || c;
   let recs = tr.recs || [];
   const lv = (tr.lv || []).filter(p => !tr.end || p[0] >= tr.end + (tr.step || 60000));
@@ -346,8 +396,8 @@ function notifyEntry(c) {
 }
 function notifyExit(c, E) {
   const T = ST.trade;
-  const head = E.st === 'win' ? '✅ **成功**' : E.st === 'timeout' ? '⏱ **逾時**' : '❌ **失敗**';
-  const how = E.how === 'lock' ? `（跑回鎖利線 +${E.pnl}% 出場）` : E.how === 'hold' ? `（持有到 ${T.hold} 小時到期）` : E.st === 'amb' ? '（同一根 K 棒兩邊都碰到，保守算失敗）' : '';
+  const head = E.how === 'flip' ? '🔄 **反手**' : E.st === 'win' ? '✅ **成功**' : E.st === 'timeout' ? '⏱ **逾時**' : '❌ **失敗**';
+  const how = E.how === 'flip' ? '（出現反方向訊號，用當時價格結束）' : E.how === 'lock' ? `（跑回鎖利線 +${E.pnl}% 出場）` : E.how === 'hold' ? `（持有到 ${T.hold} 小時到期）` : E.st === 'amb' ? '（同一根 K 棒兩邊都碰到，保守算失敗）' : '';
   const pnl = (E.pnl > 0 ? '+' : E.pnl < 0 ? '−' : '') + Math.abs(E.pnl).toFixed(0) + '%';
   dcAll(`📡 **訊號模擬結果**｜${head} ${c.dir > 0 ? '做多' : '做空'} **${mdEsc(c.sym)}** **${pnl}**${how}\n` +
     `訊號價 ${fpx(c.entry)}（${tw(c.et)}）\n持有 ${durTxt((E.exitAt || Date.now()) - c.et)}・${T.lev}x\n-# 這是訊號的模擬結果，不代表交易所的倉位已經平倉`, (N, X) => N.enabled && N.exit && !(X.A.lt.btcF && c.btcPass === false));
@@ -418,7 +468,11 @@ function addCard(r) {
   r.why = reason(r);
   // 同一個幣還有單沒結單 → 不開新單。同方向就更新一下「最後偵測」的數字；反方向直接忽略
   const live = ST.cards.find(c => c.sym === r.sym && c.et && isLive(c));
-  if (live) {
+  if (live && live.dir !== r.dir) {                    // 🔄 反方向訊號：舊訊號用現價結束，接著開新訊號（實盤也跟著反手）
+    live.flipAt = now; live.flipPx = PX.map[live.pid] || r.last; live.flipTo = r.dir;
+    log('反手', r.sym, live.dir > 0 ? '多→空' : '空→多');
+    touchCards();
+  } else if (live) {
     if (live.dir === r.dir) {
       // 原本沒過 BTC 過濾、這次異常項數夠了：開著過濾的帳號現在才進場（沒開過濾的帳號當初就進了）
       const late = live.btcPass === false && r.btcPass;
@@ -436,11 +490,11 @@ function addCard(r) {
   touchCards();
   if (c.btcPass === false) SCAN.btcSkip++;
   notifyEntry(c);
-  for (const X of allX()) if (X.A.lt.on) ltOpen(X, c);   // 每個「開始交易」的帳號各自用自己的金鑰下單
+  for (const X of allX()) if (X.A.lt.on) ltFlipOpen(X, c);   // 每個「開始交易」的帳號各自用自己的金鑰下單（手上有反方向的自動單就先反手平倉）
 }
 async function scan() {
   if (SCAN.running) return; SCAN.running = true;
-  if (ST.set.btcF) { await btcRefresh(); SCAN.btc = btcNow(); } else SCAN.btc = null;
+  await btcRefresh(); SCAN.btc = btcNow();              // 每個帳號自己決定要不要過濾，BTC 方向一律更新
   const t0 = Date.now(); SCAN.err = ''; SCAN.done = 0; SCAN.found = 0;
   try {
     const uni = await BN.universe(), S = ST.set;
@@ -449,6 +503,7 @@ async function scan() {
     let idx = 0;
     const worker = async () => { while (idx < flat.length) { const u = flat[idx++]; try { const r = await analyze(u); if (r) { SCAN.found++; addCard(r); } } catch (e) {} SCAN.done++; } };
     await Promise.all(Array.from({ length: 8 }, worker));
+    SCAN.okAt = Date.now();
   } catch (e) { SCAN.err = e.message; log('掃描失敗', e.message); }
   SCAN.last = Date.now(); SCAN.dur = SCAN.last - t0; SCAN.running = false;
 }
@@ -796,7 +851,8 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    ST.accts[uid] = { bx, lt, ltTrades, notify }（會存檔）；X = 帳號執行中的暫存（持倉、帳戶資金、下單鎖、版本號）
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
-const OWNER_UID = '852639358';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const OWNER_UID = '852639358';
+const VER = '2026-10-20b';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -947,7 +1003,8 @@ async function ltOpen(X, c) {
       await bxPost('/api/v1/futures/account/change_leverage', { symbol: c.sym, leverage: lev, marginCoin: 'USDT' }, K);
       LT.lev[c.sym] = key;
     }
-    const T = TT(X), slPx = px * (1 - c.dir * T.sl / 100 / lev), qp = +pr.quotePrecision || 4;
+    // 失敗線用「設定的槓桿」換算價格（例如 100x、−250% ＝ 價格反向 2.5%）；幣只支援 50x 時實際虧損是 −125%，但跟訊號模擬同一個價格出場
+    const T = TT(X), slPx = px * (1 - c.dir * T.sl / 100 / C.lev), qp = +pr.quotePrecision || 4;
     const base = { symbol: c.sym, qty: String(qty), side: c.dir > 0 ? 'BUY' : 'SELL', tradeSide: 'OPEN', orderType: 'MARKET', clientId: 'q' + Date.now().toString(36) };
     let o, exSL = true;
     try { o = await bxPost('/api/v1/futures/trade/place_order', { ...base, slPrice: pxStr(slPx, qp), slStopType: 'MARK_PRICE', slOrderType: 'MARKET' }, K); }
@@ -961,13 +1018,61 @@ async function ltOpen(X, c) {
     const t = {
       id: 'lt-' + Date.now(), sym: c.sym, dir: c.dir, card: c.id, abN: c.abN, et: Date.now(), lev,
       entry: p ? num(p.avgOpenPrice) : px, qty: p ? num(p.qty) : qty, qty0: p ? num(p.qty) : qty, margin: p ? num(p.margin) : C.margin, m0: p ? num(p.margin) || C.margin : C.margin,
-      positionId: p ? String(p.positionId) : '', orderId: o && o.orderId, status: 'open', realized: 0, fee: p ? num(p.fee) : 0, funding: 0, closes: [], locked: false, fav: 0, adv: 0, exSL, prec: +pr.basePrecision || 0, minQty: +pr.minTradeVolume || 0
+      positionId: p ? String(p.positionId) : '', orderId: o && o.orderId, status: 'open', ruleLev: C.lev, realized: 0, fee: p ? num(p.fee) : 0, funding: 0, closes: [], locked: false, fav: 0, adv: 0, exSL, prec: +pr.basePrecision || 0, minQty: +pr.minTradeVolume || 0
     };
     X.A.ltTrades.unshift(t); X.A.ltTrades = X.A.ltTrades.slice(0, 2000); touchLT(X);
     log('自動開倉', X.uid, c.sym, c.dir > 0 ? '做多' : '做空', qty, '@', t.entry);
     dcX(X, `🤖 **自動開倉** ${c.dir > 0 ? '🟢 做多' : '🔴 做空'} **${mdEsc(c.sym)}**\n成交價 ${fpx(t.entry)}・${lev}x 全倉・數量 ${t.qty}・保證金約 ${t.margin.toFixed(2)}U\n${exSL ? `交易所止損 ${fpx(slPx)}（−${T.sl}%）` : '⚠️ 交易所止損沒設成功，改由伺服器監控'}`);
   } catch (e) { LT.msg = `${c.sym} 自動下單失敗：${e.message}`; log(X.uid, LT.msg); dcX(X, `❗ **自動下單失敗** ${mdEsc(c.sym)}：${mdEsc(e.message)}`); }
   finally { LT.busy.delete(c.sym); }
+}
+// 🛡 把交易所上的止損改成目前設定的浮虧 %：先改「持倉止損」，沒有的話就新掛一張；舊的止損單取消掉
+async function ltSyncSL(X) {
+  const K = X.A.bx, T = TT(X), ok = [], bad = [], skip = [];
+  for (const t of ltOpenTrades(X)) {
+    if (!t.positionId) continue;
+    const rl = t.ruleLev || t.lev, slPx = t.entry * (1 - t.dir * T.sl / 100 / rl), px = PX.map[t.sym];
+    if (px > 0 && t.dir * (px - slPx) <= 0) { skip.push(t.sym); continue; }     // 現價已經超過新的止損：伺服器下一輪就會平倉，不用掛
+    const pr = await ltPair(t.sym).catch(() => null), sp = pxStr(slPx, pr ? +pr.quotePrecision || 4 : 6);
+    const body = { symbol: t.sym, positionId: t.positionId, slPrice: sp, slStopType: 'MARK_PRICE' };
+    let oid = null;
+    try { oid = (await bxPost('/api/v1/futures/tpsl/position/modify_order', body, K) || {}).orderId; }
+    catch (e1) {
+      try { oid = (await bxPost('/api/v1/futures/tpsl/position/place_order', body, K) || {}).orderId; }
+      catch (e2) { bad.push(`${t.sym}（${e2.message}）`); continue; }
+    }
+    try {                                              // 其他價格不一樣的止損單取消，免得舊的比較近先觸發
+      const L = await bxGet('/api/v1/futures/tpsl/get_pending_orders', { symbol: t.sym, positionId: t.positionId, limit: 20 }, K);
+      for (const o of Array.isArray(L) ? L : []) if (o.slPrice && String(o.id) !== String(oid) && Math.abs(+o.slPrice / slPx - 1) > 1e-6) await bxPost('/api/v1/futures/tpsl/cancel_order', { symbol: t.sym, orderId: String(o.id) }, K).catch(() => {});
+    } catch (e) {}
+    t.slPx = slPx; t.exSL = true; ok.push(t.sym);
+    await sleep(250);
+  }
+  touchLT(X);
+  if (ok.length || bad.length) dcX(X, `🛡 **交易所止損已改成 −${T.sl}%**：成功 ${ok.length} 筆${bad.length ? `，失敗 ${bad.length} 筆：${mdEsc(bad.join('、'))}` : ''}${skip.length ? `；${skip.join('、')} 已經超過新的止損，伺服器會直接平倉` : ''}\n-# 改失敗的單，伺服器還是會照 −${T.sl}% 幫你平倉`);
+}
+// 🔄 反手：手上有這個幣「反方向」的自動單 → 先市價平掉、確認倉位消失，再照新訊號開倉（手動單不動）
+async function ltFlipOpen(X, c) {
+  const LT = X.LT, opp = ltOpenTrades(X).filter(t => t.sym === c.sym && t.dir !== c.dir && t.positionId);
+  if (!opp.length) return ltOpen(X, c);
+  if (X.A.lt.btcF && c.btcPass === false) { LT.msg = `${c.sym} 出現反方向訊號，但沒過 BTC 方向過濾，維持原本的單`; return; }
+  if (LT.flip && LT.flip.has(c.sym)) return;
+  (LT.flip = LT.flip || new Set()).add(c.sym);
+  try {
+    for (const t of opp) {
+      t.closing = true;                                // 不讓每 3 秒的管理同時去平這一筆
+      try { await ltClosePos(X, t.positionId, 1, 'flip'); }
+      catch (e) { t.closing = false; dcX(X, `❗ **反手失敗** ${mdEsc(c.sym)}：原本的${t.dir > 0 ? '多單' : '空單'}平不掉（${mdEsc(e.message)}），不開新單`); return; }
+    }
+    for (let i = 0; i < 8; i++) {                      // 等交易所確認倉位真的沒了（最多約 12 秒）
+      await sleep(1500); await bxPollOne(X);
+      if (!X.BX.pos.some(p => p.sym === c.sym && p.dir !== c.dir) && !ltOpenTrades(X).some(t => t.sym === c.sym && t.dir !== c.dir)) break;
+    }
+    for (const t of opp) t.closing = false;
+    if (X.BX.pos.some(p => p.sym === c.sym)) { dcX(X, `❗ **反手**：${mdEsc(c.sym)} 原本的倉位還在，這次不開新單，請到交易所確認`); return; }
+    dcX(X, `🔄 **反手** ${mdEsc(c.sym)}：原本的${opp[0].dir > 0 ? '多單' : '空單'}已平倉，改${c.dir > 0 ? '做多' : '做空'}`);
+    await ltOpen(X, c);
+  } finally { LT.flip.delete(c.sym); }
 }
 // 平倉：pct＝1 全部（閃電平倉）；其他比例用市價平倉單
 function closeBody(p, q) {
@@ -1009,15 +1114,16 @@ async function ltManage() { for (const X of allX()) { if (X.managing || !ltOpenT
 async function ltManageX(X) {
   const T = TT(X), now = Date.now();
   for (const t of ltOpenTrades(X)) {
-    const px = PX.map[t.sym]; if (!(px > 0) || !t.positionId || t.closing) continue;
-    const roe = t.dir * (px / t.entry - 1) * t.lev * 100;
+    const px = PX.map[t.sym]; if (!(px > 0) || !t.positionId || t.closing || (X.LT.flip && X.LT.flip.has(t.sym))) continue;
+    const rl = t.ruleLev || t.lev;                     // 規則用的槓桿：新單＝你設定的槓桿（跟訊號模擬一致）；更新前開的舊單照原本的實際槓桿
+    const roe = t.dir * (px / t.entry - 1) * rl * 100;
     t.cur = px; t.roe = roe; t.fav = Math.max(t.fav || 0, roe); t.adv = Math.min(t.adv || 0, roe);
     let why = '';
     if (roe <= -T.sl) why = 'fail';
     else if (T.exit === 'fixed') { if (roe >= T.tp) why = 'win'; }
     else if (t.fav >= T.tp) {                            // 鎖利：最高浮盈每多 step%，鎖利線就往上調一格，只升不降
       const lv = Math.max(lockAt(t.fav, T), t.lockLv || 0);
-      if (!t.locked) { t.locked = true; touchLT(X); dcX(X, `🤖 **實盤**｜🔒 **達標鎖利** ${mdEsc(t.sym)}（${t.lev}x）：浮盈 +${roe.toFixed(0)}%，鎖利線 **+${lv}%**${T.step > 0 ? `\n之後浮盈每多 ${T.step}% 鎖利線就往上調一次，跑回鎖利線就平倉` : `，之後跑回 +${lv}% 就平倉`}`); }
+      if (!t.locked) { t.locked = true; touchLT(X); dcX(X, `🤖 **實盤**｜🔒 **達標鎖利** ${mdEsc(t.sym)}（${t.lev}x${rl !== t.lev ? `，照 ${rl}x 換算` : ''}）：浮盈 +${roe.toFixed(0)}%，鎖利線 **+${lv}%**${T.step > 0 ? `\n之後浮盈每多 ${T.step}% 鎖利線就往上調一次，跑回鎖利線就平倉` : `，之後跑回 +${lv}% 就平倉`}`); }
       else if (lv > (t.lockLv || T.tp)) { touchLT(X); dcX(X, `🤖 **實盤**｜🔒 **鎖利上調** ${mdEsc(t.sym)}：浮盈 +${roe.toFixed(0)}%，鎖利線調到 **+${lv}%**`); }
       t.lockLv = lv;
       if (roe < lv) why = 'lock';
@@ -1063,7 +1169,7 @@ async function ltReconcile(X, pos) {
     const prevPart = t.closes.reduce((a, c) => a + c.pnl, 0);
     t.closes.push({ t: Date.now(), qty: t.qty, pnl: (t.realized || 0) - prevPart, by: reason });
     Object.assign(t, { status: 'closed', exitAt: Date.now(), reason, qty: 0, upnl: 0 }); ch = true;
-    const net = ltNet(t), nm = '🤖 **實盤平倉**｜' + ({ win: '✅ 達標出場', lock: `🔒 鎖利出場（鎖利線 +${t.lockLv || ST.trade.tp}%）`, fail: '❌ 失敗線出場', timeout: '⏱ 持有到期出場', manual: '🖐 手動平倉', all: '🛑 一鍵平倉（自動單）', liq: '💥 強平', exchange: '📤 交易所平倉（止損或在 App 平倉）' }[reason] || reason);
+    const net = ltNet(t), nm = '🤖 **實盤平倉**｜' + ({ win: '✅ 達標出場', lock: `🔒 鎖利出場（鎖利線 +${t.lockLv || ST.trade.tp}%）`, fail: '❌ 失敗線出場', timeout: '⏱ 持有到期出場', manual: '🖐 手動平倉', all: '🛑 一鍵平倉（自動單）', flip: '🔄 反手平倉', liq: '💥 強平', exchange: '📤 交易所平倉（止損或在 App 平倉）' }[reason] || reason);
     dcX(X, `${nm} **${mdEsc(t.sym)}** ${t.dir > 0 ? '做多' : '做空'}\n淨損益 **${net >= 0 ? '+' : '−'}${Math.abs(net).toFixed(2)}U**（${(net / (t.m0 || X.A.lt.margin) * 100).toFixed(0)}%）・持有 ${durTxt(Date.now() - t.et)}${t.closePx ? `・平倉均價 ${fpx(t.closePx)}` : ''}`);
   }
   // 單日虧損上限（台北時間每天 00:00 重算）
@@ -1294,6 +1400,31 @@ function whOut(sym, after) {
 setInterval(whPrune, 15000);
 setTimeout(whConnect, 2000);
 
+/* ---------------- 🩺 伺服器健康：出問題就傳 Discord，每天早上回報一次 ---------------- */
+const BOOT = Date.now(), HL = { scanBad: 0, bx: {} };
+function healthTick() {
+  const now = Date.now(), OX = ctx(ownerUid());
+  // 掃描超過 10 分鐘沒成功（幣安連不到、程式卡住）→ 告訴擁有者；一小時最多一次，恢復時也說一聲
+  const age = now - (SCAN.okAt || BOOT);
+  if (age > 10 * 60000) { if (now - HL.scanBad > HOUR) { HL.scanBad = now; dcX(OX, `🩺 **掃描已經 ${Math.round(age / 60000)} 分鐘沒成功**${SCAN.err ? `：${mdEsc(SCAN.err)}` : ''}\n新訊號會停住，已開的單照常管理。持續沒恢復請在 SSH 打 \`journalctl -u quant -n 50\` 看原因`); } }
+  else if (HL.scanBad) { HL.scanBad = 0; dcX(OX, '🩺 **掃描恢復正常**'); }
+  // 每個帳號：Bitunix 連續 5 分鐘讀不到 → 告訴那個帳號（讀不到就沒辦法管理持倉）
+  for (const X of allX()) {
+    if (!hasKey(X)) continue;
+    const bad = X.BX.err && now - (X.BX.at || BOOT) > 5 * 60000, H = HL.bx[X.uid] || (HL.bx[X.uid] = { at: 0 });
+    if (bad) { if (now - H.at > HOUR) { H.at = now; dcX(X, `🩺 **讀不到你的 Bitunix 帳戶已經 ${Math.round((now - (X.BX.at || BOOT)) / 60000)} 分鐘**：${mdEsc(X.BX.err)}\n這段時間伺服器沒辦法幫你管理持倉（鎖利、到期）。常見原因：API 金鑰被刪、IP 白名單不對、Bitunix 維護`); } }
+    else if (H.at) { H.at = 0; dcX(X, '🩺 **Bitunix 帳戶恢復連線**'); }
+  }
+  // 每天早上 9 點（台北）跟擁有者回報一次：沒收到這則，就代表伺服器可能掛了
+  const tp = new Date(now + TZ), day = tp.toISOString().slice(0, 10);
+  if (tp.getUTCHours() >= 9 && ST.hb !== day) {
+    ST.hb = day; dirty = true;
+    const XS = allX(), on = XS.filter(X => X.A.lt.on).length, open = XS.reduce((a, X) => a + ltOpenTrades(X).length, 0), mem = process.memoryUsage().rss / 1048576;
+    dcX(OX, `🩺 **伺服器正常**（每天早上 9 點回報）\n版本 ${VER}・已連續運作 ${durTxt(now - BOOT)}・記憶體 ${mem.toFixed(0)}MB\n帳號 ${ST.users.length} 個（自動交易運作中 ${on} 個）・自動單持倉 ${open} 筆・最後成功掃描 ${tw(SCAN.okAt || BOOT)}\n-# 哪天早上沒收到這則，請檢查伺服器`);
+  }
+}
+setInterval(healthTick, 60000);
+
 /* ---------------- 💰 AWS 帳單提醒（傳到 Discord） ----------------
    伺服器沒有 AWS 帳號權限，讀不到真正的帳單，所以是用「主機建立日」推算：
    Lightsail $5 方案從建立起大約 90 天免費 → 結束前 7 天、前 1 天、結束當天各提醒一次；之後每月 1 號提醒一次。 */
@@ -1424,14 +1555,19 @@ async function googleEmail(cred, cid) {               // 向 Google 確認登入
   if (!j || j.aud !== cid || !['accounts.google.com', 'https://accounts.google.com'].includes(j.iss) || String(j.email_verified) !== 'true' || !(+j.exp * 1000 > Date.now()) || !j.email) return '';
   return String(j.email).toLowerCase();
 }
+const PRE = new Map();                                 // 擁有者登入：密碼過了、等 Google 驗證的暫時憑證（5 分鐘）
 const pick = (o, keys) => Object.fromEntries(keys.filter(k => o[k] !== undefined).map(k => [k, o[k]]));
 http.createServer(async (req, res) => {
   try {
     if (req.method === 'OPTIONS') return send(res, 204, {});
     const u = new URL(req.url, 'http://x');
     if (req.method === 'GET' && u.pathname === '/api/ping') return send(res, 200, { ok: true, time: Date.now() });
+    if (req.method === 'GET' && u.pathname === '/api/health') {   // 給外部監控用：掃描 10 分鐘沒成功就回 503（不需要登入，也不透露任何帳號資料）
+      const age = Date.now() - (SCAN.okAt || BOOT);
+      return send(res, age < 10 * 60000 ? 200 : 503, { ok: age < 10 * 60000, scanAgeS: Math.round(age / 1000), up: Math.round((Date.now() - BOOT) / 1000) });
+    }
     if (req.method === 'GET' && u.pathname === '/api/auth') return send(res, 200, { needSetup: !ST.users.length });
-    if (req.method === 'POST' && ['/api/login', '/api/setup', '/api/logout'].includes(u.pathname)) {
+    if (req.method === 'POST' && ['/api/login', '/api/setup', '/api/logout', '/api/login/google'].includes(u.pathname)) {
       const ip = ipOf(req), b = await readBody(req, 1e5);
       if (u.pathname === '/api/logout') { const m = String(req.headers.authorization || '').match(/^Bearer\s+(\w+)$/); if (m) { const h = tokHash(m[1]); ST.sessions = ST.sessions.filter(x => x.h !== h); dirty = true; } return send(res, 200, { ok: true }); }
       if (locked(ip)) return send(res, 429, { error: '輸錯太多次，請 15 分鐘後再試' });
@@ -1446,9 +1582,23 @@ http.createServer(async (req, res) => {
         ST.owner = usr.uid; dirty = true;
         return send(res, 200, { token: newSession(usr), uid: usr.uid, role: usr.role });
       }
+      if (u.pathname === '/api/login/google') {         // 擁有者第二步：Google 驗證綁定的信箱
+        const P = PRE.get(String(b.pre || '')); PRE.delete(String(b.pre || ''));
+        const usr = P && P.exp > Date.now() ? ST.users.find(x => x.uid === P.uid) : null;
+        if (!usr) return send(res, 401, { error: '驗證逾時，請重新輸入密碼登入' });
+        const email = b.credential ? await googleEmail(String(b.credential), gClient()) : '';
+        if (!email || !usr.bind || email !== usr.bind.email) { failed(ip); log('擁有者 Google 驗證失敗', usr.uid, email); return send(res, 401, { error: email ? `要用綁定的信箱登入，你選的是 ${email}` : 'Google 驗證失敗' }); }
+        FAILS.delete(ip); log('擁有者登入（Google 驗證）', usr.uid);
+        return send(res, 200, { token: newSession(usr), uid: usr.uid, role: usr.role });
+      }
       const usr = ST.users.find(x => x.uid === String(b.uid || ''));
       if (!usr || !validPw(b.password) || !pwOk(usr, b.password)) { failed(ip); return send(res, 401, { error: 'UID 或密碼不對' }); }
       FAILS.delete(ip);
+      if (usr.uid === ownerUid() && gClient() && usr.bind && usr.bind.email) {   // 👑 擁有者：密碼對了還要第二層 Google 驗證
+        const pre = crypto.randomBytes(16).toString('hex'); PRE.set(pre, { uid: usr.uid, exp: Date.now() + 5 * 60000 });
+        for (const [k, v] of PRE) if (v.exp < Date.now()) PRE.delete(k);
+        return send(res, 200, { need2fa: true, pre, google: gClient(), email: usr.bind.email.replace(/^(.{2}).*(@.*)$/, '$1***$2') });
+      }
       return send(res, 200, { token: newSession(usr), uid: usr.uid, role: usr.role });
     }
     const me = who(req), admin = keyOk(req) || (me && me.role === 'admin'), owner = keyOk(req) || (me && me.uid === ownerUid());   // 擁有者 ⊃ 灰色管理員 ⊃ 一般
@@ -1485,7 +1635,7 @@ http.createServer(async (req, res) => {
     }
     if (req.method === 'GET' && u.pathname === '/api/state') {
       const out = {
-        time: Date.now(), ver: '2026-10-19f', cv: CV, bv: BV * 2 + (X.A.lt.btcF ? 1 : 0), set: ST.set, trade: ST.trade, canWrite: !!ADMIN_KEY,
+        time: Date.now(), ver: VER, cv: CV, bv: BV * 2 + (X.A.lt.btcF ? 1 : 0), set: ST.set, trade: ST.trade, canWrite: !!ADMIN_KEY,
         scan: { ...SCAN, pause: RL.pause }, bt: { at: ST.bt.at, coins: ST.bt.coins, n: btActive().length, cmp: btCompare() }, btp: BTP,
         notify: { enabled: X.A.notify.enabled, entry: X.A.notify.entry, exit: X.A.notify.exit, hasHook: !!X.A.notify.webhook, name: X.A.notify.name },
         me: { uid: me ? me.uid : '管理金鑰', admin: !!admin, owner: !!owner },
@@ -1551,6 +1701,18 @@ http.createServer(async (req, res) => {
         const id = String(b.clientId || '').trim();
         if (id && !/^[\w-]+\.apps\.googleusercontent\.com$/.test(id)) return send(res, 400, { error: '格式不對，應該是 xxxx.apps.googleusercontent.com' });
         ST.google.clientId = id; dirty = true; return send(res, 200, { ok: true, google: gClient() });
+      }
+      if (u.pathname === '/api/lt/all') {             // 👑 擁有者：所有帳號一起暫停／開始自動交易（沒有 API 的帳號跳過）
+        if (typeof b.on !== 'boolean') return send(res, 400, { error: '要指定開始或暫停' });
+        let n = 0, skip = 0;
+        for (const XA of allX()) {
+          if (b.on && !hasKey(XA)) { skip++; continue; }
+          if (XA.A.lt.on === b.on) continue;
+          XA.A.lt.on = b.on; touchLT(XA); n++;
+          dcX(XA, b.on ? '▶️ **自動交易已開始**（擁有者一鍵開啟全部帳號）' : '⏸ **自動交易已暫停**（擁有者一鍵暫停全部帳號，已開的單照常管理）');
+        }
+        log(b.on ? '一鍵全部開始' : '一鍵全部暫停', n, '個帳號');
+        return send(res, 200, { ok: true, n, skip });
       }
       if (u.pathname === '/api/owner/transfer') {      // 👑 轉讓擁有者：一定要用 Google 驗證「擁有者綁定的信箱」才能轉
         const cid = gClient(), O = ST.users.find(x => x.uid === ownerUid());
@@ -1647,7 +1809,7 @@ http.createServer(async (req, res) => {
           dcX(X, b.btcF ? '🧭 **BTC 方向過濾已開啟**：順勢、逆勢的異常項數不夠就不下單' : '🧭 **BTC 方向過濾已關閉**：所有訊號都會下單');
         }
         let rule = false;                                // 個人的出場規則
-        if (b.sl !== undefined) { const v = +b.sl; if (!(v >= 10 && v <= 1000)) return send(res, 400, { error: '浮虧 % 要在 10～1000 之間' }); C.sl = v; rule = true; }
+        if (b.sl !== undefined) { const v = +b.sl; if (!(v >= 10 && v <= 1000)) return send(res, 400, { error: '浮虧 % 要在 10～1000 之間' }); if (C.sl !== v) setTimeout(() => ltSyncSL(X).catch(e => log('改止損失敗', X.uid, e.message)), 500); C.sl = v; rule = true; }
         if (b.step !== undefined) { const v = +b.step; if (!(v >= 0 && v <= 1000)) return send(res, 400, { error: '鎖利線上調要在 0～1000 之間' }); C.step = v; rule = true; }
         if (b.hold !== undefined) { const v = +b.hold; if (!(v >= 1 && v <= 720)) return send(res, 400, { error: '持有時間要在 1 小時～30 天之間' }); C.hold = v; rule = true; }
         if (+b.lev >= 1 && +b.lev <= 125) rule = true;
@@ -1658,7 +1820,7 @@ http.createServer(async (req, res) => {
         if (b.reset) { const e = bxEquity(X); C.startAt = Date.now(); C.startCap = C.budget > 0 ? C.budget : e > 0 ? Math.round(e * 100) / 100 : 0; }   // 有設投入資金就用它，沒有就用目前帳戶權益
         touchLT(X); return send(res, 200, { ok: true, cfg: C });
       }
-      if (u.pathname === '/api/lt/testOpen' && process.env.LT_TEST === '1') { await ltOpen(X, { id: 'test', sym: b.sym, dir: b.dir || 1, abN: 2, last: 1 }); return send(res, 200, { ok: true, msg: X.LT.msg }); }
+      if (u.pathname === '/api/lt/testOpen' && process.env.LT_TEST === '1') { await ltFlipOpen(X, { id: 'test', sym: b.sym, dir: b.dir || 1, abN: b.abN || 2, last: 1, btcPass: b.btcPass, btcNeed: 4 }); return send(res, 200, { ok: true, msg: X.LT.msg }); }
       if (u.pathname === '/api/lt/close') {
         const pct = Math.min(1, Math.max(0.01, +b.pct || 1));
         try { const r = await ltClosePos(X, String(b.positionId), pct, 'manual'); setTimeout(() => bxPollOne(X), 1500); return send(res, 200, { ok: true, r }); }
