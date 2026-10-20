@@ -34,12 +34,12 @@ const lockAt = (peak, T = ST.trade) => (T.step > 0 && peak > T.tp ? T.tp + Math.
 const DEF_NOTIFY = { webhook: '', name: '', enabled: true, entry: true, exit: true };
 const DEF_EQ = { mode: 'fixed', amt: 0.3, fee: 0.05, max: 0 };
 const DEF_BX = { key: '', secret: '', notify: true, liq: true, liqPct: 3 };
-const DEF_LT = { on: false, margin: 0.3, lev: 100, mode: 'CROSS', maxOpen: 0, dayLoss: 20, startCap: 0, startAt: 0, budget: 0, sl: 250, step: 50, hold: 168, btcF: 1, manual: 0 };   // manual：手動選的方向 1＝只做多、-1＝只做空、0＝沒選（按暫停就清掉）   // btcF：自己要不要用 BTC 方向過濾（預設開）   // sl：浮虧多少 % 平倉；step：鎖利線每多幾 % 上調；hold：最長持有（小時）——每個帳號自己設定   // budget：投入資金（0＝整個合約帳戶）   // startCap＝0 代表等偵測到帳戶資金再開始算   // 自動下單（預設暫停）   // Bitunix 唯讀 API 金鑰（只存在這台伺服器）            // 資金模擬：每筆保證金、手續費、最多同時持倉
+const DEF_LT = { on: false, margin: 0.3, lev: 100, mode: 'CROSS', maxOpen: 0, dayLoss: 20, startCap: 0, startAt: 0, budget: 0, sl: 250, step: 50, hold: 168, btcF: 1 };   // btcF：自己要不要用 BTC 方向過濾（預設開）   // sl：浮虧多少 % 平倉；step：鎖利線每多幾 % 上調；hold：最長持有（小時）——每個帳號自己設定   // budget：投入資金（0＝整個合約帳戶）   // startCap＝0 代表等偵測到帳戶資金再開始算   // 自動下單（預設暫停）   // Bitunix 唯讀 API 金鑰（只存在這台伺服器）            // 資金模擬：每筆保證金、手續費、最多同時持倉
 const DEF_REP = { cap: 100, btN: 50, days: 14, next: 0 };                   // 雙週結算：每期本金、回測幣數、幾天一期、下次結算時間
 let ST = { cards: [], bt: { at: 0, coins: 0, trades: [] }, set: { ...DEF_SET }, trade: { ...DEF_TRADE }, google: { clientId: '' }, eq: { ...DEF_EQ }, rep: { ...DEF_REP }, reports: [], users: [], sessions: [], accts: {}, owner: '' };
 try {
   const j = JSON.parse(fs.readFileSync(FILE, 'utf8'));
-  ST = { cards: j.cards || [], bt: j.bt || ST.bt, set: { ...DEF_SET, ...(j.set || {}) }, trade: { ...DEF_TRADE, ...(j.trade || {}) }, google: { clientId: '', ...(j.google || {}) }, eq: { ...DEF_EQ, ...(j.eq || {}) }, rep: { ...DEF_REP, ...(j.rep || {}) }, reports: j.reports || [], users: j.users || [], sessions: j.sessions || [], aws: j.aws || {}, accts: j.accts || {}, owner: j.owner || '', bstat: j.bstat || null, hb: j.hb || '' };
+  ST = { cards: j.cards || [], bt: j.bt || ST.bt, set: { ...DEF_SET, ...(j.set || {}) }, trade: { ...DEF_TRADE, ...(j.trade || {}) }, google: { clientId: '', ...(j.google || {}) }, eq: { ...DEF_EQ, ...(j.eq || {}) }, rep: { ...DEF_REP, ...(j.rep || {}) }, reports: j.reports || [], users: j.users || [], sessions: j.sessions || [], aws: j.aws || {}, accts: j.accts || {}, owner: j.owner || '', bstat: j.bstat || null, hb: j.hb || '', ecoDay: j.ecoDay || '' };
   // 舊版（只有一個帳號）：原本的 Bitunix 金鑰、自動交易、實盤紀錄、Discord 搬到擁有者（第一個管理員）的帳號底下
   if (!j.accts && (j.bx || j.lt || j.ltTrades || j.notify)) {
     const a = ST.users.find(u => u.role === 'admin'), uid = a ? a.uid : '__owner';
@@ -48,7 +48,7 @@ try {
     log('舊存檔搬到帳號', uid);
   }
   for (const A of Object.values(ST.accts)) {        // 補齊欄位；伺服器重開後每個帳號的自動交易一律先暫停
-    A.bx = { ...DEF_BX, ...(A.bx || {}) }; A.lt = { ...DEF_LT, sl: ST.trade.sl, step: ST.trade.step, hold: ST.trade.hold, ...(A.lt || {}), on: false, manual: 0 };   // 舊帳號沒有個人參數：沿用原本的共用設定 A.notify = { ...DEF_NOTIFY, ...(A.notify || {}) }; A.ltTrades = A.ltTrades || [];
+    A.bx = { ...DEF_BX, ...(A.bx || {}) }; A.lt = { ...DEF_LT, sl: ST.trade.sl, step: ST.trade.step, hold: ST.trade.hold, ...(A.lt || {}), on: false };   // 舊帳號沒有個人參數：沿用原本的共用設定 A.notify = { ...DEF_NOTIFY, ...(A.notify || {}) }; A.ltTrades = A.ltTrades || [];
     if (A.lt.startCap === 100 && !A.ltTrades.length) { A.lt.startCap = 0; A.lt.startAt = 0; }   // 舊版預設把起始本金寫死成 100U
   }
   log(`讀入存檔：${ST.cards.length} 張卡片、${ST.bt.trades.length} 筆回測`);
@@ -389,10 +389,10 @@ function notifyEntry(c) {
   const T = ST.trade;
   const tpPx = c.entry * (1 + c.dir * T.tp / 100 / T.lev), slPx = c.entry * (1 - c.dir * T.sl / 100 / T.lev);
   const ab = (c.ind || []).filter(i => i.ab).map(i => `${i.n} z${i.z > 0 ? '+' : ''}${i.z.toFixed(1)}`).join('、');
-  const bt = c.h4 ? `\n🕓 4H：${h4Txt(c.h4)}` : '';
+  const bt = c.btcD !== undefined ? `\nBTC ${c.btcD > 0 ? '偏多' : c.btcD < 0 ? '偏空' : '讀不到'}${c.btcChg !== null && c.btcChg !== undefined ? `（${c.btcChg > 0 ? '+' : ''}${c.btcChg}%）` : ''}・${c.btcD === c.dir ? '順勢' : '逆勢'}（需要 ${c.btcNeed} 項，${c.btcPass === false ? '**沒過 BTC 過濾**，有開過濾的人不會下單' : '有過 BTC 過濾'}）` : '';
   dcAll(X => `📡 **訊號**｜${c.dir > 0 ? '🟢 **做多**' : '🔴 **做空**'} **${mdEsc(c.sym)}**（數據異常 ${c.abN}/5）${bt}\n` +
     `進場 **${fpx(c.entry)}**・${T.lev}x\n達標 ${fpx(tpPx)}（+${T.tp}%）\n失敗 ${fpx(slPx)}（−${T.sl}%）\n` +
-    `${ab ? '異常：' + mdEsc(ab) + '\n' : ''}時間 ${tw(c.et)}（台北）\n-# 訊號模擬：用幣安訊號價、${T.lev}x 計算，不是你的實際倉位${X.A.lt.on ? '；實際下單看 🤖 實盤通知' : ''}`, (N, X) => N.enabled && N.entry && h4Ok(X, c));
+    `${ab ? '異常：' + mdEsc(ab) + '\n' : ''}時間 ${tw(c.et)}（台北）\n-# 訊號模擬：用幣安訊號價、${T.lev}x 計算，不是你的實際倉位${X.A.lt.on ? '；實際下單看 🤖 實盤通知' : ''}`, (N, X) => N.enabled && N.entry && !(X.A.lt.btcF && c.btcPass === false));
 }
 function notifyExit(c, E) {
   const T = ST.trade;
@@ -400,7 +400,7 @@ function notifyExit(c, E) {
   const how = E.how === 'flip' ? '（出現反方向訊號，用當時價格結束）' : E.how === 'lock' ? `（跑回鎖利線 +${E.pnl}% 出場）` : E.how === 'hold' ? `（持有到 ${T.hold} 小時到期）` : E.st === 'amb' ? '（同一根 K 棒兩邊都碰到，保守算失敗）' : '';
   const pnl = (E.pnl > 0 ? '+' : E.pnl < 0 ? '−' : '') + Math.abs(E.pnl).toFixed(0) + '%';
   dcAll(`📡 **訊號模擬結果**｜${head} ${c.dir > 0 ? '做多' : '做空'} **${mdEsc(c.sym)}** **${pnl}**${how}\n` +
-    `訊號價 ${fpx(c.entry)}（${tw(c.et)}）\n持有 ${durTxt((E.exitAt || Date.now()) - c.et)}・${T.lev}x\n-# 這是訊號的模擬結果，不代表交易所的倉位已經平倉`, (N, X) => N.enabled && N.exit && h4Ok(X, c));
+    `訊號價 ${fpx(c.entry)}（${tw(c.et)}）\n持有 ${durTxt((E.exitAt || Date.now()) - c.et)}・${T.lev}x\n-# 這是訊號的模擬結果，不代表交易所的倉位已經平倉`, (N, X) => N.enabled && N.exit && !(X.A.lt.btcF && c.btcPass === false));
 }
 function checkExits() {
   let ch = false;
@@ -436,34 +436,6 @@ function btcNow() {
   const px = PX.map.BTCUSDT || (BTCL.k.length ? BTCL.k[BTCL.k.length - 1].c : 0), now = Date.now();
   return { ...btcDirFrom(px, btcRef(BTCL.k, now, ST.set.btcMode)), mode: ST.set.btcMode, px };
 }
-/* ---------------- 🕓 4 小時方向規則 ----------------
-   交易日從台北早上 8 點（UTC 0 點）開始。當天兩根 4H 收完（16:00）之後，到隔天 08:00 為止，每 4 小時用「最新收完的兩根」判斷：
-     兩根都是綠 K、第二根收盤 > 第一根最高 → 偏多；兩根都是紅 K、第二根收盤 < 第一根最低 → 偏空；其他 → 不明確
-   進場：山寨幣自己明確 → 只做它的方向；不明確 → 看 BTC，明確就跟 BTC；都不明確 → 有手動選就照選的，沒選就多空都做
-   08:00–16:00：不判斷 4H，有手動選「只做多／只做空」才進場 */
-const H4 = 4 * HOUR, DAYMS = 24 * HOUR;
-function h4Slot(t) { const d0 = Math.floor(t / DAYMS) * DAYMS, k = Math.floor((t - d0) / H4); return { win: k >= 2, a: d0 + (k - 2) * H4, b: d0 + (k - 1) * H4, next: d0 + Math.max(k + 1, 2) * H4 }; }
-function h4Pat(c1, c2) { if (!c1 || !c2) return 0; if (c1.c > c1.o && c2.c > c2.o && c2.c > c1.h) return 1; if (c1.c < c1.o && c2.c < c2.o && c2.c < c1.l) return -1; return 0; }
-function h4From1h(get, s0) { let o, h = -Infinity, l = Infinity, c; for (let i = 0; i < 4; i++) { const b = get(s0 + i * HOUR); if (!b) return null; if (!i) o = b.o; h = Math.max(h, b.h); l = Math.min(l, b.l); c = b.c; } return { o, h, l, c }; }
-const h4DirAt = (get, t) => { const S = h4Slot(t); return S.win ? h4Pat(h4From1h(get, S.a), h4From1h(get, S.b)) : 0; };
-const h4Info0 = (t, cd, bd) => { const S = h4Slot(t); return { win: S.win, cd: S.win ? cd : 0, bd: S.win ? bd : 0 }; };
-// 規則本身（沒有手動選方向的人）：時段外不進場；山寨幣明確跟它；BTC 明確跟 BTC；都不明確多空都做
-const h4Auto = (dir, h) => !h ? true : !h.win ? false : h.cd ? dir === h.cd : h.bd ? dir === h.bd : true;
-// 某個帳號能不能做這張訊號（加上他手動選的方向：只在 08–16 點、或山寨幣和 BTC 都不明確時有作用）
-function h4Ok(X, c) { const h = c.h4; if (!h) return true; const m = X.A.lt.manual || 0, f = h.win && (h.cd || h.bd); if (f) return c.dir === f; if (m) return c.dir === m; return h.win; }
-const h4Txt = h => !h ? '' : !h.win ? '08:00–16:00（今天還沒收完兩根 4H）' : h.cd ? `本幣 4H ${h.cd > 0 ? '偏多' : '偏空'}` : h.bd ? `本幣不明確，跟 BTC 4H ${h.bd > 0 ? '偏多' : '偏空'}` : '本幣和 BTC 4H 都不明確，多空都可以';
-// 即時：抓幣安 4 小時 K（幣安的 4H 也是從 UTC 0 點＝台北 8 點開始切），每 4 小時每個幣只抓一次
-const H4C = new Map();
-async function h4Live(sym) {
-  const S = h4Slot(Date.now()); if (!S.win) return 0;
-  const k = H4C.get(sym); if (k && k.a === S.a) return k.d;
-  const rows = await getJSON(`${BF}/fapi/v1/klines?symbol=${sym}&interval=4h&limit=5`);
-  const m = new Map(rows.map(r => [+r[0], { o: +r[1], h: +r[2], l: +r[3], c: +r[4] }]));
-  const d = h4Pat(m.get(S.a), m.get(S.b)); H4C.set(sym, { a: S.a, d }); return d;
-}
-async function h4Info(sym) { const t = Date.now(), S = h4Slot(t); if (!S.win) return h4Info0(t, 0, 0); const [cd, bd] = await Promise.all([h4Live(sym).catch(() => 0), h4Live('BTCUSDT').catch(() => 0)]); return h4Info0(t, cd, bd); }
-// 美國高影響數據：公布前 15 分鐘到公布後 30 分鐘不開新單
-const ecoBlock = (t = Date.now()) => ECO.list.find(e => e.imp === 'H' && t >= e.t - 15 * 60000 && t <= e.t + 30 * 60000) || null;
 const btcNeed = (dir, bd, S = ST.set) => (!S.btcF ? S.minN : bd === 0 ? Math.max(S.btcWith, S.btcAgainst) : dir === bd ? S.btcWith : S.btcAgainst);
 const CACHE = new Map();
 async function getData(u, N) {
@@ -489,8 +461,10 @@ async function analyze(u) {
 }
 function addCard(r) {
   const now = Date.now();
-  // 🕓 4H 規則：訊號照樣產生；ok＝規則允許，或有正在交易的帳號手動選了這個方向（不 ok 的不顯示、不算成功率）
-  if (r.h4) r.h4.ok = h4Auto(r.dir, r.h4) || allX().some(X => X.A.lt.on && h4Ok(X, r));
+  {                                                    // 🧭 BTC 方向過濾：訊號照樣產生，記下有沒有過；開著過濾的帳號才擋（不通知、不下單、不算成功率）
+    const B = btcNow(), need = btcNeed(r.dir, B.d, { ...ST.set, btcF: 1 });
+    r.btcD = B.d; r.btcChg = B.chg; r.btcNeed = need; r.btcPass = r.abN >= need;
+  }
   r.why = reason(r);
   // 同一個幣還有單沒結單 → 不開新單。同方向就更新一下「最後偵測」的數字；反方向直接忽略
   const live = ST.cards.find(c => c.sym === r.sym && c.et && isLive(c));
@@ -501,7 +475,9 @@ function addCard(r) {
   } else if (live) {
     if (live.dir === r.dir) {
       // 原本沒過 BTC 過濾、這次異常項數夠了：開著過濾的帳號現在才進場（沒開過濾的帳號當初就進了）
-      const { entry, et, id, t0, h4, ...rest } = r;
+      const late = live.btcPass === false && r.btcPass;
+      const { entry, et, id, t0, btcPass, ...rest } = r;
+      if (late) { live.btcPass = true; live.btcLate = now; for (const X of allX()) if (X.A.lt.on && X.A.lt.btcF) ltOpen(X, live); }
       Object.assign(live, rest, now - live.t >= 300000 ? { t: now, hits: (live.hits || 1) + 1 } : {});
       touchCards();
     }
@@ -512,20 +488,20 @@ function addCard(r) {
   ST.cards.unshift(c);
   ST.cards = ST.cards.slice(0, 300);
   touchCards();
-  if (c.h4 && !c.h4.ok) SCAN.btcSkip++;
+  if (c.btcPass === false) SCAN.btcSkip++;
   notifyEntry(c);
   for (const X of allX()) if (X.A.lt.on) ltFlipOpen(X, c);   // 每個「開始交易」的帳號各自用自己的金鑰下單（手上有反方向的自動單就先反手平倉）
 }
 async function scan() {
   if (SCAN.running) return; SCAN.running = true;
-  { const S = h4Slot(Date.now()); SCAN.h4 = { win: S.win, bd: S.win ? await h4Live('BTCUSDT').catch(() => 0) : 0, next: S.next }; }   // 🕓 BTC 4H 狀態（給網頁顯示）
+  await btcRefresh(); SCAN.btc = btcNow();              // 每個帳號自己決定要不要過濾，BTC 方向一律更新
   const t0 = Date.now(); SCAN.err = ''; SCAN.done = 0; SCAN.found = 0;
   try {
     const uni = await BN.universe(), S = ST.set;
     const flat = uni.filter(u => Math.abs(u.chg) <= S.flat && u.amp <= S.range && u.qv >= S.minVol * 1e4).sort((a, b) => b.qv - a.qv);
     SCAN.total = uni.length; SCAN.flatN = flat.length; SCAN.todo = flat.length;
     let idx = 0;
-    const worker = async () => { while (idx < flat.length) { const u = flat[idx++]; try { const r = await analyze(u); if (r) { SCAN.found++; r.h4 = await h4Info(u.id).catch(() => null); addCard(r); } } catch (e) {} SCAN.done++; } };
+    const worker = async () => { while (idx < flat.length) { const u = flat[idx++]; try { const r = await analyze(u); if (r) { SCAN.found++; addCard(r); } } catch (e) {} SCAN.done++; } };
     await Promise.all(Array.from({ length: 8 }, worker));
     SCAN.okAt = Date.now();
   } catch (e) { SCAN.err = e.message; log('掃描失敗', e.message); }
@@ -633,7 +609,8 @@ async function backtest(N) {
     const list = uni.sort((a, b) => b.qv - a.qv).slice(0, N || uni.length);
     BTP.total = list.length; BTP.msg = '';
     // BTC 1 小時 K 線：用來判斷每一筆訊號當下 BTC 的方向（每種判斷方式都記下來，之後換方式也能比較）
-    const bk = (await btBase({ id: 'BTCUSDT', sym: 'BTCUSDT' })).k, bmap = new Map(bk.map(x => [x.t, x])), bget = t0 => bmap.get(t0);   // BTC 1 小時 K：組 4H 用
+    const bk = (await btBase({ id: 'BTCUSDT', sym: 'BTCUSDT' })).k, bpx = new Map(bk.map(x => [x.t, x.c]));
+    const btcAt = (et, mode) => btcDirFrom(bpx.get(et - HOUR), btcRef(bk, et, mode));
     const one = async u => {
       const c = await btBase(u), k = c.k, n = k.length; if (n < 200) return;
       const cand = [];
@@ -657,14 +634,14 @@ async function backtest(N) {
       if (!sig.length) return;
       await btBars(u, c, k[168].t + HOUR);
       const now = Date.now(), bars = c.b15.filter(b => b.t + 900000 <= now);
-      // 兩條路線各自算「上一筆結單前同一個幣不開新單」：c0＝沒有規則、c1＝4H 方向規則（沒有手動選方向的情況）
-      let free0 = 0, free1 = 0; const kmap = new Map(k.map(x => [x.t, x])), kget = t0 => kmap.get(t0);
+      // 兩條路線各自算「上一筆結單前同一個幣不開新單」：c0＝沒有 BTC 過濾、c1＝有 BTC 過濾
+      let free0 = 0, free1 = 0;
       for (const { i, D, chg, pc } of sig) {
-        const et = k[i].t + HOUR, h4 = h4Info0(et, h4DirAt(kget, et), h4DirAt(bget, et));
-        const in0 = et >= free0, in1 = h4Auto(D.dir, h4) && et >= free1;
+        const et = k[i].t + HOUR, B = btcAt(et, S.btcMode), need = btcNeed(D.dir, B.d, { ...S, btcF: 1 });
+        const in0 = et >= free0, in1 = D.abN >= need && et >= free1;
         if (!in0 && !in1) continue;
         const tr = { id: 'bt-' + u.id + '-' + et, bt: 1, sym: u.sym, pid: u.id, spot: u.spot, src: 'binance', dir: D.dir, abN: D.abN, et, entry: k[i].c, recs: [], fav: 0, adv: 0, end: 0, step: 900000,
-          h4, c0: in0, c1: in1 };
+          btcD: B.d, btcChg: B.chg, btcNeed: need, btcMode: S.btcMode, c0: in0, c1: in1 };
         const seg = bars.filter(b => b.t >= et && b.t - et < TRACK_MAX);
         extend(tr, seg); hourClose(tr, tr, seg, 900000);
         delete tr.fav; delete tr.adv;
@@ -686,7 +663,7 @@ async function backtest(N) {
     };
     await Promise.all(Array.from({ length: 6 }, worker));
     trades.sort((a, b) => b.et - a.et);
-    ST.bt = { at: Date.now(), coins: BTP.done, trades: trades.slice(0, 6000), cfg: { rule: '4h', minN: S.minN } };
+    ST.bt = { at: Date.now(), coins: BTP.done, trades: trades.slice(0, 6000), cfg: { mode: S.btcMode, w: S.btcWith, a: S.btcAgainst, minN: S.minN } };
     touchBT(); BTCMP.key = '';
     BTP.msg = BTP.stop ? `已手動停止，回測了 ${BTP.done}／${BTP.total} 個幣` : '';
     log('回測完成', BTP.done, '個幣', trades.length, '筆');
@@ -695,7 +672,7 @@ async function backtest(N) {
 }
 
 // 目前使用的回測紀錄：開著 BTC 過濾就用 c1 那條，關掉就用 c0 那條（舊版回測沒有標記，兩條都算）
-const btActive = () => ST.bt.trades.filter(t => t.c1 !== false);   // 一律用 4H 規則那條
+const btActive = () => ST.bt.trades.filter(t => (ST.set.btcF ? t.c1 : t.c0) !== false);
 // 🧭 有／沒有 BTC 過濾的比較：同一次回測、同一組浮盈規則，用固定本金照時間順序模擬
 const BTCMP = { key: '', v: null };
 function btCompare() {
@@ -714,8 +691,8 @@ function btCompare() {
     };
     const off = all.filter(t => t.c0), on = all.filter(t => t.c1);
     v = { start, end: end - 1, at: ST.bt.at, coins: ST.bt.coins, cfg: ST.bt.cfg || null, off: one(off), on: one(on),
-      cut: { n: off.filter(t => !t.c1).length, long: off.filter(t => !t.c1 && t.dir > 0).length, short: off.filter(t => !t.c1 && t.dir < 0).length, win: off.filter(t => !t.c1 && t.h4 && !t.h4.win).length },
-      by: { coin: one(on.filter(t => t.h4 && t.h4.cd)), btc: one(on.filter(t => t.h4 && !t.h4.cd && t.h4.bd)), both: one(on.filter(t => t.h4 && !t.h4.cd && !t.h4.bd)) } };
+      cut: { n: off.filter(t => !t.c1).length, long: off.filter(t => !t.c1 && t.dir > 0).length, short: off.filter(t => !t.c1 && t.dir < 0).length },
+      bySide: { with: one(on.filter(t => t.btcD === t.dir)), against: one(on.filter(t => t.btcD !== t.dir)) } };
   }
   BTCMP.key = key; BTCMP.v = v; return v;
 }
@@ -775,8 +752,8 @@ async function settle(manual) {
     const end = Date.now(), start = end - ST.rep.days * 24 * HOUR;
     await backtest(ST.rep.btN);
     const r = {
-      id: end, start, end, manual: !!manual, cfg: { ...ST.eq, ...ST.trade, h4: true, cap: ST.rep.cap, btN: ST.rep.btN },
-      bt: simReport(btActive(), start, end, ST.rep.cap), live: simReport(ST.cards.filter(c => !(c.h4 && c.h4.ok === false)), start, end, ST.rep.cap)
+      id: end, start, end, manual: !!manual, cfg: { ...ST.eq, ...ST.trade, btc: ST.set.btcF ? { mode: ST.set.btcMode, w: ST.set.btcWith, a: ST.set.btcAgainst } : null, cap: ST.rep.cap, btN: ST.rep.btN },
+      bt: simReport(btActive(), start, end, ST.rep.cap), live: simReport(ST.cards.filter(c => !(ST.set.btcF && c.btcPass === false)), start, end, ST.rep.cap)
     };
     ST.reports.unshift(r); ST.reports = ST.reports.slice(0, 60);
     if (!manual) ST.rep.next = end + ST.rep.days * 24 * HOUR;
@@ -812,8 +789,8 @@ async function historyReports(periods) {
     const list = uni.sort((a, b) => b.qv - a.qv).slice(0, ST.rep.btN || uni.length);
     const trades = []; let idx = 0, done = 0;
     // 🧭 BTC 方向過濾：跟即時進場用同一套規則（BTC 1 小時 K 線多抓 2 天，才算得到最前面的 24 小時漲跌）
-    const bkm = new Map((await getRange(`${BF}/fapi/v1/klines?symbol=BTCUSDT&interval=1h`, HOUR, from - 2 * 24 * HOUR, anchor)).map(r => [+r[0], { t: +r[0], o: +r[1], h: +r[2], l: +r[3], c: +r[4] }]));
-    const bget = t0 => bkm.get(t0);                    // 🕓 BTC 1 小時 K：組 4H 用
+    const bkm = new Map((await getRange(`${BF}/fapi/v1/klines?symbol=BTCUSDT&interval=1h`, HOUR, from - 2 * 24 * HOUR, anchor)).map(r => [+r[0], { t: +r[0], o: +r[1], c: +r[4] }]));
+    const btcAt = et => { const b = bkm.get(et - HOUR); return btcDirFrom(b ? b.c : 0, btcRef(bkm, et, S.btcMode)); };
     const one = async u => {
       const kr = await getRange(`${BF}/fapi/v1/klines?symbol=${u.id}&interval=1h`, HOUR, from, anchor);
       const k = kr.map(r => ({ t: +r[0], o: +r[1], h: +r[2], l: +r[3], c: +r[4], qv: +r[7], d: 2 * +r[10] - +r[7] }));
@@ -834,12 +811,12 @@ async function historyReports(periods) {
       if (!sig.length) return;
       const br = await getRange(`${BF}/fapi/v1/klines?symbol=${u.id}&interval=15m`, 900000, k[sig[0].i].t + HOUR, now);
       const bars = br.map(x => ({ t: +x[0], h: +x[2], l: +x[3], c: +x[4] })).filter(b => b.t + 900000 <= now);
-      let free = 0; const kmap = new Map(k.map(x => [x.t, x])), kget = t0 => kmap.get(t0);
+      let free = 0;
       for (const { i, D: Dt } of sig) {
         const et = k[i].t + HOUR; if (et < free) continue;
-        const h4 = h4Info0(et, h4DirAt(kget, et), h4DirAt(bget, et));
-        if (!h4Auto(Dt.dir, h4)) continue;              // 不符合 4H 規則：不進場，也不擋後面的訊號
-        const tr = { bt: 1, sym: u.sym, pid: u.id, dir: Dt.dir, abN: Dt.abN, et, entry: k[i].c, recs: [], fav: 0, adv: 0, end: 0, step: 900000, h4 };
+        const B = S.btcF ? btcAt(et) : null;
+        if (B && Dt.abN < btcNeed(Dt.dir, B.d)) continue;      // 沒過 BTC 過濾：不進場，也不擋後面的訊號
+        const tr = { bt: 1, sym: u.sym, pid: u.id, dir: Dt.dir, abN: Dt.abN, et, entry: k[i].c, recs: [], fav: 0, adv: 0, end: 0, step: 900000, btcD: B ? B.d : undefined };
         const seg = bars.filter(b => b.t >= et && b.t - et < TRACK_MAX);
         extend(tr, seg); hourClose(tr, tr, seg, 900000);
         delete tr.fav; delete tr.adv;
@@ -858,7 +835,7 @@ async function historyReports(periods) {
     const out = [];
     for (let p = 0; p < periods; p++) {
       const start = t0 + p * D, end = start + D;
-      out.push({ id: end, start, end, hist: true, cfg: { ...ST.eq, ...ST.trade, h4: true, cap, btN: ST.rep.btN, noOI: end < now - 30 * 24 * HOUR }, bt: simReport(trades, start, end, cap), live: null });
+      out.push({ id: end, start, end, hist: true, cfg: { ...ST.eq, ...ST.trade, btc: ST.set.btcF ? { mode: ST.set.btcMode, w: ST.set.btcWith, a: ST.set.btcAgainst } : null, cap, btN: ST.rep.btN, noOI: end < now - 30 * 24 * HOUR }, bt: simReport(trades, start, end, cap), live: null });
     }
     ST.reports = ST.reports.filter(r => !r.hist).concat(out).sort((a, b) => b.end - a.end).slice(0, 80);
     if (!live.length) ST.rep.next = anchor + D;                       // 下一次正式結算接在歷史的後面
@@ -875,7 +852,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-21a';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-21c';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1000,11 +977,23 @@ function ltBotEq(X) {
   for (const t of X.A.ltTrades) { if (!inStat(t, C.startAt)) continue; e += ltNet(t) + (t.status === 'open' ? (t.upnl || 0) : 0); if (t.status === 'open') used += t.margin || t.m0 || 0; }
   return { eq: e, used, free: e - used };
 }
+// 📅 有美國高影響數據公布的那一天（台北時間 00:00–23:59）整天不開新單、不反手；已開的單照常管理
+const twDay = t => new Date(t + TZ).toISOString().slice(0, 10);
+const ecoToday = (t = Date.now()) => ECO.list.filter(e => e.imp === 'H' && twDay(e.t) === twDay(t));
+const ecoBlock = (t = Date.now()) => ecoToday(t)[0] || null;
+const ecoNames = L => L.map(e => `${e.zh || e.title} ${tw(e.t).slice(-5)}`).join('、');
+function ecoDayTick() {                               // 這種日子一開始就在 Discord 通知一次
+  const L = ecoToday(), day = twDay(Date.now());
+  if (!L.length || ST.ecoDay === day) return;
+  ST.ecoDay = day; dirty = true;
+  dcAll(`📅 **今天（${day.slice(5).replace('-', '/')}）有美國重要數據：${mdEsc(ecoNames(L))}**\n自動交易今天整天不開新單、也不反手；已經開著的單照常管理（鎖利、失敗線、到期）。`, N => N.enabled);
+}
+setInterval(ecoDayTick, 60000); setTimeout(ecoDayTick, 90000);
 async function ltOpen(X, c) {
   const C = X.A.lt, K = X.A.bx, LT = X.LT, BX = X.BX;
   if (!C.on || !hasKey(X) || LT.busy.has(c.sym)) return;
-  if (!h4Ok(X, c)) { LT.msg = `${c.sym} ${c.dir > 0 ? '做多' : '做空'}不符合 4H 規則（${h4Txt(c.h4)}${C.manual ? `，你選的是只做${C.manual > 0 ? '多' : '空'}` : ''}），不下單`; return; }
-  { const ev = ecoBlock(); if (ev) { LT.msg = `${c.sym}：美國重要數據「${ev.zh || ev.title}」${tw(ev.t)} 公布前後，不開新單`; return; } }
+  if (C.btcF && c.btcPass === false) { LT.msg = `${c.sym} 沒過 BTC 方向過濾（${c.abN} 項，需要 ${c.btcNeed} 項），不下單`; return; }
+  { const L = ecoToday(); if (L.length) { LT.msg = `今天有美國重要數據（${ecoNames(L)}），整天不開新單：${c.sym} 略過`; return; } }
   LT.busy.add(c.sym);
   try {
     if (C.maxOpen && ltOpenTrades(X).length >= C.maxOpen) { LT.msg = `已達最多同時持倉 ${C.maxOpen} 筆，${c.sym} 這次不下單`; return; }
@@ -1079,8 +1068,8 @@ async function ltSyncSL(X) {
 async function ltFlipOpen(X, c) {
   const LT = X.LT, opp = ltOpenTrades(X).filter(t => t.sym === c.sym && t.dir !== c.dir && t.positionId);
   if (!opp.length) return ltOpen(X, c);
-  if (!h4Ok(X, c)) { LT.msg = `${c.sym} 出現反方向訊號，但不符合 4H 規則，維持原本的單`; return; }
-  if (ecoBlock()) { LT.msg = `${c.sym} 出現反方向訊號，但現在是重要數據公布前後，維持原本的單`; return; }
+  if (X.A.lt.btcF && c.btcPass === false) { LT.msg = `${c.sym} 出現反方向訊號，但沒過 BTC 方向過濾，維持原本的單`; return; }
+  if (ecoBlock()) { LT.msg = `${c.sym} 出現反方向訊號，但今天有美國重要數據，維持原本的單`; return; }
   if (LT.flip && LT.flip.has(c.sym)) return;
   (LT.flip = LT.flip || new Set()).add(c.sym);
   try {
@@ -1802,19 +1791,19 @@ http.createServer(async (req, res) => {
     }
     if (req.method === 'GET' && u.pathname === '/api/state') {
       const out = {
-        time: Date.now(), ver: VER, cv: CV, bv: BV, set: ST.set, trade: ST.trade, canWrite: !!ADMIN_KEY,
+        time: Date.now(), ver: VER, cv: CV, bv: BV * 2 + (X.A.lt.btcF ? 1 : 0), set: ST.set, trade: ST.trade, canWrite: !!ADMIN_KEY,
         scan: { ...SCAN, pause: RL.pause }, bt: { at: ST.bt.at, coins: ST.bt.coins, n: btActive().length, cmp: btCompare() }, btp: BTP, bstat: { busy: BSTAT.busy, msg: BSTAT.msg, v: BSTAT.v || ST.bstat || null },
         notify: { enabled: X.A.notify.enabled, entry: X.A.notify.entry, exit: X.A.notify.exit, hasHook: !!X.A.notify.webhook, name: X.A.notify.name },
         me: { uid: me ? me.uid : '管理金鑰', admin: !!admin, owner: !!owner },
         eq: ST.eq, rep: { ...ST.rep, busy: REP.busy, msg: REP.msg }, rv: RV,
         bx: { set: hasKey(X), notify: X.A.bx.notify, liq: X.A.bx.liq, liqPct: X.A.bx.liqPct, at: X.BX.at, err: X.BX.err, acct: X.BX.acct,
           pos: X.BX.pos.map(p => ({ ...p, px: PX.map[p.sym] || null, sig: !!ST.cards.find(c => c.sym === p.sym && c.dir === p.dir && c.et && isLive(c)), bot: !!X.A.ltTrades.find(t => t.status === 'open' && t.positionId === p.id) })) },
-        eco: { list: ECO.list.filter(e => e.t > Date.now() - 7 * 24 * HOUR), at: ECO.at, err: ECO.err, hasNext: !!ECO.hasNext },
+        eco: { list: ECO.list.filter(e => e.t > Date.now() - 7 * 24 * HOUR), at: ECO.at, err: ECO.err, hasNext: !!ECO.hasNext, today: ecoToday().map(e => ({ t: e.t, zh: e.zh || e.title })) },
         lt: { cfg: X.A.lt, msg: X.LT.msg, dayPnl: X.LT.dayPnl || 0, v: X.v, bot: ltBotEq(X), acctEq: bxEquity(X) },
         aws: !(X.uid === ownerUid()) ? null : { on: ST.aws.on, created: ST.aws.created, auto: ST.aws.auto, price: ST.aws.price, detected: awsDetect(), ...awsNext() }
       };
       if (+u.searchParams.get('cv') !== CV) out.cards = ST.cards;
-      if (+u.searchParams.get('bv') !== BV) out.trades = btActive();   // 自己開著 BTC 過濾就看有過濾的那條
+      if (+u.searchParams.get('bv') !== BV * 2 + (X.A.lt.btcF ? 1 : 0)) out.trades = ST.bt.trades.filter(t => (X.A.lt.btcF ? t.c1 : t.c0) !== false);   // 自己開著 BTC 過濾就看有過濾的那條
       if (+u.searchParams.get('rv') !== RV) out.reports = ST.reports;
       if (+u.searchParams.get('lv') !== X.v) out.ltTrades = X.A.ltTrades.map(({ closing, ...t }) => t);
       return send(res, 200, out);
@@ -1875,7 +1864,7 @@ http.createServer(async (req, res) => {
         for (const XA of allX()) {
           if (b.on && !hasKey(XA)) { skip++; continue; }
           if (XA.A.lt.on === b.on) continue;
-          XA.A.lt.on = b.on; XA.A.lt.manual = 0; touchLT(XA); n++;
+          XA.A.lt.on = b.on; touchLT(XA); n++;
           dcX(XA, b.on ? '▶️ **自動交易已開始**（擁有者一鍵開啟全部帳號）' : '⏸ **自動交易已暫停**（擁有者一鍵暫停全部帳號，已開的單照常管理）');
         }
         log(b.on ? '一鍵全部開始' : '一鍵全部暫停', n, '個帳號');
@@ -1971,8 +1960,7 @@ http.createServer(async (req, res) => {
         const C = X.A.lt;
         if (typeof b.on === 'boolean') {
           if (b.on && !hasKey(X)) return send(res, 400, { error: '請先設定你自己的 Bitunix API 金鑰（要開交易權限）' });
-          C.on = b.on; C.manual = b.on ? (+b.manual > 0 ? 1 : +b.manual < 0 ? -1 : 0) : 0;   // 按暫停就清掉手動方向
-          dcX(X, b.on ? `▶️ **自動交易已開始**${C.manual ? `（**只做${C.manual > 0 ? '多' : '空'}**：08:00–16:00、或山寨幣和 BTC 4H 都不明確時照這個方向）` : '（照 4H 規則；08:00–16:00 不進場）'}` : '⏸ **自動交易已暫停**（已開的單照常管理）');
+          C.on = b.on; dcX(X, b.on ? '▶️ **自動交易已開始**' : '⏸ **自動交易已暫停**（已開的單照常管理）');
         }
         if (+b.margin > 0) C.margin = +b.margin;
         if (+b.lev >= 1 && +b.lev <= 125) C.lev = Math.round(+b.lev);
@@ -1984,6 +1972,11 @@ http.createServer(async (req, res) => {
           if (+b.budget > 0 && !(e > 0)) return send(res, 400, { error: '還沒讀到合約帳戶的資金，請等 10 秒再試' });
           if (+b.budget > e + 1e-9) return send(res, 400, { error: `投入資金不能大於合約帳戶目前的資金 ${e.toFixed(2)}U` });
           C.budget = +b.budget;
+        }
+        if (typeof b.btcF === 'boolean') {               // 🧭 自己要不要用 BTC 方向過濾
+          C.btcF = b.btcF ? 1 : 0;
+          if (X.uid === ownerUid() && ST.set.btcF !== C.btcF) { ST.set.btcF = C.btcF; touchBT(); }   // 擁有者的選擇也用在共用的結算報告
+          dcX(X, b.btcF ? '🧭 **BTC 方向過濾已開啟**：順勢、逆勢的異常項數不夠就不下單' : '🧭 **BTC 方向過濾已關閉**：所有訊號都會下單');
         }
         let rule = false;                                // 個人的出場規則
         if (b.sl !== undefined) { const v = +b.sl; if (!(v >= 10 && v <= 1000)) return send(res, 400, { error: '浮虧 % 要在 10～1000 之間' }); if (C.sl !== v) setTimeout(() => ltSyncSL(X).catch(e => log('改止損失敗', X.uid, e.message)), 500); C.sl = v; rule = true; }
@@ -1997,7 +1990,7 @@ http.createServer(async (req, res) => {
         if (b.reset) { const e = bxEquity(X); C.startAt = Date.now(); C.startCap = C.budget > 0 ? C.budget : e > 0 ? Math.round(e * 100) / 100 : 0; }   // 有設投入資金就用它，沒有就用目前帳戶權益
         touchLT(X); return send(res, 200, { ok: true, cfg: C });
       }
-      if (u.pathname === '/api/lt/testOpen' && process.env.LT_TEST === '1') { await ltFlipOpen(X, { id: 'test', sym: b.sym, dir: b.dir || 1, abN: b.abN || 2, last: 1, h4: b.h4 || null }); return send(res, 200, { ok: true, msg: X.LT.msg }); }
+      if (u.pathname === '/api/lt/testOpen' && process.env.LT_TEST === '1') { await ltFlipOpen(X, { id: 'test', sym: b.sym, dir: b.dir || 1, abN: b.abN || 2, last: 1, btcPass: b.btcPass, btcNeed: 4 }); return send(res, 200, { ok: true, msg: X.LT.msg }); }
       if (u.pathname === '/api/lt/close') {
         const pct = Math.min(1, Math.max(0.01, +b.pct || 1));
         try { const r = await ltClosePos(X, String(b.positionId), pct, 'manual'); setTimeout(() => bxPollOne(X), 1500); return send(res, 200, { ok: true, r }); }
