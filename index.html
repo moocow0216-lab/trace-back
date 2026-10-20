@@ -611,6 +611,7 @@ header{align-items:center}
     <label id="qgPw2" hidden>再輸入一次密碼<input id="qg_pw2" type="password" autocomplete="new-password"></label>
     <details class="qgadv"><summary>伺服器網址</summary><label><input id="qg_url" type="url" autocapitalize="off" spellcheck="false"></label></details>
     <button class="btn primary" id="qg_go" type="submit">登入</button>
+    <div id="qg2fa" hidden><p class="qgnote" id="qg2faNote"></p><div id="qg2faBtn"></div></div>
     <p class="qgerr" id="qgErr" role="alert"></p>
   </form>
   <form class="qgatebox" id="qBindForm" onsubmit="return false" hidden>
@@ -718,7 +719,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-19f</div>
+      <div class="qver" id="qVer">網站版本 2026-10-20b</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -988,6 +989,11 @@ header{align-items:center}
     <div class="params"><label class="field">Google 用戶端 ID（空白＝讓大家手動輸入 Gmail）<input id="qa_gid" autocomplete="off" spellcheck="false" placeholder="xxxx.apps.googleusercontent.com"></label></div>
     <div class="qbt" style="margin-top:8px"><button class="btn" id="qa_gsave">儲存</button></div>
     <p class="qrepnote" id="qa_gnote"></p>
+    <div id="qAllBox" hidden>
+      <h3 style="font-size:14px;margin:16px 0 6px">👑 所有帳號的自動交易</h3>
+      <p class="qrepnote">一鍵讓所有帳號一起暫停或開始。暫停後已經開著的單照常管理（鎖利、失敗線、到期）；開始只會開有設定 Bitunix API 的帳號。每個人的 Discord 都會收到通知。</p>
+      <div class="qbt"><button class="btn" id="qa_allOff">⏸ 全部暫停</button><button class="btn" id="qa_allOn">▶ 全部開始</button></div>
+    </div>
     <div id="qOwnBox" hidden>
       <h3 style="font-size:14px;margin:16px 0 6px">👑 轉讓擁有者</h3>
       <p class="qrepnote">轉讓後你會變成灰色管理員，對方變成擁有者（AWS 提醒、共用的訊號規則也跟著換成對方的）。一定要用你綁定的 Google 信箱驗證；對方必須已經完成綁定。</p>
@@ -3101,7 +3107,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) renderEco(j.eco);
-    $('qVer').textContent = `網站版本 2026-10-19f・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-20b・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -3247,7 +3253,8 @@ function tradeLine(c) {
     <span>目前浮盈 ${curS}・${mx}</span></div>`;
   if (E.st === 'win' && E.exitHow === 'open') return `<div class="qtr" data-tr>${head}<span>${dur(E.at - c.et)}後碰到達標價 <b>${fpx(tpPx)}</b>，鎖利線 <b class="qg">+${E.lock || T.tp}%</b>，持有中</span>
     <span>目前浮盈 ${curS}・${mx}</span></div>`;
-  const exit = E.st === 'win' ? (
+  const exit = E.exitHow === 'flip' ? `出現${c.flipTo > 0 ? '做多' : '做空'}訊號，以 <b>${fpx(c.flipPx)}</b> 反手出場 <b class="${E.pnl >= 0 ? 'qg' : 'qr'}">${pnlS(E.pnl)}</b>`
+    : E.st === 'win' ? (
       E.exitHow === 'lock' ? `碰到達標價 <b>${fpx(tpPx)}</b> 後跑回鎖利線，以 <b class="qg">${pnlS(E.pnl)}</b> 出場`
       : E.exitHow === 'hold' ? `碰到達標價後一直沒跑回來，抱到 ${T.hold} 小時到期，以 <b class="qg">${pnlS(E.pnl)}</b> 出場`
       : `碰到達標價 <b>${fpx(tpPx)}</b> 就出場 <b class="qg">+${T.tp}%</b>`)
@@ -3400,7 +3407,13 @@ function evalTrade(c) {                               // 持有中的單：最�
   return E;
 }
 function curPxAny(c) { return c.bt ? c.px : curPx(c); }
+// 🔄 反手：同一個幣出現反方向訊號時，舊訊號用當時價格結束（之前已經結單的照原本結果）
 function evalTrade0(c) {
+  const E = evalTrade0x(c);
+  if (!c.flipAt || (E.st !== 'open' && E.exitHow !== 'open' && !E.live && (E.exitAt || 0) <= c.flipAt)) return E;
+  return Object.assign({}, E, { st: E.st === 'win' ? 'win' : 'timeout', exitAt: c.flipAt, pnl: Math.round(roe(c.dir * (c.flipPx / c.entry - 1)) * 10) / 10, exitHow: 'flip', live: false });
+}
+function evalTrade0x(c) {
   const tr = c.trk || c;
   let recs = tr.recs || [];
   // 還沒被 1 分鐘 K 線涵蓋的即時價格點，接在後面一起算（數值改成累積最大值）
@@ -4147,6 +4160,21 @@ $('qg_go').onclick = async () => {
     const r = await fetch(url + (GATE_SETUP ? '/api/setup' : '/api/login'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     const j = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(j.error || 'HTTP ' + r.status);
+    if (j.need2fa) {                                   // 👑 擁有者：密碼對了，還要用綁定的 Google 信箱驗證
+      $('qg2fa').hidden = false; $('qg_go').hidden = true;
+      $('qg2faNote').textContent = `擁有者登入要再用 Google 驗證：請選綁定的信箱（${j.email}），5 分鐘內有效。`;
+      gsiButton($('qg2faBtn'), j.google, async cred => {
+        $('qgErr').textContent = '';
+        try {
+          const r2 = await fetch(url + '/api/login/google', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pre: j.pre, credential: cred }) });
+          const j2 = await r2.json().catch(() => ({}));
+          if (!r2.ok) throw new Error(j2.error || 'HTTP ' + r2.status);
+          LS.set('quantSrv', Object.assign({}, SRV, { url, token: j2.token, uid: j2.uid, role: j2.role, on: true, key: '' }));
+          location.reload();
+        } catch (e) { $('qgErr').textContent = e.message; $('qg_go').hidden = false; $('qg_go').disabled = false; $('qg2fa').hidden = true; }
+      });
+      return;
+    }
     LS.set('quantSrv', Object.assign({}, SRV, { url, token: j.token, uid: j.uid, role: j.role, on: true, key: '' }));
     location.reload();
   } catch (e) { $('qgErr').textContent = e.message === 'Failed to fetch' ? '連不到伺服器' : e.message; $('qg_go').disabled = false; }
@@ -4231,7 +4259,7 @@ async function admLoad() {
   try {
     const j = await srvFetch('/api/users');
     if (document.activeElement !== $('qa_gid')) $('qa_gid').value = j.google || '';
-    $('qOwnBox').hidden = !OWN();
+    $('qOwnBox').hidden = $('qAllBox').hidden = !OWN();
     if (OWN()) {                                       // 轉讓擁有者：要 Google 驗證
       if (!j.google) { $('qo_note').innerHTML = '要先在上面設定 <b>Google 用戶端 ID</b>，才能用 Google 驗證轉讓。'; $('qoGoogle').innerHTML = ''; }
       else if (!$('qoGoogle').dataset.ready) {
@@ -4246,7 +4274,7 @@ async function admLoad() {
       }
     }
     $('qa_gid').disabled = $('qa_gsave').disabled = !!j.googleEnv;
-    $('qa_gnote').innerHTML = j.googleEnv ? 'Google 用戶端 ID 是用伺服器的環境變數設定的，要在主機上改。' : j.google ? '已啟用 Google 驗證：之後綁定要按 Google 登入按鈕，伺服器會向 Google 確認信箱是真的。已經綁定的帳號不受影響。' : '目前是<b>手動輸入 Gmail</b>（沒有驗證）。到 Google Cloud 建立「OAuth 用戶端 ID（網頁應用程式）」，已授權的 JavaScript 來源填 <b>https://moocow0216-lab.github.io</b>，把拿到的 ID 貼在這裡，就會改成真正的 Google 驗證。';
+    $('qa_gnote').innerHTML = j.googleEnv ? 'Google 用戶端 ID 是用伺服器的環境變數設定的，要在主機上改。' : j.google ? '已啟用 Google 驗證：之後綁定要按 Google 登入按鈕，伺服器會向 Google 確認信箱是真的；擁有者每次登入也要再用 Google 驗證。已經綁定的帳號不受影響。' : '目前是<b>手動輸入 Gmail</b>（沒有驗證），<b class="qr">擁有者登入也只靠密碼</b>。到 Google Cloud 建立「OAuth 用戶端 ID（網頁應用程式）」，已授權的 JavaScript 來源填 <b>https://moocow0216-lab.github.io</b>，把拿到的 ID 貼在這裡，就會改成真正的 Google 驗證。';
     $('qAdmTab').innerHTML = '<thead><tr><th>UID</th><th>權限</th><th>綁定（Google／手機）</th><th>Bitunix API</th><th>自動交易</th><th>自動單持倉</th><th>建立時間</th><th>最後登入</th><th>登入中裝置</th><th>操作</th></tr></thead><tbody>' +
       j.users.map(u => `<tr><td><b>${esc(u.uid)}</b>${u.uid === SRV.uid ? '（你）' : ''}</td><td>${roleBadge(u.role, u.owner)}</td><td>${u.bind ? `${esc(u.bind.email)}${u.bind.google ? ' ✅' : ''}<br>${esc(u.bind.phone)}` : '<span style="color:var(--muted)">還沒綁定</span>'}</td><td>${u.api ? '已設定' : '<span style="color:var(--muted)">未設定</span>'}</td><td>${u.auto ? '<b class="qg">運作中</b>' : '暫停'}</td><td>${u.open || 0} 筆</td><td>${u.created ? fmtT(u.created) : '—'}</td><td>${u.last ? fmtT(u.last) : '—'}</td><td>${u.sessions}</td>
         <td><button class="iconbtn" data-a="view" data-u="${esc(u.uid)}">👁 查看</button>${(OWN() || u.uid === SRV.uid) ? ` <button class="iconbtn" data-a="pw" data-u="${esc(u.uid)}">改密碼</button>` : ''}${u.owner && !OWN() ? '' : `${u.bind ? ` <button class="iconbtn" data-a="unbind" data-u="${esc(u.uid)}">重設綁定</button>` : ''}${u.owner ? '' : ` <button class="iconbtn" data-a="role" data-r="${u.role === 'admin' ? 'viewer' : 'admin'}" data-u="${esc(u.uid)}">${u.role === 'admin' ? '改成一般' : '改成管理員'}</button>`}`}${u.owner && !OWN() ? '' : ` <button class="iconbtn" data-a="kick" data-u="${esc(u.uid)}">登出所有裝置</button>`}${u.owner ? '' : ` <button class="iconbtn" data-a="del" data-u="${esc(u.uid)}">刪除</button>`}</td></tr>`).join('') + '</tbody>';
@@ -4267,6 +4295,13 @@ $('qAdmTab').addEventListener('click', async e => {
     admLoad();
   } catch (err) { alert(err.message); }
 });
+async function ltAll(on) {
+  if (!confirm(on ? '要讓「所有帳號」一起開始自動交易嗎？\n\n每個有設定 Bitunix API 的帳號都會開始用他自己的資金自動下單。' : '要讓「所有帳號」一起暫停自動交易嗎？\n\n已經開著的單會照常管理到平倉。')) return;
+  try { const r = await srvFetch('/api/lt/all', { on }); alert(`${on ? '已開始' : '已暫停'} ${r.n} 個帳號${r.skip ? `（${r.skip} 個沒有設定 API，跳過）` : ''}。`); admLoad(); SV.lv = 0; srvPull(); }
+  catch (e) { alert(e.message); }
+}
+$('qa_allOff').onclick = () => ltAll(false);
+$('qa_allOn').onclick = () => ltAll(true);
 $('qa_gsave').onclick = async () => {
   const clientId = $('qa_gid').value.normalize('NFKC').trim();
   try { await srvFetch('/api/google', { clientId }); alert(clientId ? '已儲存，之後綁定會用 Google 驗證。' : '已清除，之後綁定改回手動輸入 Gmail。'); admLoad(); }
@@ -4294,7 +4329,7 @@ function viewHtml(v) {
   const cfg = `每筆 ${L.margin}U・${L.lev}x・單日虧損上限 ${L.dayLoss}U・浮虧 −${L.sl}% 平倉・鎖利每 ${L.step}% 上調・最長持有 ${+(L.hold / 24).toFixed(1)} 天${v.msg ? '・' + esc(v.msg) : ''}`;
   const pos = (v.pos || []).length ? `<div class="tablewrap"><table class="stat"><thead><tr><th>幣種</th><th>方向</th><th>槓桿</th><th>數量</th><th>開倉價</th><th>現價</th><th>未實現損益</th><th>保證金</th><th>強平價</th><th>開倉時間</th><th>來源</th></tr></thead><tbody>` +
     v.pos.map(p => `<tr><td><b>${esc(p.sym)}</b></td><td>${p.dir > 0 ? '做多' : '做空'}</td><td>${p.lev}x</td><td>${p.qty}</td><td>${p.entry}</td><td>${p.px ?? '—'}</td><td class="${p.upnl >= 0 ? 'qg' : 'qr'}">${vU(p.upnl)}</td><td>${(+p.margin).toFixed(2)}U</td><td>${p.liq > 0 ? p.liq : '低風險'}</td><td>${p.ctime ? fmtT(p.ctime) : '—'}</td><td>${p.bot ? '🤖 自動' : '手動'}</td></tr>`).join('') + '</tbody></table></div>' : '<p class="qrepnote">目前沒有持倉。</p>';
-  const RS = { win: '達標', lock: '鎖利', fail: '失敗線', timeout: '到期', manual: '手動平倉', all: '一鍵平倉', liq: '強平', exchange: '交易所平倉' };
+  const RS = { win: '達標', lock: '鎖利', fail: '失敗線', timeout: '到期', manual: '手動平倉', all: '一鍵平倉', liq: '強平', exchange: '交易所平倉', flip: '反手' };
   const tr = (v.trades || []).length ? `<div class="tablewrap"><table class="stat"><thead><tr><th>幣種</th><th>方向</th><th>開倉</th><th>平倉</th><th>結果</th><th>淨損益</th></tr></thead><tbody>` +
     v.trades.map(t => `<tr><td><b>${esc(t.sym)}</b></td><td>${t.dir > 0 ? '做多' : '做空'}</td><td>${fmtT(t.et)}</td><td>${t.exitAt ? fmtT(t.exitAt) : '持有中'}</td><td>${t.status === 'open' ? '—' : esc(RS[t.reason] || t.reason)}</td><td class="${(t.status === 'open' ? t.net + t.upnl : t.net) >= 0 ? 'qg' : 'qr'}">${vU(t.status === 'open' ? t.net + t.upnl : t.net)}</td></tr>`).join('') + '</tbody></table></div>' : '<p class="qrepnote">還沒有自動交易紀錄。</p>';
   return `<div class="qvgrid">${grid}</div><p class="qrepnote">交易設定：${cfg}</p><h3 style="font-size:14px;margin:12px 0 6px">持倉</h3>${pos}<h3 style="font-size:14px;margin:12px 0 6px">最近 30 筆自動交易</h3>${tr}`;
@@ -4446,7 +4481,7 @@ function realRows() {
     const up = P ? P.upnl : (t.upnl || 0), imNow = P && P.entry > 0 && P.qty > 0 && P.lev > 0 ? P.entry * P.qty / P.lev : (t.entry > 0 && t.qty > 0 && t.lev > 0 ? t.entry * t.qty / t.lev : im0);
     const roePct = open ? (partU / im0 + up / imNow) * 100 : (t.realized || 0) / im0 * 100;
     const reason = t.reason || '', st = open ? 'open' : roePct > 0 ? 'win' : 'fail';   // 結單賺錢＝成功，虧錢＝失敗
-    const reasonZh = { win: '達標出場', lock: '保本鎖利', fail: '失敗線', timeout: '持有到期', manual: '手動平倉', all: '一鍵全平', liq: '強平', exchange: '交易所／App 平倉' }[reason] || '';
+    const reasonZh = { win: '達標出場', lock: '保本鎖利', fail: '失敗線', timeout: '持有到期', manual: '手動平倉', all: '一鍵全平', liq: '強平', exchange: '交易所／App 平倉', flip: '反手平倉' }[reason] || '';
     const E = { st, real: true, reasonZh, pnl: roePct, pnlU: netU, live: open, fav: Math.max(0, (t.fav || 0)) / 100 / T.lev, adv: Math.max(0, -(t.adv || 0)) / 100 / T.lev, at: open ? 0 : t.exitAt, exitAt: open ? 0 : t.exitAt, exitHow: open ? 'open' : '' };
     return { c: { id: t.id, sym: t.sym, pid: t.sym, src: 'binance', spot: null, dir: t.dir, et: t.et, entry: t.entry, abN: t.abN, real: true }, live: true, E, t, linked: !open || !!P, partU };
   }).sort((a, b) => b.c.et - a.c.et);
