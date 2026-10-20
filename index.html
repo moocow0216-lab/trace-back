@@ -742,7 +742,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-21a</div>
+      <div class="qver" id="qVer">網站版本 2026-10-21c</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -793,6 +793,7 @@ header{align-items:center}
             <label class="field">鎖利線上調（浮盈每多幾 %，0＝不上調）<input id="lt_step" type="number" min="0" max="1000" step="10"></label>
             <label class="field">持有天數（到期就平倉）<input id="lt_hold" type="number" min="0.5" max="30" step="0.5"></label>
             <label class="field">浮虧 % 數（虧到這裡就平倉）<input id="lt_sl" type="number" min="10" max="1000" step="10"></label>
+            <label class="field">🧭 BTC 方向過濾<select id="lt_btcF"><option value="1">開：順勢、逆勢的異常項數不夠就不進場</option><option value="0">關：所有訊號都進場</option></select></label>
             <input id="lt_maxOpen" type="hidden">
           </div>
           <div class="qcfgnote" id="qmt_note"></div>
@@ -832,9 +833,9 @@ header{align-items:center}
           <label class="field">至少幾項指標異常<select id="qs_minN"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
           <label class="field">方向判斷<select id="qs_logic"><option value="follow">跟隨主動資金</option><option value="absorb">吸收反轉（反向）</option></select></label>
           <label class="field" hidden>🧭 BTC 方向過濾<select id="qs_btcF"><option value="1">開：進場前先看 BTC 方向</option><option value="0">關</option></select></label>
-          <label class="field" hidden>🧭 BTC 方向怎麼判斷（每個人在「👤 我的設定」自己決定開不開）<select id="qs_btcMode"><option value="24h">現價比 24 小時前</option><option value="day">現價比今天開盤（台北 08:00）</option><option value="4h">現價比 4 小時前</option></select></label>
-          <label class="field" hidden>順勢（跟 BTC 同方向）至少幾項異常<select id="qs_btcWith"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
-          <label class="field" hidden>逆勢（跟 BTC 反方向）至少幾項異常<select id="qs_btcAgainst"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
+          <label class="field">🧭 BTC 方向怎麼判斷（每個人在「👤 我的設定」自己決定開不開）<select id="qs_btcMode"><option value="24h">現價比 24 小時前</option><option value="day">現價比今天開盤（台北 08:00）</option><option value="4h">現價比 4 小時前</option></select></label>
+          <label class="field">順勢（跟 BTC 同方向）至少幾項異常<select id="qs_btcWith"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
+          <label class="field">逆勢（跟 BTC 反方向）至少幾項異常<select id="qs_btcAgainst"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
           <label class="field">自動掃描間隔（上一輪掃完後再等）<select id="qs_everyS"><option value="10">每 10 秒</option><option value="30">每 30 秒</option><option value="60">每 1 分鐘</option><option value="180">每 3 分鐘</option><option value="300">每 5 分鐘</option><option value="600">每 10 分鐘</option></select></label>
         </div>
       </details>
@@ -856,10 +857,11 @@ header{align-items:center}
         <div class="qbxh"><b>💼 我的 Bitunix 持倉</b><span id="qBxInfo"></span></div>
         <div class="qlt" id="qLt" hidden>
           <span class="qltst" id="qLtSt"></span>
-          <button class="btn" id="qLtToggle"></button><button class="btn" id="qLtLong" hidden>▶ 進場做多</button><button class="btn" id="qLtShort" hidden>▶ 進場做空</button>
+          <button class="btn" id="qLtToggle"></button>
           <button class="btn qdanger" id="qLtAll">🛑 一鍵平倉（自動單）</button>
           <button class="btn" id="qLtCfgBtn">👤 我的設定</button>
-          <span class="qltmsg" id="qLtMsg"></span>
+          <div class="qltmsg" id="qLtEco" hidden style="color:#f5a524;font-weight:600"></div>
+        <span class="qltmsg" id="qLtMsg"></span>
         </div>
         <div class="qcfg" id="qLtCfg" hidden>
           <div class="qcfgnote"><b>投入資金</b>：例如帳戶有 153U、這裡填 100，自動交易只會用這 100U（加上它自己賺的、扣掉它自己虧的）來下單，用完會自動暫停；實盤統計也從 100U 開始算。注意全倉模式下，交易所還是用整個帳戶當保證金，極端行情時帳戶裡其他的錢也可能被拖累。<br>保證金模式：<b>全倉</b>。出場規則用「⚙ 浮盈／槓桿設定」裡的成功線、失敗線、出場方式和最長持有時間。開倉單會同時掛交易所止損（失敗線）。伺服器重新啟動後，自動交易一律先暫停。</div>
@@ -3120,7 +3122,7 @@ async function srvPull() {
     const sc = j.scan;
     Object.assign(Q, { prov: BN, total: sc.total, flatN: sc.flatN, found: sc.found, last: sc.last, dur: sc.dur, err: sc.err ? '伺服器：' + sc.err : '' });
     $('qSrc').textContent = '資料：幣安・雲端伺服器';
-    H4NOW = [sc.h4, sc.btcSkip]; renderBtc(...H4NOW); renderCmp(j.bt.cmp); renderBs(j.bstat);
+    renderBtc(sc.btc, sc.btcSkip); renderCmp(j.bt.cmp); renderBs(j.bstat);
     const p = j.btp;
     btRun = p.run; $('qBtRun').disabled = p.run; $('qBtStop').hidden = !p.run || !OWN();
     $('qBtStat').textContent = p.run ? `伺服器回測中 ${p.done}／${p.total}，已找到 ${p.found} 筆訊號${p.skipped ? `，跳過 ${p.skipped} 個` : ''}…（可以關掉網頁，伺服器會繼續跑）`
@@ -3128,10 +3130,10 @@ async function srvPull() {
     if (j.notify) tgShow(j.notify);
     if (OWN() && !SV.pushed) { SV.pushed = true; pushTrade(); pushEq(); }
     if (j.rep) SRVREP.rep = j.rep;
-    if (j.lt) { SRVLT.cfg = j.lt.cfg; SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); renderBtc(...H4NOW); }   // 拿到最新的交易設定（有沒有選方向）再畫一次 4H 狀態   // 還沒設 API 也要顯示「我的交易設定」
+    if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
-    if (j.eco) renderEco(j.eco);
-    $('qVer').textContent = `網站版本 2026-10-21a・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
+    $('qVer').textContent = `網站版本 2026-10-21c・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -3222,7 +3224,8 @@ function indVal(i, c) {
   const u = (i.k === 'scvd' || i.k === 'sbar') && !c.unitOk ? '' : ' 美元';
   return samt(i.v) + u;
 }
-const btcOk = c => !(c.h4 && c.h4.ok === false);    // 🕓 不符合 4H 規則的訊號：不顯示、不算成功率
+const MYBTC = () => !!(SRVLT.cfg ? SRVLT.cfg.btcF : S.btcF);   // 自己有沒有開 BTC 方向過濾
+const btcOk = c => !(MYBTC() && c.btcPass === false);          // 開著過濾：沒過的訊號不顯示、不算成功率
 let QF = '';                                          // 🔍 查幣種：只顯示這個幣的訊號卡片和歷史紀錄
 const qfOk = sym => !QF || String(sym || '').toUpperCase().replace(/USDT$/, '').includes(QF);
 $('qFind').oninput = () => { QF = $('qFind').value.normalize('NFKC').toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/USDT$/, ''); renderCards(); renderHist(); };
@@ -3247,7 +3250,7 @@ function renderCards() {
         <b class="qsym">${esc(c.sym)}</b>
         <span class="chip open">數據異常</span>
         <span class="chip ${c.dir > 0 ? 'long' : 'short'}">${c.dir > 0 ? '做多' : '做空'}</span>
-        <span class="chip">${c.abN}／5 項異常</span>${c.h4 ? `<span class="chip" title="${!c.h4.win ? '08:00–16:00 還不判斷 4H，只有手動選方向的人會進場' : c.h4.cd ? '照這個幣自己的 4H 方向' : c.h4.bd ? '這個幣 4H 不明確，跟 BTC 的 4H 方向' : '這個幣和 BTC 的 4H 都不明確，多空都可以'}">🕓 ${!c.h4.win ? '08–16 手動' : c.h4.cd ? `本幣 4H ${c.h4.cd > 0 ? '多' : '空'}` : c.h4.bd ? `跟 BTC 4H ${c.h4.bd > 0 ? '多' : '空'}` : '4H 不明確'}</span>` : ''}
+        <span class="chip">${c.abN}／5 項異常</span>${c.btcD !== undefined ? `<span class="chip" title="訊號出現時 BTC ${c.btcChg != null ? (c.btcChg > 0 ? '+' : '') + c.btcChg + '%' : '讀不到'}，這個方向要 ${c.btcNeed} 項異常才進場">BTC ${c.btcD > 0 ? '偏多' : c.btcD < 0 ? '偏空' : '—'}・${c.btcD === c.dir ? '順勢' : '逆勢'}</span>` : ''}
         <span class="qtime">最後偵測 ${fmtT(c.t)}${c.hits > 1 ? `・第 ${c.hits} 次出現` : ''}</span>
       </div>
       <div class="qmeta"><span>現價 <b data-px>${fpx(curPx(c))}</b></span><span>24h <b class="${c.chg >= 0 ? 'pos' : 'neg'}">${spct(c.chg)}</b></span><span>振幅 ${c.amp.toFixed(1)}%</span><span>成交額 ${amt(c.qv)}</span><span>${c.src === 'okx' ? 'OKX' : '幣安'}</span></div>
@@ -3672,25 +3675,25 @@ $('qBsRun').onclick = async () => {
   if (!OWN()) return;
   try { await srvFetch('/api/btcstat', { days: 90 }); $('qBsStat').textContent = '開始統計…'; } catch (e) { alert(e.message); }
 };
-/* ---------- 🕓 4 小時方向規則：狀態列 ---------- */
-var H4NOW = [null, 0];
+/* ---------- 🧭 BTC 方向過濾 ---------- */
+const BTCM = { '24h': '24 小時', day: '今天（台北 08:00 起）', '4h': '4 小時' };
 function renderBtc(b, skip) {
-  const el = $('qBtcNow'), h = b, C = SRVLT.cfg || {}; el.hidden = false;
-  const man = C.on && C.manual ? `你選了<b>只做${C.manual > 0 ? '多' : '空'}</b>` : '';
-  if (!h) { el.textContent = '🕓 4H 方向：等下一輪掃描…'; return; }
-  el.innerHTML = !h.win
-    ? `🕓 現在 08:00–16:00，今天還沒收完兩根 4H：${man ? man + '，照這個方向進場' : '<b>不進場</b>（可以按「▶ 進場做多／做空」）'}・${fmtT(h.next)} 開始用 4H 判斷`
-    : `🕓 BTC 4H：<b class="${h.bd > 0 ? 'qg' : h.bd < 0 ? 'qr' : ''}">${h.bd > 0 ? '偏多（明確）' : h.bd < 0 ? '偏空（明確）' : '不明確'}</b>。山寨幣自己 4H 明確就照它；不明確就${h.bd ? `跟 BTC 做${h.bd > 0 ? '多' : '空'}` : (man ? `照你選的` : '多空都做')}${man ? `（${man}）` : ''}・下次判斷 ${fmtT(h.next)}${skip ? `・伺服器啟動後有 ${skip} 個訊號不符合` : ''}`;
+  const el = $('qBtcNow'); el.hidden = false;
+  if (!MYBTC()) { el.textContent = '🧭 你的 BTC 方向過濾：關（所有訊號都會進場，可以在「👤 我的設定」打開）'; return; }
+  if (!b) { el.textContent = '🧭 BTC 方向過濾：等下一輪掃描讀取 BTC…'; return; }
+  const d = b.d > 0 ? '偏多' : b.d < 0 ? '偏空' : '讀不到', chg = b.chg != null ? `${BTCM[b.mode] || b.mode} ${b.chg > 0 ? '+' : ''}${b.chg}%` : '';
+  el.innerHTML = b.d ? `🧭 BTC 目前<b class="${b.d > 0 ? 'qg' : 'qr'}">${d}</b>（${chg}）：做多要 <b>${b.d > 0 ? S.btcWith : S.btcAgainst}</b> 項、做空要 <b>${b.d < 0 ? S.btcWith : S.btcAgainst}</b> 項異常才進場${skip ? `・伺服器啟動後有 ${skip} 個訊號沒過` : ''}`
+    : `🧭 BTC 方向讀不到：做多、做空都要 ${Math.max(S.btcWith, S.btcAgainst)} 項異常才進場`;
 }
-function renderCmp(v) {                               // 回測：有／沒有 4H 方向規則並排比較
+function renderCmp(v) {                               // 回測：有／沒有 BTC 過濾並排比較
   const el = $('qBtCmp');
-  if (!v) { el.innerHTML = SRV.on ? '<div class="qcmp"><h3>🕓 4H 方向規則：回測比較</h3><p class="qcn">按「回測過去約 14 天」，跑完會在這裡並排比較「有」和「沒有」4H 規則的結果（之前的回測是舊規則，要重新跑一次）。</p></div>' : ''; return; }
+  if (!v) { el.innerHTML = SRV.on ? '<div class="qcmp"><h3>🧭 BTC 方向過濾：回測比較</h3><p class="qcn">按「回測過去約 14 天」，跑完會在這裡並排比較「有」和「沒有」BTC 過濾的結果（之前的回測沒有記錄 BTC 方向，要重新跑一次）。</p></div>' : ''; return; }
   const A = v.off, B = v.on, U = x => (x >= 0 ? '+' : '−') + Math.abs(x).toFixed(2) + 'U', P = x => x == null ? '—' : (x >= 0 ? '+' : '−') + Math.abs(x) + '%';
   const df = (a, b, f, good = 1) => { if (a == null || b == null) return '—'; const d = b - a; return `<span class="${d * good > 0 ? 'qg' : d * good < 0 ? 'qr' : ''}">${d > 0 ? '+' : d < 0 ? '−' : '±'}${f(Math.abs(d))}</span>`; };
   const row = (k, a, b, d) => `<tr><td>${k}</td><td>${a}</td><td>${b}</td><td>${d}</td></tr>`;
-  const old = !v.cfg || v.cfg.rule !== '4h', BY = v.by || {}, R = x => x ? `${x.n} 筆、成功率 ${x.rate ?? '—'}%` : '—';
-  el.innerHTML = `<div class="qcmp"><h3>🕓 4H 方向規則：回測比較</h3>
-    <div class="tablewrap"><table><thead><tr><th></th><th>沒有規則</th><th>有 4H 規則</th><th>差別</th></tr></thead><tbody>
+  const changed = v.cfg && (v.cfg.mode !== S.btcMode || v.cfg.w !== S.btcWith || v.cfg.a !== S.btcAgainst);
+  el.innerHTML = `<div class="qcmp"><h3>🧭 BTC 方向過濾：回測比較</h3>
+    <div class="tablewrap"><table><thead><tr><th></th><th>沒有過濾</th><th>有 BTC 過濾</th><th>差別</th></tr></thead><tbody>
     ${row('訊號筆數', `${A.n}（多 ${A.long}／空 ${A.short}）`, `${B.n}（多 ${B.long}／空 ${B.short}）`, df(A.n, B.n, x => x + ' 筆', 0))}
     ${row('已結單', A.done + ' 筆', B.done + ' 筆', '')}
     ${row('成功率', A.rate == null ? '—' : A.rate + '%', B.rate == null ? '—' : B.rate + '%', df(A.rate, B.rate, x => x.toFixed(1) + '%'))}
@@ -3701,9 +3704,8 @@ function renderCmp(v) {                               // 回測：有／沒有 4
     ${row('做多損益', U(A.longPl), U(B.longPl), df(A.longPl, B.longPl, x => x.toFixed(2) + 'U'))}
     ${row('做空損益', U(A.shortPl), U(B.shortPl), df(A.shortPl, B.shortPl, x => x.toFixed(2) + 'U'))}
     </tbody></table></div>
-    <p class="qcn">${old ? '<b class="qr">這是舊規則（BTC 過濾）的回測，請重新按「回測過去約 14 天」。</b><br>' : ''}擋掉 <b>${v.cut.n}</b> 筆（做多 ${v.cut.long}、做空 ${v.cut.short}${v.cut.win != null ? `；其中 ${v.cut.win} 筆是 08:00–16:00 不進場` : ''}）。<br>
-    有規則時：照本幣 4H ${R(BY.coin)}；跟 BTC 4H ${R(BY.btc)}；都不明確（多空都做）${R(BY.both)}。<br>
-    回測 ${fmtT(v.start)}～${fmtT(v.end)}、${v.coins} 個幣，<b>沒有算手動選方向</b>（08:00–16:00 一律當作不進場）。模擬資金用「📊 回測報告」的本金和每筆下單設定、扣手續費；成功率和保證金 % 用目前的浮盈規則（+${T.tp}%／−${T.sl}%、${T.lev}x）。<br>回測用的是「現在」成交額前幾名的幣，結果可能偏樂觀，只供參考。</p></div>`;
+    <p class="qcn">過濾掉 <b>${v.cut.n}</b> 筆（做多 ${v.cut.long}、做空 ${v.cut.short}）。有過濾時：順勢 ${v.bySide.with.n} 筆、成功率 ${v.bySide.with.rate ?? '—'}%；逆勢 ${v.bySide.against.n} 筆、成功率 ${v.bySide.against.rate ?? '—'}%。<br>
+    回測 ${fmtT(v.start)}～${fmtT(v.end)}、${v.coins} 個幣，BTC 方向用「${BTCM[v.cfg ? v.cfg.mode : '24h']}」、順勢 ${v.cfg ? v.cfg.w : '—'} 項／逆勢 ${v.cfg ? v.cfg.a : '—'} 項。模擬資金用「📊 回測報告」的本金和每筆下單設定、扣手續費；成功率和保證金 % 用目前的浮盈規則（+${T.tp}%／−${T.sl}%、${T.lev}x）。${changed ? '<br><b class="qr">BTC 過濾條件改過了，要重新回測才會照新條件比較。</b>' : ''}<br>回測用的是「現在」成交額前幾名的幣，結果可能偏樂觀，只供參考。</p></div>`;
 }
 function btStat(msg) { $('qBtStat').textContent = msg || (BT.at ? `上次回測 ${fmtT(BT.at)}，${BT.coins} 個幣，共 ${BT.trades.length} 筆訊號。改浮盈或槓桿會直接重算，改掃描條件需要重新回測。` : '還沒回測過。'); }
 /* 回測快取：同一次開著網頁時，再按一次回測只補最新的資料，改掃描條件重跑會快很多 */
@@ -4056,11 +4058,11 @@ function repNet(list, cap0) {
     const last = rows[0], c = v => v > 0 ? 'pos' : v < 0 ? 'neg' : '', win = H.filter(r => r[k].pnl > 0).length;
     return `<h4 style="margin:10px 0 4px">${title}：從 ${cap0}U 開始，累積淨賺 <b class="${c(last.run)}">${sgU(last.run)}</b>（現在 ${last.x.endCap.toFixed(2)}U・${sgP(last.run / cap0 * 100)}・賺錢 ${win}／${H.length} 期）</h4>
       <div class="tablewrap"><table class="stat qnet"><thead><tr><th>期間</th><th>期初</th><th>這期淨賺</th><th>期末</th><th>累積淨賺</th></tr></thead><tbody>
-      ${rows.map(({ r, x, run }) => `<tr><td>${dOnly(r.start).slice(5)}～<wbr>${dOnly(r.end).slice(5)}${r.hist ? ' <small style="color:var(--muted)">歷史</small>' : ''}${r.cfg && (r.cfg.h4 || r.cfg.btc) ? ` <small style="color:var(--muted)">${r.cfg.h4 ? '🕓' : '🧭'}</small>` : ''}</td><td>${x.cap.toFixed(2)}</td><td class="${c(x.pnl)}"><b>${sgU(x.pnl)}</b></td><td>${x.endCap.toFixed(2)}${x.bust ? ' 💥' : ''}</td><td class="${c(run)}">${sgU(run)}</td></tr>`).join('')}
+      ${rows.map(({ r, x, run }) => `<tr><td>${dOnly(r.start).slice(5)}～<wbr>${dOnly(r.end).slice(5)}${r.hist ? ' <small style="color:var(--muted)">歷史</small>' : ''}${r.cfg && r.cfg.btc ? ' <small style="color:var(--muted)">🧭</small>' : ''}</td><td>${x.cap.toFixed(2)}</td><td class="${c(x.pnl)}"><b>${sgU(x.pnl)}</b></td><td>${x.endCap.toFixed(2)}${x.bust ? ' 💥' : ''}</td><td class="${c(run)}">${sgU(run)}</td></tr>`).join('')}
       </tbody></table></div>`;
   };
   const out = one('bt', '回測') + one('live', '即時（伺服器實際記錄到的訊號）');
-  return out ? `<div class="qnetbox"><h3 style="font-size:15px;margin:0">💰 每期淨賺（累積）</h3><p class="qrepnote" style="margin:4px 0 0">淨賺＝已扣手續費。上一期的期末資金就是這一期的期初資金；最新的一期在最上面。🕓＝這期用 4H 方向規則、🧭＝舊的 BTC 方向過濾。</p>${out}</div>` : '';
+  return out ? `<div class="qnetbox"><h3 style="font-size:15px;margin:0">💰 每期淨賺（累積）</h3><p class="qrepnote" style="margin:4px 0 0">淨賺＝已扣手續費。上一期的期末資金就是這一期的期初資金；最新的一期在最上面。🧭＝這期有用 BTC 方向過濾。</p>${out}</div>` : '';
 }
 function renderRep() {
   const el = $('qRepBody');
@@ -4086,7 +4088,7 @@ function renderRep() {
       <tr class="qsub"><th>期初資金</th><th>期末資金</th><th>損益</th><th>報酬率</th><th>成功率</th><th>筆數</th><th>手續費</th><th>最大回撤</th><th>期初資金</th><th>期末資金</th><th>損益</th><th>報酬率</th><th>成功率</th><th>筆數</th><th>手續費</th><th>最大回撤</th></tr></thead>
       <tbody>${L.map((r, i) => `<tr data-i="${i}" class="${i === repSel ? 'sel' : ''}" title="點一下看這期的資金曲線"><td>${dOnly(r.start)} ～ ${dOnly(r.end)}${r.manual ? ' <small style="color:var(--muted)">手動</small>' : ''}${r.hist ? ` <small style="color:var(--muted)">歷史${r.cfg.noOI ? '・無持倉資料' : ''}</small>` : ''}${r.skip ? ' <small style="color:var(--orange)">跟上一期重疊，不計入累積</small>' : ''}</td>${repCells(r.bt)}${repCells(r.live)}</tr>`).join('')}</tbody></table></div>
     <div class="qrepcurve">${repCurve(L[repSel])}</div>
-    <p class="qrepnote" style="margin-top:8px">這期設定：每筆 ${L[repSel].cfg.mode === 'pct' ? L[repSel].cfg.amt + '%' : L[repSel].cfg.amt + 'U'}・${L[repSel].cfg.lev}x・+${L[repSel].cfg.tp}%／−${L[repSel].cfg.sl}%・最長持有 ${L[repSel].cfg.hold} 小時・手續費 ${L[repSel].cfg.fee}%${L[repSel].cfg.max ? `・最多同時 ${L[repSel].cfg.max} 筆` : ''}・${L[repSel].cfg.h4 ? '🕓 4H 方向規則' : L[repSel].cfg.btc ? `🧭 舊的 BTC 方向過濾（順勢 ${L[repSel].cfg.btc.w} 項／逆勢 ${L[repSel].cfg.btc.a} 項）` : '沒有方向規則'}</p>`;
+    <p class="qrepnote" style="margin-top:8px">這期設定：每筆 ${L[repSel].cfg.mode === 'pct' ? L[repSel].cfg.amt + '%' : L[repSel].cfg.amt + 'U'}・${L[repSel].cfg.lev}x・+${L[repSel].cfg.tp}%／−${L[repSel].cfg.sl}%・最長持有 ${L[repSel].cfg.hold} 小時・手續費 ${L[repSel].cfg.fee}%${L[repSel].cfg.max ? `・最多同時 ${L[repSel].cfg.max} 筆` : ''}・${L[repSel].cfg.btc ? `🧭 BTC 方向過濾（順勢 ${L[repSel].cfg.btc.w} 項／逆勢 ${L[repSel].cfg.btc.a} 項）` : '沒有 BTC 方向過濾'}</p>`;
 }
 $('qRepBody').addEventListener('click', e => { const tr = e.target.closest('tr[data-i]'); if (!tr) return; repSel = +tr.dataset.i; renderRep(); });
 $('qRepBtn').onclick = () => { renderRep(); $('qRepDlg').showModal(); if (SRV.on) { SV.rv = 0; srvPull(); } };
@@ -4517,19 +4519,22 @@ $('qa_save').onclick = async () => {
 })();
 /* ---------- 🤖 自動交易（實盤）：控制、平倉 ---------- */
 var SRVLT = { cfg: null, msg: '', day: 0, trades: [] };
+var SRVECO = null;                                    // 伺服器傳來的經濟數據（持倉區要知道今天有沒有重要數據）
 function renderLt() {
   const C = SRVLT.cfg; $('qLt').hidden = !C;
   if (!C) return;
   $('qLtSt').className = 'qltst ' + (C.on ? 'on' : 'off');
   $('qLtSt').textContent = C.on ? '🤖 自動交易：運作中' : '⏸ 自動交易：暫停中';
+  const ED = (SRVECO && SRVECO.today) || [];         // 📅 今天有美國重要數據：整天不開新單
+  $('qLtEco').hidden = !ED.length;
+  $('qLtEco').textContent = ED.length ? `📅 今天有美國重要數據（${ED.map(e => `${e.zh} ${fmtT(e.t).slice(-5)}`).join('、')}），自動交易整天不開新單、不反手；已開的單照常管理。` : '';
   $('qLtToggle').textContent = C.on ? '⏸ 暫停交易' : '▶ 開始交易';
-  $('qLtSt').textContent = C.on ? `🤖 自動交易：運作中${C.manual ? `（只做${C.manual > 0 ? '多' : '空'}）` : ''}` : '⏸ 自動交易：暫停中';
   $('qLtToggle').hidden = $('qLtAll').hidden = $('qLtCfgBtn').hidden = !MINE();
-  $('qLtLong').hidden = $('qLtShort').hidden = !MINE() || C.on;
   const B = SRVLT.bot, AE = SRVLT.acctEq || 0;
   $('qLtMsg').textContent = `${C.budget > 0 ? `投入 ${C.budget}U（帳戶 ${AE.toFixed(2)}U）・目前 ${B ? B.eq.toFixed(2) : '—'}U、可用 ${B ? Math.max(0, B.free).toFixed(2) : '—'}U・` : `用整個帳戶（${AE.toFixed(2)}U）・`}每筆 ${C.margin}U・${C.lev}x 全倉・最多 ${C.maxOpen || '不限'} 筆・今日 ${SRVLT.day >= 0 ? '+' : '−'}${Math.abs(SRVLT.day).toFixed(2)}U（上限 −${C.dayLoss}U）${SRVLT.msg ? '・' + SRVLT.msg : ''}`;
   ['budget', 'margin', 'lev', 'maxOpen', 'dayLoss', 'sl', 'step'].forEach(k => { const el = $('lt_' + k); if (document.activeElement !== el) el.value = C[k] || 0; });
   if (document.activeElement !== $('lt_hold')) $('lt_hold').value = +((C.hold || 168) / 24).toFixed(2);
+  if (document.activeElement !== $('lt_btcF')) $('lt_btcF').value = C.btcF ? '1' : '0';
   const AE2 = SRVLT.acctEq || 0;
   $('qmt_stat').textContent = SRVBX && SRVBX.set ? `合約帳戶目前 ${AE2.toFixed(2)}U` : '（先設定 Bitunix API）';
   $('qmt_note').innerHTML = `<b>合約投入資金</b>：自動交易只用這筆錢（加上它自己賺的、扣掉它自己虧的）來下單，用完自動暫停；不能大於合約帳戶的資金，0＝用整個合約帳戶。<br>出場規則：浮盈碰到 <b>+${T.tp}%</b> 開始鎖利${C.step > 0 ? `，之後每多 <b>${C.step}%</b> 鎖利線往上調一次` : '（鎖在 +' + T.tp + '%）'}，跑回鎖利線就平倉；浮虧到 <b>−${C.sl}%</b> 平倉；最長持有 <b>${+((C.hold || 168) / 24).toFixed(1)} 天</b>，到期平倉。改了之後，已經開著的單也會照新規則管理。`;
@@ -4539,14 +4544,11 @@ async function ltCall(path, body, okMsg) {
   try { const r = await srvFetch(path, body); if (okMsg) alert(okMsg); SV.lv = 0; srvPull(); return r; }
   catch (e) { alert(e.message); }
 }
-function ltStart(manual) {                            // ▶ 開始交易：manual 1＝只做多、-1＝只做空、0＝照 4H 規則
-  const mode = manual > 0 ? '只做多' : manual < 0 ? '只做空' : '照 4H 規則（08:00–16:00 不進場）';
-  if (!confirm(`確定要開始自動交易嗎？方向：${mode}\n\n${manual ? `08:00–16:00、或山寨幣和 BTC 的 4H 都不明確時，只做${manual > 0 ? '多' : '空'}；4H 方向明確時照 4H 方向。\n\n` : ''}伺服器會用你的 Bitunix 帳戶「真實下單」：每筆 ${SRVLT.cfg.margin}U 保證金、${SRVLT.cfg.lev} 倍、全倉。\n全倉的虧損可能超過單筆保證金，請確認你能承擔。`)) return;
-  ltCall('/api/lt/config', { on: true, manual });
-}
-$('qLtToggle').onclick = () => { if (SRVLT.cfg && SRVLT.cfg.on) ltCall('/api/lt/config', { on: false }); else ltStart(0); };
-$('qLtLong').onclick = () => ltStart(1);
-$('qLtShort').onclick = () => ltStart(-1);
+$('qLtToggle').onclick = () => {
+  const on = !(SRVLT.cfg && SRVLT.cfg.on);
+  if (on && !confirm(`確定要開始自動交易嗎？\n\n伺服器會用你的 Bitunix 帳戶「真實下單」：每筆 ${SRVLT.cfg.margin}U 保證金、${SRVLT.cfg.lev} 倍、全倉。\n全倉的虧損可能超過單筆保證金，請確認你能承擔。`)) return;
+  ltCall('/api/lt/config', { on });
+};
 $('qLtAll').onclick = () => {
   const nBot = SRVBX ? SRVBX.pos.filter(p => p.bot).length : 0, nMan = SRVBX ? SRVBX.pos.length - nBot : 0;
   if (!confirm(`確定要把「自動下單」的 ${nBot} 筆持倉全部市價平倉嗎？${nMan ? `\n\n手動開的 ${nMan} 筆（含「符合訊號」）不會動。` : ''}`)) return;
@@ -4559,6 +4561,7 @@ $('qLtCfgBtn').onclick = () => {                     // 打開「👤 我的設�
   $('qMyTrade').scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
 ['margin', 'lev', 'dayLoss', 'step', 'sl'].forEach(k => $('lt_' + k).onchange = () => ltCall('/api/lt/config', { [k]: +$('lt_' + k).value }));
+$('lt_btcF').onchange = () => ltCall('/api/lt/config', { btcF: $('lt_btcF').value === '1' });
 $('lt_hold').onchange = () => {
   const d = +$('lt_hold').value;
   if (!(d >= 0.5 && d <= 30)) { alert('持有天數要在 0.5～30 天之間'); renderLt(); return; }
