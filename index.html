@@ -742,7 +742,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-20c</div>
+      <div class="qver" id="qVer">網站版本 2026-10-20d</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -999,7 +999,7 @@ header{align-items:center}
 <dialog id="qAdmDlg" aria-labelledby="qAdmTitle">
   <div class="qdh"><h2 id="qAdmTitle">🔐 帳號管理（後台）</h2><span class="spacer"></span><button class="btn" id="qAdmClose">關閉</button></div>
   <div class="qadm">
-    <p class="qrepnote">每個帳號用 Bitunix UID 登入，第一次登入要綁定 Google 信箱和手機號碼。<span class="rbadge own">👑 擁有者</span> 只有一個人，所有功能都能用（掃描條件、回測、結算、改任何人的密碼、轉讓擁有者）。<span class="rbadge adm">管理員</span> 可以建立帳號、「查看」每個帳號、把別人改成管理員或一般、重設綁定、強制登出、刪除帳號、設定 Google 用戶端 ID，但不能動擁有者，也不能改別人的密碼。<span class="rbadge usr">一般</span> 只能設定自己的 API、Discord 和交易參數。<b>沒有任何人能動別人的倉位和資金。</b></p>
+    <p class="qrepnote">每個帳號用 Bitunix UID 登入，第一次登入要綁定 Google 信箱和手機號碼。<span class="rbadge own">👑 擁有者</span> 只有一個人，所有功能都能用（掃描條件、回測、結算、改任何人的密碼、轉讓擁有者）。<span class="rbadge adm">管理員</span> 可以建立帳號、「查看」每個帳號、把別人改成管理員或一般、重設綁定、強制登出、刪除帳號，但不能動擁有者，也不能改別人的密碼。<span class="rbadge usr">一般</span> 只能設定自己的 API、Discord 和交易參數。<b>沒有任何人能動別人的倉位和資金。</b></p>
     <div class="tablewrap"><table class="stat" id="qAdmTab"></table></div>
     <h3 style="font-size:14px;margin:14px 0 6px">新增帳號／修改密碼</h3>
     <div class="params">
@@ -1010,10 +1010,6 @@ header{align-items:center}
     <div class="qbt" style="margin-top:8px"><button class="btn primary" id="qa_save">儲存</button></div>
     <h3 style="font-size:14px;margin:16px 0 6px">📧 寄信功能（忘記密碼、擁有者驗證碼）</h3>
     <p class="qrepnote" id="qa_mail"></p>
-    <details style="margin-top:10px"><summary class="qrepnote" style="cursor:pointer">進階：Google 用戶端 ID（不需要可以不用管）</summary>
-    <div class="params"><label class="field">Google 用戶端 ID（<b>不是</b>填你的 Gmail；空白＝不用 Google 按鈕）<input id="qa_gid" autocomplete="off" spellcheck="false" placeholder="123456789-xxxx.apps.googleusercontent.com"></label></div>
-    <div class="qbt" style="margin-top:8px"><button class="btn" id="qa_gsave">儲存</button></div>
-    <p class="qrepnote" id="qa_gnote"></p></details>
     <div id="qAllBox" hidden>
       <h3 style="font-size:14px;margin:16px 0 6px">👑 所有帳號的自動交易</h3>
       <p class="qrepnote">一鍵讓所有帳號一起暫停或開始。暫停後已經開著的單照常管理（鎖利、失敗線、到期）；開始只會開有設定 Bitunix API 的帳號。每個人的 Discord 都會收到通知。</p>
@@ -1021,7 +1017,7 @@ header{align-items:center}
     </div>
     <div id="qOwnBox" hidden>
       <h3 style="font-size:14px;margin:16px 0 6px">👑 轉讓擁有者</h3>
-      <p class="qrepnote">轉讓後你會變成灰色管理員，對方變成擁有者（AWS 提醒、共用的訊號規則也跟著換成對方的）。一定要用你綁定的 Google 信箱驗證；對方必須已經完成綁定。</p>
+      <p class="qrepnote">轉讓後你會變成灰色管理員，對方變成擁有者（AWS 提醒、共用的訊號規則也跟著換成對方的）。會寄驗證碼到你綁定的信箱，輸入正確才能轉讓；對方必須已經完成綁定。</p>
       <div class="params"><label class="field">轉讓給（Bitunix UID）<input id="qo_uid" inputmode="numeric" autocomplete="off"></label></div>
       <div id="qoGoogle" style="margin-top:8px"></div>
       <p class="qrepnote" id="qo_note"></p>
@@ -3132,7 +3128,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) renderEco(j.eco);
-    $('qVer').textContent = `網站版本 2026-10-20c・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-20d・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -4339,7 +4335,6 @@ $('qb_out').onclick = async () => {
 async function admLoad() {
   try {
     const j = await srvFetch('/api/users');
-    if (document.activeElement !== $('qa_gid')) $('qa_gid').value = j.google || '';
     $('qOwnBox').hidden = $('qAllBox').hidden = !OWN();
     $('qa_mail').innerHTML = j.mail && j.mail.on ? `✅ 已設定，從 <b>${esc(j.mail.from)}</b> 寄出。忘記密碼、擁有者登入驗證碼、轉讓擁有者都會用它。`
       : '❌ <b>還沒設定</b>：忘記密碼不能用、擁有者登入只靠密碼、不能轉讓擁有者。要在主機的 /opt/quant/.env 加上 SMTP_USER 和 SMTP_PASS（Gmail 應用程式密碼）。';
@@ -4375,8 +4370,6 @@ async function admLoad() {
         });
       }
     }
-    $('qa_gid').disabled = $('qa_gsave').disabled = !!j.googleEnv;
-    $('qa_gnote').innerHTML = j.googleEnv ? 'Google 用戶端 ID 是用伺服器的環境變數設定的，要在主機上改。' : j.google ? '已啟用 Google 驗證：之後綁定要按 Google 登入按鈕，伺服器會向 Google 確認信箱是真的；擁有者每次登入也要再用 Google 驗證。已經綁定的帳號不受影響。' : '目前是<b>手動輸入 Gmail</b>（沒有驗證），<b class="qr">擁有者登入也只靠密碼</b>。到 Google Cloud 建立「OAuth 用戶端 ID（網頁應用程式）」，已授權的 JavaScript 來源填 <b>https://moocow0216-lab.github.io</b>，把拿到的 ID 貼在這裡，就會改成真正的 Google 驗證。';
     $('qAdmTab').innerHTML = '<thead><tr><th>UID</th><th>權限</th><th>綁定（Google／手機）</th><th>Bitunix API</th><th>自動交易</th><th>自動單持倉</th><th>建立時間</th><th>最後登入</th><th>登入中裝置</th><th>操作</th></tr></thead><tbody>' +
       j.users.map(u => `<tr><td><b>${esc(u.uid)}</b>${u.uid === SRV.uid ? '（你）' : ''}</td><td>${roleBadge(u.role, u.owner)}</td><td>${u.bind ? `${esc(u.bind.email)}${u.bind.google ? ' ✅' : ''}<br>${esc(u.bind.phone)}` : '<span style="color:var(--muted)">還沒綁定</span>'}</td><td>${u.api ? '已設定' : '<span style="color:var(--muted)">未設定</span>'}</td><td>${u.auto ? '<b class="qg">運作中</b>' : '暫停'}</td><td>${u.open || 0} 筆</td><td>${u.created ? fmtT(u.created) : '—'}</td><td>${u.last ? fmtT(u.last) : '—'}</td><td>${u.sessions}</td>
         <td><button class="iconbtn" data-a="view" data-u="${esc(u.uid)}">👁 查看</button>${(OWN() || u.uid === SRV.uid) ? ` <button class="iconbtn" data-a="pw" data-u="${esc(u.uid)}">改密碼</button>` : ''}${u.owner && !OWN() ? '' : `${u.bind ? ` <button class="iconbtn" data-a="unbind" data-u="${esc(u.uid)}">重設綁定</button>` : ''}${u.owner ? '' : ` <button class="iconbtn" data-a="role" data-r="${u.role === 'admin' ? 'viewer' : 'admin'}" data-u="${esc(u.uid)}">${u.role === 'admin' ? '改成一般' : '改成管理員'}</button>`}`}${u.owner && !OWN() ? '' : ` <button class="iconbtn" data-a="kick" data-u="${esc(u.uid)}">登出所有裝置</button>`}${u.owner ? '' : ` <button class="iconbtn" data-a="del" data-u="${esc(u.uid)}">刪除</button>`}</td></tr>`).join('') + '</tbody>';
@@ -4404,11 +4397,6 @@ async function ltAll(on) {
 }
 $('qa_allOff').onclick = () => ltAll(false);
 $('qa_allOn').onclick = () => ltAll(true);
-$('qa_gsave').onclick = async () => {
-  const clientId = $('qa_gid').value.normalize('NFKC').trim();
-  try { await srvFetch('/api/google', { clientId }); alert(clientId ? '已儲存，之後綁定會用 Google 驗證。' : '已清除，之後綁定改回手動輸入 Gmail。'); admLoad(); }
-  catch (e) { alert(e.message); }
-};
 /* ---------- 管理員查看帳號：只能看，沒有任何能動倉位或資金的按鈕 ---------- */
 let VIEW_UID = '';
 const vU = v => (v >= 0 ? '+' : '−') + Math.abs(v || 0).toFixed(2) + 'U';
