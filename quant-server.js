@@ -852,7 +852,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-20b';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-20c';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1535,6 +1535,66 @@ function readBody(req, max = 30e6) {
     req.on('error', no);
   });
 }
+/* ---------------- 📧 寄信（Gmail SMTP，用「應用程式密碼」）：忘記密碼、擁有者登入驗證碼、轉讓擁有者驗證碼 ----------------
+   設定放在 /opt/quant/.env：SMTP_USER=寄件的 Gmail、SMTP_PASS=16 碼應用程式密碼（不用另外裝套件） */
+const tlsM = require('tls'), netM = require('net');
+const MAIL = { host: process.env.SMTP_HOST || 'smtp.gmail.com', port: +process.env.SMTP_PORT || 465, user: process.env.SMTP_USER || '', pass: String(process.env.SMTP_PASS || '').replace(/\s+/g, ''), secure: process.env.SMTP_SECURE !== '0', name: process.env.MAIL_NAME || '無量空處' };
+const mailOn = () => !!(MAIL.user && MAIL.pass);
+const SITE = (process.env.SITE_URL || 'https://moocow0216-lab.github.io/trace-back/').replace(/\/?$/, '/');
+const b64 = x => Buffer.from(String(x), 'utf8').toString('base64');
+const maskMail = e => String(e || '').replace(/^([^@]{1,2})[^@]*(@.*)$/, '$1***$2');   // ab***@gmail.com
+function sendMail(to, subject, text) {
+  return new Promise((resolve, reject) => {
+    if (!mailOn()) return reject(new Error('伺服器還沒設定寄信'));
+    if (!/^[^\s<>@]+@[^\s<>@]+$/.test(to)) return reject(new Error('收件信箱格式不對'));
+    const body = b64(text).replace(/.{76}/g, '$&\r\n');
+    const msg = [`From: =?UTF-8?B?${b64(MAIL.name)}?= <${MAIL.user}>`, `To: <${to}>`, `Subject: =?UTF-8?B?${b64(subject)}?=`, `Date: ${new Date().toUTCString()}`,
+      `Message-ID: <${crypto.randomBytes(12).toString('hex')}@quant>`, 'MIME-Version: 1.0', 'Content-Type: text/plain; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', body].join('\r\n');
+    // SMTP 對話：等到預期的回應碼才送下一句
+    const steps = [[220, () => 'EHLO quant-server'], [250, () => 'AUTH LOGIN'], [334, () => b64(MAIL.user)], [334, () => b64(MAIL.pass)], [235, () => `MAIL FROM:<${MAIL.user}>`],
+      [250, () => `RCPT TO:<${to}>`], [250, () => 'DATA'], [354, () => msg + '\r\n.'], [250, () => 'QUIT'], [221, null]];
+    const sock = MAIL.secure ? tlsM.connect({ host: MAIL.host, port: MAIL.port, servername: MAIL.host }) : netM.connect({ host: MAIL.host, port: MAIL.port });
+    let buf = '', i = 0, done = false;
+    const end = (e) => { if (done) return; done = true; try { sock.destroy(); } catch (x) {} e ? reject(e) : resolve(true); };
+    sock.setTimeout(20000, () => end(new Error('寄信逾時')));
+    sock.on('error', e => end(e));
+    sock.on('close', () => end(i >= 9 ? null : new Error('寄信伺服器中斷連線')));
+    sock.on('data', d => {
+      buf += d.toString('utf8');
+      const lines = buf.split(/\r?\n/); buf = lines.pop();
+      for (const ln of lines) {
+        if (!/^\d{3}( |$)/.test(ln)) continue;        // 多行回應（250-xxx）等最後一行
+        const code = +ln.slice(0, 3), [want, next] = steps[i] || [];
+        if (code !== want) return end(new Error(code === 535 ? 'Gmail 帳號或應用程式密碼不對（535）' : `寄信失敗：${ln.slice(0, 120)}`));
+        i++;
+        if (i === 9) return end(null);                   // DATA 送出後回 250 就算寄成功（不用等 QUIT）
+        sock.write(next() + '\r\n');
+      }
+    });
+  });
+}
+// 寄信次數限制：同一個帳號每小時 3 封、同一個 IP 每小時 10 封
+const MAILRL = new Map();
+function mailAllow(key, max) { const now = Date.now(), a = (MAILRL.get(key) || []).filter(t => now - t < HOUR); if (a.length >= max) return false; a.push(now); MAILRL.set(key, a); return true; }
+// 一次性憑證：忘記密碼連結（30 分鐘）、6 位數驗證碼（10 分鐘，最多試 5 次）
+const RESETS = new Map(), CODES = new Map();
+const newCode = () => String(crypto.randomInt(0, 1e6)).padStart(6, '0');
+function codeCheck(pre, code, kind) {
+  const c = CODES.get(String(pre || ''));
+  if (!c || c.kind !== kind || c.exp < Date.now()) { CODES.delete(String(pre || '')); return { err: '驗證碼已過期，請重新來一次' }; }
+  if (++c.tries > 5) { CODES.delete(String(pre)); return { err: '錯太多次了，請重新來一次' }; }
+  if (!crypto.timingSafeEqual(Buffer.from(sha(String(code || '').trim())), Buffer.from(c.h))) return { err: `驗證碼不對（還可以試 ${5 - c.tries} 次）` };
+  CODES.delete(String(pre)); return { c };
+}
+async function mailCode(usr, kind, extra = {}) {      // 寄 6 位數驗證碼到綁定的信箱，回傳 pre（用來配對驗證碼）
+  const code = newCode(), pre = crypto.randomBytes(16).toString('hex');
+  for (const [k, v] of CODES) if (v.exp < Date.now()) CODES.delete(k);
+  CODES.set(pre, { uid: usr.uid, kind, h: sha(code), exp: Date.now() + 10 * 60000, tries: 0, ...extra });
+  const what = kind === 'login' ? '擁有者登入' : `把擁有者轉讓給 ${extra.to}`;
+  await sendMail(usr.bind.email, `無量空處：${what}的驗證碼 ${code}`, `你的驗證碼是：${code}\n\n用途：帳號 ${usr.uid} ${what}\n10 分鐘內有效，只能用一次。\n\n如果不是你本人在操作，代表你的密碼可能外洩了，請盡快改密碼。`);
+  return pre;
+}
+
 /* ---------------- 帳號綁定：Google 信箱＋手機號碼，綁好才能用網站 ----------------
    有設定 Google 用戶端 ID：用 Google 登入按鈕驗證信箱（伺服器向 Google 確認）；還沒設定：先手動輸入 Gmail。
    手機號碼目前只檢查格式（簡訊驗證碼要接付費簡訊服務）。同一個信箱、同一支手機只能綁一個帳號。 */
@@ -1567,7 +1627,7 @@ http.createServer(async (req, res) => {
       return send(res, age < 10 * 60000 ? 200 : 503, { ok: age < 10 * 60000, scanAgeS: Math.round(age / 1000), up: Math.round((Date.now() - BOOT) / 1000) });
     }
     if (req.method === 'GET' && u.pathname === '/api/auth') return send(res, 200, { needSetup: !ST.users.length });
-    if (req.method === 'POST' && ['/api/login', '/api/setup', '/api/logout', '/api/login/google'].includes(u.pathname)) {
+    if (req.method === 'POST' && ['/api/login', '/api/setup', '/api/logout', '/api/login/google', '/api/login/code', '/api/forgot', '/api/reset'].includes(u.pathname)) {
       const ip = ipOf(req), b = await readBody(req, 1e5);
       if (u.pathname === '/api/logout') { const m = String(req.headers.authorization || '').match(/^Bearer\s+(\w+)$/); if (m) { const h = tokHash(m[1]); ST.sessions = ST.sessions.filter(x => x.h !== h); dirty = true; } return send(res, 200, { ok: true }); }
       if (locked(ip)) return send(res, 429, { error: '輸錯太多次，請 15 分鐘後再試' });
@@ -1580,6 +1640,38 @@ http.createServer(async (req, res) => {
         ST.users.push(usr); log('建立管理員帳號', usr.uid);
         if (ST.accts.__owner && !ST.accts[usr.uid]) { ST.accts[usr.uid] = ST.accts.__owner; delete ST.accts.__owner; RT.delete('__owner'); }   // 還沒建帳號前存的資料交給第一個管理員
         ST.owner = usr.uid; dirty = true;
+        return send(res, 200, { token: newSession(usr), uid: usr.uid, role: usr.role });
+      }
+      if (u.pathname === '/api/forgot') {               // 🔑 忘記密碼：UID＋綁定的信箱都對，才寄重設連結（不管對不對都回一樣的話，別人猜不出帳號）
+        if (!mailOn()) return send(res, 400, { error: '伺服器還沒設定寄信功能，請聯絡擁有者幫你改密碼' });
+        const OK = { ok: true, msg: '如果 UID 和信箱正確，重設密碼的信已經寄出了。請到信箱收信（也看一下垃圾郵件），連結 30 分鐘內有效。' };
+        if (!mailAllow('ip:' + ip, 10)) return send(res, 429, { error: '這台裝置寄太多次了，請一小時後再試' });
+        const usr = ST.users.find(x => x.uid === String(b.uid || '').trim()), email = String(b.email || '').trim().toLowerCase();
+        if (!usr || !usr.bind || usr.bind.email !== email) { failed(ip); return send(res, 200, OK); }
+        if (!mailAllow('uid:' + usr.uid, 3)) return send(res, 200, OK);
+        const tok = crypto.randomBytes(24).toString('hex');
+        for (const [k, v] of RESETS) if (v.exp < Date.now() || v.uid === usr.uid) RESETS.delete(k);   // 同一個帳號只留最新的連結
+        RESETS.set(sha(tok), { uid: usr.uid, exp: Date.now() + 30 * 60000 });
+        sendMail(email, '無量空處：重設密碼', `你好，\n\n有人（希望是你）要求重設帳號 ${usr.uid} 的密碼。請在 30 分鐘內打開下面的連結設定新密碼：\n\n${SITE}?reset=${tok}\n\n連結只能用一次。重設後，這個帳號在所有裝置的登入都會被登出。\n\n如果不是你本人要求的，忽略這封信就好，你的密碼不會被改。`)
+          .then(() => log('寄出重設密碼信', usr.uid, maskMail(email)))
+          .catch(e => { log('重設密碼信寄不出去', usr.uid, e.message); dcX(ctx(ownerUid()), `📧 **寄信失敗**（${usr.uid} 的重設密碼信）：${mdEsc(e.message)}\n請檢查 /opt/quant/.env 的 SMTP_USER、SMTP_PASS`); });
+        return send(res, 200, OK);
+      }
+      if (u.pathname === '/api/reset') {                // 🔑 用信裡的連結設定新密碼
+        const R = RESETS.get(sha(String(b.token || '')));
+        if (!R || R.exp < Date.now()) { failed(ip); return send(res, 400, { error: '連結已經失效（超過 30 分鐘或已經用過），請重新按「忘記密碼」' }); }
+        if (!validPw(b.password)) return send(res, 400, { error: '新密碼至少 8 個字' });
+        const usr = ST.users.find(x => x.uid === R.uid); if (!usr) return send(res, 400, { error: '找不到這個帳號' });
+        RESETS.delete(sha(String(b.token)));
+        Object.assign(usr, hashPw(b.password)); ST.sessions = ST.sessions.filter(x => x.uid !== usr.uid); dirty = true;
+        log('用信箱重設密碼', usr.uid); dcX(ctx(usr.uid), '🔑 **你的密碼已經用信箱連結重設**，所有裝置都被登出了。如果不是你本人，請馬上聯絡擁有者。');
+        return send(res, 200, { ok: true, uid: usr.uid });
+      }
+      if (u.pathname === '/api/login/code') {           // 擁有者第二步：輸入寄到信箱的 6 位數驗證碼
+        const r = codeCheck(b.pre, b.code, 'login');
+        if (r.err) { failed(ip); return send(res, 401, { error: r.err }); }
+        const usr = ST.users.find(x => x.uid === r.c.uid); if (!usr) return send(res, 401, { error: '找不到帳號' });
+        FAILS.delete(ip); log('擁有者登入（信箱驗證碼）', usr.uid);
         return send(res, 200, { token: newSession(usr), uid: usr.uid, role: usr.role });
       }
       if (u.pathname === '/api/login/google') {         // 擁有者第二步：Google 驗證綁定的信箱
@@ -1597,7 +1689,11 @@ http.createServer(async (req, res) => {
       if (usr.uid === ownerUid() && gClient() && usr.bind && usr.bind.email) {   // 👑 擁有者：密碼對了還要第二層 Google 驗證
         const pre = crypto.randomBytes(16).toString('hex'); PRE.set(pre, { uid: usr.uid, exp: Date.now() + 5 * 60000 });
         for (const [k, v] of PRE) if (v.exp < Date.now()) PRE.delete(k);
-        return send(res, 200, { need2fa: true, pre, google: gClient(), email: usr.bind.email.replace(/^(.{2}).*(@.*)$/, '$1***$2') });
+        return send(res, 200, { need2fa: true, pre, google: gClient(), email: maskMail(usr.bind.email) });
+      }
+      if (usr.uid === ownerUid() && mailOn() && usr.bind && usr.bind.email) {   // 👑 擁有者：密碼對了，再寄驗證碼到綁定的信箱
+        try { const pre = await mailCode(usr, 'login'); return send(res, 200, { need2fa: true, via: 'mail', pre, email: maskMail(usr.bind.email) }); }
+        catch (e) { log('擁有者驗證碼寄不出去，這次只用密碼登入', e.message); dcX(ctx(usr.uid), `📧 **驗證碼寄不出去**（${mdEsc(e.message)}），這次擁有者登入只用了密碼。請檢查寄信設定。`); }
       }
       return send(res, 200, { token: newSession(usr), uid: usr.uid, role: usr.role });
     }
@@ -1609,7 +1705,7 @@ http.createServer(async (req, res) => {
     if (req.method === 'GET' && u.pathname === '/api/users') {
       if (!admin) return send(res, 403, { error: '只有管理員可以看' });
       return send(res, 200, { users: ST.users.map(x => { const A = ST.accts[x.uid]; return { uid: x.uid, role: x.role, created: x.created, last: x.last || 0, sessions: ST.sessions.filter(s => s.uid === x.uid && s.exp > Date.now()).length,
-        api: !!(A && A.bx.key), auto: !!(A && A.lt.on), open: A ? A.ltTrades.filter(t => t.status === 'open').length : 0, owner: x.uid === ownerUid(), bind: bindOut(x) }; }), google: gClient(), googleEnv: !!process.env.GOOGLE_CLIENT_ID });   // 只給管理員看「有沒有設」，不會給金鑰
+        api: !!(A && A.bx.key), auto: !!(A && A.lt.on), open: A ? A.ltTrades.filter(t => t.status === 'open').length : 0, owner: x.uid === ownerUid(), bind: bindOut(x) }; }), google: gClient(), googleEnv: !!process.env.GOOGLE_CLIENT_ID, mail: { on: mailOn(), from: maskMail(MAIL.user) } });   // 只給管理員看「有沒有設」，不會給金鑰
     }
     if (req.method === 'GET' && u.pathname === '/api/users/view') {      // 管理員查看某個帳號的狀況：只能看，沒有任何能動倉位或資金的東西，也不會給金鑰
       if (!admin) return send(res, 403, { error: '只有管理員可以看' });
@@ -1717,14 +1813,28 @@ http.createServer(async (req, res) => {
       if (u.pathname === '/api/owner/transfer') {      // 👑 轉讓擁有者：一定要用 Google 驗證「擁有者綁定的信箱」才能轉
         const cid = gClient(), O = ST.users.find(x => x.uid === ownerUid());
         if (!me || !O || me.uid !== O.uid) return send(res, 403, { error: '只有擁有者本人登入才能轉讓' });
-        if (!cid) return send(res, 400, { error: '要先設定 Google 用戶端 ID，轉讓一定要用 Google 驗證信箱' });
         const to = ST.users.find(x => x.uid === String(b.uid || ''));
         if (!to) return send(res, 404, { error: '找不到要轉讓的帳號' });
         if (to.uid === O.uid) return send(res, 400, { error: '已經是擁有者了' });
         if (needBind(to)) return send(res, 400, { error: '對方還沒綁定 Google 信箱和手機，請他先登入完成綁定' });
-        const email = b.credential ? await googleEmail(String(b.credential), cid) : '';
-        if (!email) return send(res, 400, { error: 'Google 驗證失敗，請重新按 Google 按鈕' });
-        if (!O.bind || email !== O.bind.email) return send(res, 400, { error: `要用擁有者綁定的信箱（${O.bind ? O.bind.email : '還沒綁定'}）驗證，你剛剛選的是 ${email}` });
+        if (!O.bind || !O.bind.email) return send(res, 400, { error: '你自己還沒綁定信箱' });
+        let email = '';
+        if (cid && b.credential) {                      // 有 Google 用戶端 ID：用 Google 按鈕驗證
+          email = await googleEmail(String(b.credential), cid);
+          if (!email) return send(res, 400, { error: 'Google 驗證失敗，請重新按 Google 按鈕' });
+          if (email !== O.bind.email) return send(res, 400, { error: `要用擁有者綁定的信箱（${O.bind.email}）驗證，你剛剛選的是 ${email}` });
+        } else {                                        // 沒有：寄驗證碼到擁有者綁定的信箱
+          if (!mailOn()) return send(res, 400, { error: '要先設定寄信功能（或 Google 用戶端 ID），轉讓一定要驗證你的信箱' });
+          if (!b.code) {
+            if (!mailAllow('uid:' + O.uid, 3)) return send(res, 429, { error: '寄太多次了，請一小時後再試' });
+            try { const pre = await mailCode(O, 'xfer', { to: to.uid }); return send(res, 200, { needCode: true, pre, email: maskMail(O.bind.email) }); }
+            catch (e) { return send(res, 500, { error: '驗證碼寄不出去：' + e.message }); }
+          }
+          const r = codeCheck(b.pre, b.code, 'xfer');
+          if (r.err) return send(res, 400, { error: r.err });
+          if (r.c.uid !== O.uid || r.c.to !== to.uid) return send(res, 400, { error: '驗證碼跟要轉讓的帳號對不上，請重新來一次' });
+          email = O.bind.email;
+        }
         ST.owner = to.uid; to.role = 'admin'; dirty = true;      // 原本的擁有者變成灰色管理員
         log('擁有者轉讓', O.uid, '→', to.uid);
         dcX(ctx(O.uid), `👑 **擁有者已轉讓**：${O.uid} → **${to.uid}**（用 ${email} 驗證）。你現在是管理員。`);
