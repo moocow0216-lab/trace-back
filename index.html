@@ -742,7 +742,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-20d</div>
+      <div class="qver" id="qVer">網站版本 2026-10-20e</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -848,6 +848,10 @@ header{align-items:center}
           <span class="qbtstat" id="qBtStat"></span>
         </div>
         <div id="qBtCmp"></div>
+        <div class="qcmp" id="qBsBox"><h3>📈 BTC 急漲急跌統計</h3>
+          <div class="qbt" style="margin:4px 0 6px"><button class="btn" id="qBsRun">統計過去 90 天</button><span class="qbtstat" id="qBsStat"></span></div>
+          <div id="qBsBody"><p class="qcn">按下去伺服器會抓過去 90 天 BTC 每分鐘的價格，算「幾分鐘內漲跌超過幾 %」多久發生一次，以及發生後 BTC 是繼續衝還是拉回來。大約 1～2 分鐘，可以關網頁。</p></div>
+        </div>
       </div>
       <div class="qbx" id="qBx" hidden>
         <div class="qbxh"><b>💼 我的 Bitunix 持倉</b><span id="qBxInfo"></span></div>
@@ -3117,7 +3121,7 @@ async function srvPull() {
     const sc = j.scan;
     Object.assign(Q, { prov: BN, total: sc.total, flatN: sc.flatN, found: sc.found, last: sc.last, dur: sc.dur, err: sc.err ? '伺服器：' + sc.err : '' });
     $('qSrc').textContent = '資料：幣安・雲端伺服器';
-    renderBtc(sc.btc, sc.btcSkip); renderCmp(j.bt.cmp);
+    renderBtc(sc.btc, sc.btcSkip); renderCmp(j.bt.cmp); renderBs(j.bstat);
     const p = j.btp;
     btRun = p.run; $('qBtRun').disabled = p.run; $('qBtStop').hidden = !p.run || !OWN();
     $('qBtStat').textContent = p.run ? `伺服器回測中 ${p.done}／${p.total}，已找到 ${p.found} 筆訊號${p.skipped ? `，跳過 ${p.skipped} 個` : ''}…（可以關掉網頁，伺服器會繼續跑）`
@@ -3128,7 +3132,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) renderEco(j.eco);
-    $('qVer').textContent = `網站版本 2026-10-20d・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-20e・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -3645,6 +3649,31 @@ setInterval(() => LS.set('quantCards', Q.cards), 30000);
 /* ---------- 歷史回測：用幣安過去約 20 天 1 小時資料，把同一套判斷逐小時重跑 ---------- */
 const BT = Object.assign({ at: 0, coins: 0, trades: [] }, SRV.on ? {} : LS.get('quantBT', {}));   // 伺服器模式等讀到伺服器的資料再顯示
 var btRun = false, btStop = false;   // 用 var：掃描狀態列在模組載入前就會讀到它
+/* ---------- 📈 BTC 急漲急跌統計 ---------- */
+let BS_KEY = '';
+function renderBs(b) {
+  if (!b) return;
+  $('qBsRun').hidden = !OWN(); $('qBsRun').disabled = b.busy;
+  $('qBsStat').textContent = b.busy ? b.msg : b.msg || (b.v ? `上次統計 ${fmtT(b.v.at)}` : '');
+  const v = b.v, key = v ? v.at + '|' + tzName() : ''; if (!v || key === BS_KEY) return; BS_KEY = key;
+  const Ws = [...new Set(v.grid.map(g => g.W))], Ts = [...new Set(v.grid.map(g => g.thr))], G = (W, t) => v.grid.find(g => g.W === W && g.thr === t);
+  const cell = g => `<span class="qg">↑${g.upW}</span>　<span class="qr">↓${g.dnW}</span>`;
+  const one = (x, up) => {
+    const name = up ? '急漲' : '急跌', d = x.cont30 + x.rev30;
+    return `<p class="qcn"><b>5 分鐘${name} 1% 以上</b>：${v.weeks} 週共 <b>${x.n}</b> 次（每週約 ${(x.n / v.weeks).toFixed(1)} 次）。觸發後 30 分鐘：<b>${up ? '繼續漲' : '繼續跌'} ${x.cont30} 次</b>、<b>拉回 ${x.rev30} 次</b>${d ? `（拉回 ${Math.round(x.rev30 / d * 100)}%）` : ''}；30 分鐘後平均${up ? '' : '再'}${x.avg30 >= 0 ? (up ? '再漲' : '跌') : (up ? '拉回' : '彈回')} ${Math.abs(x.avg30 ?? 0)}%，60 分鐘內平均最多再${up ? '漲' : '跌'} ${x.avgMore}%。</p>` +
+      (x.list.length ? `<div class="tablewrap"><table><thead><tr><th>時間（${tzName()}）</th><th>BTC</th><th>30 分鐘後</th><th>60 分內再${up ? '漲' : '跌'}</th><th>60 分內拉回</th></tr></thead><tbody>` +
+        x.list.map(e => `<tr><td>${fmtT(e.t)}</td><td>${Math.round(e.px).toLocaleString()}</td><td class="${e.a30 > 0 ? (up ? 'qg' : 'qr') : ''}">${e.a30 === null ? '—' : (e.a30 > 0 ? '+' : '') + e.a30.toFixed(2) + '%'}</td><td>${e.more.toFixed(2)}%</td><td>${e.back.toFixed(2)}%</td></tr>`).join('') + '</tbody></table></div>' : '');
+  };
+  $('qBsBody').innerHTML = `<p class="qcn">${fmtT(v.from)}～${fmtT(v.to)}（${v.weeks} 週、${v.bars.toLocaleString()} 根 1 分鐘 K 線）。數字是<b>平均每週幾次</b>，<span class="qg">↑</span>急漲、<span class="qr">↓</span>急跌；同一波行情觸發後 ${v.cool} 分鐘內不重複算。</p>
+    <div class="tablewrap"><table><thead><tr><th>幅度＼時間</th>${Ws.map(W => `<th>${W} 分鐘內</th>`).join('')}</tr></thead><tbody>
+    ${Ts.map(t => `<tr><td>${t}%</td>${Ws.map(W => `<td${W === 5 && t === 1 ? ' style="outline:2px solid var(--accent,#5b8cff);outline-offset:-2px"' : ''}>${cell(G(W, t))}</td>`).join('')}</tr>`).join('')}
+    </tbody></table></div>${one(v.up, true)}${one(v.dn, false)}
+    <p class="qcn">「30 分鐘後」是從觸發那一分鐘的收盤價算；「拉回」代表 BTC 衝完又回到觸發價以下（急跌則是彈回以上）。拉回的比例越高，代表觸發時緊急平倉越容易平在最痛的位置。</p>`;
+}
+$('qBsRun').onclick = async () => {
+  if (!OWN()) return;
+  try { await srvFetch('/api/btcstat', { days: 90 }); $('qBsStat').textContent = '開始統計…'; } catch (e) { alert(e.message); }
+};
 /* ---------- 🧭 BTC 方向過濾 ---------- */
 const BTCM = { '24h': '24 小時', day: '今天（台北 08:00 起）', '4h': '4 小時' };
 function renderBtc(b, skip) {
