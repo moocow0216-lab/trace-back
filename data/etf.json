@@ -51,62 +51,14 @@
   },
   {
    "date": "2026-10-19",
-   "net": 526700000.00000006,
+   "net": 526700000.00000006
+  },
+  {
+   "date": "2026-10-20",
+   "net": 0.0,
    "cum": 57476000000.0
   }
  ],
- "funds": {
-  "date": "2026-10-19",
-  "rows": [
-   {
-    "ticker": "IBIT",
-    "net": 665200000.0
-   },
-   {
-    "ticker": "FBTC",
-    "net": -83600000.0
-   },
-   {
-    "ticker": "BITB",
-    "net": 0.0
-   },
-   {
-    "ticker": "ARKB",
-    "net": 0.0
-   },
-   {
-    "ticker": "BTCO",
-    "net": 0.0
-   },
-   {
-    "ticker": "EZBC",
-    "net": 0.0
-   },
-   {
-    "ticker": "BRRR",
-    "net": 0.0
-   },
-   {
-    "ticker": "HODL",
-    "net": 0.0
-   },
-   {
-    "ticker": "BTCW",
-    "net": 0.0
-   },
-   {
-    "ticker": "MSBT",
-    "net": 0.0
-   },
-   {
-    "ticker": "GBTC",
-    "net": -54900000.0
-   },
-   {
-    "ticker": "BTC",
-    "net": 0.0
-   }
-  ]
- },
- "updated": "2026-10-20T08:37:02+00:00"
+ "funds": null,
+ "updated": "2026-10-20T14:20:16+00:00"
 }
