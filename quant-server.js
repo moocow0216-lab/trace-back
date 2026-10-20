@@ -852,7 +852,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-20c';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-20d';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1599,7 +1599,7 @@ async function mailCode(usr, kind, extra = {}) {      // 寄 6 位數驗證碼�
    有設定 Google 用戶端 ID：用 Google 登入按鈕驗證信箱（伺服器向 Google 確認）；還沒設定：先手動輸入 Gmail。
    手機號碼目前只檢查格式（簡訊驗證碼要接付費簡訊服務）。同一個信箱、同一支手機只能綁一個帳號。 */
 const GOOGLE_INFO = process.env.GOOGLE_TOKENINFO || 'https://oauth2.googleapis.com/tokeninfo';
-const gClient = () => process.env.GOOGLE_CLIENT_ID || ST.google.clientId || '';
+const gClient = () => '';                              // Google 用戶端 ID 已經拿掉：綁定手動輸入 Gmail，擁有者登入、轉讓都改用信箱驗證碼
 const normPhone = x => {
   let v = String(x || '').replace(/[\s\-()（）]/g, '');
   if (/^09\d{8}$/.test(v)) v = '+886' + v.slice(1);                   // 台灣手機 09xx → +8869xx
@@ -1752,7 +1752,7 @@ http.createServer(async (req, res) => {
       // 個人設定：每個帳號都能改「自己的」；其他（掃描條件、浮盈規則、回測、帳號管理、AWS）只有管理員能改
       // 個人（每個帳號）：自己的 API、Discord、交易設定、平倉；管理員（灰色）：帳號管理；其他全站設定只有擁有者能改
       const PERSONAL = ['/api/bind', '/api/bitunix', '/api/lt/config', '/api/lt/testOpen', '/api/lt/close', '/api/lt/closeAll', '/api/notify', '/api/notify/test'];
-      const ADMIN = ['/api/users', '/api/users/delete', '/api/users/kick', '/api/google', '/api/check'];
+      const ADMIN = ['/api/users', '/api/users/delete', '/api/users/kick', '/api/check'];
       if (ADMIN.includes(u.pathname) && !admin) return send(res, 403, { error: '這個功能只有管理員可以用' });
       if (!PERSONAL.includes(u.pathname) && !ADMIN.includes(u.pathname) && !owner) return send(res, 403, { error: '這個設定只有擁有者可以改' });
       const b = await readBody(req);
@@ -1792,11 +1792,6 @@ http.createServer(async (req, res) => {
         me.bind = { email, phone, google, at: Date.now() }; dirty = true;
         log('帳號綁定', me.uid, email, google ? '（Google 驗證）' : '（手動輸入）');
         return send(res, 200, { ok: true, bind: bindOut(me) });
-      }
-      if (u.pathname === '/api/google') {             // 管理員設定 Google 用戶端 ID（空白＝改回手動輸入 Gmail）
-        const id = String(b.clientId || '').trim();
-        if (id && !/^[\w-]+\.apps\.googleusercontent\.com$/.test(id)) return send(res, 400, { error: '格式不對，應該是 xxxx.apps.googleusercontent.com' });
-        ST.google.clientId = id; dirty = true; return send(res, 200, { ok: true, google: gClient() });
       }
       if (u.pathname === '/api/lt/all') {             // 👑 擁有者：所有帳號一起暫停／開始自動交易（沒有 API 的帳號跳過）
         if (typeof b.on !== 'boolean') return send(res, 400, { error: '要指定開始或暫停' });
