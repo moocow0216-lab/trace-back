@@ -852,7 +852,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-21d';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-21e';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -928,6 +928,20 @@ async function bxPoll(X) {
       }
     }
     BX.pos = pos; BX.at = Date.now(); BX.err = ''; BX.seeded = true;
+    if (Date.now() - (BX.tpslAt || 0) > 30000) {       // 手動單在交易所設的止盈止損（只讀，給網站的部位工具用），每 30 秒讀一次
+      BX.tpslAt = Date.now(); const m = new Map();
+      const syms = [...new Set(pos.filter(p => !X.A.ltTrades.some(t => t.status === 'open' && t.positionId === p.id)).map(p => p.sym))];
+      for (const sym of syms) {
+        try {
+          const L = await bxGet('/api/v1/futures/tpsl/get_pending_orders', { symbol: sym }, C);
+          for (const o of Array.isArray(L) ? L : (L && (L.orderList || L.list)) || []) {
+            const id = String(o.positionId || ''); if (!id) continue;
+            const r = m.get(id) || {}; if (+o.tpPrice > 0) r.tp = +o.tpPrice; if (+o.slPrice > 0) r.sl = +o.slPrice; m.set(id, r);
+          }
+        } catch (e) {}
+      }
+      BX.tpsl = m;
+    }
     await ltReconcile(X, pos);
     if (acct) { const a = Array.isArray(acct) ? acct[0] : acct; BX.acct = a ? { avail: num(a.available), frozen: num(a.frozen), margin: num(a.margin), cross: num(a.crossUnrealizedPNL), iso: num(a.isolationUnrealizedPNL), bonus: num(a.bonus) } : null; }
     const L = X.A.lt, eqNow = bxEquity(X);
@@ -1797,7 +1811,7 @@ http.createServer(async (req, res) => {
         me: { uid: me ? me.uid : '管理金鑰', admin: !!admin, owner: !!owner },
         eq: ST.eq, rep: { ...ST.rep, busy: REP.busy, msg: REP.msg }, rv: RV,
         bx: { set: hasKey(X), notify: X.A.bx.notify, liq: X.A.bx.liq, liqPct: X.A.bx.liqPct, at: X.BX.at, err: X.BX.err, acct: X.BX.acct,
-          pos: X.BX.pos.map(p => ({ ...p, px: PX.map[p.sym] || null, sig: !!ST.cards.find(c => c.sym === p.sym && c.dir === p.dir && c.et && isLive(c)), bot: !!X.A.ltTrades.find(t => t.status === 'open' && t.positionId === p.id) })) },
+          pos: X.BX.pos.map(p => ({ ...p, px: PX.map[p.sym] || null, tp: ((X.BX.tpsl && X.BX.tpsl.get(p.id)) || {}).tp || 0, sl: ((X.BX.tpsl && X.BX.tpsl.get(p.id)) || {}).sl || 0, sig: !!ST.cards.find(c => c.sym === p.sym && c.dir === p.dir && c.et && isLive(c)), bot: !!X.A.ltTrades.find(t => t.status === 'open' && t.positionId === p.id) })) },
         eco: { list: ECO.list.filter(e => e.t > Date.now() - 7 * 24 * HOUR), at: ECO.at, err: ECO.err, hasNext: !!ECO.hasNext, today: ecoToday().map(e => ({ t: e.t, zh: e.zh || e.title })) },
         lt: { cfg: X.A.lt, msg: X.LT.msg, dayPnl: X.LT.dayPnl || 0, v: X.v, bot: ltBotEq(X), acctEq: bxEquity(X) },
         aws: !(X.uid === ownerUid()) ? null : { on: ST.aws.on, created: ST.aws.created, auto: ST.aws.auto, price: ST.aws.price, detected: awsDetect(), ...awsNext() }
