@@ -569,6 +569,8 @@ body.mode-pat #qPanel,body.mode-news #qPanel,body.mode-pat #newsPanel,body.mode-
 .lvcards div{border:1px solid rgba(34,211,238,.18);border-radius:14px;padding:10px 12px;background:linear-gradient(160deg,rgba(34,211,238,.06),rgba(167,139,250,.04))}
 .lvcards span{display:block;font-size:12.5px;color:var(--muted)}.lvcards b{display:block;font-size:20px;margin:4px 0 2px;font-variant-numeric:tabular-nums}.lvcards em{font-style:normal;font-size:12px;color:var(--muted)}
 .lvpanel{border:1px solid var(--line);border-radius:10px;padding:8px;background:rgba(255,255,255,.015)}
+.lvpanel:fullscreen{background:#0b0f16;padding:10px 12px;overflow:auto;border-radius:0}
+.lvpanel.lvfs{position:fixed;inset:0;z-index:9999;background:#0b0f16;padding:calc(env(safe-area-inset-top,0px) + 8px) 10px 10px;overflow:auto;border-radius:0;border:none}
 .lvhead{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:6px}.lvhead .spacer{flex:1}
 .lvbtn.on{background:linear-gradient(135deg,#22d3ee,#a78bfa);color:#0b1020;font-weight:700;border-color:transparent}
 .lvctl{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:flex-end;margin:4px 2px 8px}
@@ -792,7 +794,7 @@ header{align-items:center}
         <div class="lvcards" id="lvCards"></div>
         <div class="lvpanel">
           <div class="lvhead"><b>清算地圖</b><span class="qcn" id="lvStat"></span><span class="spacer"></span>
-            <span class="lvseg" id="lvColor"><button data-c="side">依多空</button><button data-c="lev">依槓桿</button></span><button class="btn lvbtn" id="lvCandle">蠟燭</button><button class="btn lvbtn" id="lvReset">重置視圖</button></div>
+            <span class="lvseg" id="lvColor"><button data-c="side">依多空</button><button data-c="lev">依槓桿</button></span><button class="btn lvbtn" id="lvCandle">蠟燭</button><button class="btn lvbtn" id="lvReset">重置視圖</button><button class="btn lvbtn" id="lvFull" title="全螢幕（Esc 離開）">⛶ 全螢幕</button></div>
           <div class="lvctl">
             <div class="lvleg" id="lvLeg"></div>
             <div class="lvsl"><div class="lvslh"><span>強度範圍</span><button class="lvlink" id="lvSreset">重置</button></div><canvas id="lvHist"></canvas>
@@ -801,12 +803,9 @@ header{align-items:center}
             <label class="lvsl1">◆ 大小<input type="range" id="lvBub" min="0" max="2" step="0.1"></label>
           </div>
           <div style="width:100%;position:relative"><canvas id="lvCv" style="display:block;touch-action:none;cursor:crosshair"></canvas><div class="lvtip" id="lvTip" hidden></div></div>
-          <p class="qcn" style="margin:6px 4px 0">操作方式：圖上拖曳＝上下左右移動；滾輪或兩指＝縮放時間；拖曳右邊價格軸（或在上面滾滾輪）＝縮放價格；拖曳下方時間軸＝縮放時間；雙擊圖表＝價格回到自動；「重置視圖」回到全部範圍。現價標籤下面是這根 K 棒收盤倒數。右側長條是還沒清算的水平分佈，底部是 清算差值（▲ 由負轉正＝偏多轉折、▼ 由正轉負＝偏空轉折）。📌 你的倉位會畫在圖上：<b>手動單</b>綠＝目標、紅＝停損：Bitunix 有設止盈止損就一定用它（標「交易所」、不能拖）；沒設就用這筆倉位的槓桿和「我的設定」換算（目標＝浮盈 +250%、停損＝你設的浮虧 %，標「依倉位」），可以拖曳圓點微調、雙擊圓點恢復（只畫在圖上，<b>不會</b>改交易所的掛單）；<b>🤖 自動單</b>綠＝開始鎖利的價位、紅＝失敗線，是伺服器真正的出場規則，不能拖。</p>
+          </div>
         </div>
-        <p class="qcn">⚠️ <b>清算地圖是估計的</b>：交易所不會公開每個人的強平價。做法是看每段時間未平倉量增加多少（＝新開的倉位），用主動買賣比例拆成多單、空單，假設 5x、10x（低）、20x、25x（中）、50x、75x、100x、125x（高）這些常見槓桿算出強平價，畫成一條水平線；價格碰到就當作清算掉、線就斷掉。<b>強度</b>＝2×log₁₀（估計金額美元），例如 1 百萬美元＝12、1 億美元＝16。<b>精選／標準／詳細</b>＝只顯示最強的 5%／15%／40%。<b>清算牆</b>＝現價附近還沒清算、相鄰的水平合併成一區（最寬 0.8%），顯示離現價最近、夠強的那一區。清算牆、清算差值 和右側分佈用<b>全部</b>還沒清算的水平算（只看槓桿勾選），不受精選／標準／詳細和強度範圍影響。<b>清算差值</b>＝還沒清算的多頭水平數－空頭水平數。金額只是大概的數字，適合看「哪些價位堆了很多槓桿」。</p>
       </div>
-      <p class="qcn">資料直接來自幣安（瀏覽器即時連線），只供參考，不會影響自動交易的進場判斷。只有打開這個畫面時才會連線。</p>
-    </div>
     <div class="panel qpanel" id="qPanel" hidden>
       <div class="qhead">
         <h2>合約量化進場</h2>
@@ -822,7 +821,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-21s</div>
+      <div class="qver" id="qVer">網站版本 2026-10-22a</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3224,7 +3223,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-21s・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-22a・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -3723,7 +3722,9 @@ function lvZones(list, px, up) {                       // 清算牆：把相鄰�
 }
 function lvDraw() {
   const D = LVS.d, cv = $('lvCv'); if (!D || !cv) return;
-  const W = cv.parentElement.clientWidth || 360, mob = W < 640, PW = mob ? 56 : 130, AX = 66, MH = mob ? 440 : 560, TA = 22, CH = 70, H = MH + TA + CH, PL = W - PW - AX, dpr = window.devicePixelRatio || 1, ms = LV_R[D.rk].ms;
+  const panelEl = cv.closest('.lvpanel'), fs = !!panelEl && (document.fullscreenElement === panelEl || panelEl.classList.contains('lvfs'));
+  const W = cv.parentElement.clientWidth || 360, mob = W < 640, PW = mob ? 56 : 130, AX = 66, TA = 22,
+    MH = fs ? Math.max(300, Math.round(window.innerHeight - cv.parentElement.getBoundingClientRect().top - 22 - 70 - 14)) : (mob ? 440 : 560), CH = 70, H = MH + TA + CH, PL = W - PW - AX, dpr = window.devicePixelRatio || 1, ms = LV_R[D.rk].ms;
   if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.width = W + 'px'; cv.style.height = H + 'px'; }
   const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
   if (!LVS.view) LVS.view = { x0: 0, x1: D.N - 1 + D.N * 0.03, auto: true };
@@ -3969,6 +3970,17 @@ function lvInit() {
   for (const k of ['h', 'm', 'l']) { $('lvLev_' + k).checked = !!LV.lev[k]; $('lvLev_' + k).onchange = () => { LV.lev[k] = $('lvLev_' + k).checked ? 1 : 0; lvSave(); lvTick(); }; }
   $('lvCandle').onclick = () => { LV.candle = !LV.candle; lvSave(); lvTick(); };
   $('lvReset').onclick = () => { LVS.view = null; lvTick(); };
+  // ⛶ 全螢幕：支援的瀏覽器用真正的全螢幕；iPhone 這類不支援的，改成鋪滿整個畫面
+  const panel = $('lvCv').closest('.lvpanel'), isFs = () => document.fullscreenElement === panel || panel.classList.contains('lvfs');
+  const fsUI = () => { $('lvFull').textContent = isFs() ? '✕ 離開全螢幕' : '⛶ 全螢幕'; LVS.mouse = null; setTimeout(lvDraw, 50); };
+  $('lvFull').onclick = async () => {
+    if (document.fullscreenElement) { await document.exitFullscreen().catch(() => {}); return; }
+    if (panel.classList.contains('lvfs')) { panel.classList.remove('lvfs'); document.body.style.overflow = ''; fsUI(); return; }
+    if (panel.requestFullscreen) { try { await panel.requestFullscreen(); return; } catch (e) {} }
+    panel.classList.add('lvfs'); document.body.style.overflow = 'hidden'; fsUI();
+  };
+  document.addEventListener('fullscreenchange', fsUI);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && panel.classList.contains('lvfs')) { panel.classList.remove('lvfs'); document.body.style.overflow = ''; fsUI(); } });
   $('lvSmin').oninput = () => { LV.smin = Math.min(+$('lvSmin').value, LV.smax); lvSave(); lvDraw(); };
   $('lvSmax').oninput = () => { LV.smax = Math.max(+$('lvSmax').value, LV.smin); lvSave(); lvDraw(); };
   $('lvSreset').onclick = () => { if (!LVS.d) return; LV.smin = LVS.d.smin; LV.smax = LVS.d.smax; lvSave(); lvDraw(); };
@@ -5197,7 +5209,7 @@ function renderLt() {
   if (document.activeElement !== $('lt_btcF')) $('lt_btcF').value = C.btcF ? '1' : '0';
   const AE2 = SRVLT.acctEq || 0;
   $('qmt_stat').textContent = SRVBX && SRVBX.set ? `合約帳戶目前 ${AE2.toFixed(2)}U` : '（先設定 Bitunix API）';
-  $('qmt_note').innerHTML = `<b>合約投入資金</b>：自動交易只用這筆錢（加上它自己賺的、扣掉它自己虧的）來下單，用完自動暫停；不能大於合約帳戶的資金，0＝用整個合約帳戶。<br>出場規則：浮盈碰到 <b>+${T.tp}%</b> 開始鎖利${C.step > 0 ? `，之後每多 <b>${C.step}%</b> 鎖利線往上調一次` : '（鎖在 +' + T.tp + '%）'}，跑回鎖利線就平倉；浮虧到 <b>−${C.sl}%</b> 平倉；最長持有 <b>${+((C.hold || 168) / 24).toFixed(1)} 天</b>，到期平倉。改了之後，已經開著的單也會照新規則管理。`;
+  $('qmt_note').innerHTML = `<b>合約投入資金</b>：自動交易只用這筆錢（加上它自己賺的、扣掉它自己虧的）來下單，用完自動暫停；不能大於合約帳戶的資金，0＝用整個合約帳戶。<br>出場規則：浮盈碰到 <b>+${T.tp}%</b> 開始鎖利${C.step > 0 ? `，之後每多 <b>${C.step}%</b> 鎖利線往上調一次` : '（鎖在 +' + T.tp + '%）'}，跑回鎖利線就平倉；浮虧到 <b>−${C.sl}%</b> 平倉；最長持有 <b>${+((C.hold || 168) / 24).toFixed(1)} 天</b>，到期平倉。改了之後，已經開著的單也會照新規則管理。<br>幣種開不到你的槓桿時（例如你設 ${C.lev || T.lev}x、幣只能開 50x），停利、停損、鎖利間距都按比例縮小（50x 就是 +${Math.round(T.tp * 50 / (C.lev || T.lev))}% 開始鎖利、−${Math.round(T.sl * 50 / (C.lev || T.lev))}% 停損），出場的價格不變。`;
 }
 async function ltCall(path, body, okMsg) {
   if (!MINE()) { alert('請先登入。'); return; }
@@ -5265,8 +5277,9 @@ function realRows() {
     const up = P ? P.upnl : (t.upnl || 0), imNow = P && P.entry > 0 && P.qty > 0 && P.lev > 0 ? P.entry * P.qty / P.lev : (t.entry > 0 && t.qty > 0 && t.lev > 0 ? t.entry * t.qty / t.lev : im0);
     const roePct = open ? (partU / im0 + up / imNow) * 100 : (t.realized || 0) / im0 * 100;
     const reason = t.reason || '', st = open ? 'open' : roePct > 0 ? 'win' : 'fail';   // 結單賺錢＝成功，虧錢＝失敗
-    const reasonZh = { win: '達標出場', lock: '保本鎖利', fail: '失敗線', timeout: '持有到期', manual: '手動平倉', all: '一鍵全平', liq: '強平', exchange: '交易所／App 平倉', flip: '反手平倉' }[reason] || '';
-    const E = { st, real: true, reasonZh, pnl: roePct, pnlU: netU, live: open, fav: Math.max(0, (t.fav || 0)) / 100 / T.lev, adv: Math.max(0, -(t.adv || 0)) / 100 / T.lev, at: open ? 0 : t.exitAt, exitAt: open ? 0 : t.exitAt, exitHow: open ? 'open' : '' };
+    const reasonZh = ({ win: '達標出場', lock: '保本鎖利', fail: '失敗線', timeout: '持有到期', manual: '手動平倉', all: '一鍵全平', liq: '強平', exchange: '交易所／App 平倉', flip: '反手平倉' }[reason] || '') +
+      (t.ruleLev && t.lev && t.ruleLev !== t.lev && reason ? `（${t.lev}x，停利停損 ×${+(t.lev / t.ruleLev).toFixed(2)}）` : '');   // 這個幣開不到你設定的槓桿：規則照設定槓桿換算價格，實際報酬率會等比例變小
+    const E = { st, real: true, reasonZh, pnl: roePct, pnlU: netU, live: open, fav: Math.max(0, (t.fav || 0)) / 100 / (t.ruleLev || t.lev || T.lev) * (t.lev || T.lev) / T.lev, adv: Math.max(0, -(t.adv || 0)) / 100 / (t.ruleLev || t.lev || T.lev) * (t.lev || T.lev) / T.lev, /* 伺服器記的是「規則槓桿」的浮盈，換回實際槓桿，跟損益同單位 */ at: open ? 0 : t.exitAt, exitAt: open ? 0 : t.exitAt, exitHow: open ? 'open' : '' };
     return { c: { id: t.id, sym: t.sym, pid: t.sym, src: 'binance', spot: null, dir: t.dir, et: t.et, entry: t.entry, abN: t.abN, real: true }, live: true, E, t, linked: !open || !!P, partU };
   }).sort((a, b) => b.c.et - a.c.et);
 }
