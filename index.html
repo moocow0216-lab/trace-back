@@ -549,7 +549,10 @@ dialog#qAdmDlg::backdrop{background:rgba(4,7,12,.62)}
 body.mode-pat .col.right,body.mode-news .col.right,body.mode-news .col.left{display:none!important}
 body.mode-pat #qPanel,body.mode-news #qPanel,body.mode-pat #newsPanel,body.mode-pat #mktPanel,body.mode-news #mktPanel,body.mode-news #resPanel{display:none!important}
 @media (min-width:881px){body.mode-pat .app{grid-template-columns:400px minmax(0,1fr)}body.mode-news .app{grid-template-columns:minmax(0,1fr)}}
-body.mode-pat #qModePat,body.mode-news #qModeNews{background:var(--accent);color:#fff;border-color:var(--accent)}
+body.mode-pat #qModePat,body.mode-news #qModeNews,body.mode-bt #qModeBt{background:var(--accent);color:#fff;border-color:var(--accent)}
+body.mode-bt .col.right,body.mode-bt .col.left,body.mode-bt #qPanel,body.mode-bt #newsPanel,body.mode-bt #mktPanel,body.mode-bt #resPanel{display:none!important}
+@media (min-width:881px){body.mode-bt .app{grid-template-columns:minmax(0,1fr)}}
+#qBtHost #qBtArea{margin-top:4px}
 #qBxHost .qbx{margin:0}
 /* 動態星空背景（深色模式）：畫在最底層，卡片維持原本不透明的底色，數字不受影響 */
 #qStars{position:fixed;inset:0;width:100vw;height:100vh;z-index:-1;pointer-events:none;display:none}
@@ -654,7 +657,7 @@ header{align-items:center}
   <span class="qeco" id="qEco" hidden><button class="qecob" id="qEcoBtn" aria-expanded="false">📅 數據公布 <span id="qEcoNext">讀取中…</span></button><div class="qecol" id="qEcoList" hidden></div></span>
   <label class="tzsel gtz">時區 <select id="tzSel" aria-label="全站時區"></select></label>
   <span class="quser" id="qUserBox" hidden><button class="iconbtn" id="qAdmBtn" hidden>🔐 帳號管理</button><button class="iconbtn" id="qLogout" title="登出">👤 <span id="qUid"></span>・登出</button></span>
-  <span class="qmodes"><button class="iconbtn qbtn" id="qModePat">📈 歷史走勢</button><button class="iconbtn qbtn" id="qModeNews">📰 加密新聞</button><button class="iconbtn" id="qModeClose" hidden>✕ 關閉，回到合約量化</button></span>
+  <span class="qmodes"><button class="iconbtn qbtn" id="qModePat">📈 歷史走勢</button><button class="iconbtn qbtn" id="qModeNews">📰 加密新聞</button><button class="iconbtn qbtn" id="qModeBt">📊 回測數據</button><button class="iconbtn" id="qModeClose" hidden>✕ 關閉，回到合約量化</button></span>
   <button class="iconbtn qbtn" id="qOpen" hidden aria-pressed="false" aria-controls="qPanel">合約量化進場<span class="qbadge" id="qBadge" hidden></span></button>
   <span class="meta" id="meta">BTCUSDT 永續合約・15 分鐘 K 線・載入中</span>
   <span class="coinmsg" id="coinMsg" hidden></span>
@@ -727,6 +730,7 @@ header{align-items:center}
 
   <section class="col center">
     <div id="qBxHost" hidden></div>
+    <div class="panel" id="qBtHost" hidden><div class="qhead"><h2>📊 回測數據</h2></div></div>
     <div class="panel qpanel" id="qPanel" hidden>
       <div class="qhead">
         <h2>合約量化進場</h2>
@@ -742,7 +746,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-21d</div>
+      <div class="qver" id="qVer">網站版本 2026-10-21e</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -842,6 +846,7 @@ header{align-items:center}
         </div>
       </details>
       <p class="qnote">偵測的五項指標：合約 CVD、未平倉合約、現貨 CVD、現貨 Delta Bars、合約 Delta Bars（成交量不列入判斷）。每項跟該幣自己過去 7 天比較，偏離越大越異常。訊號是統計推算，只供參考，不是投資建議，進場前請自行確認並設好停損。</p>
+        <div id="qBtArea">
         <div class="qbt qbtrow">
           <label class="tzsel">回測範圍 <select id="qBtN"><option value="30">成交額前 30 個幣</option><option value="50" selected>成交額前 50 個幣</option><option value="100">成交額前 100 個幣</option><option value="0">全部幣（較久）</option></select></label>
           <button class="btn primary" id="qBtRun">回測過去約 14 天</button>
@@ -853,6 +858,7 @@ header{align-items:center}
         <div class="qcmp" id="qBsBox"><h3>📈 BTC 急漲急跌統計</h3>
           <div class="qbt" style="margin:4px 0 6px"><button class="btn" id="qBsRun">統計過去 90 天</button><span class="qbtstat" id="qBsStat"></span></div>
           <div id="qBsBody"><p class="qcn">按下去伺服器會抓過去 90 天 BTC 每分鐘的價格，算「幾分鐘內漲跌超過幾 %」多久發生一次，以及發生後 BTC 是繼續衝還是拉回來。大約 1～2 分鐘，可以關網頁。</p></div>
+        </div>
         </div>
       </div>
       <div class="qbx" id="qBx" hidden>
@@ -3136,7 +3142,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-21d・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-21e・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -3349,16 +3355,19 @@ function openPanel(show) {
 $('qOpen').onclick = () => openPanel($('qPanel').hidden);
 /* 三種版面切換 */
 let MODE = 'quant';
+const BT_HOME = document.createComment('回測區塊原本的位置'); $('qBtArea').before(BT_HOME);
 function setMode(m) {
   MODE = m;
+  if (m === 'bt') { $('qBtHost').appendChild($('qBtArea')); $('qBtHost').hidden = false; }   // 📊 回測數據：把回測整塊搬過來
+  else if ($('qBtArea').parentElement === $('qBtHost')) { BT_HOME.after($('qBtArea')); $('qBtHost').hidden = true; }
   if (m === 'quant') {
-    document.body.classList.remove('mode-pat', 'mode-news');
+    document.body.classList.remove('mode-pat', 'mode-news', 'mode-bt');
     $('qBx').parentElement !== $('qPanel') && $('qPanel').querySelector('.tabs').before($('qBx'));   // 倉位搬回合約量化面板
     $('qBxHost').hidden = true;
     openPanel(true);
   } else {
     if (!$('qPanel').hidden) openPanel(false);
-    document.body.classList.toggle('mode-pat', m === 'pat'); document.body.classList.toggle('mode-news', m === 'news');
+    document.body.classList.toggle('mode-pat', m === 'pat'); document.body.classList.toggle('mode-news', m === 'news'); document.body.classList.toggle('mode-bt', m === 'bt');
     $('qBxHost').appendChild($('qBx')); $('qBxHost').hidden = false;   // 我的倉位放在最上面
     window.scrollTo({ top: 0 });
     setTimeout(() => window.dispatchEvent(new Event('resize')), 60);   // 星圖重新計算大小
@@ -3367,6 +3376,7 @@ function setMode(m) {
 }
 $('qModePat').onclick = () => setMode(MODE === 'pat' ? 'quant' : 'pat');
 $('qModeNews').onclick = () => setMode(MODE === 'news' ? 'quant' : 'news');
+$('qModeBt').onclick = () => setMode(MODE === 'bt' ? 'quant' : 'bt');
 $('qModeClose').onclick = () => setMode('quant');
 setTimeout(() => setMode('quant'), 0);                // 首頁直接是合約量化進場
 $('qSetBtn').onclick = () => { const h = !$('qSetBox').hidden; $('qSetBox').hidden = h; $('qSetBtn').setAttribute('aria-expanded', String(!h)); };
@@ -3694,7 +3704,7 @@ function renderCmp(v) {                               // 回測：有／沒有 B
   const A = v.off, B = v.on, U = x => (x >= 0 ? '+' : '−') + Math.abs(x).toFixed(2) + 'U', P = x => x == null ? '—' : (x >= 0 ? '+' : '−') + Math.abs(x) + '%';
   const df = (a, b, f, good = 1) => { if (a == null || b == null) return '—'; const d = b - a; return `<span class="${d * good > 0 ? 'qg' : d * good < 0 ? 'qr' : ''}">${d > 0 ? '+' : d < 0 ? '−' : '±'}${f(Math.abs(d))}</span>`; };
   const row = (k, a, b, d) => `<tr><td>${k}</td><td>${a}</td><td>${b}</td><td>${d}</td></tr>`;
-  const changed = v.cfg && (v.cfg.mode !== S.btcMode || v.cfg.w !== S.btcWith || v.cfg.a !== S.btcAgainst);
+  const changed = v.cfg && v.cfg.mode && (v.cfg.mode !== S.btcMode || v.cfg.w !== S.btcWith || v.cfg.a !== S.btcAgainst);
   el.innerHTML = `<div class="qcmp"><h3>🧭 BTC 方向過濾：回測比較</h3>
     <div class="tablewrap"><table><thead><tr><th></th><th>沒有過濾</th><th>有 BTC 過濾</th><th>差別</th></tr></thead><tbody>
     ${row('訊號筆數', `${A.n}（多 ${A.long}／空 ${A.short}）`, `${B.n}（多 ${B.long}／空 ${B.short}）`, df(A.n, B.n, x => x + ' 筆', 0))}
@@ -3708,7 +3718,7 @@ function renderCmp(v) {                               // 回測：有／沒有 B
     ${row('做空損益', U(A.shortPl), U(B.shortPl), df(A.shortPl, B.shortPl, x => x.toFixed(2) + 'U'))}
     </tbody></table></div>
     <p class="qcn">過濾掉 <b>${v.cut.n}</b> 筆（做多 ${v.cut.long}、做空 ${v.cut.short}）。有過濾時：順勢 ${v.bySide.with.n} 筆、成功率 ${v.bySide.with.rate ?? '—'}%；逆勢 ${v.bySide.against.n} 筆、成功率 ${v.bySide.against.rate ?? '—'}%。<br>
-    回測 ${fmtT(v.start)}～${fmtT(v.end)}、${v.coins} 個幣，BTC 方向用「${BTCM[v.cfg ? v.cfg.mode : '24h']}」、順勢 ${v.cfg ? v.cfg.w : '—'} 項／逆勢 ${v.cfg ? v.cfg.a : '—'} 項。模擬資金用「📊 回測報告」的本金和每筆下單設定、扣手續費；成功率和保證金 % 用目前的浮盈規則（+${T.tp}%／−${T.sl}%、${T.lev}x）。${changed ? '<br><b class="qr">BTC 過濾條件改過了，要重新回測才會照新條件比較。</b>' : ''}<br>回測用的是「現在」成交額前幾名的幣，結果可能偏樂觀，只供參考。</p></div>`;
+    回測 ${fmtT(v.start)}～${fmtT(v.end)}、${v.coins} 個幣，${v.cfg && v.cfg.mode ? `BTC 方向用「${BTCM[v.cfg.mode] || v.cfg.mode}」、順勢 ${v.cfg.w} 項／逆勢 ${v.cfg.a} 項。` : '<b class="qr">這份回測是用其他規則跑的，請重新按「回測過去約 14 天」。</b>'}模擬資金用「📊 回測報告」的本金和每筆下單設定、扣手續費；成功率和保證金 % 用目前的浮盈規則（+${T.tp}%／−${T.sl}%、${T.lev}x）。${changed ? '<br><b class="qr">BTC 過濾條件改過了，要重新回測才會照新條件比較。</b>' : ''}<br>回測用的是「現在」成交額前幾名的幣，結果可能偏樂觀，只供參考。</p></div>`;
 }
 function btStat(msg) { $('qBtStat').textContent = msg || (BT.at ? `上次回測 ${fmtT(BT.at)}，${BT.coins} 個幣，共 ${BT.trades.length} 筆訊號。改浮盈或槓桿會直接重算，改掃描條件需要重新回測。` : '還沒回測過。'); }
 /* 回測快取：同一次開著網頁時，再按一次回測只補最新的資料，改掃描條件重跑會快很多 */
