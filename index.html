@@ -801,7 +801,7 @@ header{align-items:center}
             <label class="lvsl1">泡泡<input type="range" id="lvBub" min="0" max="2" step="0.1"></label>
           </div>
           <div style="width:100%;position:relative"><canvas id="lvCv" style="display:block;touch-action:none;cursor:crosshair"></canvas><div class="lvtip" id="lvTip" hidden></div></div>
-          <p class="qcn" style="margin:6px 4px 0">操作跟 TradingView 一樣：圖上拖曳＝上下左右移動；滾輪或兩指＝縮放時間；拖曳右邊價格軸（或在上面滾滾輪）＝縮放價格；拖曳下方時間軸＝縮放時間；雙擊圖表＝價格回到自動；「重置視圖」回到全部範圍。現價標籤下面是這根 K 棒收盤倒數。右側長條是還沒清算的水平分佈，底部是 CLLD（▲ 由負轉正＝牛市轉折、▼ 由正轉負＝熊市轉折）。📌 你的倉位會畫成多頭／空頭部位工具：<b>手動單</b>綠＝目標、紅＝停損（有在 Bitunix 設止盈止損就用它，沒有就依槓桿推算），拖曳藍色方塊調整、雙擊恢復（只畫在圖上，<b>不會</b>改交易所的掛單）；<b>🤖 自動單</b>綠＝開始鎖利的價位、紅＝失敗線，是伺服器真正的出場規則，不能拖。</p>
+          <p class="qcn" style="margin:6px 4px 0">操作跟 TradingView 一樣：圖上拖曳＝上下左右移動；滾輪或兩指＝縮放時間；拖曳右邊價格軸（或在上面滾滾輪）＝縮放價格；拖曳下方時間軸＝縮放時間；雙擊圖表＝價格回到自動；「重置視圖」回到全部範圍。現價標籤下面是這根 K 棒收盤倒數。右側長條是還沒清算的水平分佈，底部是 CLLD（▲ 由負轉正＝牛市轉折、▼ 由正轉負＝熊市轉折）。📌 你的倉位會畫成多頭／空頭部位工具：<b>手動單</b>綠＝目標、紅＝停損：Bitunix 有設止盈止損就一定用它（標「交易所」、不能拖）；沒設就用這筆倉位的槓桿和「我的設定」換算（目標＝浮盈 +250%、停損＝你設的浮虧 %，標「依倉位」），可以拖曳藍色方塊微調、雙擊恢復（只畫在圖上，<b>不會</b>改交易所的掛單）；<b>🤖 自動單</b>綠＝開始鎖利的價位、紅＝失敗線，是伺服器真正的出場規則，不能拖。</p>
         </div>
         <p class="qcn">⚠️ <b>清算水平是估計的</b>：交易所不會公開每個人的強平價。做法是看每段時間未平倉量增加多少（＝新開的倉位），用主動買賣比例拆成多單、空單，假設 5x、10x（低）、20x、25x（中）、50x、75x、100x、125x（高）這些常見槓桿算出強平價，畫成一條水平線；價格碰到就當作清算掉、線就斷掉。<b>強度</b>＝2×log₁₀（估計金額美元），例如 1 百萬美元＝12、1 億美元＝16。<b>一級／二級／三級</b>＝只顯示最強的 5%／15%／40%。<b>磁區</b>＝現價附近還沒清算、相鄰的水平合併成一區（最寬 0.8%），顯示離現價最近、夠強的那一區。磁區、CLLD 和右側分佈用<b>全部</b>還沒清算的水平算（只看槓桿勾選），不受一級／二級／三級和強度範圍影響。這些數字跟 Coinglass 是不同的模型，<b>只會接近、不會一樣</b>。<b>CLLD</b>＝還沒清算的多頭水平數－空頭水平數。金額只是大概的數字，適合看「哪些價位堆了很多槓桿」。</p>
       </div>
@@ -822,7 +822,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-21p</div>
+      <div class="qver" id="qVer">網站版本 2026-10-21q</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3224,7 +3224,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-21p・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-21q・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -3683,13 +3683,23 @@ function ptBot(p) {                                   // 🤖 自動單：用系
   const t = (SRVLT.trades || []).find(x => x.status === 'open' && x.positionId === p.id), rl = (t && (t.ruleLev || t.lev)) || p.lev || T.lev;
   return { tp: p.entry * (1 + p.dir * T.tp / 100 / rl), sl: p.entry * (1 - p.dir * T.sl / 100 / rl) };
 }
-function ptDef(p) {                                   // 手動單：交易所有設止盈止損就用它；沒有就依槓桿推算（最多 3%），目標等距
+function ptDef(p) {                                   // 手動單沒設止盈止損：用這筆倉位的槓桿＋「我的設定」的規則換算（目標＝浮盈 +250%、停損＝你設的浮虧 %）
   if (p.bot) return ptBot(p);
-  let d = Math.min(0.03, Math.max(0.002, 0.9 / Math.max(1, p.lev || 20)));
-  if (p.liq > 0) d = Math.min(d, Math.max(0.002, Math.abs(p.liq / p.entry - 1) * 0.9));
-  return { tp: p.tp > 0 ? p.tp : p.entry * (1 + p.dir * d), sl: p.sl > 0 ? p.sl : p.entry * (1 - p.dir * d) };
+  const lev = Math.max(1, p.lev || T.lev);
+  return { tp: p.entry * (1 + p.dir * T.tp / 100 / lev), sl: p.entry * (1 - p.dir * T.sl / 100 / lev) };
 }
-function ptGet(p) { const d = ptDef(p); if (p.bot) return d; const s0 = PT[p.id] || {}; return { tp: s0.tp > 0 ? s0.tp : d.tp, sl: s0.sl > 0 ? s0.sl : d.sl }; }
+// 以倉位為準：交易所有設止盈止損 → 一定用交易所的（不能拖）；沒設 → 你拖過的位置，沒拖過就用依倉位換算的
+function ptGet(p) {
+  const d = ptDef(p); if (p.bot) return Object.assign(d, { tpSrc: 'bot', slSrc: 'bot' });
+  const s0 = PT[p.id] || {}, pick = k => p[k] > 0 ? [p[k], 'ex'] : s0[k] > 0 ? [s0[k], 'drag'] : [d[k], 'def'];
+  const [tp, tpSrc] = pick('tp'), [sl, slSrc] = pick('sl'); return { tp, sl, tpSrc, slSrc };
+}
+function ptClean() {                                  // 已經平倉的倉位：清掉瀏覽器裡記的舊拖曳位置
+  if (!(typeof SRVBX !== 'undefined' && SRVBX && SRVBX.set && SRVBX.at)) return;
+  const ids = new Set((SRVBX.pos || []).map(p => p.id)); let ch = false;
+  for (const k of Object.keys(PT)) if (!ids.has(k)) { delete PT[k]; ch = true; }
+  if (ch) LS.set('quantPosTool', PT);
+}
 function lvMineChips(D, px) {                          // 圖表上方：列出所有手動倉位，點一下切換幣種
   const L = lvMine(), el = $('lvMine'); el.hidden = !L.length; if (!L.length) return;
   el.innerHTML = '📌 我的倉位：' + L.map(p => {
@@ -3771,12 +3781,12 @@ function lvDraw() {
     }
     g.restore();
   }
-  LVS.pth = [];
+  LVS.pth = []; ptClean();
   let slot = 0;
   for (const p of lvMine()) {                         // 📌 我的倉位：多頭／空頭部位工具
     if (p.sym !== D.sym) continue;
     const k0 = slot++;                                 // 同一個幣有好幾筆：往左排開，不要疊在一起
-    const { tp, sl } = ptGet(p), e = p.entry, f = x => x.toFixed(dec), q = p.qty;
+    const { tp, sl, tpSrc, slSrc } = ptGet(p), e = p.entry, f = x => x.toFixed(dec), q = p.qty;
     const xi = p.ctime > 0 ? Math.max(V.x0, (p.ctime - D.K[0].t) / ms) : V.x0, xa = Math.max(0, Math.min(PL - 152 - k0 * 160, xs(xi))), xb = Math.min(PL - 2, xa + 150), w = xb - xa, cx = xa + w / 2;   // 跟 TradingView 一樣是一個小框
     const ye = Math.round(ys(e)) + 0.5, yt = Math.round(ys(tp)) + 0.5, yl = Math.round(ys(sl)) + 0.5;
     g.fillStyle = 'rgba(38,166,154,.22)'; g.fillRect(xa, Math.min(ye, yt), w, Math.abs(yt - ye));
@@ -3785,13 +3795,14 @@ function lvDraw() {
     g.strokeStyle = '#ef5350'; g.beginPath(); g.moveTo(xa, yl); g.lineTo(xb, yl); g.stroke();
     g.strokeStyle = '#cfd6e0'; g.beginPath(); g.moveTo(xa, ye); g.lineTo(xb, ye); g.stroke();
     const lp = (HT.mini.get(p.sym) || {}).c || px, un = (lp - e) * p.dir * q, gain = Math.abs(tp - e) * q, loss = Math.abs(sl - e) * q, rr = Math.abs(tp - e) / Math.max(1e-12, Math.abs(sl - e));
-    const pct = x => (Math.abs(x / e - 1) * 100).toFixed(2) + '%', src = p.bot ? '🤖 ' : (PT[p.id] && (PT[p.id].tp || PT[p.id].sl)) ? '' : (p.tp > 0 || p.sl > 0) ? '交易所 ' : '';
+    const pct = x => (Math.abs(x / e - 1) * 100).toFixed(2) + '%', SRC = { bot: '🤖 ', ex: '交易所 ', drag: '', def: '依倉位 ' };
     const lab = (txt, y, bg, fg) => { g.font = 'bold 12px system-ui'; const tw = g.measureText(txt).width + 14; let x = cx - tw / 2; if (x < xa + 10 && xa + 10 + tw <= PL - 2) x = xa + 10; x = Math.max(2, Math.min(PL - tw - 2, x)); /* 放得下就避開圓點，放不下就往左，不要被切掉 */ g.fillStyle = bg; g.beginPath(); g.roundRect ? g.roundRect(x, y - 13, tw, 20, 5) : g.rect(x, y - 13, tw, 20); g.fill(); g.fillStyle = fg; g.fillText(txt, x + 7, y + 2); };
     const far = (y) => (y < ye ? y - 12 : y + 18);    // 標籤放在離開倉價那一側的外面
-    lab(`${src}${p.bot ? '開始鎖利' : '目標'} ${f(tp)}（${tp > e ? '+' : '−'}${pct(tp)}）+${gain.toFixed(2)}U`, far(yt), '#2e7d32', '#fff');
-    lab(`${src}${p.bot ? '失敗線' : '停損'} ${f(sl)}（${sl > e ? '+' : '−'}${pct(sl)}）−${loss.toFixed(2)}U`, far(yl), '#c62828', '#fff');
+    lab(`${SRC[tpSrc]}${p.bot ? '開始鎖利' : '目標'} ${f(tp)}（${tp > e ? '+' : '−'}${pct(tp)}）+${gain.toFixed(2)}U`, far(yt), '#2e7d32', '#fff');
+    lab(`${SRC[slSrc]}${p.bot ? '失敗線' : '停損'} ${f(sl)}（${sl > e ? '+' : '−'}${pct(sl)}）−${loss.toFixed(2)}U`, far(yl), '#c62828', '#fff');
     lab(`${p.bot ? '🤖 ' : ''}${p.dir > 0 ? '多' : '空'} ${q}・${p.lev}x　${un >= 0 ? '+' : ''}${un.toFixed(2)}U　${rr.toFixed(2)}:1`, ye + 4, un >= 0 ? '#26a69a' : '#ef5350', '#fff');
-    if (!p.bot) for (const [k, y] of [['tp', yt], ['sl', yl]]) { g.fillStyle = '#12161d'; g.strokeStyle = '#2f80ff'; g.lineWidth = 1.5; g.fillRect(xa - 5, y - 5, 10, 10); g.strokeRect(xa - 5, y - 5, 10, 10); LVS.pth.push({ k, x: xa, y, p }); }   // 自動單不能拖（那是伺服器真正的規則）
+    if (!p.bot) for (const [k, y] of [['tp', yt], ['sl', yl]]) { if ((k === 'tp' ? tpSrc : slSrc) === 'ex') continue;   // 交易所的止盈止損是真正的掛單，不能拖
+ g.fillStyle = '#12161d'; g.strokeStyle = '#2f80ff'; g.lineWidth = 1.5; g.fillRect(xa - 5, y - 5, 10, 10); g.strokeRect(xa - 5, y - 5, 10, 10); LVS.pth.push({ k, x: xa, y, p }); }   // 自動單不能拖（那是伺服器真正的規則）
     g.beginPath(); g.arc(xa, ye, 5, 0, Math.PI * 2); g.fillStyle = '#12161d'; g.fill(); g.strokeStyle = '#2f80ff'; g.stroke();
   }
   g.restore();
@@ -3910,7 +3921,7 @@ function lvInit() {
     if (p.mode === 'pt' && p.h) {                     // 拖曳目標／停損：只能在獲利／虧損那一側
       const q = p.h.p, e0 = q.entry, pr = V.y0 + (G.MH - e.offsetY) / G.MH * (V.y1 - V.y0), lim = e0 * 0.0005;
       const ok = p.h.k === 'tp' ? (q.dir > 0 ? Math.max(pr, e0 + lim) : Math.min(pr, e0 - lim)) : (q.dir > 0 ? Math.min(pr, e0 - lim) : Math.max(pr, e0 + lim));
-      PT[q.id] = Object.assign(ptGet(q), { [p.h.k]: ok }); LS.set('quantPosTool', PT); lvDraw(); return;
+      const cur = PT[q.id] || {}; cur[p.h.k] = ok; PT[q.id] = cur; LS.set('quantPosTool', PT); lvDraw(); return;
     }
     if (p.mode === 'y') { yScale(Math.exp(dy * 0.006)); return; }
     if (p.mode === 'x') { lvZoom(Math.exp(-dx * 0.006), G.PL); return; }
