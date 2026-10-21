@@ -852,7 +852,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-21e';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-22a';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1049,7 +1049,7 @@ async function ltOpen(X, c) {
     };
     X.A.ltTrades.unshift(t); X.A.ltTrades = X.A.ltTrades.slice(0, 2000); touchLT(X);
     log('自動開倉', X.uid, c.sym, c.dir > 0 ? '做多' : '做空', qty, '@', t.entry);
-    dcX(X, `🤖 **自動開倉** ${c.dir > 0 ? '🟢 做多' : '🔴 做空'} **${mdEsc(c.sym)}**\n成交價 ${fpx(t.entry)}・${lev}x 全倉・數量 ${t.qty}・保證金約 ${t.margin.toFixed(2)}U\n${exSL ? `交易所止損 ${fpx(slPx)}（−${T.sl}%）` : '⚠️ 交易所止損沒設成功，改由伺服器監控'}`);
+    dcX(X, `🤖 **自動開倉** ${c.dir > 0 ? '🟢 做多' : '🔴 做空'} **${mdEsc(c.sym)}**\n成交價 ${fpx(t.entry)}・${lev}x 全倉・數量 ${t.qty}・保證金約 ${t.margin.toFixed(2)}U\n${exSL ? `交易所止損 ${fpx(slPx)}（−${pctK(T.sl, lev / C.lev)}%）` : '⚠️ 交易所止損沒設成功，改由伺服器監控'}\n出場規則：浮盈 **+${pctK(T.tp, lev / C.lev)}%** 開始鎖利、浮虧 **−${pctK(T.sl, lev / C.lev)}%** 停損${lev !== C.lev ? `\n-# 這個幣最高 ${lev}x，你設 ${C.lev}x：停利停損按 ${lev}÷${C.lev} 縮小（你的 +${T.tp}%／−${T.sl}%），出場價格不變` : ''}`);
   } catch (e) { LT.msg = `${c.sym} 自動下單失敗：${e.message}`; log(X.uid, LT.msg); dcX(X, `❗ **自動下單失敗** ${mdEsc(c.sym)}：${mdEsc(e.message)}`); }
   finally { LT.busy.delete(c.sym); }
 }
@@ -1076,9 +1076,12 @@ async function ltSyncSL(X) {
     await sleep(250);
   }
   touchLT(X);
-  if (ok.length || bad.length) dcX(X, `🛡 **交易所止損已改成 −${T.sl}%**：成功 ${ok.length} 筆${bad.length ? `，失敗 ${bad.length} 筆：${mdEsc(bad.join('、'))}` : ''}${skip.length ? `；${skip.join('、')} 已經超過新的止損，伺服器會直接平倉` : ''}\n-# 改失敗的單，伺服器還是會照 −${T.sl}% 幫你平倉`);
+  if (ok.length || bad.length) dcX(X, `🛡 **交易所止損已改成 −${T.sl}%**（槓桿開不到 ${TT(X).lev}x 的幣按比例縮小）：成功 ${ok.length} 筆${bad.length ? `，失敗 ${bad.length} 筆：${mdEsc(bad.join('、'))}` : ''}${skip.length ? `；${skip.join('、')} 已經超過新的止損，伺服器會直接平倉` : ''}\n-# 改失敗的單，伺服器還是會照 −${T.sl}% 幫你平倉`);
 }
 // 🔄 反手：手上有這個幣「反方向」的自動單 → 先市價平掉、確認倉位消失，再照新訊號開倉（手動單不動）
+// 幣開不到你設定的槓桿：停利、停損、鎖利間距都按「實際槓桿 ÷ 設定槓桿」縮小（出場價格不變），通知裡顯示這筆單真正的報酬率
+const rk = (t, rl) => (t.lev > 0 && rl > 0 ? t.lev / rl : 1);
+const pctK = (v, k) => { const x = v * k; return Math.abs(x - Math.round(x)) < 0.05 ? String(Math.round(x)) : x.toFixed(1); };
 async function ltFlipOpen(X, c) {
   const LT = X.LT, opp = ltOpenTrades(X).filter(t => t.sym === c.sym && t.dir !== c.dir && t.positionId);
   if (!opp.length) return ltOpen(X, c);
@@ -1151,8 +1154,9 @@ async function ltManageX(X) {
     else if (T.exit === 'fixed') { if (roe >= T.tp) why = 'win'; }
     else if (t.fav >= T.tp) {                            // 鎖利：最高浮盈每多 step%，鎖利線就往上調一格，只升不降
       const lv = Math.max(lockAt(t.fav, T), t.lockLv || 0);
-      if (!t.locked) { t.locked = true; touchLT(X); dcX(X, `🤖 **實盤**｜🔒 **達標鎖利** ${mdEsc(t.sym)}（${t.lev}x${rl !== t.lev ? `，照 ${rl}x 換算` : ''}）：浮盈 +${roe.toFixed(0)}%，鎖利線 **+${lv}%**${T.step > 0 ? `\n之後浮盈每多 ${T.step}% 鎖利線就往上調一次，跑回鎖利線就平倉` : `，之後跑回 +${lv}% 就平倉`}`); }
-      else if (lv > (t.lockLv || T.tp)) { touchLT(X); dcX(X, `🤖 **實盤**｜🔒 **鎖利上調** ${mdEsc(t.sym)}：浮盈 +${roe.toFixed(0)}%，鎖利線調到 **+${lv}%**`); }
+      const k = rk(t, rl), kn = k !== 1 ? `\n-# ${t.lev}x 的幣：你的 +${lv}% 按 ${t.lev}÷${rl} 縮小` : '';   // 通知裡顯示這筆單真正的報酬率
+      if (!t.locked) { t.locked = true; touchLT(X); dcX(X, `🤖 **實盤**｜🔒 **達標鎖利** ${mdEsc(t.sym)}（${t.lev}x）：浮盈 +${pctK(roe, k)}%，鎖利線 **+${pctK(lv, k)}%**${T.step > 0 ? `\n之後浮盈每多 ${pctK(T.step, k)}% 鎖利線就往上調一次，跑回鎖利線就平倉` : `，之後跑回 +${pctK(lv, k)}% 就平倉`}${kn}`); }
+      else if (lv > (t.lockLv || T.tp)) { touchLT(X); dcX(X, `🤖 **實盤**｜🔒 **鎖利上調** ${mdEsc(t.sym)}（${t.lev}x）：浮盈 +${pctK(roe, k)}%，鎖利線調到 **+${pctK(lv, k)}%**${kn}`); }
       t.lockLv = lv;
       if (roe < lv) why = 'lock';
     }
