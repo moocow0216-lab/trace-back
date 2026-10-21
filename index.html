@@ -797,7 +797,7 @@ header{align-items:center}
           <div style="width:100%"><canvas id="lvCv" style="display:block;touch-action:none;cursor:grab"></canvas></div>
           <p class="qcn" style="margin:6px 4px 0">滾輪或兩指縮放、拖曳左右移動；「重置視圖」回到全部範圍。右側長條是還沒清算的水平分佈，底部是 CLLD（▲ 由負轉正＝牛市轉折、▼ 由正轉負＝熊市轉折）。</p>
         </div>
-        <p class="qcn">⚠️ <b>清算水平是估計的</b>：交易所不會公開每個人的強平價。做法是看每段時間未平倉量增加多少（＝新開的倉位），用主動買賣比例拆成多單、空單，假設 10x（低）、25x（中）、50x 和 100x（高）這些常見槓桿算出強平價，畫成一條水平線；價格碰到就當作清算掉、線就斷掉。<b>強度</b>＝2×log₁₀（估計金額美元），例如 1 百萬美元＝12、1 億美元＝16。<b>一級／二級／三級</b>＝只顯示最強的 5%／15%／40%。<b>磁區</b>＝現價附近還沒清算、相鄰的水平合併成一區（最寬 0.8%），顯示離現價最近、夠強的那一區。<b>CLLD</b>＝還沒清算的多頭水平數－空頭水平數。金額只是大概的數字，適合看「哪些價位堆了很多槓桿」。</p>
+        <p class="qcn">⚠️ <b>清算水平是估計的</b>：交易所不會公開每個人的強平價。做法是看每段時間未平倉量增加多少（＝新開的倉位），用主動買賣比例拆成多單、空單，假設 10x（低）、25x（中）、50x 和 100x（高）這些常見槓桿算出強平價，畫成一條水平線；價格碰到就當作清算掉、線就斷掉。<b>強度</b>＝2×log₁₀（估計金額美元），例如 1 百萬美元＝12、1 億美元＝16。<b>一級／二級／三級</b>＝只顯示最強的 5%／15%／40%。<b>磁區</b>＝現價附近還沒清算、相鄰的水平合併成一區（最寬 0.8%），顯示離現價最近、夠強的那一區。磁區、CLLD 和右側分佈用<b>全部</b>還沒清算的水平算（只看槓桿勾選），不受一級／二級／三級和強度範圍影響。這些數字跟 Coinglass 是不同的模型，<b>只會接近、不會一樣</b>。<b>CLLD</b>＝還沒清算的多頭水平數－空頭水平數。金額只是大概的數字，適合看「哪些價位堆了很多槓桿」。</p>
       </div>
       <p class="qcn">資料直接來自幣安（瀏覽器即時連線），只供參考，不會影響自動交易的進場判斷。只有打開這個畫面時才會連線。</p>
     </div>
@@ -816,7 +816,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-21j</div>
+      <div class="qver" id="qVer">網站版本 2026-10-21k</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3218,7 +3218,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-21j・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-21k・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -3600,6 +3600,7 @@ const usdW = v => v >= 1e8 ? (v / 1e8).toFixed(2) + ' 億' : v >= 1e4 ? Math.rou
    強度＝2×log10(估計金額美元)；磁區＝現價附近還沒清算、相鄰的水平合併成一區；CLLD＝還沒清算的多頭水平數－空頭水平數 */
 const LV = Object.assign({ sym: 'BTCUSDT', rk: '3d', lev: { h: 1, m: 1, l: 1 }, tier: 1, color: 'side', candle: true, smin: null, smax: null, line: 0.5, bub: 0.7 }, LS.get('quantLvCfg', {}));
 const LVS = { d: null, at: 0, busy: false, err: '', key: '', view: null, ptr: new Map(), pinch: 0, stat: null };
+window.__lv = LVS;                                    // 除錯用：瀏覽器主控台可以查看清算水平的資料
 const LV_R = { '3d': { iv: '1m', ms: 60000, n: 4320, oi: '5m', oims: 300000, blk: 15, name: '3 天・1 分 K' }, '7d': { iv: '3m', ms: 180000, n: 3360, oi: '15m', oims: 900000, blk: 10, name: '7 天・3 分 K' }, '30d': { iv: '15m', ms: 900000, n: 2880, oi: '1h', oims: 3600000, blk: 8, name: '30 天・15 分 K' } };
 const LV_TIER = [[100, 0.15, 'h'], [50, 0.2, 'h'], [25, 0.3, 'm'], [10, 0.35, 'l']], LV_MMR = 0.005;
 const LV_COL = { S: '#2fbf71', L: '#e5484d', h: '#f5c542', m: '#a78bfa', l: '#60a5fa' };
@@ -3621,7 +3622,7 @@ async function lvLoad() {
     if (K.length < 50) throw new Error('抓不到 K 線');
     if (O.length < 5) throw new Error('抓不到未平倉量（幣安只保留最近 30 天）');
     const oiAt = t => { let lo = 0, hi = O.length - 1, b = O[0].v; while (lo <= hi) { const m = (lo + hi) >> 1; if (O[m].t <= t) { b = O[m].v; lo = m + 1; } else hi = m - 1; } return b; };
-    const N = K.length, levels = [], open = [], clld = new Int32Array(N); let nL = 0, nS = 0;
+    const N = K.length, levels = [], open = [], clld = new Array(N).fill(0); let nL = 0, nS = 0;
     let prev = oiAt(K[0].t);
     for (let i = 0; i < N; i++) {
       const b = K[i];
@@ -3655,6 +3656,20 @@ async function lvLoad() {
   } catch (e) { LVS.err = e.message || '讀取失敗'; }
   LVS.busy = false;
 }
+function lvLive() {                                   // 每秒：用即時價格更新最後一根 K 棒；時間到就開新的一根；價格碰到的水平即時清算
+  const D = LVS.d; if (!D) return;
+  const m = HT.mini.get(D.sym); if (!m || !(m.c > 0) || Date.now() - HT.msgAt > 5000) return;
+  const px = m.c, ms = LV_R[D.rk].ms, now = Date.now(); let last = D.K[D.N - 1];
+  if (Math.abs(px / last.c - 1) > 0.15) return;
+  if (now >= last.t + ms) {
+    const t = Math.floor(now / ms) * ms; D.K.push({ t, o: last.c, h: Math.max(last.c, px), l: Math.min(last.c, px), c: px, qv: 0, tb: 0 }); D.N++; D.clld.push(D.clld[D.N - 2]);
+    const V = LVS.view; if (V && V.x1 >= D.N - 3) { V.x0 += 1; V.x1 += 1; }   // 正在看最右邊：畫面跟著往右
+    last = D.K[D.N - 1];
+  } else { last.c = px; last.h = Math.max(last.h, px); last.l = Math.min(last.l, px); }
+  let hit = 0;
+  for (const v of D.levels) if (v.i1 === null && ((v.side === 'L' && px <= v.p) || (v.side === 'S' && px >= v.p))) { v.i1 = D.N - 1; hit++; }
+  if (hit) { let nL = 0, nS = 0; for (const v of D.levels) if (v.i1 === null) v.side === 'L' ? nL++ : nS++; D.clld[D.N - 1] = nL - nS; }
+}
 function lvShow(v) {                                   // 這條水平要不要畫：槓桿勾選、一級／二級／三級、強度範圍
   const D = LVS.d;
   if (!LV.lev[v.cls]) return false;
@@ -3684,29 +3699,38 @@ function lvDraw() {
   g.fillStyle = '#12161d'; g.fillRect(0, 0, W, H);
   g.strokeStyle = 'rgba(255,255,255,.06)'; g.lineWidth = 1; g.fillStyle = '#9aa4b2'; g.font = '11px system-ui'; g.textAlign = 'left';
   for (let k = 0; k <= 8; k++) { const p = lo + (hi - lo) * k / 8, y = ys(p); g.beginPath(); g.moveTo(0, y); g.lineTo(PL, y); g.stroke(); g.fillText(p.toFixed(dec), PL + PW + 4, y + 4); }
-  const vis = D.levels.filter(lvShow), sMin = LV.smin, sMax = Math.max(LV.smin + 0.01, LV.smax), nrm = v => Math.max(0, Math.min(1, (v.s - sMin) / (sMax - sMin)));
+  const vis = D.levels.filter(lvShow); let sMin = Infinity, sMax = -Infinity; for (const v of vis) { sMin = Math.min(sMin, v.s); sMax = Math.max(sMax, v.s); }
+  if (!(sMax > sMin)) { sMin = LV.smin; sMax = LV.smin + 1; }
+  const nrm = v => Math.max(0, Math.min(1, (v.s - sMin) / (sMax - sMin)));
   g.save(); g.beginPath(); g.rect(0, 0, PL, MH); g.clip();
   for (const v of vis) {                               // 水平線＋起點氣泡
     const xa = xs(v.i0), xb = v.i1 === null ? PL : xs(v.i1); if (xb < 0 || xa > PL) continue;
     const y = ys(v.p); if (y < -20 || y > MH + 20) continue;
     const n = nrm(v), col = LV.color === 'side' ? LV_COL[v.side] : LV_COL[v.cls];
-    g.globalAlpha = 0.2 + 0.8 * n; g.strokeStyle = col; g.lineWidth = 0.4 + LV.line * 3 * n; g.beginPath(); g.moveTo(xa, y); g.lineTo(xb, y); g.stroke();
-    if (LV.bub > 0) { const r = LV.bub * (1.5 + 13 * n * n); g.globalAlpha = 0.9; g.lineWidth = 1.2; g.beginPath(); g.arc(xa, y, r, 0, Math.PI * 2); g.stroke(); g.globalAlpha = 0.12; g.fillStyle = col; g.fill(); g.globalAlpha = 1; g.fillStyle = '#fff'; g.beginPath(); g.arc(xa, y, 1.6, 0, Math.PI * 2); g.fill(); }
+    g.globalAlpha = 0.5 + 0.5 * n; g.strokeStyle = col; g.lineWidth = 1 + LV.line * 3 * n; g.beginPath(); g.moveTo(xa, y); g.lineTo(xb, y); g.stroke();
+    if (LV.bub > 0) { const r = LV.bub * (4 + 24 * n * n); g.globalAlpha = 0.95; g.lineWidth = 1.5; g.beginPath(); g.arc(xa, y, r, 0, Math.PI * 2); g.stroke(); g.globalAlpha = 0.1 + 0.12 * n; g.fillStyle = col; g.fill(); g.globalAlpha = 1; g.fillStyle = '#fff'; g.beginPath(); g.arc(xa, y, 1.8, 0, Math.PI * 2); g.fill(); }
   }
   g.globalAlpha = 1;
-  if (LV.candle) for (let i = i0; i <= i1; i++) {      // K 線
-    const b = D.K[i], x = xs(i), w = Math.max(1, PL / (V.x1 - V.x0) * 0.6), upc = b.c >= b.o;
-    g.strokeStyle = g.fillStyle = upc ? '#26a69a' : '#ef5350'; g.lineWidth = 1;
-    g.beginPath(); g.moveTo(x, ys(b.h)); g.lineTo(x, ys(b.l)); g.stroke(); g.fillRect(x - w / 2, Math.min(ys(b.o), ys(b.c)), w, Math.max(1, Math.abs(ys(b.o) - ys(b.c))));
+  if (LV.candle) {                                     // 高清 K 線：太密就合併成每根至少 3 像素寬；線條對齊像素
+    const per = PL / (V.x1 - V.x0), grp = Math.max(1, Math.ceil(3.2 / per)), w = Math.max(1, Math.floor(per * grp * 0.7)), px1 = 1 / dpr;
+    for (let k = Math.floor(i0 / grp) * grp; k <= i1; k += grp) {
+      let o = null, h = -Infinity, l = Infinity, c = null;
+      for (let i = Math.max(0, k); i < Math.min(D.N, k + grp); i++) { const b = D.K[i]; if (o === null) o = b.o; h = Math.max(h, b.h); l = Math.min(l, b.l); c = b.c; }
+      if (o === null) continue;
+      const x = Math.round(xs(k + (grp - 1) / 2)) + 0.5, upc = c >= o, yo = ys(o), yc = ys(c);
+      g.strokeStyle = g.fillStyle = upc ? '#26a69a' : '#ef5350'; g.lineWidth = Math.max(1, px1 * 1.5);
+      g.beginPath(); g.moveTo(x, Math.round(ys(h))); g.lineTo(x, Math.round(ys(l))); g.stroke();
+      if (w >= 2) g.fillRect(Math.round(x - w / 2), Math.round(Math.min(yo, yc)), w, Math.max(1, Math.round(Math.abs(yo - yc))));
+    }
   }
   g.restore();
   const yp = ys(px); g.setLineDash([4, 4]); g.strokeStyle = '#fff'; g.beginPath(); g.moveTo(0, yp); g.lineTo(PL + PW, yp); g.stroke(); g.setLineDash([]);
   g.fillStyle = '#fff'; g.fillRect(PL + PW, yp - 9, AX, 18); g.fillStyle = '#000'; g.font = 'bold 11px system-ui'; g.fillText(px.toFixed(dec), PL + PW + 4, yp + 4);
   // 右側：還沒清算的水平分佈（上方空頭綠、下方多頭紅）
-  const openV = vis.filter(v => v.i1 === null), BIN = 4, prof = new Map(); let pmax = 0;
-  for (const v of openV) { const y = Math.round(ys(v.p) / BIN) * BIN; if (y < 0 || y > MH) continue; const o = prof.get(y) || { a: 0, up: v.p > px }; o.a += v.amt; prof.set(y, o); pmax = Math.max(pmax, o.a); }
+  const openV = vis.filter(v => v.i1 === null), allOpen = D.levels.filter(v => v.i1 === null && LV.lev[v.cls]), BIN = 2, prof = new Map(); let pmax = 0;
+  for (const v of allOpen) { const y = Math.round(ys(v.p) / BIN) * BIN; if (y < 0 || y > MH) continue; const o = prof.get(y) || { a: 0, up: v.p > px }; o.a += v.amt; prof.set(y, o); pmax = Math.max(pmax, o.a); }
   g.fillStyle = 'rgba(255,255,255,.03)'; g.fillRect(PL, 0, PW, MH);
-  for (const [y, o] of prof) { g.fillStyle = o.up ? '#2fbf71' : '#e5484d'; g.fillRect(PL + 2, y - BIN / 2 + 0.5, Math.max(1, (PW - 6) * o.a / pmax), BIN - 1); }
+  for (const [y, o] of prof) { g.fillStyle = o.up ? '#2fbf71' : '#e5484d'; g.fillRect(PL + 2, y - BIN / 2, Math.max(1, (PW - 6) * Math.sqrt(o.a / pmax)), BIN); }
   if (!mob) { g.fillStyle = '#9aa4b2'; g.font = '11px system-ui'; g.fillText('還沒清算的分佈', PL + 6, 14); }
   // 底部：CLLD
   const cy0 = MH + 6, ch = CH - 12; let cmn = 0, cmx = 0; for (let i = i0; i <= i1; i++) { cmn = Math.min(cmn, D.clld[i]); cmx = Math.max(cmx, D.clld[i]); }
@@ -3717,14 +3741,14 @@ function lvDraw() {
   g.font = '11px system-ui'; for (const s0 of D.sig) { if (s0.i < i0 || s0.i > i1) continue; g.fillStyle = s0.up ? '#2fbf71' : '#e5484d'; g.fillText(s0.up ? '▲' : '▼', xs(s0.i) - 4, s0.up ? cy0 + ch + 4 : cy0 + 8); }
   const cl = D.clld[D.N - 1]; g.fillStyle = '#e6e9ef'; g.font = 'bold 11px system-ui'; g.fillText(`CLLD ${cl >= 0 ? '+' : ''}${cl}`, 6, MH + 16);
   // 數字卡
-  const zu = lvZones(openV, px, true), zd = lvZones(openV, px, false), m24 = HT.mini.get(D.sym), c24 = m24 && m24.o > 0 ? (px / m24.o - 1) * 100 : null;
+  const zu = lvZones(allOpen, px, true), zd = lvZones(allOpen, px, false), m24 = HT.mini.get(D.sym), c24 = m24 && m24.o > 0 ? (px / m24.o - 1) * 100 : null;
   const pc = p => ((p / px - 1) * 100 >= 0 ? '+' : '') + ((p / px - 1) * 100).toFixed(2) + '%';
   const hAgo = Math.max(0, D.N - 1 - Math.round(HOUR_MS / LV_R[D.rk].ms)), ch1 = cl - D.clld[hAgo], ls = D.sig[D.sig.length - 1];
   $('lvCards').innerHTML = `<div><span>● 最終價格</span><b>${px.toFixed(dec)}</b><em class="${c24 >= 0 ? 'qg' : 'qr'}">${c24 === null ? '' : (c24 >= 0 ? '+' : '') + c24.toFixed(2) + '% 24 小時'}</em></div>
     <div><span style="color:#2fbf71">● 最近的短磁區（上方空單）</span><b>${zu ? (zu.lo === zu.hi ? zu.lo.toFixed(dec) : zu.lo.toFixed(dec) + ' – ' + zu.hi.toFixed(dec)) : '—'}</b><em>${zu ? `${pc(zu.lo)}・強度 ${Math.round(zu.s)}・約 ${usdW(zu.amt)} 美元` : '上方沒有'}</em></div>
     <div><span style="color:#e5484d">● 最近的長磁區（下方多單）</span><b>${zd ? (zd.lo === zd.hi ? zd.lo.toFixed(dec) : zd.lo.toFixed(dec) + ' – ' + zd.hi.toFixed(dec)) : '—'}</b><em>${zd ? `${pc(zd.hi)}・強度 ${Math.round(zd.s)}・約 ${usdW(zd.amt)} 美元` : '下方沒有'}</em></div>
     <div><span>CLLD・還沒清算的多頭－空頭水平數</span><b class="${cl >= 0 ? 'qg' : 'qr'}">${cl >= 0 ? '+' : ''}${cl}</b><em>${cl >= 0 ? '多頭水平比較多' : '空頭水平比較多'}・1 小時變化 ${ch1 >= 0 ? '+' : ''}${ch1}${ls ? `・最近 ${ls.up ? '▲ 牛市轉折' : '▼ 熊市轉折'} ${fmtT(D.K[ls.i].t)}` : ''}</em></div>`;
-  $('lvStat').textContent = `幣安 ${D.sym}・${LV_R[D.rk].name}・畫面上 ${vis.length} 條（還沒清算 ${openV.length} 條）・每分鐘重算`;
+  $('lvStat').innerHTML = `${Date.now() - HT.msgAt < 5000 ? '<span class="wlive"></span>即時' : '連線中'}・幣安 ${D.sym}・${LV_R[D.rk].name}・畫面上 ${vis.length} 條・還沒清算的全部 ${allOpen.length} 條（磁區、CLLD、右側分佈用全部算）`;
   lvHist();
 }
 function lvHist() {                                    // 強度範圍滑桿後面的分佈長條
@@ -3746,8 +3770,12 @@ function lvTick() {
   for (const b of document.querySelectorAll('#lvColor button')) b.classList.toggle('on', b.dataset.c === LV.color);
   $('lvCandle').classList.toggle('on', LV.candle);
   $('lvLeg').innerHTML = LV.color === 'side' ? `<i style="background:${LV_COL.S}"></i>空頭部位（價格上方）<i style="background:${LV_COL.L}"></i>多頭部位（價格下方）・亮度和氣泡大小＝強度` : `<i style="background:${LV_COL.h}"></i>高槓桿<i style="background:${LV_COL.m}"></i>中等槓桿<i style="background:${LV_COL.l}"></i>低槓桿・空頭在價格上方、多頭在下方・亮度和氣泡大小＝強度`;
-  if (!LVS.d) { $('lvStat').textContent = LVS.err ? '❗ ' + LVS.err : '載入中…（3 天約要抓 8 次資料）'; return; }
-  lvDraw();
+  if (!LVS.d) {
+    $('lvStat').textContent = LVS.err ? '❗ ' + LVS.err : '載入中…（3 天約要抓 8 次資料）';
+    const cv = $('lvCv'); if (cv.width) { const g = cv.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = '#12161d'; g.fillRect(0, 0, cv.width, cv.height); }   // 換幣種或範圍：先清掉舊的圖
+    $('lvCards').innerHTML = ''; return;
+  }
+  lvLive(); lvDraw();
 }
 // 互動：滾輪縮放、拖曳平移、兩指縮放
 function lvZoom(f, cx) { const V = LVS.view, D = LVS.d; if (!V || !D) return; const PL = $('lvCv').clientWidth - ($('lvCv').clientWidth < 640 ? 56 : 130) - 66, at = V.x0 + (V.x1 - V.x0) * Math.max(0, Math.min(1, cx / PL)); let a = at - (at - V.x0) * f, b = at + (V.x1 - at) * f; if (b - a < 30) return; a = Math.max(-D.N * 0.05, a); b = Math.min(D.N * 1.1, b); V.x0 = a; V.x1 = b; lvDraw(); }
