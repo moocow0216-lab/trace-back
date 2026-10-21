@@ -746,7 +746,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-21f</div>
+      <div class="qver" id="qVer">網站版本 2026-10-21g</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -779,7 +779,8 @@ header{align-items:center}
           <div class="params">
             <label class="field">API Key<input id="qbx_key" type="password" autocomplete="new-password" data-lpignore="true" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
             <label class="field">Secret Key<input id="qbx_sec" type="password" autocomplete="new-password" data-lpignore="true" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
-            <label class="field" hidden>通知<span class="qtgck"><label><input type="checkbox" id="qbx_notify"> 開倉／平倉</label><label><input type="checkbox" id="qbx_liq"> 離強平價 <input id="qbx_pct" type="number" min="0.5" max="50" step="0.5" style="width:56px"> % 內提醒</label></span></label>
+            <label class="field" hidden>通知<span class="qtgck"><label><input type="checkbox" id="qbx_notify"> 開倉／平倉</label></span></label>
+            <label class="field">⚠️ 快爆倉提醒（傳到 Discord）<span class="qtgck"><label><input type="checkbox" id="qbx_liq"> 現價離強平價 <input id="qbx_pct" type="number" min="0.5" max="50" step="0.5" style="width:60px"> % 以內就提醒</label></span></label>
           </div>
           <div class="qbt" style="margin:8px 0 0">
             <button class="btn primary" id="qbx_save">儲存並測試</button>
@@ -3142,7 +3143,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-21f・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-21g・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -4186,7 +4187,11 @@ $('qbx_save').onclick = () => {
 };
 $('qbx_clear').onclick = () => { if (confirm('要從伺服器刪除 Bitunix 金鑰嗎？刪除後就不會再讀取持倉。')) tgCall('/api/bitunix', { clear: true }, '已刪除。'); };
 ['notify', 'liq'].forEach(k => $('qbx_' + k).onchange = () => tgCall('/api/bitunix', { [k]: $('qbx_' + k).checked }));
-$('qbx_pct').onchange = () => tgCall('/api/bitunix', { liqPct: +$('qbx_pct').value });
+$('qbx_pct').onchange = () => {
+  const v = +$('qbx_pct').value;
+  if (!(v >= 0.5 && v <= 50)) { alert('要在 0.5～50 % 之間'); $('qbx_pct').value = SRVBX ? SRVBX.liqPct : 3; return; }
+  tgCall('/api/bitunix', { liqPct: v });
+};
 /* ---------- 🔐 登入閘門：進網站前要輸入 Bitunix UID 和密碼（驗證在伺服器上做） ---------- */
 let GATE_SETUP = false;
 var RESET_ON = false;                                 // 從信裡的連結打開、正在設定新密碼：其他程式（背景更新）不能把畫面切回登入
