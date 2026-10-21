@@ -549,7 +549,22 @@ dialog#qAdmDlg::backdrop{background:rgba(4,7,12,.62)}
 body.mode-pat .col.right,body.mode-news .col.right,body.mode-news .col.left{display:none!important}
 body.mode-pat #qPanel,body.mode-news #qPanel,body.mode-pat #newsPanel,body.mode-pat #mktPanel,body.mode-news #mktPanel,body.mode-news #resPanel{display:none!important}
 @media (min-width:881px){body.mode-pat .app{grid-template-columns:400px minmax(0,1fr)}body.mode-news .app{grid-template-columns:minmax(0,1fr)}}
-body.mode-pat #qModePat,body.mode-news #qModeNews,body.mode-bt #qModeBt{background:var(--accent);color:#fff;border-color:var(--accent)}
+/* 🔥 熱力圖 */
+.htmap{position:relative;width:100%;border-radius:8px;overflow:hidden;background:#20242c}
+.htc{position:absolute;box-sizing:border-box;border:1px solid rgba(0,0,0,.35);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden;line-height:1.15;transition:background-color .4s}
+.htc b{font-weight:700}.htc span{font-size:.8em;opacity:.95}
+.htc.sig{outline:2px solid #ffd54a;outline-offset:-3px;z-index:1}
+.httab.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+table.htf{border-collapse:separate;border-spacing:1px;font-size:11px}
+table.htf td{min-width:14px;height:20px;padding:0}
+table.htf td:first-child,table.htf th:first-child{position:sticky;left:0;background:var(--panel);padding:0 6px;text-align:left;white-space:nowrap;z-index:1}
+table.htf td.htnow{min-width:64px;padding:0 6px;text-align:right;color:#fff;font-variant-numeric:tabular-nums;border-right:3px solid var(--panel)}
+table.htf th{font-weight:600;font-size:11.5px;color:var(--muted);text-align:left;padding:2px 4px}
+.htall{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:4px;max-height:55vh;overflow:auto}
+.htck{display:flex;align-items:center;gap:4px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;font-size:13px}
+body.mode-heat .col.right,body.mode-heat .col.left,body.mode-heat #qPanel,body.mode-heat #newsPanel,body.mode-heat #mktPanel,body.mode-heat #resPanel{display:none!important}
+@media (min-width:881px){body.mode-heat .app{grid-template-columns:minmax(0,1fr)}}
+body.mode-heat #qModeHeat,body.mode-pat #qModePat,body.mode-news #qModeNews,body.mode-bt #qModeBt{background:var(--accent);color:#fff;border-color:var(--accent)}
 body.mode-bt .col.right,body.mode-bt .col.left,body.mode-bt #qPanel,body.mode-bt #newsPanel,body.mode-bt #mktPanel,body.mode-bt #resPanel{display:none!important}
 @media (min-width:881px){body.mode-bt .app{grid-template-columns:minmax(0,1fr)}}
 #qBtHost #qBtArea{margin-top:4px}
@@ -657,7 +672,7 @@ header{align-items:center}
   <span class="qeco" id="qEco" hidden><button class="qecob" id="qEcoBtn" aria-expanded="false">📅 數據公布 <span id="qEcoNext">讀取中…</span></button><div class="qecol" id="qEcoList" hidden></div></span>
   <label class="tzsel gtz">時區 <select id="tzSel" aria-label="全站時區"></select></label>
   <span class="quser" id="qUserBox" hidden><button class="iconbtn" id="qAdmBtn" hidden>🔐 帳號管理</button><button class="iconbtn" id="qLogout" title="登出">👤 <span id="qUid"></span>・登出</button></span>
-  <span class="qmodes"><button class="iconbtn qbtn" id="qModePat">📈 歷史走勢</button><button class="iconbtn qbtn" id="qModeNews">📰 加密新聞</button><button class="iconbtn qbtn" id="qModeBt">📊 回測數據</button><button class="iconbtn" id="qModeClose" hidden>✕ 關閉，回到合約量化</button></span>
+  <span class="qmodes"><button class="iconbtn qbtn" id="qModePat">📈 歷史走勢</button><button class="iconbtn qbtn" id="qModeNews">📰 加密新聞</button><button class="iconbtn qbtn" id="qModeBt">📊 回測數據</button><button class="iconbtn qbtn" id="qModeHeat">🔥 熱力圖</button><button class="iconbtn" id="qModeClose" hidden>✕ 關閉，回到合約量化</button></span>
   <button class="iconbtn qbtn" id="qOpen" hidden aria-pressed="false" aria-controls="qPanel">合約量化進場<span class="qbadge" id="qBadge" hidden></span></button>
   <span class="meta" id="meta">BTCUSDT 永續合約・15 分鐘 K 線・載入中</span>
   <span class="coinmsg" id="coinMsg" hidden></span>
@@ -731,6 +746,20 @@ header{align-items:center}
   <section class="col center">
     <div id="qBxHost" hidden></div>
     <div class="panel" id="qBtHost" hidden><div class="qhead"><h2>📊 回測數據</h2></div></div>
+    <div class="panel" id="qHeatHost" hidden>
+      <div class="qhead"><h2>🔥 熱力圖</h2><span class="qbtstat" id="htLive"></span></div>
+      <div class="qbt" style="margin:6px 0">
+        <button class="btn httab" id="htTabMkt">📈 市場漲跌</button><button class="btn httab" id="htTabFund">💰 資金費率</button>
+        <label class="tzsel">幣種 <select id="htPick"><option value="top50">成交額前 50</option><option value="top100">成交額前 100</option><option value="top200">成交額前 200</option><option value="mine">自選</option></select></label>
+        <button class="btn" id="htEdit" hidden>✏ 編輯自選</button>
+        <label class="tzsel" id="htTfBox">漲跌 <select id="htTf"><option value="1h">1 小時</option><option value="4h">4 小時</option><option value="24h">24 小時</option></select></label>
+        <label class="tzsel" id="htSortBox" hidden>排序 <select id="htSort"><option value="vol">成交額</option><option value="hi">現在費率：高→低</option><option value="lo">現在費率：低→高</option><option value="abs">現在費率：最極端</option></select></label>
+      </div>
+      <p class="qcn" id="htSum"></p>
+      <div id="htMktBox"><div class="htmap" id="htMap"></div></div>
+      <div id="htFundBox" hidden><div id="htFund"></div></div>
+      <p class="qcn">資料直接來自幣安（瀏覽器即時連線），只供參考，不會影響自動交易的進場判斷。只有打開這個畫面時才會連線。</p>
+    </div>
     <div class="panel qpanel" id="qPanel" hidden>
       <div class="qhead">
         <h2>合約量化進場</h2>
@@ -746,7 +775,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-21g</div>
+      <div class="qver" id="qVer">網站版本 2026-10-21h</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -1037,6 +1066,11 @@ header{align-items:center}
       <p class="qrepnote" id="qo_note"></p>
     </div>
   </div>
+</dialog>
+<dialog id="htDlg" aria-labelledby="htDlgT" style="padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);width:min(560px,96vw)">
+  <div class="qdh"><h2 id="htDlgT">✏ 編輯自選幣種</h2><span class="spacer"></span><button class="btn" id="htClr">全部清除</button><button class="btn primary" id="htDone">完成</button></div>
+  <div class="qfind" style="margin:8px 0"><input id="htQ" type="search" placeholder="🔍 搜尋，例如 SOL" autocomplete="off" autocapitalize="characters" spellcheck="false"><span class="qfnote" id="htCnt"></span></div>
+  <div id="htAll" class="htall"></div>
 </dialog>
 <dialog id="qViewDlg" aria-labelledby="qViewTitle">
   <div class="qdh"><h2 id="qViewTitle">👁 查看帳號</h2><span class="spacer"></span><button class="btn" id="qViewRe">重新整理</button><button class="btn" id="qViewClose">關閉</button></div>
@@ -3143,7 +3177,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-21g・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-21h・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -3360,14 +3394,15 @@ $('qBtHost').appendChild($('qBtArea'));               // 回測整塊只放在�
 function setMode(m) {
   MODE = m;
   $('qBtHost').hidden = m !== 'bt';
+  $('qHeatHost').hidden = m !== 'heat'; if (m === 'heat') htStart(); else htStop();   // 🔥 熱力圖：只有打開時才連幣安
   if (m === 'quant') {
-    document.body.classList.remove('mode-pat', 'mode-news', 'mode-bt');
+    document.body.classList.remove('mode-pat', 'mode-news', 'mode-bt', 'mode-heat');
     $('qBx').parentElement !== $('qPanel') && $('qPanel').querySelector('.tabs').before($('qBx'));   // 倉位搬回合約量化面板
     $('qBxHost').hidden = true;
     openPanel(true);
   } else {
     if (!$('qPanel').hidden) openPanel(false);
-    document.body.classList.toggle('mode-pat', m === 'pat'); document.body.classList.toggle('mode-news', m === 'news'); document.body.classList.toggle('mode-bt', m === 'bt');
+    document.body.classList.toggle('mode-pat', m === 'pat'); document.body.classList.toggle('mode-news', m === 'news'); document.body.classList.toggle('mode-bt', m === 'bt'); document.body.classList.toggle('mode-heat', m === 'heat');
     $('qBxHost').appendChild($('qBx')); $('qBxHost').hidden = false;   // 我的倉位放在最上面
     window.scrollTo({ top: 0 });
     setTimeout(() => window.dispatchEvent(new Event('resize')), 60);   // 星圖重新計算大小
@@ -3377,6 +3412,182 @@ function setMode(m) {
 $('qModePat').onclick = () => setMode(MODE === 'pat' ? 'quant' : 'pat');
 $('qModeNews').onclick = () => setMode(MODE === 'news' ? 'quant' : 'news');
 $('qModeBt').onclick = () => setMode(MODE === 'bt' ? 'quant' : 'bt');
+$('qModeHeat').onclick = () => setMode(MODE === 'heat' ? 'quant' : 'heat');
+/* ---------- 🔥 熱力圖：市場漲跌、資金費率 ----------
+   瀏覽器直接連幣安（即時推播每秒更新），伺服器不用多做事。只有打開熱力圖畫面時才連線 */
+const HT = { tab: 'mkt', tf: LS.get('quantHeatTf', '24h'), pick: LS.get('quantHeatPick', 'top100'), mine: LS.get('quantHeatMine', []), sort: 'vol',
+  ws: null, wsI: 0, msgAt: 0, mini: new Map(), mark: new Map(), ref: new Map(), fund: new Map(), q: [], busy: 0,
+  rects: null, keys: '', layoutAt: 0, liveSet: new Set(), fundKeys: '', timer: null, wd: null };
+const HT_WS = ['wss://fstream.binance.com/market/stream?streams=!miniTicker@arr/!markPrice@arr@1s', 'wss://fstream.binance.com/stream?streams=!miniTicker@arr/!markPrice@arr@1s'];
+const htShort = s => s.replace(/USDT$/, '');
+const htUni = () => [...HT.mini.keys()].filter(s => /USDT$/.test(s) && !s.includes('_'));
+function htList() {                                   // 目前要顯示的幣：成交額前 N，或自選
+  const uni = htUni(), vol = s => (HT.mini.get(s) || {}).q || 0;
+  if (HT.pick === 'mine') { const set = new Set(uni); return HT.mine.filter(s => set.has(s)).sort((a, b) => vol(b) - vol(a)); }
+  const n = +HT.pick.replace('top', '') || 100;
+  return uni.sort((a, b) => vol(b) - vol(a)).slice(0, n);
+}
+function htConnect() {                                // 連幣安即時推播；8 秒沒資料就換下一個網址
+  htClose();
+  let ws; try { ws = new WebSocket(HT_WS[HT.wsI % HT_WS.length]); } catch (e) { return; }
+  HT.ws = ws; HT.msgAt = Date.now();
+  ws.onmessage = ev => {
+    let m; try { m = JSON.parse(ev.data); } catch (e) { return; }
+    const d = m && m.data; if (!Array.isArray(d)) return;
+    HT.msgAt = Date.now();
+    for (const x of d) {
+      if (x.e === '24hrMiniTicker') HT.mini.set(x.s, { c: +x.c, o: +x.o, q: +x.q });
+      else if (x.e === 'markPriceUpdate') HT.mark.set(x.s, { p: +x.p, r: +x.r, T: +x.T });
+    }
+  };
+  ws.onclose = () => { if (HT.ws === ws) HT.ws = null; };
+}
+function htClose() { if (HT.ws) { const w = HT.ws; HT.ws = null; try { w.close(); } catch (e) {} } }
+async function htSeed() {                             // 剛打開：先用一次 REST 拿到所有幣的 24h 行情，不用等推播
+  if (HT.mini.size) return;
+  try { const r = await fetch(BF + '/fapi/v1/ticker/24hr').then(x => x.json()); for (const x of r) if (!HT.mini.has(x.symbol)) HT.mini.set(x.symbol, { c: +x.lastPrice, o: +x.openPrice, q: +x.quoteVolume }); } catch (e) {}
+  try { const r = await fetch(BF + '/fapi/v1/premiumIndex').then(x => x.json()); for (const x of r) if (!HT.mark.has(x.symbol)) HT.mark.set(x.symbol, { p: +x.markPrice, r: +x.lastFundingRate, T: +x.nextFundingTime }); } catch (e) {}
+}
+function htQueue(job) { HT.q.push(job); htPump(); }
+function htPump() {                                   // 同時最多 5 個請求，不要一次打太多被幣安限速
+  while (HT.busy < 5 && HT.q.length) { const j = HT.q.shift(); HT.busy++; j().catch(() => {}).finally(() => { HT.busy--; htPump(); }); }
+}
+function htNeedRef(list) {                            // 1 小時、4 小時前的價格：用 5 分鐘 K 線，每 5 分鐘更新一次
+  const now = Date.now();
+  for (const s of list) {
+    const r = HT.ref.get(s); if (r && (r.busy || now - r.at < 5 * 60000)) continue;
+    HT.ref.set(s, Object.assign(r || {}, { busy: true }));
+    htQueue(async () => {
+      const k = await fetch(`${BF}/fapi/v1/klines?symbol=${s}&interval=5m&limit=50`).then(x => x.json());
+      const at = t => { const t0 = Math.floor(t / 300000) * 300000, b = k.find(x => +x[0] === t0); return b ? +b[1] : null; };
+      HT.ref.set(s, { h1: at(Date.now() - HOUR_MS), h4: at(Date.now() - 4 * HOUR_MS), at: Date.now(), busy: false });
+    });
+  }
+}
+function htNeedFund(list) {                           // 資金費率歷史：最近 21 次結算，每小時更新
+  const now = Date.now();
+  for (const s of list) {
+    const f = HT.fund.get(s); if (f && (f.busy || now - f.at < HOUR_MS)) continue;
+    HT.fund.set(s, Object.assign(f || { list: [] }, { busy: true }));
+    htQueue(async () => {
+      const r = await fetch(`${BF}/fapi/v1/fundingRate?symbol=${s}&limit=21`).then(x => x.json());
+      HT.fund.set(s, { list: (Array.isArray(r) ? r : []).map(x => ({ t: +x.fundingTime, r: +x.fundingRate })), at: Date.now(), busy: false });
+      HT.fundKeys = '';                                // 有新資料：下一秒整張表重畫
+    });
+  }
+}
+const htChg = s => {                                  // 漲跌幅（%）
+  const m = HT.mini.get(s); if (!m || !(m.c > 0)) return null;
+  if (HT.tf === '24h') return m.o > 0 ? (m.c / m.o - 1) * 100 : null;
+  const r = HT.ref.get(s), b = r && (HT.tf === '1h' ? r.h1 : r.h4);
+  return b > 0 ? (m.c / b - 1) * 100 : null;
+};
+function htMix(v, cap, pos, neg) {                    // 數值 → 顏色（越極端越深）
+  if (v === null || !Number.isFinite(v)) return 'rgb(48,54,66)';
+  const t = Math.min(1, Math.abs(v) / cap), c = v >= 0 ? pos : neg, b = [48, 54, 66];
+  return `rgb(${b.map((x, i) => Math.round(x + (c[i] - x) * (0.25 + 0.75 * t))).join(',')})`;
+}
+function htSquarify(items, x, y, w, h) {              // 方塊樹狀圖：格子盡量接近正方形
+  const out = [], tot = items.reduce((a, b) => a + b.v, 0); if (!tot) return out;
+  let rest = items.map(i => ({ k: i.k, a: i.v * w * h / tot }));
+  while (rest.length) {
+    const sh = Math.min(w, h); let row = [], best = Infinity;
+    for (let i = 0; i < rest.length; i++) {
+      const t = row.concat(rest[i]), s = t.reduce((a, b) => a + b.a, 0), mx = Math.max(...t.map(q => q.a)), mn = Math.min(...t.map(q => q.a));
+      const worst = Math.max(sh * sh * mx / (s * s), s * s / (sh * sh * mn));
+      if (worst > best) break; best = worst; row = t;
+    }
+    rest = rest.slice(row.length);
+    const s = row.reduce((a, b) => a + b.a, 0);
+    if (w >= h) { const cw = s / h; let cy = y; for (const r of row) { const ch = r.a / cw; out.push({ k: r.k, x, y: cy, w: cw, h: ch }); cy += ch; } x += cw; w -= cw; }
+    else { const ch = s / w; let cx = x; for (const r of row) { const cw = r.a / ch; out.push({ k: r.k, x: cx, y, w: cw, h: ch }); cx += cw; } y += ch; h -= ch; }
+  }
+  return out;
+}
+function htRenderMkt() {
+  const box = $('htMap'), list = htList(), W = box.clientWidth || 360;
+  if (!list.length) { box.style.height = 'auto'; box.innerHTML = `<p class="qcn" style="padding:12px">${HT.pick === 'mine' ? '還沒選幣種，按「✏ 編輯自選」挑選。' : '正在連幣安…'}</p>`; HT.keys = ''; return; }
+  if (HT.tf !== '24h') htNeedRef(list);
+  const H = W < 640 ? Math.round(W * 1.3) : Math.min(720, Math.round(W * 0.55)), key = list.join(',') + '|' + W;
+  if (key !== HT.keys || Date.now() - HT.layoutAt > 60000) {   // 格子大小：每分鐘或幣種改變才重排（不然會一直跳）
+    HT.keys = key; HT.layoutAt = Date.now();
+    HT.liveSet = new Set(Q.cards.filter(c => c.et && evalTrade(c).st === 'open').map(c => c.sym));
+    HT.rects = htSquarify(list.map(s => ({ k: s, v: Math.sqrt(Math.max(1, (HT.mini.get(s) || {}).q || 1)) })), 0, 0, W, H);
+    box.style.height = H + 'px';
+    box.innerHTML = HT.rects.map(r => `<div class="htc${HT.liveSet.has(r.k) ? ' sig' : ''}" data-s="${r.k}" style="left:${r.x.toFixed(1)}px;top:${r.y.toFixed(1)}px;width:${r.w.toFixed(1)}px;height:${r.h.toFixed(1)}px;font-size:${Math.max(9, Math.min(22, Math.min(r.w, r.h) / 4)).toFixed(0)}px"><b></b><span></span></div>`).join('');
+  }
+  const cap = { '1h': 1.5, '4h': 3, '24h': 6 }[HT.tf];
+  let up = 0, dn = 0;
+  for (const el of box.children) {                    // 每秒：只換顏色和數字
+    const s = el.dataset.s, v = htChg(s), m = HT.mini.get(s) || {}, small = Math.min(el.offsetWidth, el.offsetHeight) < 30;
+    if (v > 0) up++; else if (v < 0) dn++;
+    el.style.background = htMix(v, cap, [22, 163, 74], [220, 38, 38]);
+    el.firstChild.textContent = small ? '' : htShort(s);
+    el.lastChild.textContent = small || v === null ? '' : (v >= 0 ? '+' : '') + v.toFixed(2) + '%';
+    el.title = `${s}　${v === null ? '資料讀取中' : (v >= 0 ? '+' : '') + v.toFixed(2) + '%'}（${HT.tf}）　價格 ${m.c}　24h 成交額 ${((m.q || 0) / 1e8).toFixed(2)} 億美元${HT.liveSet.has(s) ? '　有訊號進行中' : ''}`;
+  }
+  const b = htChg('BTCUSDT');
+  $('htSum').innerHTML = `${list.length} 個幣：<b class="qg">漲 ${up}</b>、<b class="qr">跌 ${dn}</b>${b !== null ? `・BTC <b class="${b >= 0 ? 'qg' : 'qr'}">${b >= 0 ? '+' : ''}${b.toFixed(2)}%</b>` : ''}・格子越大成交額越大，有框的幣有訊號進行中`;
+}
+function htRenderFund() {
+  const box = $('htFund'); let list = htList();
+  if (HT.pick !== 'mine') list = list.slice(0, 50); else list = list.slice(0, 100);
+  if (!list.length) { box.innerHTML = `<p class="qcn">${HT.pick === 'mine' ? '還沒選幣種，按「✏ 編輯自選」挑選。' : '正在連幣安…'}</p>`; HT.fundKeys = ''; return; }
+  htNeedFund(list);
+  const now = r => (HT.mark.get(r) || {}).r;
+  if (HT.sort === 'hi') list.sort((a, b) => (now(b) ?? -9) - (now(a) ?? -9));
+  else if (HT.sort === 'lo') list.sort((a, b) => (now(a) ?? 9) - (now(b) ?? 9));
+  else if (HT.sort === 'abs') list.sort((a, b) => Math.abs(now(b) ?? 0) - Math.abs(now(a) ?? 0));
+  const P = [234, 88, 12], N = [37, 99, 235], cap = 0.1, pct = r => (r * 100).toFixed(4).replace(/0+$/, '').replace(/\.$/, '') + '%';
+  const key = list.join(',');
+  if (key !== HT.fundKeys) {                          // 幣種、排序或歷史資料改變才整張重畫
+    HT.fundKeys = key;
+    box.innerHTML = `<div class="tablewrap"><table class="htf"><thead><tr><th>幣種</th><th>現在</th><th colspan="21">最近 21 次結算（右邊最新）</th></tr></thead><tbody>` +
+      list.map(s => { const L = (HT.fund.get(s) || {}).list || [], pad = Array(Math.max(0, 21 - L.length)).fill(null);
+        return `<tr><td><b>${htShort(s)}</b></td><td class="htnow" data-s="${s}"></td>${pad.map(() => '<td class="htn"></td>').join('')}${L.map(x => `<td style="background:${htMix(x.r * 100, cap, P, N)}" title="${fmtT(x.t)}　${pct(x.r)}"></td>`).join('')}</tr>`; }).join('') + '</tbody></table></div>';
+  }
+  for (const el of box.querySelectorAll('.htnow')) {  // 每秒：只更新「現在」那一欄
+    const r = now(el.dataset.s); el.textContent = r === undefined ? '…' : pct(r); el.style.background = r === undefined ? '' : htMix(r * 100, cap, P, N);
+  }
+  const B = HT.mark.get('BTCUSDT');
+  $('htSum').innerHTML = `顏色：<b style="color:rgb(234,88,12)">橘紅＝費率正</b>（做多的人付錢、多單擁擠）、<b style="color:rgb(80,140,255)">藍＝費率負</b>（做空的人付錢、空單擁擠），越深越極端。「現在」是下一期的預估費率，每秒更新${B && B.T ? `・BTC 下次結算 ${fmtT(B.T)}` : ''}`;
+}
+function htTick() {
+  if (MODE !== 'heat') return;
+  const age = Date.now() - HT.msgAt;
+  if (!HT.ws || age > 8000) { if (age > 8000) HT.wsI++; htConnect(); }   // 斷線或 8 秒沒資料：重連（換下一個網址）
+  $('htLive').innerHTML = age < 4000 ? '<span class="wlive"></span>即時連線中，每秒更新' : '連線幣安中…';
+  $('htMktBox').hidden = HT.tab !== 'mkt'; $('htFundBox').hidden = HT.tab !== 'fund'; $('htTfBox').hidden = HT.tab !== 'mkt'; $('htSortBox').hidden = HT.tab !== 'fund';
+  $('htTabMkt').classList.toggle('on', HT.tab === 'mkt'); $('htTabFund').classList.toggle('on', HT.tab === 'fund');
+  $('htEdit').hidden = HT.pick !== 'mine';
+  if (HT.tab === 'mkt') htRenderMkt(); else htRenderFund();
+}
+function htStart() { htSeed().then(htTick); htConnect(); clearInterval(HT.timer); HT.timer = setInterval(htTick, 1000); htTick(); }
+function htStop() { clearInterval(HT.timer); HT.timer = null; htClose(); }
+$('htTabMkt').onclick = () => { HT.tab = 'mkt'; htTick(); };
+$('htTabFund').onclick = () => { HT.tab = 'fund'; HT.fundKeys = ''; htTick(); };
+$('htTf').value = HT.tf; $('htTf').onchange = () => { HT.tf = $('htTf').value; LS.set('quantHeatTf', HT.tf); htTick(); };
+$('htPick').value = HT.pick; $('htPick').onchange = () => { HT.pick = $('htPick').value; LS.set('quantHeatPick', HT.pick); HT.keys = HT.fundKeys = ''; htTick(); if (HT.pick === 'mine' && !HT.mine.length) htEditOpen(); };
+$('htSort').onchange = () => { HT.sort = $('htSort').value; HT.fundKeys = ''; htTick(); };
+window.addEventListener('resize', () => { HT.keys = ''; });
+// ✏ 編輯自選
+function htEditList() {
+  const q = $('htQ').value.normalize('NFKC').toUpperCase().replace(/[^A-Z0-9]/g, ''), mine = new Set(HT.mine);
+  const uni = htUni().sort((a, b) => ((HT.mini.get(b) || {}).q || 0) - ((HT.mini.get(a) || {}).q || 0)).filter(s => !q || htShort(s).includes(q)).slice(0, 300);
+  $('htCnt').textContent = `已選 ${HT.mine.length} 個`;
+  $('htAll').innerHTML = uni.map(s => `<label class="htck"><input type="checkbox" data-s="${s}"${mine.has(s) ? ' checked' : ''}> ${htShort(s)}</label>`).join('') || '<p class="qcn">找不到這個幣</p>';
+}
+function htEditOpen() { $('htQ').value = ''; htEditList(); $('htDlg').showModal(); setTimeout(() => $('htQ').focus(), 50); }
+$('htEdit').onclick = htEditOpen;
+$('htQ').oninput = htEditList;
+$('htAll').onchange = e => {
+  const s = e.target.dataset.s; if (!s) return;
+  HT.mine = e.target.checked ? [...new Set(HT.mine.concat(s))] : HT.mine.filter(x => x !== s);
+  LS.set('quantHeatMine', HT.mine); $('htCnt').textContent = `已選 ${HT.mine.length} 個`; HT.keys = HT.fundKeys = '';
+};
+$('htClr').onclick = () => { if (confirm('要清除全部自選幣種嗎？')) { HT.mine = []; LS.set('quantHeatMine', HT.mine); htEditList(); HT.keys = HT.fundKeys = ''; } };
+$('htDone').onclick = () => { $('htDlg').close(); htTick(); };
+
 $('qModeClose').onclick = () => setMode('quant');
 setTimeout(() => setMode('quant'), 0);                // 首頁直接是合約量化進場
 $('qSetBtn').onclick = () => { const h = !$('qSetBox').hidden; $('qSetBox').hidden = h; $('qSetBtn').setAttribute('aria-expanded', String(!h)); };
