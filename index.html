@@ -816,7 +816,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-21k</div>
+      <div class="qver" id="qVer">網站版本 2026-10-21l</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3218,7 +3218,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-21k・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-21l・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -3607,14 +3607,14 @@ const LV_COL = { S: '#2fbf71', L: '#e5484d', h: '#f5c542', m: '#a78bfa', l: '#60
 const lvSave = () => LS.set('quantLvCfg', { sym: LV.sym, rk: LV.rk, lev: LV.lev, tier: LV.tier, color: LV.color, candle: LV.candle, smin: LV.smin, smax: LV.smax, line: LV.line, bub: LV.bub });
 async function lvPage(url, ms, from, to, lim) {        // 幣安一次最多給 lim 筆，分段抓
   const out = [];
-  for (let s0 = from; s0 < to; s0 += lim * ms) { const r = await fetch(`${url}&startTime=${s0}&endTime=${Math.min(to, s0 + lim * ms - 1)}&limit=${lim}`).then(x => x.json()); if (!Array.isArray(r)) throw new Error(r && r.msg ? r.msg : '幣安回應錯誤'); out.push(...r); }
+  for (let s0 = from; s0 < to; s0 += lim * ms) { const r = await fetch(`${url}&startTime=${s0}&endTime=${Math.min(to, s0 + lim * ms - 1)}&limit=${lim}`, { signal: AbortSignal.timeout(20000) }).then(x => x.json()); if (!Array.isArray(r)) throw new Error(r && r.msg ? r.msg : '幣安回應錯誤'); out.push(...r); }
   return out;
 }
 async function lvLoad() {
-  if (LVS.busy) return; LVS.busy = true; LVS.err = '';
+  if (LVS.busy) return; LVS.busy = true;
   const R = LV_R[LV.rk], s = LV.sym, now = Date.now(), to = Math.floor(now / R.ms) * R.ms + R.ms, from = to - R.n * R.ms;
   try {
-    const [kr, oir] = await Promise.all([lvPage(`${BF}/fapi/v1/klines?symbol=${s}&interval=${R.iv}`, R.ms, from, to, 1500), lvPage(`${BF}/futures/data/openInterestHist?symbol=${s}&period=${R.oi}`, R.oims, from - R.oims, to, 500)]);
+    const [kr, oir] = await Promise.all([lvPage(`${BF}/fapi/v1/klines?symbol=${s}&interval=${R.iv}`, R.ms, from, to, 1500), lvPage(`${BF}/futures/data/openInterestHist?symbol=${s}&period=${R.oi}`, R.oims, Math.max(from - R.oims, Math.ceil((now - 29.5 * 24 * HOUR_MS) / R.oims) * R.oims), to, 500)]);
     const seen = new Set(), K = [];
     for (const r of kr) { const t = +r[0]; if (seen.has(t)) continue; seen.add(t); K.push({ t, o: +r[1], h: +r[2], l: +r[3], c: +r[4], qv: +r[7], tb: +r[10] }); }
     K.sort((a, b) => a.t - b.t);
@@ -3652,8 +3652,8 @@ async function lvLoad() {
     LVS.d = { K, N, levels, clld, sig, sym: s, rk: LV.rk, smin: Math.floor(ss[0] || 0), smax: Math.ceil(ss[ss.length - 1] || 1), t1: q(0.95), t2: q(0.85), t3: q(0.6), ss };   // 一級＝最強 5%、二級＝15%、三級＝40%
     if (LV.smin === null || LV.smin < LVS.d.smin || LV.smin > LVS.d.smax) LV.smin = LVS.d.smin;
     if (LV.smax === null || LV.smax > LVS.d.smax || LV.smax < LVS.d.smin) LV.smax = LVS.d.smax;
-    LVS.at = Date.now();
-  } catch (e) { LVS.err = e.message || '讀取失敗'; }
+    LVS.at = Date.now(); LVS.err = '';
+  } catch (e) { LVS.err = (e.name === 'TimeoutError' ? '幣安太久沒回應' : e.message) || '讀取失敗'; LVS.at = Date.now() - 45000; }   // 失敗：15 秒後再試，不要每秒重抓
   LVS.busy = false;
 }
 function lvLive() {                                   // 每秒：用即時價格更新最後一根 K 棒；時間到就開新的一根；價格碰到的水平即時清算
@@ -3764,14 +3764,14 @@ function lvHist() {                                    // 強度範圍滑桿後�
 }
 function lvTick() {
   const key = LV.sym + '|' + LV.rk;
-  if ((key !== LVS.key || Date.now() - LVS.at > 60000) && !LVS.busy) { if (key !== LVS.key) { LVS.d = null; LVS.view = null; } LVS.key = key; lvLoad().then(lvDraw); }
+  if ((key !== LVS.key || Date.now() - LVS.at > 60000) && !LVS.busy) { if (key !== LVS.key) { LVS.d = null; LVS.view = null; LVS.err = ''; } LVS.key = key; lvLoad().then(lvDraw); }
   for (const b of document.querySelectorAll('#lvRk button')) b.classList.toggle('on', b.dataset.r === LV.rk);
   for (const b of document.querySelectorAll('#lvTier button')) b.classList.toggle('on', +b.dataset.t === LV.tier);
   for (const b of document.querySelectorAll('#lvColor button')) b.classList.toggle('on', b.dataset.c === LV.color);
   $('lvCandle').classList.toggle('on', LV.candle);
   $('lvLeg').innerHTML = LV.color === 'side' ? `<i style="background:${LV_COL.S}"></i>空頭部位（價格上方）<i style="background:${LV_COL.L}"></i>多頭部位（價格下方）・亮度和氣泡大小＝強度` : `<i style="background:${LV_COL.h}"></i>高槓桿<i style="background:${LV_COL.m}"></i>中等槓桿<i style="background:${LV_COL.l}"></i>低槓桿・空頭在價格上方、多頭在下方・亮度和氣泡大小＝強度`;
   if (!LVS.d) {
-    $('lvStat').textContent = LVS.err ? '❗ ' + LVS.err : '載入中…（3 天約要抓 8 次資料）';
+    $('lvStat').textContent = LVS.err ? `❗ ${LVS.err}，15 秒後自動重試` : `載入中…（${LV_R[LV.rk].name}，第一次要等幾秒）`;
     const cv = $('lvCv'); if (cv.width) { const g = cv.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = '#12161d'; g.fillRect(0, 0, cv.width, cv.height); }   // 換幣種或範圍：先清掉舊的圖
     $('lvCards').innerHTML = ''; return;
   }
