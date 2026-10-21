@@ -795,9 +795,9 @@ header{align-items:center}
             <label class="lvsl1">泡泡<input type="range" id="lvBub" min="0" max="2" step="0.1"></label>
           </div>
           <div style="width:100%"><canvas id="lvCv" style="display:block;touch-action:none;cursor:grab"></canvas></div>
-          <p class="qcn" style="margin:6px 4px 0">滾輪或兩指縮放、拖曳左右移動；「重置視圖」回到全部範圍。右側長條是還沒清算的水平分佈，底部是 CLLD（▲ 由負轉正＝牛市轉折、▼ 由正轉負＝熊市轉折）。</p>
+          <p class="qcn" style="margin:6px 4px 0">操作跟 TradingView 一樣：圖上拖曳＝上下左右移動；滾輪或兩指＝縮放時間；拖曳右邊價格軸（或在上面滾滾輪）＝縮放價格；拖曳下方時間軸＝縮放時間；雙擊圖表＝價格回到自動；「重置視圖」回到全部範圍。現價標籤下面是這根 K 棒收盤倒數。右側長條是還沒清算的水平分佈，底部是 CLLD（▲ 由負轉正＝牛市轉折、▼ 由正轉負＝熊市轉折）。</p>
         </div>
-        <p class="qcn">⚠️ <b>清算水平是估計的</b>：交易所不會公開每個人的強平價。做法是看每段時間未平倉量增加多少（＝新開的倉位），用主動買賣比例拆成多單、空單，假設 10x（低）、25x（中）、50x 和 100x（高）這些常見槓桿算出強平價，畫成一條水平線；價格碰到就當作清算掉、線就斷掉。<b>強度</b>＝2×log₁₀（估計金額美元），例如 1 百萬美元＝12、1 億美元＝16。<b>一級／二級／三級</b>＝只顯示最強的 5%／15%／40%。<b>磁區</b>＝現價附近還沒清算、相鄰的水平合併成一區（最寬 0.8%），顯示離現價最近、夠強的那一區。磁區、CLLD 和右側分佈用<b>全部</b>還沒清算的水平算（只看槓桿勾選），不受一級／二級／三級和強度範圍影響。這些數字跟 Coinglass 是不同的模型，<b>只會接近、不會一樣</b>。<b>CLLD</b>＝還沒清算的多頭水平數－空頭水平數。金額只是大概的數字，適合看「哪些價位堆了很多槓桿」。</p>
+        <p class="qcn">⚠️ <b>清算水平是估計的</b>：交易所不會公開每個人的強平價。做法是看每段時間未平倉量增加多少（＝新開的倉位），用主動買賣比例拆成多單、空單，假設 5x、10x（低）、20x、25x（中）、50x、75x、100x、125x（高）這些常見槓桿算出強平價，畫成一條水平線；價格碰到就當作清算掉、線就斷掉。<b>強度</b>＝2×log₁₀（估計金額美元），例如 1 百萬美元＝12、1 億美元＝16。<b>一級／二級／三級</b>＝只顯示最強的 5%／15%／40%。<b>磁區</b>＝現價附近還沒清算、相鄰的水平合併成一區（最寬 0.8%），顯示離現價最近、夠強的那一區。磁區、CLLD 和右側分佈用<b>全部</b>還沒清算的水平算（只看槓桿勾選），不受一級／二級／三級和強度範圍影響。這些數字跟 Coinglass 是不同的模型，<b>只會接近、不會一樣</b>。<b>CLLD</b>＝還沒清算的多頭水平數－空頭水平數。金額只是大概的數字，適合看「哪些價位堆了很多槓桿」。</p>
       </div>
       <p class="qcn">資料直接來自幣安（瀏覽器即時連線），只供參考，不會影響自動交易的進場判斷。只有打開這個畫面時才會連線。</p>
     </div>
@@ -816,7 +816,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-21l</div>
+      <div class="qver" id="qVer">網站版本 2026-10-21m</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3218,7 +3218,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-21l・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-21m・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -3602,7 +3602,7 @@ const LV = Object.assign({ sym: 'BTCUSDT', rk: '3d', lev: { h: 1, m: 1, l: 1 }, 
 const LVS = { d: null, at: 0, busy: false, err: '', key: '', view: null, ptr: new Map(), pinch: 0, stat: null };
 window.__lv = LVS;                                    // 除錯用：瀏覽器主控台可以查看清算水平的資料
 const LV_R = { '3d': { iv: '1m', ms: 60000, n: 4320, oi: '5m', oims: 300000, blk: 15, name: '3 天・1 分 K' }, '7d': { iv: '3m', ms: 180000, n: 3360, oi: '15m', oims: 900000, blk: 10, name: '7 天・3 分 K' }, '30d': { iv: '15m', ms: 900000, n: 2880, oi: '1h', oims: 3600000, blk: 8, name: '30 天・15 分 K' } };
-const LV_TIER = [[100, 0.15, 'h'], [50, 0.2, 'h'], [25, 0.3, 'm'], [10, 0.35, 'l']], LV_MMR = 0.005;
+const LV_TIER = [[125, 0.05, 'h'], [100, 0.1, 'h'], [75, 0.08, 'h'], [50, 0.15, 'h'], [25, 0.22, 'm'], [20, 0.1, 'm'], [10, 0.22, 'l'], [5, 0.08, 'l']], LV_MMR = 0.005;   // 高＝50x 以上、中＝20～25x、低＝5～10x
 const LV_COL = { S: '#2fbf71', L: '#e5484d', h: '#f5c542', m: '#a78bfa', l: '#60a5fa' };
 const lvSave = () => LS.set('quantLvCfg', { sym: LV.sym, rk: LV.rk, lev: LV.lev, tier: LV.tier, color: LV.color, candle: LV.candle, smin: LV.smin, smax: LV.smax, line: LV.line, bub: LV.bub });
 async function lvPage(url, ms, from, to, lim) {        // 幣安一次最多給 lim 筆，分段抓
@@ -3685,20 +3685,33 @@ function lvZones(list, px, up) {                       // 磁區：把相鄰（�
 }
 function lvDraw() {
   const D = LVS.d, cv = $('lvCv'); if (!D || !cv) return;
-  const W = cv.parentElement.clientWidth || 360, mob = W < 640, PW = mob ? 56 : 130, AX = 66, MH = mob ? 440 : 560, CH = 70, H = MH + CH, PL = W - PW - AX, dpr = window.devicePixelRatio || 1;
+  const W = cv.parentElement.clientWidth || 360, mob = W < 640, PW = mob ? 56 : 130, AX = 66, MH = mob ? 440 : 560, TA = 22, CH = 70, H = MH + TA + CH, PL = W - PW - AX, dpr = window.devicePixelRatio || 1, ms = LV_R[D.rk].ms;
   if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.width = W + 'px'; cv.style.height = H + 'px'; }
   const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
-  if (!LVS.view) LVS.view = { x0: 0, x1: D.N - 1 + D.N * 0.03 };
+  if (!LVS.view) LVS.view = { x0: 0, x1: D.N - 1 + D.N * 0.03, auto: true };
   const V = LVS.view, xs = i => (i - V.x0) / (V.x1 - V.x0) * PL;
   const i0 = Math.max(0, Math.floor(V.x0)), i1 = Math.min(D.N - 1, Math.ceil(V.x1));
   let mn = Infinity, mx = -Infinity; for (let i = i0; i <= i1; i++) { mn = Math.min(mn, D.K[i].l); mx = Math.max(mx, D.K[i].h); }
   const last = D.K[D.N - 1].c, live = (HT.mini.get(D.sym) || {}).c, px = live > 0 && Math.abs(live / last - 1) < 0.15 ? live : last;
   mn = Math.min(mn, px); mx = Math.max(mx, px);
-  const pad = (mx - mn) * 0.35 + mx * 0.004, lo = mn - pad, hi = mx + pad, ys = p => MH - (p - lo) / (hi - lo) * MH;
+  if (V.auto !== false || !(V.y1 > V.y0)) { const pad = (mx - mn) * 0.35 + mx * 0.004; V.y0 = mn - pad; V.y1 = mx + pad; }   // 自動縮放（像 TradingView 的 A）
+  const lo = V.y0, hi = V.y1, ys = p => MH - (p - lo) / (hi - lo) * MH;
+  LVS.geo = { PL, PW, AX, MH, TA, CH, W };
   const dec = hi >= 1000 ? 1 : hi >= 10 ? 3 : hi >= 1 ? 4 : 6;
   g.fillStyle = '#12161d'; g.fillRect(0, 0, W, H);
   g.strokeStyle = 'rgba(255,255,255,.06)'; g.lineWidth = 1; g.fillStyle = '#9aa4b2'; g.font = '11px system-ui'; g.textAlign = 'left';
-  for (let k = 0; k <= 8; k++) { const p = lo + (hi - lo) * k / 8, y = ys(p); g.beginPath(); g.moveTo(0, y); g.lineTo(PL, y); g.stroke(); g.fillText(p.toFixed(dec), PL + PW + 4, y + 4); }
+  const nice = r => { const e = Math.pow(10, Math.floor(Math.log10(r))), f = r / e; return (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * e; };
+  const pst = nice((hi - lo) / (mob ? 6 : 9));
+  for (let p = Math.ceil(lo / pst) * pst; p <= hi; p += pst) { const y = Math.round(ys(p)) + 0.5; g.beginPath(); g.moveTo(0, y); g.lineTo(PL, y); g.stroke(); g.fillText(p.toFixed(dec), PL + PW + 4, y + 4); }
+  const t0 = D.K[0].t, tAt = i => t0 + i * ms, span = (V.x1 - V.x0) * ms, TZ8 = 8 * HOUR_MS;   // 時間軸（台北時間）
+  const tst = [6e4, 3e5, 9e5, 18e5, 36e5, 72e5, 144e5, 216e5, 432e5, 864e5, 1728e5, 6048e5].find(x => span / x <= (mob ? 4 : 8)) || 6048e5;
+  g.fillStyle = '#0d1117'; g.fillRect(0, MH, PL + PW, TA); g.fillStyle = '#9aa4b2'; g.textAlign = 'center';
+  for (let t = Math.ceil((tAt(V.x0) + TZ8) / tst) * tst - TZ8; t <= tAt(V.x1); t += tst) {
+    const x = Math.round(xs((t - t0) / ms)) + 0.5; if (x < 0 || x > PL) continue;
+    g.beginPath(); g.moveTo(x, 0); g.lineTo(x, MH); g.stroke();
+    const f = fmtT(t), hm = f.slice(-5); g.fillText(tst >= 864e5 || hm === '00:00' ? f.slice(0, 5) : hm, x, MH + 15);
+  }
+  g.textAlign = 'left';
   const vis = D.levels.filter(lvShow); let sMin = Infinity, sMax = -Infinity; for (const v of vis) { sMin = Math.min(sMin, v.s); sMax = Math.max(sMax, v.s); }
   if (!(sMax > sMin)) { sMin = LV.smin; sMax = LV.smin + 1; }
   const nrm = v => Math.max(0, Math.min(1, (v.s - sMin) / (sMax - sMin)));
@@ -3725,7 +3738,23 @@ function lvDraw() {
   }
   g.restore();
   const yp = ys(px); g.setLineDash([4, 4]); g.strokeStyle = '#fff'; g.beginPath(); g.moveTo(0, yp); g.lineTo(PL + PW, yp); g.stroke(); g.setLineDash([]);
-  g.fillStyle = '#fff'; g.fillRect(PL + PW, yp - 9, AX, 18); g.fillStyle = '#000'; g.font = 'bold 11px system-ui'; g.fillText(px.toFixed(dec), PL + PW + 4, yp + 4);
+  const lastK = D.K[D.N - 1], upK = lastK.c >= lastK.o, rem = Math.max(0, lastK.t + ms - Date.now());   // 現價標籤（綠漲紅跌）＋這根 K 棒收盤倒數
+  const p2 = n => String(n).padStart(2, '0'), mm = Math.floor(rem / 60000), cd = mm >= 60 ? `${Math.floor(mm / 60)}:${p2(mm % 60)}:${p2(Math.floor(rem / 1000) % 60)}` : `${p2(mm)}:${p2(Math.floor(rem / 1000) % 60)}`;
+  g.fillStyle = upK ? '#26a69a' : '#ef5350'; g.fillRect(PL + PW, yp - 10, AX, 34); g.fillStyle = '#fff'; g.font = 'bold 11px system-ui'; g.fillText(px.toFixed(dec), PL + PW + 4, yp + 4);
+  g.font = '11px system-ui'; g.fillText(cd, PL + PW + 4, yp + 19);
+  const M0 = LVS.mouse;                                 // 十字游標：價格、時間、那根 K 棒的開高低收
+  if (M0 && !LVS.ptr.size && M0.x >= 0 && M0.x <= PL && M0.y >= 0 && M0.y <= MH) {
+    g.setLineDash([3, 3]); g.strokeStyle = 'rgba(255,255,255,.45)'; g.lineWidth = 1;
+    g.beginPath(); g.moveTo(0, M0.y + 0.5); g.lineTo(PL, M0.y + 0.5); g.moveTo(M0.x + 0.5, 0); g.lineTo(M0.x + 0.5, MH); g.stroke(); g.setLineDash([]);
+    const cp = lo + (MH - M0.y) / MH * (hi - lo); g.fillStyle = '#3a4250'; g.fillRect(PL + PW, M0.y - 9, AX, 18); g.fillStyle = '#fff'; g.font = '11px system-ui'; g.fillText(cp.toFixed(dec), PL + PW + 4, M0.y + 4);
+    const ci = Math.round(V.x0 + M0.x / PL * (V.x1 - V.x0));
+    if (ci >= 0 && ci < D.N) {
+      const b = D.K[ci], tl = fmtT(b.t); g.font = '11px system-ui'; const tw = g.measureText(tl).width + 10;
+      g.fillStyle = '#3a4250'; g.fillRect(Math.min(PL - tw, Math.max(0, M0.x - tw / 2)), MH + 2, tw, 18); g.fillStyle = '#fff'; g.textAlign = 'center'; g.fillText(tl, Math.min(PL - tw / 2, Math.max(tw / 2, M0.x)), MH + 15); g.textAlign = 'left';
+      const ch2 = (b.c / b.o - 1) * 100, info = `${tl}　開 ${b.o.toFixed(dec)}　高 ${b.h.toFixed(dec)}　低 ${b.l.toFixed(dec)}　收 ${b.c.toFixed(dec)}　${ch2 >= 0 ? '+' : ''}${ch2.toFixed(2)}%`;
+      g.font = '12px system-ui'; const iw = g.measureText(info).width + 12; g.fillStyle = 'rgba(13,17,23,.85)'; g.fillRect(4, 4, iw, 20); g.fillStyle = b.c >= b.o ? '#26a69a' : '#ef5350'; g.fillText(info, 10, 18);
+    }
+  }
   // 右側：還沒清算的水平分佈（上方空頭綠、下方多頭紅）
   const openV = vis.filter(v => v.i1 === null), allOpen = D.levels.filter(v => v.i1 === null && LV.lev[v.cls]), BIN = 2, prof = new Map(); let pmax = 0;
   for (const v of allOpen) { const y = Math.round(ys(v.p) / BIN) * BIN; if (y < 0 || y > MH) continue; const o = prof.get(y) || { a: 0, up: v.p > px }; o.a += v.amt; prof.set(y, o); pmax = Math.max(pmax, o.a); }
@@ -3733,13 +3762,13 @@ function lvDraw() {
   for (const [y, o] of prof) { g.fillStyle = o.up ? '#2fbf71' : '#e5484d'; g.fillRect(PL + 2, y - BIN / 2, Math.max(1, (PW - 6) * Math.sqrt(o.a / pmax)), BIN); }
   if (!mob) { g.fillStyle = '#9aa4b2'; g.font = '11px system-ui'; g.fillText('還沒清算的分佈', PL + 6, 14); }
   // 底部：CLLD
-  const cy0 = MH + 6, ch = CH - 12; let cmn = 0, cmx = 0; for (let i = i0; i <= i1; i++) { cmn = Math.min(cmn, D.clld[i]); cmx = Math.max(cmx, D.clld[i]); }
+  const cy0 = MH + TA + 6, ch = CH - 12; let cmn = 0, cmx = 0; for (let i = i0; i <= i1; i++) { cmn = Math.min(cmn, D.clld[i]); cmx = Math.max(cmx, D.clld[i]); }
   const cyS = v => cy0 + ch - (v - cmn) / Math.max(1, cmx - cmn) * ch;
-  g.fillStyle = '#0d1117'; g.fillRect(0, MH, W, CH);
+  g.fillStyle = '#0d1117'; g.fillRect(0, MH + TA, W, CH);
   g.strokeStyle = 'rgba(255,255,255,.15)'; g.beginPath(); g.moveTo(0, cyS(0)); g.lineTo(PL, cyS(0)); g.stroke();
   g.strokeStyle = '#c97b8a'; g.lineWidth = 1.2; g.beginPath(); for (let i = i0; i <= i1; i++) { const x = xs(i), y = cyS(D.clld[i]); i === i0 ? g.moveTo(x, y) : g.lineTo(x, y); } g.stroke();
   g.font = '11px system-ui'; for (const s0 of D.sig) { if (s0.i < i0 || s0.i > i1) continue; g.fillStyle = s0.up ? '#2fbf71' : '#e5484d'; g.fillText(s0.up ? '▲' : '▼', xs(s0.i) - 4, s0.up ? cy0 + ch + 4 : cy0 + 8); }
-  const cl = D.clld[D.N - 1]; g.fillStyle = '#e6e9ef'; g.font = 'bold 11px system-ui'; g.fillText(`CLLD ${cl >= 0 ? '+' : ''}${cl}`, 6, MH + 16);
+  const cl = D.clld[D.N - 1]; g.fillStyle = '#e6e9ef'; g.font = 'bold 11px system-ui'; g.fillText(`CLLD ${cl >= 0 ? '+' : ''}${cl}`, 6, MH + TA + 16);
   // 數字卡
   const zu = lvZones(allOpen, px, true), zd = lvZones(allOpen, px, false), m24 = HT.mini.get(D.sym), c24 = m24 && m24.o > 0 ? (px / m24.o - 1) * 100 : null;
   const pc = p => ((p / px - 1) * 100 >= 0 ? '+' : '') + ((p / px - 1) * 100).toFixed(2) + '%';
@@ -3778,18 +3807,31 @@ function lvTick() {
   lvLive(); lvDraw();
 }
 // 互動：滾輪縮放、拖曳平移、兩指縮放
-function lvZoom(f, cx) { const V = LVS.view, D = LVS.d; if (!V || !D) return; const PL = $('lvCv').clientWidth - ($('lvCv').clientWidth < 640 ? 56 : 130) - 66, at = V.x0 + (V.x1 - V.x0) * Math.max(0, Math.min(1, cx / PL)); let a = at - (at - V.x0) * f, b = at + (V.x1 - at) * f; if (b - a < 30) return; a = Math.max(-D.N * 0.05, a); b = Math.min(D.N * 1.1, b); V.x0 = a; V.x1 = b; lvDraw(); }
+function lvZoom(f, cx) { const V = LVS.view, D = LVS.d; if (!V || !D) return; const PL = LVS.geo ? LVS.geo.PL : 300, at = V.x0 + (V.x1 - V.x0) * Math.max(0, Math.min(1, cx / PL)); let a = at - (at - V.x0) * f, b = at + (V.x1 - at) * f; if (b - a < 30) return; a = Math.max(-D.N * 0.05, a); b = Math.min(D.N * 1.1, b); V.x0 = a; V.x1 = b; lvDraw(); }
 function lvInit() {
   const cv = $('lvCv');
-  cv.addEventListener('wheel', e => { e.preventDefault(); lvZoom(e.deltaY > 0 ? 1.15 : 1 / 1.15, e.offsetX); }, { passive: false });
-  cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); LVS.ptr.set(e.pointerId, { x: e.offsetX }); LVS.pinch = 0; });
+  // TradingView 式操作：圖上拖曳＝上下左右移動；拖右邊價格軸＝縮放價格；拖下方時間軸＝縮放時間；滾輪＝縮放時間（在價格軸上滾＝縮放價格）；雙擊＝回到自動
+  const zone = (x, y) => { const G = LVS.geo; if (!G) return 'pan'; if (x > G.PL + G.PW) return 'y'; if (y > G.MH && y < G.MH + G.TA) return 'x'; return y <= G.MH ? 'pan' : 'none'; };
+  const yScale = f => { const V = LVS.view; if (!V) return; V.auto = false; const c = (V.y0 + V.y1) / 2, h = (V.y1 - V.y0) / 2 * f; V.y0 = c - h; V.y1 = c + h; lvDraw(); };
+  cv.addEventListener('wheel', e => { e.preventDefault(); if (zone(e.offsetX, e.offsetY) === 'y') yScale(e.deltaY > 0 ? 1.1 : 1 / 1.1); else lvZoom(e.deltaY > 0 ? 1.15 : 1 / 1.15, e.offsetX); }, { passive: false });
+  cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); LVS.ptr.set(e.pointerId, { x: e.offsetX, y: e.offsetY, mode: zone(e.offsetX, e.offsetY) }); LVS.pinch = 0; });
   cv.addEventListener('pointermove', e => {
-    const p = LVS.ptr.get(e.pointerId), V = LVS.view; if (!p || !V) return;
+    const p = LVS.ptr.get(e.pointerId), V = LVS.view, G = LVS.geo;
+    if (!p) { LVS.mouse = { x: e.offsetX, y: e.offsetY }; const z = zone(e.offsetX, e.offsetY); cv.style.cursor = z === 'y' ? 'ns-resize' : z === 'x' ? 'ew-resize' : 'crosshair'; lvDraw(); return; }
+    if (!V || !G) return;
     if (LVS.ptr.size === 2) { const [a, b] = [...LVS.ptr.values()]; p.x = e.offsetX; const dist = Math.abs(a.x - b.x); if (LVS.pinch) lvZoom(LVS.pinch / Math.max(10, dist), (a.x + b.x) / 2); LVS.pinch = dist; return; }
-    const PL = cv.clientWidth - (cv.clientWidth < 640 ? 56 : 130) - 66, dx = (e.offsetX - p.x) / PL * (V.x1 - V.x0); p.x = e.offsetX; V.x0 -= dx; V.x1 -= dx; lvDraw();
+    const dx = e.offsetX - p.x, dy = e.offsetY - p.y; p.x = e.offsetX; p.y = e.offsetY;
+    if (p.mode === 'y') { yScale(Math.exp(dy * 0.006)); return; }
+    if (p.mode === 'x') { lvZoom(Math.exp(-dx * 0.006), G.PL); return; }
+    if (p.mode !== 'pan') return;
+    const kx = dx / G.PL * (V.x1 - V.x0); V.x0 -= kx; V.x1 -= kx;
+    if (dy) { if (V.auto !== false) V.auto = false; const ky = dy / G.MH * (V.y1 - V.y0); V.y0 += ky; V.y1 += ky; }
+    cv.style.cursor = 'grabbing'; lvDraw();
   });
-  const up = e => { LVS.ptr.delete(e.pointerId); LVS.pinch = 0; };
+  const up = e => { LVS.ptr.delete(e.pointerId); LVS.pinch = 0; cv.style.cursor = 'crosshair'; };
   cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+  cv.addEventListener('pointerleave', () => { if (!LVS.ptr.size) { LVS.mouse = null; lvDraw(); } });
+  cv.addEventListener('dblclick', () => { if (LVS.view) LVS.view.auto = true; lvDraw(); });
   $('lvSym').onchange = () => {
     const v = $('lvSym').value.normalize('NFKC').toUpperCase().replace(/[^A-Z0-9]/g, ''); if (!v) return;
     const s = v.endsWith('USDT') ? v : v + 'USDT';
