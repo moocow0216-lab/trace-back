@@ -27,7 +27,7 @@ const r5 = x => Math.round(x * 1e5) / 1e5;
 const log = (...a) => console.log(new Date().toISOString(), ...a);
 
 /* ---------------- 狀態與存檔 ---------------- */
-const DEF_SET = { flat: 2, range: 6, minVol: 500, win: 4, sens: 1, minN: 2, logic: 'follow', everyS: 10, btcF: 1, btcMode: '24h', btcWith: 2, btcAgainst: 4 };   // btcF：進場前先看 BTC 方向；順勢至少 btcWith 項異常、逆勢至少 btcAgainst 項
+const DEF_SET = { flat: 2, range: 6, minVol: 500, win: 4, sens: 1, zSum: 5, zBar: 5, minN: 2, logic: 'follow', everyS: 10, btcF: 1, btcMode: '24h', btcWith: 2, btcAgainst: 4 };   // btcF：進場前先看 BTC 方向；順勢至少 btcWith 項異常、逆勢至少 btcAgainst 項
 const DEF_TRADE = { tp: 250, sl: 250, lev: 100, hold: 24, exit: 'lock', step: 50 };   // step：達標後浮盈每多幾 %，鎖利線就往上調一格（0＝固定鎖在達標線）
 // 鎖利線：最高浮盈 peak（%）→ 鎖在哪裡（%）。例：達標 250、間距 50 → 最高 260 鎖 250、最高 300 鎖 300、最高 349 鎖 300
 const lockAt = (peak, T = ST.trade) => (T.step > 0 && peak > T.tp ? T.tp + Math.floor((peak - T.tp) / T.step + 1e-9) * T.step : T.tp);
@@ -225,7 +225,7 @@ const IND = [
   { k: 'fbar', n: '合約 Delta Bars', w: 0.75, bar: true }
 ];
 function detect(fd, oiv, sd, W) {
-  const S = ST.set, th = SENS[S.sens] || SENS[1];
+  const S = ST.set, th = { sum: +S.zSum > 0 ? +S.zSum : 5, bar: +S.zBar > 0 ? +S.zBar : 5 };   // z 值門檻：擁有者在掃描條件自己設（累積型／單根型）
   const F = { fcvd: sumFeat(fd, W), oi: oiv ? oiFeat(oiv, W) : null, scvd: sd ? sumFeat(sd, W) : null, sbar: sd ? barFeat(sd, W) : null, fbar: barFeat(fd, W) };
   let score = 0, abN = 0;
   const ind = IND.map(I => {
@@ -852,7 +852,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-21c';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-21d';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1921,6 +1921,7 @@ http.createServer(async (req, res) => {
           ST.set.btcF = ST.set.btcF ? 1 : 0; if (!['24h', 'day', '4h'].includes(ST.set.btcMode)) ST.set.btcMode = '24h';
           ST.set.btcWith = Math.min(5, Math.max(1, Math.round(+ST.set.btcWith) || 2)); ST.set.btcAgainst = Math.min(5, Math.max(1, Math.round(+ST.set.btcAgainst) || 4));
           if (was !== ST.set.btcF) touchBT();
+          ST.set.zSum = Math.min(20, Math.max(1, Math.round((+ST.set.zSum || 5) * 10) / 10)); ST.set.zBar = Math.min(20, Math.max(1, Math.round((+ST.set.zBar || 5) * 10) / 10));
         }
         if (b.trade) Object.assign(ST.trade, pick(b.trade, Object.keys(DEF_TRADE)));
         if (b.eq) Object.assign(ST.eq, pick(b.eq, Object.keys(DEF_EQ)));
