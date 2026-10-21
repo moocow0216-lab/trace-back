@@ -554,6 +554,9 @@ body.mode-pat #qPanel,body.mode-news #qPanel,body.mode-pat #newsPanel,body.mode-
 .htc{position:absolute;box-sizing:border-box;border:1px solid rgba(0,0,0,.35);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden;line-height:1.15;transition:background-color .4s}
 .htc b{font-weight:700}.htc span{font-size:.8em;opacity:.95}
 .htc.sig{outline:2px solid #ffd54a;outline-offset:-3px;z-index:1}
+.lvtip{position:absolute;z-index:3;pointer-events:none;min-width:230px;max-width:300px;background:rgba(22,26,33,.97);border:1px solid #333a46;border-radius:10px;padding:10px 12px;font-size:12.5px;color:#cfd6e0;box-shadow:0 6px 20px rgba(0,0,0,.45)}
+.lvtip h4{margin:0 0 6px;font-size:14px;color:#fff}.lvtip div{display:flex;justify-content:space-between;gap:12px;line-height:1.75}.lvtip span{color:#9aa4b2}.lvtip b{font-weight:600;color:#fff;text-align:right}.lvtip i{font-style:normal}
+.lvtip hr{border:none;border-top:1px solid #333a46;margin:6px 0}
 .lvbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:4px 0 10px}
 .lvseg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .lvseg button{background:none;border:none;color:var(--muted);padding:6px 10px;font:inherit;font-size:13px;cursor:pointer}
@@ -794,7 +797,7 @@ header{align-items:center}
             <label class="lvsl1">線條<input type="range" id="lvLine" min="0" max="1" step="0.05"></label>
             <label class="lvsl1">泡泡<input type="range" id="lvBub" min="0" max="2" step="0.1"></label>
           </div>
-          <div style="width:100%"><canvas id="lvCv" style="display:block;touch-action:none;cursor:grab"></canvas></div>
+          <div style="width:100%;position:relative"><canvas id="lvCv" style="display:block;touch-action:none;cursor:crosshair"></canvas><div class="lvtip" id="lvTip" hidden></div></div>
           <p class="qcn" style="margin:6px 4px 0">操作跟 TradingView 一樣：圖上拖曳＝上下左右移動；滾輪或兩指＝縮放時間；拖曳右邊價格軸（或在上面滾滾輪）＝縮放價格；拖曳下方時間軸＝縮放時間；雙擊圖表＝價格回到自動；「重置視圖」回到全部範圍。現價標籤下面是這根 K 棒收盤倒數。右側長條是還沒清算的水平分佈，底部是 CLLD（▲ 由負轉正＝牛市轉折、▼ 由正轉負＝熊市轉折）。</p>
         </div>
         <p class="qcn">⚠️ <b>清算水平是估計的</b>：交易所不會公開每個人的強平價。做法是看每段時間未平倉量增加多少（＝新開的倉位），用主動買賣比例拆成多單、空單，假設 5x、10x（低）、20x、25x（中）、50x、75x、100x、125x（高）這些常見槓桿算出強平價，畫成一條水平線；價格碰到就當作清算掉、線就斷掉。<b>強度</b>＝2×log₁₀（估計金額美元），例如 1 百萬美元＝12、1 億美元＝16。<b>一級／二級／三級</b>＝只顯示最強的 5%／15%／40%。<b>磁區</b>＝現價附近還沒清算、相鄰的水平合併成一區（最寬 0.8%），顯示離現價最近、夠強的那一區。磁區、CLLD 和右側分佈用<b>全部</b>還沒清算的水平算（只看槓桿勾選），不受一級／二級／三級和強度範圍影響。這些數字跟 Coinglass 是不同的模型，<b>只會接近、不會一樣</b>。<b>CLLD</b>＝還沒清算的多頭水平數－空頭水平數。金額只是大概的數字，適合看「哪些價位堆了很多槓桿」。</p>
@@ -816,7 +819,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-21m</div>
+      <div class="qver" id="qVer">網站版本 2026-10-21n</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3218,7 +3221,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-21m・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-21n・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -3716,25 +3719,32 @@ function lvDraw() {
   if (!(sMax > sMin)) { sMin = LV.smin; sMax = LV.smin + 1; }
   const nrm = v => Math.max(0, Math.min(1, (v.s - sMin) / (sMax - sMin)));
   g.save(); g.beginPath(); g.rect(0, 0, PL, MH); g.clip();
+  const snap = (y, w) => (Math.round(y * dpr) + ((Math.round(w * dpr) % 2) ? 0.5 : 0)) / dpr;   // 線條對齊螢幕像素，才不會糊
+  LVS.bubs = [];
   for (const v of vis) {                               // 水平線＋起點氣泡
     const xa = xs(v.i0), xb = v.i1 === null ? PL : xs(v.i1); if (xb < 0 || xa > PL) continue;
-    const y = ys(v.p); if (y < -20 || y > MH + 20) continue;
+    if (ys(v.p) < -20 || ys(v.p) > MH + 20) continue;
+    const lwd = Math.max(1, Math.round((1 + LV.line * 3 * nrm(v)) * dpr)), y = (Math.round(ys(v.p) * dpr) + (lwd % 2 ? 0.5 : 0)) / dpr;   // 線寬取整數個螢幕像素，125% 縮放也不會糊
     const n = nrm(v), col = LV.color === 'side' ? LV_COL[v.side] : LV_COL[v.cls];
-    g.globalAlpha = 0.5 + 0.5 * n; g.strokeStyle = col; g.lineWidth = 1 + LV.line * 3 * n; g.beginPath(); g.moveTo(xa, y); g.lineTo(xb, y); g.stroke();
-    if (LV.bub > 0) { const r = LV.bub * (4 + 24 * n * n); g.globalAlpha = 0.95; g.lineWidth = 1.5; g.beginPath(); g.arc(xa, y, r, 0, Math.PI * 2); g.stroke(); g.globalAlpha = 0.1 + 0.12 * n; g.fillStyle = col; g.fill(); g.globalAlpha = 1; g.fillStyle = '#fff'; g.beginPath(); g.arc(xa, y, 1.8, 0, Math.PI * 2); g.fill(); }
+    g.globalAlpha = 0.5 + 0.5 * n; g.strokeStyle = col; g.lineWidth = lwd / dpr; g.beginPath(); g.moveTo(xa, y); g.lineTo(xb, y); g.stroke();
+    if (LV.bub > 0) { const r = LV.bub * (4 + 24 * n * n); LVS.bubs.push({ x: xa, y, r, v }); g.globalAlpha = 0.95; g.lineWidth = 1.5; g.beginPath(); g.arc(xa, y, r, 0, Math.PI * 2); g.stroke(); g.globalAlpha = 0.1 + 0.12 * n; g.fillStyle = col; g.fill(); g.globalAlpha = 1; g.fillStyle = '#fff'; g.beginPath(); g.arc(xa, y, 1.8, 0, Math.PI * 2); g.fill(); }
   }
   g.globalAlpha = 1;
-  if (LV.candle) {                                     // 高清 K 線：太密就合併成每根至少 3 像素寬；線條對齊像素
-    const per = PL / (V.x1 - V.x0), grp = Math.max(1, Math.ceil(3.2 / per)), w = Math.max(1, Math.floor(per * grp * 0.7)), px1 = 1 / dpr;
+  if (LV.candle) {                                     // 高清 K 線：直接用螢幕的實際像素畫（影線剛好 1 像素、實體奇數寬度讓影線置中）；太密就合併成每根至少 4 像素
+    const per = PL / (V.x1 - V.x0), grp = Math.max(1, Math.ceil(4 / per)), P = v => Math.round(v * dpr);
+    let bw = Math.max(1, P(per * grp * 0.72)); if (bw % 2 === 0) bw -= 1; if (bw < 1) bw = 1;
+    const ww = Math.max(1, Math.round(dpr));
+    g.save(); g.setTransform(1, 0, 0, 1, 0, 0);
     for (let k = Math.floor(i0 / grp) * grp; k <= i1; k += grp) {
       let o = null, h = -Infinity, l = Infinity, c = null;
       for (let i = Math.max(0, k); i < Math.min(D.N, k + grp); i++) { const b = D.K[i]; if (o === null) o = b.o; h = Math.max(h, b.h); l = Math.min(l, b.l); c = b.c; }
       if (o === null) continue;
-      const x = Math.round(xs(k + (grp - 1) / 2)) + 0.5, upc = c >= o, yo = ys(o), yc = ys(c);
-      g.strokeStyle = g.fillStyle = upc ? '#26a69a' : '#ef5350'; g.lineWidth = Math.max(1, px1 * 1.5);
-      g.beginPath(); g.moveTo(x, Math.round(ys(h))); g.lineTo(x, Math.round(ys(l))); g.stroke();
-      if (w >= 2) g.fillRect(Math.round(x - w / 2), Math.round(Math.min(yo, yc)), w, Math.max(1, Math.round(Math.abs(yo - yc))));
+      const xc = P(xs(k + (grp - 1) / 2)), upc = c >= o, yh = P(ys(h)), yl = P(ys(l)), yt = P(ys(Math.max(o, c))), yb = P(ys(Math.min(o, c)));
+      g.fillStyle = upc ? '#26a69a' : '#ef5350';
+      g.fillRect(xc - (ww >> 1), yh, ww, Math.max(1, yl - yh));
+      if (bw >= 3) g.fillRect(xc - (bw >> 1), yt, bw, Math.max(ww, yb - yt));
     }
+    g.restore();
   }
   g.restore();
   const yp = ys(px); g.setLineDash([4, 4]); g.strokeStyle = '#fff'; g.beginPath(); g.moveTo(0, yp); g.lineTo(PL + PW, yp); g.stroke(); g.setLineDash([]);
@@ -3751,10 +3761,9 @@ function lvDraw() {
     if (ci >= 0 && ci < D.N) {
       const b = D.K[ci], tl = fmtT(b.t); g.font = '11px system-ui'; const tw = g.measureText(tl).width + 10;
       g.fillStyle = '#3a4250'; g.fillRect(Math.min(PL - tw, Math.max(0, M0.x - tw / 2)), MH + 2, tw, 18); g.fillStyle = '#fff'; g.textAlign = 'center'; g.fillText(tl, Math.min(PL - tw / 2, Math.max(tw / 2, M0.x)), MH + 15); g.textAlign = 'left';
-      const ch2 = (b.c / b.o - 1) * 100, info = `${tl}　開 ${b.o.toFixed(dec)}　高 ${b.h.toFixed(dec)}　低 ${b.l.toFixed(dec)}　收 ${b.c.toFixed(dec)}　${ch2 >= 0 ? '+' : ''}${ch2.toFixed(2)}%`;
-      g.font = '12px system-ui'; const iw = g.measureText(info).width + 12; g.fillStyle = 'rgba(13,17,23,.85)'; g.fillRect(4, 4, iw, 20); g.fillStyle = b.c >= b.o ? '#26a69a' : '#ef5350'; g.fillText(info, 10, 18);
-    }
-  }
+      lvTip(b, ci, cp, px, dec, M0, ys);
+    } else lvTip(null);
+  } else lvTip(null);
   // 右側：還沒清算的水平分佈（上方空頭綠、下方多頭紅）
   const openV = vis.filter(v => v.i1 === null), allOpen = D.levels.filter(v => v.i1 === null && LV.lev[v.cls]), BIN = 2, prof = new Map(); let pmax = 0;
   for (const v of allOpen) { const y = Math.round(ys(v.p) / BIN) * BIN; if (y < 0 || y > MH) continue; const o = prof.get(y) || { a: 0, up: v.p > px }; o.a += v.amt; prof.set(y, o); pmax = Math.max(pmax, o.a); }
@@ -3779,6 +3788,33 @@ function lvDraw() {
     <div><span>CLLD・還沒清算的多頭－空頭水平數</span><b class="${cl >= 0 ? 'qg' : 'qr'}">${cl >= 0 ? '+' : ''}${cl}</b><em>${cl >= 0 ? '多頭水平比較多' : '空頭水平比較多'}・1 小時變化 ${ch1 >= 0 ? '+' : ''}${ch1}${ls ? `・最近 ${ls.up ? '▲ 牛市轉折' : '▼ 熊市轉折'} ${fmtT(D.K[ls.i].t)}` : ''}</em></div>`;
   $('lvStat').innerHTML = `${Date.now() - HT.msgAt < 5000 ? '<span class="wlive"></span>即時' : '連線中'}・幣安 ${D.sym}・${LV_R[D.rk].name}・畫面上 ${vis.length} 條・還沒清算的全部 ${allOpen.length} 條（磁區、CLLD、右側分佈用全部算）`;
   lvHist();
+}
+// 滑鼠移上去的資訊框（仿 Coinglass）：時間、開收、高低、游標價格、當時和現在這個價位的強度、CLLD；停在泡泡上再加這條水平的細節
+function lvTip(b, ci, cp, px, dec, M0, ys) {
+  const el = $('lvTip'); if (!b) { el.hidden = true; return; }
+  const D = LVS.d, near = v => LV.lev[v.cls] && Math.abs(ys(v.p) - M0.y) <= 4;
+  let then = 0, now = 0;
+  for (const v of D.levels) {
+    if (!near(v)) continue;
+    if (v.i0 <= ci && (v.i1 === null || v.i1 > ci)) then = Math.max(then, v.s);
+    if (v.i1 === null) now = Math.max(now, v.s);
+  }
+  let hit = null, hd = Infinity;
+  for (const q of LVS.bubs || []) { const d = Math.hypot(q.x - M0.x, q.y - M0.y); if (d <= q.r + 3 && d < hd) { hd = d; hit = q.v; } }
+  const d0 = new Date(b.t + 8 * HOUR_MS), ttl = `${d0.getUTCMonth() + 1}月${d0.getUTCDate()}日 ${String(d0.getUTCHours()).padStart(2, '0')}:${String(d0.getUTCMinutes()).padStart(2, '0')}`;
+  const pc = (cp / px - 1) * 100, cl = D.clld[ci], f = x => x.toFixed(dec), row = (k, v) => `<div><span>${k}</span><b>${v}</b></div>`;
+  let h = `<h4>${ttl}</h4>` + row('開 / 收', `${f(b.o)} / <i class="${b.c >= b.o ? 'qg' : 'qr'}">${f(b.c)}</i>`) + row('高 / 低', `${f(b.h)} / ${f(b.l)}`) +
+    row('游標價格', `${f(cp)} <i class="${pc >= 0 ? 'qg' : 'qr'}">${pc >= 0 ? '+' : ''}${pc.toFixed(2)}%</i>`) +
+    row('當時這個價位的強度', then ? then.toFixed(1) : '—') + row('現在這個價位的強度', now ? now.toFixed(1) : '—') + row('CLLD', (cl >= 0 ? '+' : '') + cl);
+  if (hit) {
+    const sideTxt = hit.side === 'S' ? '空頭（價格漲上來會清算）' : '多頭（價格跌下去會清算）', clsTxt = { h: '高槓桿', m: '中等槓桿', l: '低槓桿' }[hit.cls];
+    h += `<hr><h4 style="color:${LV_COL[LV.color === 'side' ? hit.side : hit.cls]}">💥 這條清算水平</h4>` + row('方向', sideTxt) + row('槓桿', `${hit.lev}x・${clsTxt}`) + row('強平價', f(hit.p)) +
+      row('估計金額', usdW(hit.amt) + ' 美元') + row('強度', hit.s.toFixed(1)) + row('開倉時間', fmtT(D.K[hit.i0].t)) + row('狀態', hit.i1 === null ? '<i class="qg">還沒清算</i>' : `已在 ${fmtT(D.K[hit.i1].t)} 清算`);
+  }
+  el.innerHTML = h; el.hidden = false;
+  const box = el.parentElement.getBoundingClientRect(), tw = el.offsetWidth, th = el.offsetHeight;
+  let x = M0.x + 16, y = M0.y + 16; if (x + tw > box.width - 4) x = M0.x - tw - 16; if (y + th > (LVS.geo ? LVS.geo.MH : box.height)) y = Math.max(4, M0.y - th - 16);
+  el.style.left = Math.max(4, x) + 'px'; el.style.top = y + 'px';
 }
 function lvHist() {                                    // 強度範圍滑桿後面的分佈長條
   const D = LVS.d, cv = $('lvHist'); if (!D || !cv) return;
@@ -3814,7 +3850,7 @@ function lvInit() {
   const zone = (x, y) => { const G = LVS.geo; if (!G) return 'pan'; if (x > G.PL + G.PW) return 'y'; if (y > G.MH && y < G.MH + G.TA) return 'x'; return y <= G.MH ? 'pan' : 'none'; };
   const yScale = f => { const V = LVS.view; if (!V) return; V.auto = false; const c = (V.y0 + V.y1) / 2, h = (V.y1 - V.y0) / 2 * f; V.y0 = c - h; V.y1 = c + h; lvDraw(); };
   cv.addEventListener('wheel', e => { e.preventDefault(); if (zone(e.offsetX, e.offsetY) === 'y') yScale(e.deltaY > 0 ? 1.1 : 1 / 1.1); else lvZoom(e.deltaY > 0 ? 1.15 : 1 / 1.15, e.offsetX); }, { passive: false });
-  cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); LVS.ptr.set(e.pointerId, { x: e.offsetX, y: e.offsetY, mode: zone(e.offsetX, e.offsetY) }); LVS.pinch = 0; });
+  cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); LVS.ptr.set(e.pointerId, { x: e.offsetX, y: e.offsetY, x0: e.offsetX, y0: e.offsetY, mode: zone(e.offsetX, e.offsetY) }); LVS.pinch = 0; });
   cv.addEventListener('pointermove', e => {
     const p = LVS.ptr.get(e.pointerId), V = LVS.view, G = LVS.geo;
     if (!p) { LVS.mouse = { x: e.offsetX, y: e.offsetY }; const z = zone(e.offsetX, e.offsetY); cv.style.cursor = z === 'y' ? 'ns-resize' : z === 'x' ? 'ew-resize' : 'crosshair'; lvDraw(); return; }
@@ -3828,9 +3864,12 @@ function lvInit() {
     if (dy) { if (V.auto !== false) V.auto = false; const ky = dy / G.MH * (V.y1 - V.y0); V.y0 += ky; V.y1 += ky; }
     cv.style.cursor = 'grabbing'; lvDraw();
   });
-  const up = e => { LVS.ptr.delete(e.pointerId); LVS.pinch = 0; cv.style.cursor = 'crosshair'; };
+  const up = e => {
+    const p = LVS.ptr.get(e.pointerId); LVS.ptr.delete(e.pointerId); LVS.pinch = 0; cv.style.cursor = 'crosshair';
+    if (p && e.pointerType !== 'mouse' && Math.abs(e.offsetX - p.x0) < 6 && Math.abs(e.offsetY - p.y0) < 6) { LVS.mouse = { x: e.offsetX, y: e.offsetY }; lvDraw(); }   // 手機：點一下顯示資訊框
+  };
   cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
-  cv.addEventListener('pointerleave', () => { if (!LVS.ptr.size) { LVS.mouse = null; lvDraw(); } });
+  cv.addEventListener('pointerleave', e => { if (!LVS.ptr.size && e.pointerType === 'mouse') { LVS.mouse = null; lvDraw(); } });
   cv.addEventListener('dblclick', () => { if (LVS.view) LVS.view.auto = true; lvDraw(); });
   $('lvSym').onchange = () => {
     const v = $('lvSym').value.normalize('NFKC').toUpperCase().replace(/[^A-Z0-9]/g, ''); if (!v) return;
