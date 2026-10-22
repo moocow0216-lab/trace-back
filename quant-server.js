@@ -477,7 +477,15 @@ function addCard(r) {
       // 原本沒過 BTC 過濾、這次異常項數夠了：開著過濾的帳號現在才進場（沒開過濾的帳號當初就進了）
       const late = live.btcPass === false && r.btcPass;
       const { entry, et, id, t0, btcPass, ...rest } = r;
-      if (late) { live.btcPass = true; live.btcLate = now; for (const X of allX()) if (X.A.lt.on && X.A.lt.btcF) ltOpen(X, live); }
+      if (late) { live.btcPass = true; live.btcLate = now; }
+      for (const X of allX()) {                          // 開著過濾、現在才通過的帳號：走反手流程（手上有反方向的自動單就先平掉）
+        if (!X.A.lt.on) continue;
+        const F = X.LT.flipTry || (X.LT.flipTry = {});
+        if (late && X.A.lt.btcF) { F[live.sym] = now; ltFlipOpen(X, live); continue; }
+        // 補反手：之前沒反手成功（例如當時沒過 BTC 過濾），這個訊號又出現、而且對這個帳號有過 → 補做反手；同一個幣 10 分鐘最多試一次
+        const pass = !(X.A.lt.btcF && live.btcPass === false);
+        if (pass && now - (F[live.sym] || 0) > 10 * 60000 && ltOpenTrades(X).some(t => t.sym === live.sym && t.dir !== live.dir && t.positionId)) { F[live.sym] = now; log('補反手', X.uid, live.sym); ltFlipOpen(X, live); }
+      }
       Object.assign(live, rest, now - live.t >= 300000 ? { t: now, hits: (live.hits || 1) + 1 } : {});
       touchCards();
     }
@@ -852,7 +860,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-22a';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-22b';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
