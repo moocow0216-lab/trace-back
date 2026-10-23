@@ -821,7 +821,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-22a</div>
+      <div class="qver" id="qVer">網站版本 2026-10-22c</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -870,6 +870,7 @@ header{align-items:center}
             <label class="field">每筆保證金（U）<input id="lt_margin" type="number" min="0.01" step="0.1"></label>
             <label class="field">單日虧損上限（U，超過自動暫停）<input id="lt_dayLoss" type="number" min="0" step="1"></label>
             <label class="field">槓桿倍率（幣不支援就用最高）<input id="lt_lev" type="number" min="1" max="125" step="1"></label>
+            <label class="field">開始鎖利（浮盈達到幾 %）<input id="lt_tp" type="number" min="10" max="1000" step="10"></label>
             <label class="field">鎖利線上調（浮盈每多幾 %，0＝不上調）<input id="lt_step" type="number" min="0" max="1000" step="10"></label>
             <label class="field">持有天數（到期就平倉）<input id="lt_hold" type="number" min="0.5" max="30" step="0.5"></label>
             <label class="field">浮虧 % 數（虧到這裡就平倉）<input id="lt_sl" type="number" min="10" max="1000" step="10"></label>
@@ -3223,7 +3224,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-22a・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-22c・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -4196,9 +4197,9 @@ $('qt_step').onchange = () => {
 };
 $('qt_exit').onchange = () => { T.exit = $('qt_exit').value; LS.set('quantTrade', T); tradeNote(); renderCards(); renderHist(); pushTrade(); };
 // 伺服器要用同一組浮盈／槓桿設定，才能判斷什麼時候「結單」、什麼時候可以再開下一單、什麼時候發結單通知
-function syncT(j) {                                   // 出場規則以伺服器上「我的設定」為準：成功線、出場方式全站共用，浮虧、鎖利上調、持有時間、槓桿用自己的
+function syncT(j) {                                   // 出場規則以伺服器上「我的設定」為準：出場方式全站共用，開始鎖利、浮虧、鎖利上調、持有時間、槓桿用自己的
   const C = j.lt && j.lt.cfg; if (!C || !(C.sl > 0)) return;
-  const nT = { tp: j.trade && j.trade.tp || T.tp, exit: j.trade && j.trade.exit || T.exit, sl: C.sl, step: C.step, hold: C.hold, lev: C.lev };
+  const nT = { tp: C.tp || (j.trade && j.trade.tp) || T.tp, exit: j.trade && j.trade.exit || T.exit, sl: C.sl, step: C.step, hold: C.hold, lev: C.lev };
   if (Object.keys(nT).some(k => nT[k] !== T[k])) { Object.assign(T, nT); tradeNote(); renderCards(); renderHist(); }
 }
 function pushTrade() {
@@ -5205,6 +5206,7 @@ function renderLt() {
   const B = SRVLT.bot, AE = SRVLT.acctEq || 0;
   $('qLtMsg').textContent = `${C.budget > 0 ? `投入 ${C.budget}U（帳戶 ${AE.toFixed(2)}U）・目前 ${B ? B.eq.toFixed(2) : '—'}U、可用 ${B ? Math.max(0, B.free).toFixed(2) : '—'}U・` : `用整個帳戶（${AE.toFixed(2)}U）・`}每筆 ${C.margin}U・${C.lev}x 全倉・最多 ${C.maxOpen || '不限'} 筆・今日 ${SRVLT.day >= 0 ? '+' : '−'}${Math.abs(SRVLT.day).toFixed(2)}U（上限 −${C.dayLoss}U）${SRVLT.msg ? '・' + SRVLT.msg : ''}`;
   ['budget', 'margin', 'lev', 'maxOpen', 'dayLoss', 'sl', 'step'].forEach(k => { const el = $('lt_' + k); if (document.activeElement !== el) el.value = C[k] || 0; });
+  if (document.activeElement !== $('lt_tp')) $('lt_tp').value = C.tp || T.tp;
   if (document.activeElement !== $('lt_hold')) $('lt_hold').value = +((C.hold || 168) / 24).toFixed(2);
   if (document.activeElement !== $('lt_btcF')) $('lt_btcF').value = C.btcF ? '1' : '0';
   const AE2 = SRVLT.acctEq || 0;
@@ -5233,6 +5235,11 @@ $('qLtCfgBtn').onclick = () => {                     // 打開「👤 我的設�
   $('qMyTrade').scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
 ['margin', 'lev', 'dayLoss', 'step', 'sl'].forEach(k => $('lt_' + k).onchange = () => ltCall('/api/lt/config', { [k]: +$('lt_' + k).value }));
+$('lt_tp').onchange = () => {                         // 浮盈達到幾 % 開始鎖利
+  const v = +$('lt_tp').value;
+  if (!(v >= 10 && v <= 1000)) { alert('開始鎖利要在 10～1000 % 之間'); renderLt(); return; }
+  ltCall('/api/lt/config', { tp: v });
+};
 $('lt_btcF').onchange = () => ltCall('/api/lt/config', { btcF: $('lt_btcF').value === '1' });
 $('lt_hold').onchange = () => {
   const d = +$('lt_hold').value;
