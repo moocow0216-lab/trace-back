@@ -390,15 +390,15 @@ function notifyEntry(c) {
   const tpPx = c.entry * (1 + c.dir * T.tp / 100 / T.lev), slPx = c.entry * (1 - c.dir * T.sl / 100 / T.lev);
   const ab = (c.ind || []).filter(i => i.ab).map(i => `${i.n} z${i.z > 0 ? '+' : ''}${i.z.toFixed(1)}`).join('、');
   const bt = c.btcD !== undefined ? `\nBTC ${c.btcD > 0 ? '偏多' : c.btcD < 0 ? '偏空' : '讀不到'}${c.btcChg !== null && c.btcChg !== undefined ? `（${c.btcChg > 0 ? '+' : ''}${c.btcChg}%）` : ''}・${c.btcD === c.dir ? '順勢' : '逆勢'}（需要 ${c.btcNeed} 項，${c.btcPass === false ? '**沒過 BTC 過濾**，有開過濾的人不會下單' : '有過 BTC 過濾'}）` : '';
-  dcAll(X => `📡 **訊號**｜${c.dir > 0 ? '🟢 **做多**' : '🔴 **做空**'} **${mdEsc(c.sym)}**（數據異常 ${c.abN}/5）${bt}\n` +
-    `進場 **${fpx(c.entry)}**・${T.lev}x\n達標 ${fpx(tpPx)}（+${T.tp}%）\n失敗 ${fpx(slPx)}（−${T.sl}%）\n` +
-    `${ab ? '異常：' + mdEsc(ab) + '\n' : ''}時間 ${tw(c.et)}（台北）\n-# 訊號模擬：用幣安訊號價、${T.lev}x 計算，不是你的實際倉位${X.A.lt.on ? '；實際下單看 🤖 實盤通知' : ''}`, (N, X) => N.enabled && N.entry && !(X.A.lt.btcF && c.btcPass === false));
+  dcAll(`📡 **訊號**｜${c.dir > 0 ? '🟢 **做多**' : '🔴 **做空**'} **${mdEsc(c.sym)}**（數據異常 ${c.abN}/5）${bt}\n` +   // 只發訊號本身；模擬倉的達標價、失敗價不發
+    `訊號價 **${fpx(c.entry)}**\n${ab ? '異常：' + mdEsc(ab) + '\n' : ''}時間 ${tw(c.et)}（台北）`, (N, X) => N.enabled && N.entry && !(X.A.lt.btcF && c.btcPass === false));
 }
 function notifyExit(c, E) {
   const T = ST.trade;
   const head = E.how === 'flip' ? '🔄 **反手**' : E.st === 'win' ? '✅ **成功**' : E.st === 'timeout' ? '⏱ **逾時**' : '❌ **失敗**';
   const how = E.how === 'flip' ? '（出現反方向訊號，用當時價格結束）' : E.how === 'lock' ? `（跑回鎖利線 +${E.pnl}% 出場）` : E.how === 'hold' ? `（持有到 ${T.hold} 小時到期）` : E.st === 'amb' ? '（同一根 K 棒兩邊都碰到，保守算失敗）' : '';
   const pnl = (E.pnl > 0 ? '+' : E.pnl < 0 ? '−' : '') + Math.abs(E.pnl).toFixed(0) + '%';
+  return;                                             // 模擬倉的結果不發 Discord（使用者要求）；網站上的卡片、歷史紀錄照常顯示
   dcAll(`📡 **訊號模擬結果**｜${head} ${c.dir > 0 ? '做多' : '做空'} **${mdEsc(c.sym)}** **${pnl}**${how}\n` +
     `訊號價 ${fpx(c.entry)}（${tw(c.et)}）\n持有 ${durTxt((E.exitAt || Date.now()) - c.et)}・${T.lev}x\n-# 這是訊號的模擬結果，不代表交易所的倉位已經平倉`, (N, X) => N.enabled && N.exit && !(X.A.lt.btcF && c.btcPass === false));
 }
@@ -768,7 +768,7 @@ async function settle(manual) {
     RV++; dirty = true;
     log('結算完成', `回測 ${r.bt.endCap}U（${r.bt.n} 筆）`, `即時 ${r.live.endCap}U（${r.live.n} 筆）`);
     const sg = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(2);
-    dcAll(`📊 **雙週結算**（${tw(start)} ～ ${tw(end)}，每期本金 ${ST.rep.cap}U）\n` +
+    if (false) dcAll(`📊 **雙週結算**（${tw(start)} ～ ${tw(end)}，每期本金 ${ST.rep.cap}U）\n` +
       `回測：${r.bt.endCap}U（**${sg(r.bt.pnl)}U**，${sg(r.bt.ret)}%），${r.bt.n} 筆，成功率 ${r.bt.rate ?? '—'}%\n` +
       `即時：${r.live.endCap}U（**${sg(r.live.pnl)}U**，${sg(r.live.ret)}%），${r.live.n} 筆，成功率 ${r.live.rate ?? '—'}%`, N => N.enabled);
     REP.msg = '';
@@ -860,7 +860,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-22c';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-22e';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
