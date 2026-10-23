@@ -549,6 +549,46 @@ dialog#qAdmDlg::backdrop{background:rgba(4,7,12,.62)}
 body.mode-pat .col.right,body.mode-news .col.right,body.mode-news .col.left{display:none!important}
 body.mode-pat #qPanel,body.mode-news #qPanel,body.mode-pat #newsPanel,body.mode-pat #mktPanel,body.mode-news #mktPanel,body.mode-news #resPanel{display:none!important}
 @media (min-width:881px){body.mode-pat .app{grid-template-columns:400px minmax(0,1fr)}body.mode-news .app{grid-template-columns:minmax(0,1fr)}}
+/* 📖 使用說明書 */
+#gdDlg{padding:0;border:none;background:transparent;max-width:100vw;max-height:100dvh;overflow:visible}
+#gdDlg::backdrop{background:rgba(4,7,15,.72)}
+.gdcard{width:min(440px,100vw);height:min(880px,100dvh);box-sizing:border-box;background:#0b1020;color:#e8ecf3;border:1px solid #2a3447;border-radius:18px;display:flex;flex-direction:column;padding:18px 20px calc(18px + env(safe-area-inset-bottom,0px));gap:14px;font-size:14px}
+@media (max-width:480px){.gdcard{border-radius:0;border:none;padding-top:calc(16px + env(safe-area-inset-top,0px))}}
+.gdhead{display:flex;align-items:center;justify-content:space-between;color:#a3adbd;font-size:13px;letter-spacing:.04em}
+.gdprog{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.gdprog i{height:4px;border-radius:2px;background:#26304a}.gdprog i.on{background:#7aa2ff}
+.gddots{display:flex;gap:6px;justify-content:center}.gddots i{width:6px;height:6px;border-radius:3px;background:#34405a}.gddots i.on{width:22px;background:#7aa2ff}
+.gdscroll{flex:1;overflow:auto;display:flex;flex-direction:column;gap:14px;margin:0 -4px;padding:0 4px}
+.gdscroll h2{margin:0;font-size:22px;line-height:1.35}.gdscroll h3{margin:4px 0 0;font-size:16px}
+.gdsub{margin:0;color:#a3adbd;line-height:1.6}.gdsub b{color:#e8ecf3}
+.gdbox{display:flex;flex-direction:column;gap:12px;background:#141b2b;border:1px solid #2a3447;border-radius:14px;padding:14px 16px}
+.gdbox.calc{background:#121a2c;gap:6px}.gdbox.calc p{margin:0;font-size:15px}.gdbox small,.gdf small{color:#a3adbd;font-size:12.5px;line-height:1.5}
+.gdcl{color:#a3adbd;font-size:13px}.gdgrid{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;line-height:1.5}.gdgrid span:nth-child(odd){color:#a3adbd}
+.gdf{display:flex;flex-direction:column;gap:6px;color:#e8ecf3;font-weight:500}
+.gdf input{min-height:44px;box-sizing:border-box;border-radius:10px;border:1px solid #34405a;background:#0e1422;color:#e8ecf3;padding:0 12px;font:inherit;font-size:15px;font-weight:400}
+.gdf input:disabled{opacity:.5}
+.gdbtn{min-height:44px;padding:0 16px;border-radius:10px;border:1px solid #34405a;background:transparent;color:#d4dbe7;font:inherit;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.gdbtn.pri{border:none;background:#7aa2ff;color:#0b1020;font-weight:700;font-size:15px}.gdbtn.sm{min-height:36px;padding:0 12px;font-size:13px}
+.gdbtn.on{border:2px solid #7aa2ff;background:#1a2440;color:#e8ecf3;font-weight:700}.gdbtn.dash{border-style:dashed;border-color:#4a5a7a;color:#c7d6ff;min-height:46px}
+.gdbtn.red{border-color:#b04a52;color:#ff9aa2}.gdbtn.fake{pointer-events:none;font-size:13px}
+.gd2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.gd4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.gdnum{display:flex;gap:12px;align-items:flex-start;line-height:1.6;color:#d4dbe7}.gdnum>span{flex:none;width:26px;height:26px;border-radius:13px;background:#1d2740;color:#c7d6ff;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center}.gdnum b{color:#e8ecf3}.gdnum>div{flex:1;min-width:0}
+.gdwarn,.gdscroll b.gdwarn{color:#f5b642}
+.gdcode{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#0e1422;border:1px solid #34405a;border-radius:8px;padding:6px 6px 6px 12px;margin-top:6px}.gdcode code{font-size:15px;letter-spacing:.03em;color:#e8ecf3}
+.gdtip{display:flex;gap:10px;align-items:flex-start;background:#121a2c;border:1px solid #2a3447;border-radius:12px;padding:12px 14px;color:#a3adbd}.gdtip svg{flex:none;margin-top:2px}.gdtip p{margin:0;font-size:13px;line-height:1.6}.gdtip b{color:#d4dbe7}
+.gdtip.warn{background:#2a2113;border-color:#6b5422;color:#f5b642}.gdtip.warn p{color:#f1dcb0}.gdtip.warn b{color:#ffe7b3}
+.gdmsg{margin:0;font-size:13px;color:#a3adbd;line-height:1.5;min-height:1em}.gdmsg.ok{color:#5ec8e0}.gdmsg.bad{color:#ff9aa2}.gdok{margin:0;color:#5ec8e0;font-size:13px}
+.gdpt{display:flex;gap:12px;align-items:flex-start;color:#7aa2ff}.gdpt svg{flex:none;margin-top:1px}.gdpt p{margin:0;line-height:1.65;color:#d4dbe7}.gdpt b{color:#e8ecf3}
+.gdscroll b.or{color:#f5c46a}.gdscroll b.cy,.gdsum b.cy{color:#5ec8e0}.gdscroll b.bl{color:#9db8ff}.gdsum b.or{color:#f5c46a}
+.gdmock{display:flex;flex-direction:column;gap:10px;background:#141b2b;border:1px solid #2a3447;border-radius:14px;padding:14px 16px}
+.gdmrow{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}.gdmrow b{font-size:16px}.gdmrow.sm{font-size:13px;color:#c3cbd8;justify-content:space-between}.gdmrow.sm b{font-size:13px;color:#e8ecf3}.gdmrow .dim{color:#7d879a}
+.gdchip{font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid #34405a;color:#c3cbd8}.gdchip.or{border-color:#b07a2a;color:#f5c46a}.gdchip.rd{border-color:#b04a52;color:#ff9aa2}.gdchip.gr{border-color:#2f8a78;color:#7fe0cd}
+.gdbars{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;align-items:center;font-size:13px;color:#a3adbd}.gdbars .or{color:#f5c46a}.gdbars i{height:6px;border-radius:3px;background:linear-gradient(90deg,#ef6b73 var(--w),#26304a var(--w))}
+.gdfeat{display:flex;gap:14px;align-items:center;background:#141b2b;border:1px solid #2a3447;border-radius:14px;padding:12px}.gdfeat b{font-size:15px}.gdfeat p{margin:4px 0 0;font-size:13px;line-height:1.55;color:#c3cbd8}
+.gdth{flex:none;width:92px;height:72px;border-radius:8px;overflow:hidden;background:#0e1422}.gdth.tm{display:grid;grid-template-columns:2fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:2px}.gdth.fr{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px}
+.gdic{flex:none;width:26px;height:26px;color:#7aa2ff;align-self:flex-start}
+.gddone{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}.gdcheck{width:64px;height:64px;border-radius:32px;background:#12283a;border:2px solid #5ec8e0;color:#5ec8e0;display:flex;align-items:center;justify-content:center}
+.gdbox.sum{padding:4px 16px;gap:0}.gdsum{display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:46px;border-bottom:1px solid #222b3d}.gdsum:last-child{border-bottom:none}.gdsum span{color:#c3cbd8}.gdsum b{text-align:right}
+.gdfoot{display:grid;grid-template-columns:1fr 2fr;gap:10px}.gdfoot.one{grid-template-columns:1fr}.gdfoot .gdbtn{min-height:48px;border-radius:12px}
 /* 🔥 熱力圖 */
 .htmap{position:relative;width:100%;border-radius:8px;overflow:hidden;background:#20242c}
 .htc{position:absolute;box-sizing:border-box;border:1px solid rgba(0,0,0,.35);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;overflow:hidden;line-height:1.15;transition:background-color .4s}
@@ -697,7 +737,7 @@ header{align-items:center}
   <span class="qeco" id="qEco" hidden><button class="qecob" id="qEcoBtn" aria-expanded="false">📅 數據公布 <span id="qEcoNext">讀取中…</span></button><div class="qecol" id="qEcoList" hidden></div></span>
   <label class="tzsel gtz">時區 <select id="tzSel" aria-label="全站時區"></select></label>
   <span class="quser" id="qUserBox" hidden><button class="iconbtn" id="qAdmBtn" hidden>🔐 帳號管理</button><button class="iconbtn" id="qLogout" title="登出">👤 <span id="qUid"></span>・登出</button></span>
-  <span class="qmodes"><button class="iconbtn qbtn" id="qModePat">📈 歷史走勢</button><button class="iconbtn qbtn" id="qModeNews">📰 加密新聞</button><button class="iconbtn qbtn" id="qModeBt">📊 回測數據</button><button class="iconbtn qbtn" id="qModeHeat">🔥 熱力圖</button><button class="iconbtn" id="qModeClose" hidden>✕ 關閉，回到合約量化</button></span>
+  <span class="qmodes"><button class="iconbtn qbtn" id="qModePat">📈 歷史走勢</button><button class="iconbtn qbtn" id="qModeNews">📰 加密新聞</button><button class="iconbtn qbtn" id="qModeBt">📊 回測數據</button><button class="iconbtn qbtn" id="qModeHeat">🔥 熱力圖</button><button class="iconbtn qbtn" id="qGuideBtn">📖 使用說明</button><button class="iconbtn" id="qModeClose" hidden>✕ 關閉，回到合約量化</button></span>
   <button class="iconbtn qbtn" id="qOpen" hidden aria-pressed="false" aria-controls="qPanel">合約量化進場<span class="qbadge" id="qBadge" hidden></span></button>
   <span class="meta" id="meta">BTCUSDT 永續合約・15 分鐘 K 線・載入中</span>
   <span class="coinmsg" id="coinMsg" hidden></span>
@@ -821,7 +861,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-22c</div>
+      <div class="qver" id="qVer">網站版本 2026-10-22d</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -1114,6 +1154,7 @@ header{align-items:center}
     </div>
   </div>
 </dialog>
+<dialog id="gdDlg" aria-label="使用說明"><div class="gdcard" id="gdBody"></div></dialog>
 <dialog id="htDlg" aria-labelledby="htDlgT" style="padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);width:min(560px,96vw)">
   <div class="qdh"><h2 id="htDlgT">✏ 編輯自選幣種</h2><span class="spacer"></span><button class="btn" id="htClr">全部清除</button><button class="btn primary" id="htDone">完成</button></div>
   <div class="qfind" style="margin:8px 0"><input id="htQ" type="search" placeholder="🔍 搜尋，例如 SOL" autocomplete="off" autocapitalize="characters" spellcheck="false"><span class="qfnote" id="htCnt"></span></div>
@@ -3218,13 +3259,13 @@ async function srvPull() {
     btRun = p.run; $('qBtRun').disabled = p.run; $('qBtStop').hidden = !p.run || !OWN();
     $('qBtStat').textContent = p.run ? `伺服器回測中 ${p.done}／${p.total}，已找到 ${p.found} 筆訊號${p.skipped ? `，跳過 ${p.skipped} 個` : ''}…（可以關掉網頁，伺服器會繼續跑）`
       : (p.msg ? p.msg + '　' : '') + (BT.at ? `伺服器上次回測 ${fmtT(BT.at)}，${BT.coins} 個幣，共 ${BT.trades.length} 筆訊號。` : '伺服器還沒回測過。');
-    if (j.notify) tgShow(j.notify);
+    if (j.notify) { tgShow(j.notify); GD.nt = j.notify; setTimeout(gdAuto, 0); }   // 📖 新帳號第一次登入：自動打開使用說明
     if (OWN() && !SV.pushed) { SV.pushed = true; pushTrade(); pushEq(); }
     if (j.rep) SRVREP.rep = j.rep;
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-22c・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-22d・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -3460,6 +3501,169 @@ $('qModePat').onclick = () => setMode(MODE === 'pat' ? 'quant' : 'pat');
 $('qModeNews').onclick = () => setMode(MODE === 'news' ? 'quant' : 'news');
 $('qModeBt').onclick = () => setMode(MODE === 'bt' ? 'quant' : 'bt');
 $('qModeHeat').onclick = () => setMode(MODE === 'heat' ? 'quant' : 'heat');
+/* ---------- 📖 使用說明書：第一次登入的設定步驟＋功能介紹（右上角都可以略過） ---------- */
+const GD = { i: 0, nt: null, auto: false, busy: false };
+const GD_PAGES = ['api', 'dc', 'fund', 'tp', 'f1', 'f2', 'f3', 'f4', 'f5', 'done'];
+const gdC = () => (SRVLT && SRVLT.cfg) || {};
+const gdHasApi = () => !!(SRVBX && SRVBX.set);
+const gdTip = (txt, warn) => `<div class="gdtip${warn ? ' warn' : ''}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${warn ? '<path d="M12 3l9.5 17h-19z"></path><path d="M12 10v4"></path><path d="M12 17v.01"></path>' : '<circle cx="12" cy="12" r="9"></circle><path d="M12 8v5"></path><path d="M12 16.5v.01"></path>'}</svg><p>${txt}</p></div>`;
+const gdNum = (n, txt) => `<div class="gdnum"><span>${n}</span><div>${txt}</div></div>`;
+const gdPt = (svg, txt) => `<div class="gdpt"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${svg}</svg><p>${txt}</p></div>`;
+function gdPage(p) {
+  const C = gdC();
+  if (p === 'api') return `<h2>連接你的 Bitunix 帳戶</h2><p class="gdsub">填好 API 之後，伺服器才能幫你自動下單、管理持倉。伺服器只能交易，<b>不能提領你的資金</b>。</p>
+    <div class="gdbox">${gdHasApi() ? '<p class="gdok">✓ 已經連接 Bitunix。想換新的金鑰才需要重新填。</p>' : ''}
+      <label class="gdf">API Key<input id="gd_key" autocomplete="off" spellcheck="false" placeholder="貼上 API Key"></label>
+      <label class="gdf">Secret Key<input id="gd_sec" type="password" autocomplete="off" placeholder="貼上 Secret Key"></label>
+      <button class="gdbtn pri" id="gd_apiSave">儲存並測試連線</button><p class="gdmsg" id="gdMsg" role="status"></p></div>
+    <h3>怎麼拿到 Bitunix API</h3>
+    ${gdNum(1, '用電腦登入 Bitunix 網頁版（比手機好操作），點右上角頭像，進入「API 管理」。')}
+    ${gdNum(2, '按「建立 API」，名稱隨便取，例如「無量空處」。')}
+    ${gdNum(3, '權限只勾「<b>交易</b>」。<b class="gdwarn">千萬不要勾「提現」</b>。')}
+    ${gdNum(4, 'IP 白名單填入伺服器的 IP，別人拿到金鑰也用不了：<div class="gdcode"><code>3.107.254.240</code><button class="gdbtn sm" id="gd_copyIp">複製</button></div>')}
+    ${gdNum(5, '完成手機或信箱驗證後，複製 API Key 和 Secret Key，貼到上面。<b>Secret Key 只會顯示一次</b>，記得先存好。')}
+    ${gdTip('還沒有 API 也沒關係，先按右上角「略過」。之後在<b>「設定 → 我的設定 → Bitunix API」</b>都可以再填。')}`;
+  if (p === 'dc') return `<h2>設定 Discord 通知</h2><p class="gdsub">新訊號、自動開倉、鎖利、平倉、快爆倉提醒，都會即時傳到你自己的 Discord 頻道，不用一直開著網站。</p>
+    <div class="gdbox">${GD.nt && GD.nt.hasHook ? '<p class="gdok">✓ 已經設定好 Discord 了。</p>' : ''}
+      <label class="gdf">Discord Webhook 網址<input id="gd_hook" autocomplete="off" spellcheck="false" placeholder="https://discord.com/api/webhooks/…"></label>
+      <div class="gd2"><button class="gdbtn pri" id="gd_dcSave">儲存</button><button class="gdbtn" id="gd_dcTest">傳測試訊息</button></div>
+      <p class="gdmsg" id="gdMsg" role="status">按「傳測試訊息」，頻道收到一則「通知設定成功」，就代表設定好了。</p></div>
+    <h3>怎麼拿到 Webhook 網址</h3>
+    ${gdNum(1, '在 Discord 建一個自己的伺服器，開一個文字頻道，例如「量化交易」。')}
+    ${gdNum(2, '點頻道旁邊的齒輪「編輯頻道」，進入「整合」→「Webhook」。')}
+    ${gdNum(3, '按「新 Webhook」，再按「複製 Webhook 網址」，貼到上面。')}
+    ${gdTip('略過的話就收不到通知，但自動交易照常運作。之後在<b>「設定 → 我的設定 → Discord 通知」</b>可以再填。')}`;
+  if (p === 'fund') return `<h2>資金與下單</h2><p class="gdsub">決定自動交易可以用多少錢、每一筆下多少、用幾倍槓桿。</p>
+    ${gdHasApi() ? '' : gdTip('你還沒設定 Bitunix API，系統讀不到你的帳戶資金，<b>這一步可以先略過</b>。之後在<b>「設定 → 我的設定 → 我的交易設定」</b>都能再調整。', true)}
+    <div class="gdbox">
+      <label class="gdf">合約投入資金（U）<input id="gd_budget" type="number" min="0" step="10" placeholder="留空＝整個合約帳戶" value="${C.budget > 0 ? C.budget : ''}"${gdHasApi() ? '' : ' disabled'}><small>自動交易最多只用這麼多，不能超過你的合約帳戶資金${SRVLT.acctEq ? `（目前約 ${(+SRVLT.acctEq).toFixed(2)}U）` : ''}。</small></label>
+      <label class="gdf">每筆下單保證金（U）<input id="gd_margin" type="number" min="0.01" step="0.1" value="${C.margin || 0.3}"><small>每出現一個訊號，就用這麼多保證金開一筆。</small></label>
+      <div class="gdf"><span>槓桿倍數</span><div class="gd4" id="gd_levs">${[20, 50, 75, 100].map(v => `<button class="gdbtn${(C.lev || 100) === v ? ' on' : ''}" data-lev="${v}">${v}x</button>`).join('')}</div>
+        <input id="gd_lev" type="number" min="1" max="125" step="1" value="${C.lev || 100}" aria-label="自訂槓桿倍數"><small>幣種開不到這麼高時，自動用那個幣的最高槓桿。</small></div>
+    </div>
+    <div class="gdbox calc" id="gd_calc"></div>
+    <button class="gdbtn dash" id="gd_def1">使用預設值（整個帳戶・每筆 0.3U・100x）</button><p class="gdmsg" id="gdMsg" role="status"></p>`;
+  if (p === 'tp') return `<h2>獲利目標與鎖利</h2><p class="gdsub">賺到多少開始保護獲利、之後怎麼往上追，以及虧到多少就停損。</p>
+    <div class="gdbox">
+      <label class="gdf">獲利目標：浮盈達到幾 % 開始鎖利<input id="gd_tp" type="number" min="10" max="1000" step="10" value="${C.tp || T.tp || 250}"><small>達到之後，價格跑回這條線就自動平倉，把獲利留住。</small></label>
+      <label class="gdf">鎖利線上調：浮盈每多幾 % 往上調一次<input id="gd_step" type="number" min="0" max="1000" step="10" value="${C.step ?? 50}"><small>填 0＝不上調，只守住獲利目標那條線。</small></label>
+      <label class="gdf">停損：浮虧幾 % 就平倉<input id="gd_sl" type="number" min="10" max="1000" step="10" value="${C.sl || 250}"><small>同時會在 Bitunix 掛好止損單，伺服器斷線也有保護。</small></label>
+    </div>
+    <div class="gdbox calc" id="gd_calc"></div>
+    <button class="gdbtn dash" id="gd_def2">使用預設值（+250% 開始鎖利・每 50%・−250% 停損）</button><p class="gdmsg" id="gdMsg" role="status"></p>
+    ${gdTip('略過就維持目前的設定。之後在<b>「設定 → 我的設定 → 我的交易設定」</b>可以再改。')}`;
+  if (p === 'f1') return `<div class="gdmock"><div class="gdmrow"><b>BTCUSDT</b><span class="gdchip or">數據異常</span><span class="gdchip rd">做空</span><span class="gdchip">4／5 項異常</span></div>
+      <div class="gdbars"><span class="or">未平倉合約</span><i style="--w:50%"></i><span class="or">現貨 CVD</span><i style="--w:44%"></i><span>合約 CVD</span><i style="--w:28%"></i></div>
+      <div class="gdmrow sm">進場 <b>83525.8</b>　目前浮盈 <b class="bl">+82%</b>　最大浮盈 <b class="cy">+108%</b></div></div>
+    <h2>訊號卡片：系統找到的進場機會</h2>
+    ${gdPt('<circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path>', '每 10 秒掃描幣安 500 多個合約，找出<b>價格很平穩、但資金動作很異常</b>的幣。')}
+    ${gdPt('<path d="M4 19V9"></path><path d="M10 19V5"></path><path d="M16 19v-7"></path><path d="M22 19H2"></path>', '看五項指標，跟這個幣自己過去 7 天比。<b class="or">橘色</b>的是異常的項目，異常越多越值得注意。')}
+    ${gdPt('<path d="M3 12h4l3-8 4 16 3-8h4"></path>', '卡片會一直追蹤到結果出爐：成功、鎖利、失敗或到期。按「開啟圖表」可以看 K 線。')}
+    ${gdPt('<path d="M7 7h10v10"></path><path d="M17 7L7 17"></path>', '同一個幣出現反方向的訊號時，會自動<b>反手</b>。')}`;
+  if (p === 'f2') return `<div class="gdmock"><div class="gd2"><span class="gdbtn pri fake">開始交易</span><span class="gdbtn red fake">一鍵平倉（自動單）</span></div>
+      <div class="gdmrow sm"><span>BTCUSDT <span class="gdchip gr">做多</span> 100x</span><span class="dim">ETHUSDT（手動單）<span class="gdchip">做多</span></span></div></div>
+    <h2>自動交易：伺服器 24 小時幫你下單</h2>
+    ${gdPt('<path d="M8 5v14l11-7z"></path>', '按<b>「開始交易」</b>才會真的下單。關掉網頁、手機鎖螢幕，伺服器照樣運作。')}
+    ${gdPt('<rect x="4" y="10" width="16" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path>', '鎖利、停損、持有到期都會自動平倉，交易所上也會掛好止損單。')}
+    ${gdPt('<circle cx="12" cy="8" r="4"></circle><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"></path>', '你自己在 App 開的單是<b>手動單</b>（灰色），系統不會動它，一鍵平倉也只平自動單。')}
+    ${gdPt('<path d="M12 3l9.5 17h-19z"></path><path d="M12 10v4"></path><path d="M12 17v.01"></path>', '伺服器更新或重啟後，自動交易會<b class="or">先暫停</b>，記得再按一次「開始交易」。')}`;
+  if (p === 'f3') return `<div class="gdmock"><svg width="100%" height="64" viewBox="0 0 320 64" preserveAspectRatio="none" aria-hidden="true"><path d="M0 54 L40 48 L80 51 L120 36 L160 40 L200 27 L240 31 L280 16 L320 10" fill="none" stroke="#5ec8e0" stroke-width="2.5"></path><path d="M0 54 L40 48 L80 51 L120 36 L160 40 L200 27 L240 31 L280 16 L320 10 L320 64 L0 64 Z" fill="#5ec8e0" fill-opacity=".12"></path></svg></div>
+    <h2>成功率、紀錄與回測</h2>
+    ${gdPt('<path d="M3 17l6-6 4 4 8-8"></path><path d="M15 7h6v6"></path>', '<b>實盤</b>看你帳戶真正的賺賠和資金曲線；<b>訊號模擬</b>看所有訊號照規則跑的成績。')}
+    ${gdPt('<rect x="4" y="4" width="16" height="16" rx="2"></rect><path d="M4 10h16"></path><path d="M10 10v10"></path>', '歷史紀錄每一筆都有進場價、最大浮盈浮虧、出場原因，點一行可以看圖表，也能匯出 CSV。')}
+    ${gdPt('<circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path>', '右上角<b>「回測數據」</b>：用過去 14 天、過去 7 個月的資料，看這套規則以前會賺還是賠。')}`;
+  if (p === 'f4') return `<h2>熱力圖：一眼看懂整個市場</h2>
+    <div class="gdfeat"><div class="gdth tm" aria-hidden="true"><i style="grid-row:span 2;background:#1f8a62"></i><i style="background:#b8434d"></i><i style="background:#2a9e73"></i><i style="background:#2a9e73"></i><i style="background:#7d3440"></i></div><div><b>市場漲跌</b><p>格子越大成交額越大，綠漲紅跌，每秒更新。可以挑自己想看的幣。</p></div></div>
+    <div class="gdfeat"><div class="gdth fr" aria-hidden="true">${['#e8742f', '#3d6fd8', '#6b4a3a', '#f08a3e', '#2c55a8', '#b8602c', '#e8742f', '#4a7fe8'].map(c => `<i style="background:${c}"></i>`).join('')}</div><div><b>資金費率</b><p>橘色是多單擁擠、藍色是空單擁擠，太極端常常會反轉。</p></div></div>
+    <div class="gdfeat"><svg class="gdth" viewBox="0 0 92 72" aria-hidden="true"><path d="M14 14H92" stroke="#22d3ee" stroke-width="2"></path><path d="M34 24H92" stroke="#22d3ee" stroke-width="1.5" stroke-opacity=".6"></path><path d="M24 50H92" stroke="#f472b6" stroke-width="2"></path><path d="M46 60H92" stroke="#f472b6" stroke-width="1.5" stroke-opacity=".6"></path><path d="M14 8L18 14L14 20L10 14Z" fill="#22d3ee" fill-opacity=".35" stroke="#22d3ee"></path><path d="M24 44L29 50L24 56L19 50Z" fill="#f472b6" fill-opacity=".35" stroke="#f472b6"></path><path d="M6 40L20 34L34 38L48 30L62 33L76 28L88 31" fill="none" stroke="#e8ecf3" stroke-width="1.5"></path></svg><div><b>清算地圖</b><p>估計哪些價位堆了很多槓桿，價格碰到容易引發連環清算。你的倉位也會畫在圖上。</p></div></div>
+    ${gdTip('熱力圖只供參考，不會影響自動交易。清算地圖可以拖曳、縮放，也能全螢幕。')}`;
+  if (p === 'f5') return `<h2>其他好用的功能</h2>
+    <div class="gdfeat"><svg class="gdic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17c3-6 6 2 9-4s6-3 9-8"></path><path d="M3 21h18"></path></svg><div><b>歷史走勢</b><p>畫出你想找的走勢，或用目前的走勢，在歷史 K 線裡找相似的段落，看之後通常怎麼走。</p></div></div>
+    <div class="gdfeat"><svg class="gdic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M7 9h10"></path><path d="M7 13h6"></path></svg><div><b>加密新聞</b><p>即時新聞列表和新聞星圖，剛進來的新聞會閃光提示。</p></div></div>
+    <div class="gdfeat"><svg class="gdic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18"></path><path d="M8 3v4"></path><path d="M16 3v4"></path></svg><div><b>數據公布</b><p>最上方的黃框是美國重要經濟數據。有高影響數據的那一天，自動交易<b class="or">整天不開新單</b>。</p></div></div>
+    <div class="gdfeat"><svg class="gdic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3"></path><path d="M12 19v3"></path><path d="M2 12h3"></path><path d="M19 12h3"></path><path d="M4.9 4.9l2.1 2.1"></path><path d="M17 17l2.1 2.1"></path><path d="M4.9 19.1L7 17"></path><path d="M17 7l2.1-2.1"></path></svg><div><b>設定</b><p>「設定 → 我的設定」可以隨時改 API、Discord、資金、槓桿、鎖利和停損，也能開關 BTC 方向過濾。</p></div></div>`;
+  const row = (k, v, cls) => `<div class="gdsum"><span>${k}</span><b${cls ? ` class="${cls}"` : ''}>${v}</b></div>`;
+  return `<div class="gddone"><div class="gdcheck"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></div><h2>設定完成</h2><p class="gdsub">下面是你目前的設定，之後都可以在「設定 → 我的設定」修改。</p></div>
+    <div class="gdbox sum">${row('Bitunix API', gdHasApi() ? '已連接' : '略過（之後再設）', gdHasApi() ? 'cy' : 'or')}${row('Discord 通知', GD.nt && GD.nt.hasHook ? '已設定' : '略過（之後再設）', GD.nt && GD.nt.hasHook ? 'cy' : 'or')}
+      ${row('資金與下單', `${C.budget > 0 ? C.budget + 'U' : '整個帳戶'}・每筆 ${C.margin || 0.3}U・${C.lev || 100}x`)}${row('鎖利與停損', `+${C.tp || T.tp}% 起・每 ${C.step ?? 50}%・−${C.sl || 250}%`)}</div>
+    ${gdTip('設定好不會馬上下單。準備好之後，到持倉區按<b>「開始交易」</b>，伺服器才會用你的帳戶自動交易。', true)}
+    <p class="gdsub">之後想再看說明，按上方「熱力圖」旁邊的<b>「📖 使用說明」</b>。</p>`;
+}
+function gdCalc() {                                   // 第 3、4 步的試算
+  const el = $('gd_calc'); if (!el) return;
+  const m = +($('gd_margin') ? $('gd_margin').value : gdC().margin) || 0.3, lev = +($('gd_lev') ? $('gd_lev').value : gdC().lev) || 100;
+  if (GD_PAGES[GD.i] === 'fund') { el.innerHTML = `<span class="gdcl">照這個設定</span><p>每筆 <b>${m}U</b> × <b>${lev}x</b> ＝ 倉位約 <b>${+(m * lev).toFixed(2)}U</b></p><small>全倉模式下，虧損可能超過單筆保證金，請確認你能承擔。</small>`; return; }
+  const tp = +$('gd_tp').value || 250, st = +$('gd_step').value || 0, sl = +$('gd_sl').value || 250, C = gdC(), mm = C.margin || 0.3, L = C.lev || 100;
+  const lockAt2 = pk => (st > 0 && pk > tp ? tp + Math.floor((pk - tp) / st + 1e-9) * st : tp), u = p => (mm * p / 100).toFixed(2);
+  const a = tp - 10, b = tp + 10, c = tp + Math.max(st, 50) + 20;
+  el.innerHTML = `<span class="gdcl">照這個設定，每筆 ${mm}U、${L}x 時</span><div class="gdgrid"><span>最高浮盈 +${a}%</span><span>還沒開始鎖利</span><span>最高浮盈 +${b}%</span><span>鎖在 <b class="cy">+${lockAt2(b)}%</b>（約 +${u(lockAt2(b))}U）</span><span>最高浮盈 +${c}%</span><span>鎖在 <b class="cy">+${lockAt2(c)}%</b>（約 +${u(lockAt2(c))}U）</span><span>浮虧 −${sl}%</span><span>停損出場（約 −${u(sl)}U）</span></div><small>幣種開不到 ${L}x 時，這些 % 會按比例縮小，出場的價格不變。</small>`;
+}
+async function gdSave(body, okMsg) {                  // 用網站原本的 API 存設定；結果顯示在畫面上，不跳視窗
+  const msg = $('gdMsg');
+  try { const r = await srvFetch(body.path, body.data); if (msg) { msg.className = 'gdmsg ok'; msg.textContent = okMsg; } SV.lv = 0; SV.cv = -1; srvPull(); return r || true; }
+  catch (e) { if (msg) { msg.className = 'gdmsg bad'; msg.textContent = e.message; } return null; }
+}
+function gdRender() {
+  const p = GD_PAGES[GD.i], setup = GD.i < 4, feat = GD.i >= 4 && GD.i < 9, done = p === 'done';
+  const head = done ? '' : `<div class="gdhead"><span>${setup ? `設定 ${GD.i + 1}／4` : `功能介紹 ${GD.i - 3}／5`}</span><button class="gdbtn" id="gd_skip">${setup ? '略過' : '略過介紹'}</button></div>
+    ${setup ? `<div class="gdprog">${[0, 1, 2, 3].map(k => `<i class="${k <= GD.i ? 'on' : ''}"></i>`).join('')}</div>` : `<div class="gddots">${[4, 5, 6, 7, 8].map(k => `<i class="${k === GD.i ? 'on' : ''}"></i>`).join('')}</div>`}`;
+  const nextTxt = p === 'tp' ? '完成設定，看功能介紹' : p === 'f5' ? '看完了' : done ? '開始使用' : '下一步';
+  $('gdBody').innerHTML = `${head}<div class="gdscroll">${gdPage(p)}</div><div class="gdfoot${GD.i === 0 || done ? ' one' : ''}">${GD.i === 0 || done ? '' : `<button class="gdbtn" id="gd_prev">${feat ? '上一個' : '上一步'}</button>`}<button class="gdbtn pri" id="gd_next">${nextTxt}</button></div>`;
+  $('gdBody').querySelector('.gdscroll').scrollTop = 0;
+  const on = (id, f) => { const el = $(id); if (el) el.onclick = f; };
+  on('gd_skip', () => { GD.i = setup ? GD.i + 1 : 9; gdRender(); });
+  on('gd_prev', () => { GD.i = Math.max(0, GD.i - 1); gdRender(); });
+  on('gd_next', () => gdNext());
+  on('gd_copyIp', () => { navigator.clipboard && navigator.clipboard.writeText('3.107.254.240').then(() => { $('gd_copyIp').textContent = '已複製'; }).catch(() => {}); });
+  on('gd_apiSave', async () => {
+    const key = $('gd_key').value.trim(), secret = $('gd_sec').value.trim();
+    if (!key || !secret) { $('gdMsg').className = 'gdmsg bad'; $('gdMsg').textContent = 'API Key 和 Secret Key 都要貼上。'; return; }
+    $('gdMsg').className = 'gdmsg'; $('gdMsg').textContent = '測試中…';
+    if (await gdSave({ path: '/api/bitunix', data: { key, secret } }, '成功！伺服器已經可以讀到你的 Bitunix 帳戶。')) { $('gd_key').value = ''; $('gd_sec').value = ''; }
+  });
+  on('gd_dcSave', async () => {
+    const webhook = $('gd_hook').value.normalize('NFKC').replace(/\s+/g, '');
+    if (!/^https:\/\/(?:(?:canary|ptb)\.)?(?:discord|discordapp)\.com\/api\/webhooks\/\d+\/[\w-]+/.test(webhook)) { $('gdMsg').className = 'gdmsg bad'; $('gdMsg').textContent = '網址格式不對，應該是 https://discord.com/api/webhooks/ 開頭。'; return; }
+    if (await gdSave({ path: '/api/notify', data: { webhook, enabled: true, entry: true, exit: true } }, '已儲存。按「傳測試訊息」試試看。')) $('gd_hook').value = '';
+  });
+  on('gd_dcTest', () => gdSave({ path: '/api/notify/test', data: {} }, '已送出，看看 Discord 頻道有沒有收到。'));
+  for (const b of $('gdBody').querySelectorAll('[data-lev]')) b.onclick = () => { $('gd_lev').value = b.dataset.lev; for (const x of $('gdBody').querySelectorAll('[data-lev]')) x.classList.toggle('on', x === b); gdCalc(); };
+  for (const id of ['gd_margin', 'gd_lev', 'gd_tp', 'gd_step', 'gd_sl']) { const el = $(id); if (el) el.oninput = () => { if (id === 'gd_lev') for (const x of $('gdBody').querySelectorAll('[data-lev]')) x.classList.toggle('on', x.dataset.lev === el.value); gdCalc(); }; }
+  on('gd_def1', () => { if ($('gd_budget')) $('gd_budget').value = ''; $('gd_margin').value = 0.3; $('gd_lev').value = 100; for (const x of $('gdBody').querySelectorAll('[data-lev]')) x.classList.toggle('on', x.dataset.lev === '100'); gdCalc(); });
+  on('gd_def2', () => { $('gd_tp').value = 250; $('gd_step').value = 50; $('gd_sl').value = 250; gdCalc(); });
+  gdCalc();
+}
+async function gdNext() {
+  if (GD.busy) return;
+  const p = GD_PAGES[GD.i];
+  GD.busy = true;
+  try {
+    if (p === 'api' && $('gd_key').value.trim() && $('gd_sec').value.trim()) { $('gd_apiSave').click(); return; }   // 有填就先存，存好再按一次下一步
+    if (p === 'fund') {
+      const m = +$('gd_margin').value, lev = +$('gd_lev').value, bud = $('gd_budget').value === '' ? 0 : +$('gd_budget').value;
+      if (!(m > 0)) { $('gdMsg').className = 'gdmsg bad'; $('gdMsg').textContent = '每筆保證金要大於 0。'; return; }
+      if (!(lev >= 1 && lev <= 125)) { $('gdMsg').className = 'gdmsg bad'; $('gdMsg').textContent = '槓桿要在 1～125 倍之間。'; return; }
+      const data = { margin: m, lev }; if (gdHasApi()) data.budget = bud;
+      if (!(await gdSave({ path: '/api/lt/config', data }, '已儲存。'))) return;
+    }
+    if (p === 'tp') {
+      const data = { tp: +$('gd_tp').value, step: +$('gd_step').value, sl: +$('gd_sl').value };
+      if (!(data.tp >= 10 && data.tp <= 1000) || !(data.sl >= 10 && data.sl <= 1000) || !(data.step >= 0 && data.step <= 1000)) { $('gdMsg').className = 'gdmsg bad'; $('gdMsg').textContent = '獲利目標、停損要在 10～1000 % 之間，上調要在 0～1000 % 之間。'; return; }
+      if (!(await gdSave({ path: '/api/lt/config', data }, '已儲存。'))) return;
+    }
+    if (p === 'done') { gdClose(); return; }
+    GD.i++; gdRender();
+  } finally { GD.busy = false; }
+}
+function gdOpen(i) { GD.i = i || 0; gdRender(); if (!$('gdDlg').open) $('gdDlg').showModal(); }
+function gdClose() { if (SRV.uid) LS.set('quantGuide:' + SRV.uid, 1); if ($('gdDlg').open) $('gdDlg').close(); }
+$('gdDlg').addEventListener('close', () => { if (SRV.uid) LS.set('quantGuide:' + SRV.uid, 1); });
+$('qGuideBtn').onclick = () => gdOpen(0);
+function gdAuto() {                                   // 新帳號第一次登入、還沒設 API：自動打開一次
+  if (GD.auto || !MINE() || !SRV.uid || !SRVBX) return; GD.auto = true;   // 等讀到 API 狀態才判斷（API 狀態比 Discord 晚一點讀到）
+  if (!LS.get('quantGuide:' + SRV.uid) && !gdHasApi()) gdOpen(0);
+}
+
 /* ---------- 🔥 熱力圖：市場漲跌、資金費率 ----------
    瀏覽器直接連幣安（即時推播每秒更新），伺服器不用多做事。只有打開熱力圖畫面時才連線 */
 const HT = { tab: 'mkt', tf: LS.get('quantHeatTf', '24h'), pick: LS.get('quantHeatPick', 'top100'), mine: LS.get('quantHeatMine', []), sort: 'vol',
