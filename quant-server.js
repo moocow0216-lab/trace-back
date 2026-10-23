@@ -34,7 +34,7 @@ const lockAt = (peak, T = ST.trade) => (T.step > 0 && peak > T.tp ? T.tp + Math.
 const DEF_NOTIFY = { webhook: '', name: '', enabled: true, entry: true, exit: true };
 const DEF_EQ = { mode: 'fixed', amt: 0.3, fee: 0.05, max: 0 };
 const DEF_BX = { key: '', secret: '', notify: true, liq: true, liqPct: 3 };
-const DEF_LT = { on: false, margin: 0.3, lev: 100, mode: 'CROSS', maxOpen: 0, dayLoss: 20, startCap: 0, startAt: 0, budget: 0, sl: 250, step: 50, hold: 168, btcF: 1 };   // btcF：自己要不要用 BTC 方向過濾（預設開）   // sl：浮虧多少 % 平倉；step：鎖利線每多幾 % 上調；hold：最長持有（小時）——每個帳號自己設定   // budget：投入資金（0＝整個合約帳戶）   // startCap＝0 代表等偵測到帳戶資金再開始算   // 自動下單（預設暫停）   // Bitunix 唯讀 API 金鑰（只存在這台伺服器）            // 資金模擬：每筆保證金、手續費、最多同時持倉
+const DEF_LT = { on: false, margin: 0.3, lev: 100, mode: 'CROSS', maxOpen: 0, dayLoss: 20, startCap: 0, startAt: 0, budget: 0, tp: 250, sl: 250, step: 50, hold: 168, btcF: 1 };   // tp：浮盈達到幾 % 開始鎖利（每個帳號自己設）   // btcF：自己要不要用 BTC 方向過濾（預設開）   // sl：浮虧多少 % 平倉；step：鎖利線每多幾 % 上調；hold：最長持有（小時）——每個帳號自己設定   // budget：投入資金（0＝整個合約帳戶）   // startCap＝0 代表等偵測到帳戶資金再開始算   // 自動下單（預設暫停）   // Bitunix 唯讀 API 金鑰（只存在這台伺服器）            // 資金模擬：每筆保證金、手續費、最多同時持倉
 const DEF_REP = { cap: 100, btN: 50, days: 14, next: 0 };                   // 雙週結算：每期本金、回測幣數、幾天一期、下次結算時間
 let ST = { cards: [], bt: { at: 0, coins: 0, trades: [] }, set: { ...DEF_SET }, trade: { ...DEF_TRADE }, google: { clientId: '' }, eq: { ...DEF_EQ }, rep: { ...DEF_REP }, reports: [], users: [], sessions: [], accts: {}, owner: '' };
 try {
@@ -860,7 +860,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-22b';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-22c';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -878,7 +878,7 @@ function ctx(uid) {
 const allX = () => Object.keys(ST.accts).map(ctx);
 { if (!ST.owner && ST.users.some(u => u.uid === OWNER_UID)) ST.owner = OWNER_UID; const o = ST.users.find(u => u.uid === ownerUid()); if (o) o.role = 'admin'; }
 // 這個帳號實盤用的規則：成功線、出場方式跟大家一樣；浮虧失敗線、鎖利上調間距、最長持有用自己的設定
-const TT = X => ({ ...ST.trade, sl: X.A.lt.sl, step: X.A.lt.step, hold: X.A.lt.hold });
+const TT = X => ({ ...ST.trade, tp: X.A.lt.tp || ST.trade.tp, sl: X.A.lt.sl, step: X.A.lt.step, hold: X.A.lt.hold });
 const hasKey = X => !!(X.A.bx.key && X.A.bx.secret);
 const dcX = (X, msg) => dcSend(msg, X.A.notify);                // 只傳到這個帳號自己的 Discord
 function dcAll(content, ok = () => true) {             // 大家共用的通知（訊號、數據公布、結算）：每個帳號自己的 Discord 各傳一次，同一個 Webhook 不重複
@@ -1209,7 +1209,7 @@ async function ltReconcile(X, pos) {
     const prevPart = t.closes.reduce((a, c) => a + c.pnl, 0);
     t.closes.push({ t: Date.now(), qty: t.qty, pnl: (t.realized || 0) - prevPart, by: reason });
     Object.assign(t, { status: 'closed', exitAt: Date.now(), reason, qty: 0, upnl: 0 }); ch = true;
-    const net = ltNet(t), nm = '🤖 **實盤平倉**｜' + ({ win: '✅ 達標出場', lock: `🔒 鎖利出場（鎖利線 +${t.lockLv || ST.trade.tp}%）`, fail: '❌ 失敗線出場', timeout: '⏱ 持有到期出場', manual: '🖐 手動平倉', all: '🛑 一鍵平倉（自動單）', flip: '🔄 反手平倉', liq: '💥 強平', exchange: '📤 交易所平倉（止損或在 App 平倉）' }[reason] || reason);
+    const net = ltNet(t), nm = '🤖 **實盤平倉**｜' + ({ win: '✅ 達標出場', lock: `🔒 鎖利出場（鎖利線 +${pctK(t.lockLv || TT(X).tp, rk(t, t.ruleLev || t.lev))}%）`, fail: '❌ 失敗線出場', timeout: '⏱ 持有到期出場', manual: '🖐 手動平倉', all: '🛑 一鍵平倉（自動單）', flip: '🔄 反手平倉', liq: '💥 強平', exchange: '📤 交易所平倉（止損或在 App 平倉）' }[reason] || reason);
     dcX(X, `${nm} **${mdEsc(t.sym)}** ${t.dir > 0 ? '做多' : '做空'}\n淨損益 **${net >= 0 ? '+' : '−'}${Math.abs(net).toFixed(2)}U**（${(net / (t.m0 || X.A.lt.margin) * 100).toFixed(0)}%）・持有 ${durTxt(Date.now() - t.et)}${t.closePx ? `・平倉均價 ${fpx(t.closePx)}` : ''}`);
   }
   // 單日虧損上限（台北時間每天 00:00 重算）
@@ -2007,11 +2007,12 @@ http.createServer(async (req, res) => {
         }
         let rule = false;                                // 個人的出場規則
         if (b.sl !== undefined) { const v = +b.sl; if (!(v >= 10 && v <= 1000)) return send(res, 400, { error: '浮虧 % 要在 10～1000 之間' }); if (C.sl !== v) setTimeout(() => ltSyncSL(X).catch(e => log('改止損失敗', X.uid, e.message)), 500); C.sl = v; rule = true; }
+        if (b.tp !== undefined) { const v = +b.tp; if (!(v >= 10 && v <= 1000)) return send(res, 400, { error: '開始鎖利要在 10～1000 % 之間' }); C.tp = v; rule = true; }   // 浮盈達到幾 % 開始鎖利
         if (b.step !== undefined) { const v = +b.step; if (!(v >= 0 && v <= 1000)) return send(res, 400, { error: '鎖利線上調要在 0～1000 之間' }); C.step = v; rule = true; }
         if (b.hold !== undefined) { const v = +b.hold; if (!(v >= 1 && v <= 720)) return send(res, 400, { error: '持有時間要在 1 小時～30 天之間' }); C.hold = v; rule = true; }
         if (+b.lev >= 1 && +b.lev <= 125) rule = true;
         if (rule && X.uid === ownerUid()) {             // 擁有者的設定也拿來當「訊號模擬、回測、Discord 訊號通知」的共用規則
-          Object.assign(ST.trade, { sl: C.sl, step: C.step, hold: C.hold, lev: C.lev });
+          Object.assign(ST.trade, { tp: C.tp || ST.trade.tp, sl: C.sl, step: C.step, hold: C.hold, lev: C.lev });
           CACHE.clear(); markSettledNotified(); touchCards();
         }
         if (b.reset) { const e = bxEquity(X); C.startAt = Date.now(); C.startCap = C.budget > 0 ? C.budget : e > 0 ? Math.round(e * 100) / 100 : 0; }   // 有設投入資金就用它，沒有就用目前帳戶權益
