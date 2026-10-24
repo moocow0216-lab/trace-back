@@ -129,7 +129,7 @@ process.on('uncaughtException', e => onCrash('程式錯誤', e));
       const X = ctx(r.uid); if (!hasKey(X)) continue;
       const parts = [r.on ? '自動交易' : '', r.sp && toolOkUid(r.uid) ? '🗡 特級交易' : ''].filter(Boolean); if (!parts.length) continue;
       if (loop || down > 15 * 60000) {
-        X.LT.pause = { t: now, why: loop ? `伺服器 30 分鐘內重開了 ${ST.boots.length} 次，沒有自動恢復` : `伺服器停機 ${Math.round(down / 60000)} 分鐘，沒有自動恢復` };
+        X.LT.pause = { t: now, why: loop ? `伺服器 30 分鐘內重開了 ${ST.boots.length} 次，沒有自動恢復` : isFinite(down) ? `伺服器停機 ${Math.round(down / 60000)} 分鐘，沒有自動恢復` : '沒有上次運作的紀錄（剛更新到新版），沒有自動恢復' };
         dcX(X, `⏸ **伺服器重新啟動，${parts.join('和')}維持暫停**：${X.LT.pause.why}。確認沒問題後，請到網站重新按開始`); continue;
       }
       if (r.on) X.A.lt.on = true;
@@ -903,7 +903,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-24d';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-24e';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
