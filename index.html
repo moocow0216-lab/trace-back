@@ -861,7 +861,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-22d</div>
+      <div class="qver" id="qVer">網站版本 2026-10-22f</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3265,7 +3265,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-22d・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-22f・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -5278,7 +5278,7 @@ async function admLoad() {
       }
     }
     $('qAdmTab').innerHTML = '<thead><tr><th>UID</th><th>權限</th><th>綁定（Google／手機）</th><th>Bitunix API</th><th>自動交易</th><th>自動單持倉</th><th>建立時間</th><th>最後登入</th><th>登入中裝置</th><th>操作</th></tr></thead><tbody>' +
-      j.users.map(u => `<tr><td><b>${esc(u.uid)}</b>${u.uid === SRV.uid ? '（你）' : ''}</td><td>${roleBadge(u.role, u.owner)}</td><td>${u.bind ? `${esc(u.bind.email)}${u.bind.google ? ' ✅' : ''}<br>${esc(u.bind.phone)}` : '<span style="color:var(--muted)">還沒綁定</span>'}</td><td>${u.api ? '已設定' : '<span style="color:var(--muted)">未設定</span>'}</td><td>${u.auto ? '<b class="qg">運作中</b>' : '暫停'}</td><td>${u.open || 0} 筆</td><td>${u.created ? fmtT(u.created) : '—'}</td><td>${u.last ? fmtT(u.last) : '—'}</td><td>${u.sessions}</td>
+      j.users.map(u => `<tr><td><b>${esc(u.uid)}</b>${u.uid === SRV.uid ? '（你）' : ''}</td><td>${roleBadge(u.role, u.owner)}</td><td>${u.bind ? `${esc(u.bind.email)}${u.bind.google ? ' ✅' : ''}<br>${esc(u.bind.phone)}` : '<span style="color:var(--muted)">還沒綁定</span>'}</td><td>${u.api ? '已設定' : '<span style="color:var(--muted)">未設定</span>'}</td><td>${u.auto ? '<b class="qg">運作中</b>' : '暫停'}${OWN() ? `<br><button class="iconbtn" data-a="lt" data-on="${u.auto ? 0 : 1}" data-u="${esc(u.uid)}"${!u.auto && !u.api ? ' disabled title="還沒設定 Bitunix API"' : ''}>${u.auto ? '⏸ 暫停' : '▶ 開始'}</button>` : ''}</td><td>${u.open || 0} 筆</td><td>${u.created ? fmtT(u.created) : '—'}</td><td>${u.last ? fmtT(u.last) : '—'}</td><td>${u.sessions}</td>
         <td><button class="iconbtn" data-a="view" data-u="${esc(u.uid)}">👁 查看</button>${(OWN() || u.uid === SRV.uid) ? ` <button class="iconbtn" data-a="pw" data-u="${esc(u.uid)}">改密碼</button>` : ''}${u.owner && !OWN() ? '' : `${u.bind ? ` <button class="iconbtn" data-a="unbind" data-u="${esc(u.uid)}">重設綁定</button>` : ''}${u.owner ? '' : ` <button class="iconbtn" data-a="role" data-r="${u.role === 'admin' ? 'viewer' : 'admin'}" data-u="${esc(u.uid)}">${u.role === 'admin' ? '改成一般' : '改成管理員'}</button>`}`}${u.owner && !OWN() ? '' : ` <button class="iconbtn" data-a="kick" data-u="${esc(u.uid)}">登出所有裝置</button>`}${u.owner ? '' : ` <button class="iconbtn" data-a="del" data-u="${esc(u.uid)}">刪除</button>`}</td></tr>`).join('') + '</tbody>';
   } catch (e) { $('qAdmTab').innerHTML = `<tbody><tr><td>${esc(e.message)}</td></tr></tbody>`; }
 }
@@ -5289,6 +5289,11 @@ $('qAdmTab').addEventListener('click', async e => {
   const uid = b.dataset.u;
   try {
     if (b.dataset.a === 'view') return viewLoad(uid);
+    if (b.dataset.a === 'lt') {                        // 👑 擁有者：幫這個帳號開始／暫停自動交易
+      const on = b.dataset.on === '1';
+      if (!confirm(on ? `要幫 ${uid} 開始自動交易嗎？\n\n伺服器會用他的 Bitunix 帳戶「真實下單」，他的 Discord 會收到通知。` : `要幫 ${uid} 暫停自動交易嗎？\n\n已經開著的單會照常管理到平倉。`)) return;
+      await srvFetch('/api/users/lt', { uid, on });
+    }
     if (b.dataset.a === 'role') { const r = b.dataset.r; if (!confirm(`要把 ${uid} 改成${r === 'admin' ? '管理員（灰色）' : '一般'}嗎？`)) return; await srvFetch('/api/users', { uid, role: r }); }
     if (b.dataset.a === 'unbind') { if (!confirm(`要重設 ${uid} 的 Google 信箱和手機綁定嗎？\n對方會被登出，下次登入要重新綁定。`)) return; await srvFetch('/api/users', { uid, unbind: true }); }
     if (b.dataset.a === 'pw') { $('qa_uid').value = uid; $('qa_pw').value = ''; $('qa_pw').focus(); return; }
