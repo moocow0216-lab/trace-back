@@ -574,7 +574,8 @@ body.mode-pat #qPanel,body.mode-news #qPanel,body.mode-pat #newsPanel,body.mode-
 .tltools{align-items:center}
 /* 🗡 特級交易：紅色動態框 */
 .qspbtn{border-color:#b91c1c!important;color:#fecaca!important}.qspbtn.on{background:#3b0a0a!important}
-.qspst{color:#fca5a5}.qspst.on{color:#ef4444;font-weight:700}
+.qspst{color:#fca5a5}
+.qspcfg{border:2px solid #7f1d1d!important;background:radial-gradient(circle at 0 0,rgba(239,68,68,.08),transparent 60%)!important}.qspcfg>b{color:#fecaca}.qspst.on{color:#ef4444;font-weight:700}
 .qspmini{display:inline-block;margin-top:4px;font-size:12px;color:#fca5a5}.qspmini.on{color:#ef4444;font-weight:700}
 .qsptag{color:#ef4444;font-weight:700}
 .qspbox{position:relative;margin:12px 0;padding:12px 14px;border:2px solid transparent;border-radius:16px;background:linear-gradient(#141015,#120c10) padding-box,linear-gradient(120deg,#1a0000 0%,#7f1d1d 20%,#ef4444 40%,#f97316 50%,#ef4444 60%,#7f1d1d 80%,#1a0000 100%) border-box;background-size:100% 100%,300% 300%;animation:fireflow 3s linear infinite,fireglow 1.6s ease-in-out infinite}
@@ -939,7 +940,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-24a</div>
+      <div class="qver" id="qVer">網站版本 2026-10-24d</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -996,6 +997,21 @@ header{align-items:center}
             <input id="lt_maxOpen" type="hidden">
           </div>
           <div class="qcfgnote" id="qmt_note"></div>
+        </div>
+        <div class="qtg qspcfg" id="qSpCfg" hidden>
+          <b>🗡 特級交易設定</b><span id="qsp_stat"></span>
+          <div class="params">
+            <label class="field">特級交易投入資金（U，0＝不限制）<input id="sp_budget" type="number" min="0" step="10"></label>
+            <label class="field">每筆保證金（U）<input id="sp_margin" type="number" min="0.01" step="0.1"></label>
+            <label class="field">單日虧損上限（U，0＝不限制）<input id="sp_dayLoss" type="number" min="0" step="1"></label>
+            <label class="field">槓桿倍率（幣不支援就用最高）<input id="sp_lev" type="number" min="1" max="125" step="1"></label>
+            <label class="field">停利線：開始鎖利（浮盈達到幾 %）<input id="sp_tp" type="number" min="10" max="1000" step="10"></label>
+            <label class="field">鎖利線上調（浮盈每多幾 %，0＝不上調）<input id="sp_step" type="number" min="0" max="1000" step="10"></label>
+            <label class="field">停損線（浮虧幾 % 就平倉）<input id="sp_sl" type="number" min="10" max="1000" step="10"></label>
+            <label class="field">持有天數（到期就平倉）<input id="sp_hold" type="number" min="0.5" max="30" step="0.5"></label>
+          </div>
+          <div class="qbt" style="margin:8px 0 0"><button class="btn primary qspbtn" id="sp_save">儲存特級交易設定</button><span class="qltmsg" id="sp_msg"></span></div>
+          <div class="qcfgnote">只用在 🗡 特級交易，跟上面的一般交易分開：投入資金、單日虧損上限各算各的。同一個幣出現反方向的特級咒具訊號時會<b>反手</b>（只反手特級交易自己的單，不動一般自動單和手動單）。改停損線會一起更新交易所上特級單的止損。</div>
         </div>
         <div class="qtg" id="qScanBox" hidden>
           <b>🔍 掃描條件</b><span>（全站共用，只有擁有者看得到、能改）</span>
@@ -1065,6 +1081,7 @@ header{align-items:center}
           <button class="btn" id="qLtCfgBtn">👤 我的設定</button>
           <div class="qltmsg" id="qLtEco" hidden style="color:#f5a524;font-weight:600"></div>
         <span class="qltmsg" id="qLtMsg"></span>
+          <div class="qltmsg" id="qLtWhy" hidden style="color:#f5c46a"></div>
         </div>
         <div class="qcfg" id="qLtCfg" hidden>
           <div class="qcfgnote"><b>投入資金</b>：例如帳戶有 153U、這裡填 100，自動交易只會用這 100U（加上它自己賺的、扣掉它自己虧的）來下單，用完會自動暫停；實盤統計也從 100U 開始算。注意全倉模式下，交易所還是用整個帳戶當保證金，極端行情時帳戶裡其他的錢也可能被拖累。<br>保證金模式：<b>全倉</b>。出場規則用「⚙ 浮盈／槓桿設定」裡的成功線、失敗線、出場方式和最長持有時間。開倉單會同時掛交易所止損（失敗線）。伺服器重新啟動後，自動交易一律先暫停。</div>
@@ -3359,10 +3376,10 @@ async function srvPull() {
     if (j.notify) { tgShow(j.notify); GD.nt = j.notify; setTimeout(gdAuto, 0); }   // 📖 新帳號第一次登入：自動打開使用說明
     if (OWN() && !SV.pushed) { SV.pushed = true; pushTrade(); pushEq(); }
     if (j.rep) SRVREP.rep = j.rep;
-    if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
+    if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.pause = j.lt.pause || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-24a・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-24d・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -3663,7 +3680,7 @@ function gdPage(p) {
     ${gdPt('<path d="M8 5v14l11-7z"></path>', '按<b>「開始交易」</b>才會真的下單。關掉網頁、手機鎖螢幕，伺服器照樣運作。')}
     ${gdPt('<rect x="4" y="10" width="16" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path>', '鎖利、停損、持有到期都會自動平倉，交易所上也會掛好止損單。')}
     ${gdPt('<circle cx="12" cy="8" r="4"></circle><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"></path>', '你自己在 App 開的單是<b>手動單</b>（灰色），系統不會動它，一鍵平倉也只平自動單。')}
-    ${gdPt('<path d="M12 3l9.5 17h-19z"></path><path d="M12 10v4"></path><path d="M12 17v.01"></path>', '伺服器更新或重啟後，自動交易會<b class="or">先暫停</b>，記得再按一次「開始交易」。')}`;
+    ${gdPt('<path d="M12 3l9.5 17h-19z"></path><path d="M12 10v4"></path><path d="M12 17v.01"></path>', '伺服器更新或重啟後，約 <b class="or">1 分鐘會自動恢復</b>；短時間重開太多次或停機太久就不會，會用 Discord 通知你。')}`;
   if (p === 'f3') return `<div class="gdmock"><svg width="100%" height="64" viewBox="0 0 320 64" preserveAspectRatio="none" aria-hidden="true"><path d="M0 54 L40 48 L80 51 L120 36 L160 40 L200 27 L240 31 L280 16 L320 10" fill="none" stroke="#5ec8e0" stroke-width="2.5"></path><path d="M0 54 L40 48 L80 51 L120 36 L160 40 L200 27 L240 31 L280 16 L320 10 L320 64 L0 64 Z" fill="#5ec8e0" fill-opacity=".12"></path></svg></div>
     <h2>成功率、紀錄與回測</h2>
     ${gdPt('<path d="M3 17l6-6 4 4 8-8"></path><path d="M15 7h6v6"></path>', '<b>實盤</b>看你帳戶真正的賺賠和資金曲線；<b>訊號模擬</b>看所有訊號照規則跑的成績。')}
@@ -5064,7 +5081,7 @@ function renderHist() {
   { const R = DATA === 'real' && SRV.on && SRVLT.cfg ? all.filter(x => x.E.live) : [];
     $('qRecon').innerHTML = R.length ? '計算用到的持倉：' + R.map(x => `${esc(x.c.sym)} <b class="${x.E.pnl >= 0 ? 'pos' : 'neg'}">${spct(x.E.pnl, 1)}</b>${x.linked ? '' : '（⚠ 找不到對應的交易所倉位）'}${Math.abs(x.partU) > 1e-9 ? `（含部分平倉 ${x.partU >= 0 ? '+' : '−'}${Math.abs(x.partU).toFixed(2)}U）` : ''}`).join('、') : ''; }
   $('qPnl').innerHTML = pnlBox(allN, `${SP ? '🤖 一般交易紀錄' : '全部紀錄'}（${T.lev}x，+${T.tp}%／−${T.sl}%）`, SP ? HROWS.filter(x => !isT(x)) : HROWS);
-  if (SP) $('qSpPnl').innerHTML = pnlBox(allS, `🗡 特級交易紀錄（${T.lev}x，+${T.tp}%／−${T.sl}%）`, HROWS.filter(isT));
+  if (SP) { const C = SRVLT.cfg; $('qSpPnl').innerHTML = pnlBox(allS, `🗡 特級交易紀錄（${C.spLev}x，+${C.spTp}%／−${C.spSl}%）`, HROWS.filter(isT)); }
   renderEquity(HROWS, fs || fd || fr);
   const rows = HROWS.slice(0, hMore);
   const FR = rate(HROWS);
@@ -5719,6 +5736,16 @@ function renderLt() {
   $('qLtEco').hidden = !ED.length;
   $('qLtEco').textContent = ED.length ? `📅 今天有美國重要數據（${ED.map(e => `${e.zh} ${fmtT(e.t).slice(-5)}`).join('、')}），自動交易整天不開新單、不反手；已開的單照常管理。` : '';
   $('qLtToggle').textContent = C.on ? '⏸ 暫停交易' : '▶ 開始交易';
+  { const P = SRVLT.pause, show = !!(P && MINE() && (!C.on || (SRVLT.toolOk && !C.sp)));   // ⏸ 上次暫停的原因
+    $('qLtWhy').hidden = !show; if (show) $('qLtWhy').textContent = `⏸ 上次暫停：${fmtT(P.t).slice(-11)}・${P.why}`; }
+  { const ok = !!(SRVLT.toolOk && MINE()), SB = SRVLT.spBot;   // 🗡 特級交易設定：只有特級咒具權限的人看得到
+    $('qSpCfg').hidden = !ok;
+    if (ok) {
+      const v = { budget: C.spBudget || 0, margin: C.spMargin, dayLoss: C.spDayLoss, lev: C.spLev, tp: C.spTp, step: C.spStep, sl: C.spSl, hold: Math.round((C.spHold || 168) / 24 * 10) / 10 };
+      for (const k of Object.keys(v)) { const el = $('sp_' + k); if (el && document.activeElement !== el && !el.dataset.dirty) el.value = v[k] ?? ''; }
+      $('qsp_stat').textContent = `（${C.spBudget > 0 ? `投入 ${C.spBudget}U・目前 ${SB ? SB.eq.toFixed(2) : '—'}U、可用 ${SB ? Math.max(0, SB.free).toFixed(2) : '—'}U・` : '不限投入資金・'}今日 ${(SRVLT.spDay || 0) >= 0 ? '+' : '−'}${Math.abs(SRVLT.spDay || 0).toFixed(2)}U${C.spDayLoss > 0 ? `（上限 −${C.spDayLoss}U）` : ''}）`;
+    }
+  }
   { const ok = !!(SRVLT.toolOk && MINE());              // 🗡 特級交易：只有特級咒具權限的人看得到
     $('qSpToggle').hidden = $('qSpSt').hidden = !ok;
     $('qSpToggle').textContent = C.sp ? '⏸ 暫停特級交易' : '🗡 開始特級交易'; $('qSpToggle').classList.toggle('on', !!C.sp);
@@ -5750,10 +5777,17 @@ $('qLtAll').onclick = () => {
   const pause = confirm('要不要同時暫停自動交易？\n按「確定」＝平倉並暫停；按「取消」＝只平倉，自動交易繼續。');
   ltCall('/api/lt/closeAll', { pause }, '已送出：自動單全部平倉。');
 };
+for (const k of ['budget', 'margin', 'dayLoss', 'lev', 'tp', 'step', 'sl', 'hold']) $('sp_' + k).oninput = e => { e.target.dataset.dirty = '1'; };   // 改到一半不要被每 3 秒的更新蓋掉
+$('sp_save').onclick = async () => {
+  const g = k => $('sp_' + k).value, set = { budget: g('budget') || 0, margin: g('margin'), dayLoss: g('dayLoss') || 0, lev: g('lev'), tp: g('tp'), step: g('step'), sl: g('sl'), hold: g('hold') ? Math.round(+g('hold') * 24) : undefined };
+  const m = $('sp_msg'); m.textContent = '儲存中…'; m.style.color = '';
+  try { await srvFetch('/api/lt/config', { sp_set: set }); for (const k of Object.keys(set)) delete $('sp_' + k).dataset.dirty; m.textContent = '✅ 已儲存，下一筆特級交易開始套用（已開的單停損、鎖利、到期也照新的設定）'; SV.lv = 0; srvPull(); }
+  catch (e) { m.textContent = '❌ ' + e.message; m.style.color = '#ff9aa2'; }
+};
 $('qSpToggle').onclick = () => {
   const C = SRVLT.cfg || {};
   if (C.sp) return ltCall('/api/lt/config', { sp: false }, '已暫停特級交易，已經開著的單照常管理。');
-  if (!confirm(`確定要開始「🗡 特級交易」嗎？\n\n特級咒具的莊家、CRT、獵殺進場訊號，會用你的 Bitunix 帳戶「真實下單」：每筆 ${C.margin}U、${C.lev}x 全倉，停損、鎖利、持有天數都照「我的設定」。\n\n跟一般自動交易分開開關；同一個幣已經有自動單時會跳過。全倉的虧損可能超過單筆保證金，請確認你能承擔。`)) return;
+  if (!confirm(`確定要開始「🗡 特級交易」嗎？\n\n特級咒具的莊家、CRT、獵殺進場訊號，會用你的 Bitunix 帳戶「真實下單」，照「🗡 特級交易設定」：\n・每筆 ${C.spMargin}U、${C.spLev}x 全倉\n・浮盈 +${C.spTp}% 開始鎖利、每多 ${C.spStep}% 上調\n・浮虧 −${C.spSl}% 停損、持有 ${Math.round(C.spHold / 24 * 10) / 10} 天到期\n${C.spBudget > 0 ? `・投入資金 ${C.spBudget}U\n` : ''}${C.spDayLoss > 0 ? `・單日虧損上限 ${C.spDayLoss}U\n` : ''}\n同一個幣出現反方向訊號會反手（只動特級交易自己的單）。全倉的虧損可能超過單筆保證金，請確認你能承擔。`)) return;
   ltCall('/api/lt/config', { sp: true }, '🗡 特級交易已開始。');
 };
 $('qLtCfgBtn').onclick = () => {                     // 打開「👤 我的設定」並捲到交易設定
