@@ -571,6 +571,21 @@ body.mode-pat #qPanel,body.mode-news #qPanel,body.mode-pat #newsPanel,body.mode-
 .tlwrap{display:flex;flex-direction:column;gap:12px}
 .tlhead{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap}.tlhead b{font-size:16px}
 .tlsub{display:block;font-size:12.5px;color:var(--muted);line-height:1.6}
+.tltools{align-items:center}
+.tlcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
+.tlcard{position:relative;border:1px solid #2a3140;border-left:4px solid var(--dc);border-radius:18px;padding:16px;background:linear-gradient(180deg,#151a22,#10141b);display:flex;flex-direction:column;gap:12px}
+.tlch{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.tlsym{font-size:22px;letter-spacing:.02em;display:block}.tlch .tlsub b{color:var(--ink)}
+.tlchg{padding:4px 10px;border-radius:999px;font-weight:700;font-size:14px}.tlchg.up{color:#4ade80;background:rgba(34,197,94,.14)}.tlchg.dn{color:#fb7185;background:rgba(239,68,68,.14)}
+.tlstate{border:1px solid #6b5422;border-radius:12px;padding:6px 12px;background:rgba(245,182,66,.04);display:flex;flex-direction:column}
+.tlsr{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;padding:8px 0;border-bottom:1px solid #2a2a2a;font-size:13.5px}.tlsr:last-of-type{border-bottom:none}
+.tlwhen{color:var(--muted);margin-left:auto;font-size:12.5px}.tlpxv{flex-basis:100%;font-size:13px;font-variant-numeric:tabular-nums}
+.tlmut{color:var(--muted);font-size:12.5px}
+.tlcf{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}.tltv{border-color:#6d5bd0!important;color:#c4b5fd!important;text-decoration:none}
+.tlscore{display:flex;justify-content:center;align-items:center;gap:14px;border:1px solid #6b5422;border-radius:12px;padding:10px;background:rgba(245,182,66,.05);color:var(--muted);font-size:13px}.tlscore b{font-size:17px}
+.qy{color:#f5c46a}
+.tldlg{border:1px solid var(--line);border-radius:16px;background:#11151d;color:var(--ink);width:min(720px,96vw);max-height:90dvh;padding:14px 16px}.tldlg::backdrop{background:rgba(4,7,15,.7)}
+.tldlgh{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.tldlgh h3{margin:0}
+.tldlg .tlbox{margin-bottom:12px}
 .tltab td,.tltab th{white-space:nowrap}
 .tltype{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid var(--tc);color:var(--tc);font-size:12.5px;font-weight:700}
 .tlbox{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:rgba(255,255,255,.02);display:flex;flex-direction:column;gap:8px}
@@ -910,7 +925,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-23c</div>
+      <div class="qver" id="qVer">網站版本 2026-10-23d</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3330,7 +3345,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-23c・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-23d・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -3729,56 +3744,76 @@ var MN_PAGE = '';
 const MN_ITEMS = [
   ['set', '👤', '設定', 'mnpSet', '#7aa2ff'], ['heat', '🔥', '熱力圖', 'qHeatHost', '#fb923c'], ['cards', '📡', '訊號卡片', 'qSidePanel', '#22d3ee'], ['pat', '📈', '歷史走勢', '', '#a78bfa'],
   ['news', '📰', '加密新聞', 'newsPanel', '#f472b6'], ['bt', '📊', '回測數據', 'qBtHost', '#34d399'], ['hist', '📋', '歷史紀錄', 'qTabPanel', '#fbbf24'], ['whale', '🐋', '幣安鯨魚大單', 'whalePanel', '#38bdf8'], ['guide', '📖', '使用說明', '', '#94a3b8'], ['tool', '🗡', '特級咒具', 'mnpTool', '#ef4444']];   // 最後一欄是選單框的顏色
-/* ---------- 🗡 特級咒具：上鎖（擁有者或輸入密碼的人才能用）；三種進場放在同一個列表；自己的 Discord ---------- */
+/* ---------- 🗡 特級咒具：上鎖（擁有者或輸入密碼的人才能用）；一個幣一張卡片；設定收在「⚙ 設定」裡 ---------- */
 const TL = { d: null, f: 'all', timer: null };
 const TL_TYPE = { zh: ['莊家進場', '#f5c542'], crt: ['CRT 進場', '#a78bfa'], hunt: ['獵殺進場', '#ef4444'] };
 async function tlLoad() {
-  const box = $('mnpTool');
   try { TL.d = await srvFetch('/api/tool', { op: 'get' }); tlRender(); }
-  catch (e) { TL.d = null; if (/還沒解鎖/.test(e.message) || /403/.test(e.message)) tlLocked(); else box.innerHTML = `<p class="mnmsg bad">${esc(e.message)}</p>`; }
+  catch (e) { TL.d = null; if (/還沒解鎖|403/.test(e.message)) tlLocked(); else $('mnpTool').innerHTML = `<p class="mnmsg bad">${esc(e.message)}</p>`; }
 }
 function tlLocked() {
   $('mnpTool').innerHTML = `<div class="tllock"><div class="tllockic" aria-hidden="true">🔒</div><h3>特級咒具還在開發中</h3>
     <p>目前只開放給擁有者。如果擁有者給了你密碼，輸入後就能使用。</p>
     <div class="tlrow"><input id="tlPw" type="password" autocomplete="off" placeholder="輸入密碼"><button class="btn primary" id="tlUnlock">解鎖</button></div><p class="mnmsg" id="tlMsg" role="status"></p></div>`;
-  $('tlUnlock').onclick = async () => {
-    const m = $('tlMsg');
-    try { await srvFetch('/api/tool', { op: 'unlock', pw: $('tlPw').value }); tlLoad(); }
-    catch (e) { m.className = 'mnmsg bad'; m.textContent = e.message; }
-  };
+  $('tlUnlock').onclick = async () => { try { await srvFetch('/api/tool', { op: 'unlock', pw: $('tlPw').value }); tlLoad(); } catch (e) { $('tlMsg').className = 'mnmsg bad'; $('tlMsg').textContent = e.message; } };
   $('tlPw').onkeydown = e => { if (e.key === 'Enter') $('tlUnlock').click(); };
 }
+const tlPr = p => !(p > 0) ? '—' : p >= 1000 ? p.toFixed(1) : p >= 1 ? p.toFixed(4) : p.toPrecision(4);
+const tlAgo = t => { const m = Math.max(0, Math.round((Date.now() - t) / 60000)); return m < 60 ? `${m} 分鐘前` : m < 1440 ? `${Math.floor(m / 60)} 小時 ${m % 60} 分前` : `${Math.floor(m / 1440)} 天前`; };
 function tlRender() {
-  const d = TL.d, S = d.set, list = d.sigs.filter(s => TL.f === 'all' || s.type === TL.f);
-  const pr = p => p >= 1000 ? p.toFixed(1) : p >= 1 ? p.toFixed(4) : p.toPrecision(4);
-  const row = s => { const [nm, col] = TL_TYPE[s.type]; return `<tr><td>${fmtT(s.t)}</td><td><b>${esc(s.sym.replace(/USDT$/, ''))}</b></td><td><span class="chip ${s.dir > 0 ? 'qg' : 'qr'}" style="border-color:currentColor">${s.dir > 0 ? '做多' : '做空'}</span></td>
-    <td><span class="tltype" style="--tc:${col}">${s.type === 'crt' ? (s.pair === 'h4' ? 'H4 ' : 'H1 ') : ''}${nm}</span></td><td>${s.pair === 'h4' ? '4H→15 分' : '1H→5 分'}</td><td>${pr(s.px)}</td><td>${s.type === 'crt' ? `<span class="qr">${pr(s.sl)}</span> / <span class="qg">${pr(s.tp)}</span>` : (s.tag || '—')}</td></tr>`; };
-  $('mnpTool').innerHTML = `
-    <div class="tlhead"><div><b>🗡 進場訊號</b><span class="tlsub">掃描成交額前 ${S.n} 個幣・${[S.h4 ? '4H→15 分（每 15 分鐘）' : '', S.h1 ? '1H→5 分（每 5 分鐘）' : ''].filter(Boolean).join('、') || '已全部關閉'}・上次掃描 ${d.scan.at ? fmtT(d.scan.at) : '還沒掃描'}${d.scan.err ? `・<span class="qr">${esc(d.scan.err)}</span>` : ''}</span></div>
-      <label class="tzsel">進場方式 <select id="tlF"><option value="all">全部</option><option value="zh">莊家進場</option><option value="crt">CRT 進場</option><option value="hunt">獵殺進場</option></select></label></div>
-    <div class="tablewrap tltab"><table><thead><tr><th>進場時間（台北）</th><th>幣種</th><th>方向</th><th>進場方式</th><th>週期</th><th>價格</th><th>止損／止盈・結構</th></tr></thead><tbody>${list.length ? list.slice(0, 300).map(row).join('') : '<tr><td colspan="7" style="color:var(--muted)">還沒有訊號。伺服器每根 K 棒收盤後會掃描一次。</td></tr>'}</tbody></table></div>
-    <div class="tlbox"><b>💬 Discord 通知</b><span class="tlsub">${d.hook ? '<span class="qg">已設定</span>，有新的進場訊號會傳到你的頻道' : '還沒設定。可以跟一般通知用不同的頻道'}</span>
+  if (!$('tlCards')) {                                // 第一次：畫外框（之後每 20 秒只更新卡片，打開中的設定視窗不會被洗掉）
+    $('mnpTool').innerHTML = `<div class="tlhead"><div><b>🗡 進場訊號</b><span class="tlsub" id="tlStat"></span></div>
+      <div class="tlrow tltools"><label class="tzsel">進場方式 <select id="tlF"><option value="all">全部</option><option value="zh">莊家進場</option><option value="crt">CRT 進場</option><option value="hunt">獵殺進場</option></select></label><button class="btn" id="tlSetBtn">⚙ 設定</button></div></div>
+      <div class="tlcards" id="tlCards"></div>
+      <p class="tlsub">三種進場移植自你的兩套 TradingView 指標：💰 莊家淨額背離＋CHoCH/BOS、🕯 H4/H1 CRT＋回踩 FVG（止盈＝盈虧比 1:1）、🎯 4H/1H 掃流動性窗口＋CHoCH/BOS。只是訊號通知，不會自動下單。</p>
+      <dialog id="tlDlg" class="tldlg" aria-labelledby="tlDlgT"><div class="tldlgh"><h3 id="tlDlgT">⚙ 特級咒具設定</h3><button class="btn" id="tlDlgX">關閉</button></div><div id="tlDlgB"></div></dialog>`;
+    $('tlF').value = TL.f; $('tlF').onchange = () => { TL.f = $('tlF').value; tlCards(); };
+    $('tlSetBtn').onclick = () => { tlSettings(); $('tlDlg').showModal(); };
+    $('tlDlgX').onclick = () => $('tlDlg').close();
+  }
+  const d = TL.d, S = d.set;
+  $('tlStat').innerHTML = `掃描成交額前 ${S.n} 個幣・${[S.h4 ? '4H→15 分（每 15 分鐘）' : '', S.h1 ? '1H→5 分（每 5 分鐘）' : ''].filter(Boolean).join('、') || '已全部關閉'}・上次掃描 ${d.scan.at ? fmtT(d.scan.at) : '還沒掃描'}${d.scan.err ? `・<span class="qr">${esc(d.scan.err)}</span>` : ''}${d.hook ? '' : '・<span class="qy">Discord 還沒設定（按 ⚙ 設定）</span>'}`;
+  tlCards();
+}
+function tlCards() {                                   // 一個幣一張卡片：最新的在最上面
+  const d = TL.d, list = d.sigs.filter(s => TL.f === 'all' || s.type === TL.f), by = new Map();
+  for (const s of list) { if (!by.has(s.sym)) by.set(s.sym, []); by.get(s.sym).push(s); }
+  const day = Date.now() - 24 * HOUR_MS;
+  $('tlCards').innerHTML = by.size ? [...by.entries()].slice(0, 60).map(([sym, L]) => {
+    const top = L[0], px = (d.px || {})[sym] || {}, short = sym.replace(/USDT$/, ''), recent = L.filter(s => s.t >= day), nL = recent.filter(s => s.dir > 0).length, nS = recent.length - nL;
+    const rows = L.slice(0, 5).map(s => { const [nm, col] = TL_TYPE[s.type];
+      return `<div class="tlsr"><span class="tltype" style="--tc:${col}">${s.type === 'crt' ? (s.pair === 'h4' ? 'H4 ' : 'H1 ') : ''}${nm}</span><b class="${s.dir > 0 ? 'qg' : 'qr'}">${s.dir > 0 ? '做多' : '做空'}</b><span class="tlmut">${s.pair === 'h4' ? '4H→15 分' : '1H→5 分'}</span>
+        <span class="tlwhen">${fmtT(s.t).slice(-11)}・${tlAgo(s.t)}</span><span class="tlpxv">@ ${tlPr(s.px)}${s.type === 'crt' ? `　<span class="qr">損 ${tlPr(s.sl)}</span> / <span class="qg">盈 ${tlPr(s.tp)}</span>` : s.tag ? `　<span class="tlmut">${esc(s.tag)}</span>` : ''}</span></div>`; }).join('');
+    return `<div class="tlcard" style="--dc:${top.dir > 0 ? '#22c55e' : '#ef4444'}">
+      <div class="tlch"><div><b class="tlsym">${esc(short)}</b><span class="tlsub">${esc(sym)}.P・現價 <b>${tlPr(px.c)}</b></span></div>${px.chg != null ? `<span class="tlchg ${px.chg >= 0 ? 'up' : 'dn'}">${px.chg >= 0 ? '+' : ''}${px.chg.toFixed(2)}%</span>` : ''}</div>
+      <div class="tlstate">${rows}${L.length > 5 ? `<span class="tlmut">還有 ${L.length - 5} 筆較早的訊號</span>` : ''}</div>
+      <div class="tlcf"><span class="tlmut">⏳ 最新訊號距今 ${tlAgo(top.t)}</span><a class="btn tltv" href="https://www.tradingview.com/chart/?symbol=BINANCE:${encodeURIComponent(sym)}.P" target="_blank" rel="noopener">🔗 開啟 TradingView</a></div>
+      <div class="tlscore">綜合評分（最近 24 小時）<b class="qg">多 ${nL}</b><b class="qr">空 ${nS}</b></div></div>`;
+  }).join('') : '<p class="tlsub">還沒有訊號。伺服器每根 K 棒收盤後會掃描一次。</p>';
+}
+function tlSettings() {                                // ⚙ 設定視窗：Discord、擁有者設定
+  const d = TL.d, S = d.set;
+  $('tlDlgB').innerHTML = `<div class="tlbox"><b>💬 Discord 通知</b><span class="tlsub">${d.hook ? '<span class="qg">已設定</span>，有新的進場訊號會傳到你的頻道' : '還沒設定。可以跟一般通知用不同的頻道'}</span>
       <div class="tlrow"><input id="tlHook" placeholder="https://discord.com/api/webhooks/…" autocomplete="off" spellcheck="false"><button class="btn primary" id="tlHookSave">儲存</button><button class="btn" id="tlHookTest">傳測試訊息</button>${d.hook ? '<button class="btn" id="tlHookDel">清除</button>' : ''}</div><p class="mnmsg" id="tlHookMsg" role="status"></p></div>
     ${d.owner ? `<div class="tlbox"><b>👑 擁有者設定</b>
       <div class="tlset"><label>掃描成交額前幾個幣<input id="tlN" type="number" min="5" max="100" value="${S.n}"></label>
         <label class="lvck"><input type="checkbox" id="tlH4"${S.h4 ? ' checked' : ''}>4H→15 分</label><label class="lvck"><input type="checkbox" id="tlH1"${S.h1 ? ' checked' : ''}>1H→5 分</label>
-        <label class="lvck"><input type="checkbox" id="tlZh"${S.zh ? ' checked' : ''}>莊家進場</label><label class="lvck"><input type="checkbox" id="tlCrt"${S.crt ? ' checked' : ''}>CRT 進場</label><label class="lvck"><input type="checkbox" id="tlHunt"${S.hunt ? ' checked' : ''}>獵殺進場</label>
-        <button class="btn primary" id="tlSetSave">儲存設定</button></div>
-      <div class="tlrow" style="margin-top:10px"><input id="tlNewPw" type="password" autocomplete="new-password" placeholder="${d.hasPw ? '新的密碼（至少 8 個字）' : '設定密碼（至少 8 個字）'}"><button class="btn" id="tlPwSave">${d.hasPw ? '改密碼' : '設定密碼'}</button></div>
+        <label class="lvck"><input type="checkbox" id="tlZh"${S.zh ? ' checked' : ''}>莊家進場</label><label class="lvck"><input type="checkbox" id="tlCrt"${S.crt ? ' checked' : ''}>CRT 進場</label><label class="lvck"><input type="checkbox" id="tlHunt"${S.hunt ? ' checked' : ''}>獵殺進場</label></div>
+      <button class="btn primary" id="tlSetSave">儲存設定</button>
+      <div class="tlrow" style="margin-top:6px"><input id="tlNewPw" type="password" autocomplete="new-password" placeholder="${d.hasPw ? '新的密碼（至少 8 個字）' : '設定密碼（至少 8 個字）'}"><button class="btn" id="tlPwSave">${d.hasPw ? '改密碼' : '設定密碼'}</button></div>
       <span class="tlsub">${d.hasPw ? `目前有 ${d.grants.length} 個人用密碼解鎖了${d.grants.length ? `（${d.grants.map(esc).join('、')}）` : ''}。改密碼後，他們都要重新輸入。` : '還沒設定密碼，所以只有你能用。設定後把密碼給想開放的人。'}</span>
-      <p class="mnmsg" id="tlSetMsg" role="status"></p></div>` : ''}
-    <p class="tlsub">三種進場移植自你的兩套 TradingView 指標：💰 莊家淨額背離＋CHoCH/BOS、🕯 H4/H1 CRT＋回踩 FVG（止盈＝盈虧比 1:1）、🎯 4H/1H 掃流動性窗口＋CHoCH/BOS。只是訊號通知，不會自動下單。</p>`;
-  $('tlF').value = TL.f; $('tlF').onchange = () => { TL.f = $('tlF').value; tlRender(); };
+      <p class="mnmsg" id="tlSetMsg" role="status"></p></div>` : ''}`;
   const msg = (id, ok, t) => { $(id).className = 'mnmsg ' + (ok ? 'ok' : 'bad'); $(id).textContent = t; };
-  $('tlHookSave').onclick = async () => { try { await srvFetch('/api/tool', { op: 'hook', webhook: $('tlHook').value }); await tlLoad(); msg('tlHookMsg', 1, '已儲存，按「傳測試訊息」試試看。'); } catch (e) { msg('tlHookMsg', 0, e.message); } };
+  const again = async () => { TL.d = await srvFetch('/api/tool', { op: 'get' }); tlRender(); tlSettings(); };
+  $('tlHookSave').onclick = async () => { try { await srvFetch('/api/tool', { op: 'hook', webhook: $('tlHook').value }); await again(); msg('tlHookMsg', 1, '已儲存，按「傳測試訊息」試試看。'); } catch (e) { msg('tlHookMsg', 0, e.message); } };
   $('tlHookTest').onclick = async () => { try { await srvFetch('/api/tool', { op: 'test' }); msg('tlHookMsg', 1, '已送出，看看頻道有沒有收到。'); } catch (e) { msg('tlHookMsg', 0, e.message); } };
-  if ($('tlHookDel')) $('tlHookDel').onclick = async () => { if (!confirm('要清除特級咒具的 Discord 網址嗎？')) return; await srvFetch('/api/tool', { op: 'hook', webhook: '' }); tlLoad(); };
+  if ($('tlHookDel')) $('tlHookDel').onclick = async () => { if (!confirm('要清除特級咒具的 Discord 網址嗎？')) return; await srvFetch('/api/tool', { op: 'hook', webhook: '' }); await again(); };
   if (d.owner) {
-    $('tlSetSave').onclick = async () => { try { await srvFetch('/api/tool', { op: 'set', set: { n: +$('tlN').value, h4: $('tlH4').checked, h1: $('tlH1').checked, zh: $('tlZh').checked, crt: $('tlCrt').checked, hunt: $('tlHunt').checked } }); await tlLoad(); msg('tlSetMsg', 1, '已儲存，下一輪掃描開始套用。'); } catch (e) { msg('tlSetMsg', 0, e.message); } };
+    $('tlSetSave').onclick = async () => { try { await srvFetch('/api/tool', { op: 'set', set: { n: +$('tlN').value, h4: $('tlH4').checked, h1: $('tlH1').checked, zh: $('tlZh').checked, crt: $('tlCrt').checked, hunt: $('tlHunt').checked } }); await again(); msg('tlSetMsg', 1, '已儲存，下一輪掃描開始套用。'); } catch (e) { msg('tlSetMsg', 0, e.message); } };
     $('tlPwSave').onclick = async () => {
       const pw = $('tlNewPw').value; if (pw.length < 8) return msg('tlSetMsg', 0, '密碼至少 8 個字');
       if (d.hasPw && d.grants.length && !confirm(`改密碼後，目前用密碼解鎖的 ${d.grants.length} 個人都要重新輸入新密碼。確定嗎？`)) return;
-      try { const r = await srvFetch('/api/tool', { op: 'pw', pw }); await tlLoad(); msg('tlSetMsg', 1, `密碼已更新${r.revoked ? `，${r.revoked} 個人需要重新輸入` : ''}。`); } catch (e) { msg('tlSetMsg', 0, e.message); }
+      try { const r = await srvFetch('/api/tool', { op: 'pw', pw }); await again(); msg('tlSetMsg', 1, `密碼已更新${r.revoked ? `，${r.revoked} 個人需要重新輸入` : ''}。`); } catch (e) { msg('tlSetMsg', 0, e.message); }
     };
   }
 }
@@ -3809,7 +3844,7 @@ function mnOpen(k) {
   if (k === 'set') { $('qSrv').hidden = false; mnAcct(); }
   if (k === 'heat') htStart();
   clearInterval(TL.timer);
-  if (k === 'tool') { $('mnpTool').innerHTML = '<p class="tlsub">載入中…</p>'; tlLoad(); TL.timer = setInterval(() => { if (MN_PAGE === 'tool' && TL.d && !document.activeElement.closest('#mnpTool input')) tlLoad(); }, 20000); }
+  if (k === 'tool') { $('mnpTool').innerHTML = '<p class="tlsub">載入中…</p>'; tlLoad(); TL.timer = setInterval(() => { if (MN_PAGE === 'tool' && TL.d && !($('tlDlg') && $('tlDlg').open)) tlLoad(); }, 20000); }   // 設定視窗打開時不更新
   try { if (k === 'cards') { $('qSidePanel').hidden = false; renderCards(); } if (k === 'hist') { $('qTabPanel').hidden = false; renderHist(); } } catch (e) { console.error(e); }   // 重畫出錯也要照樣打開頁面
   $('mnSheet').hidden = false; document.body.classList.add('mn-sheet'); $('mnSheet').scrollTop = 0; $('mnSheetBody').scrollTop = 0;
   setTimeout(() => window.dispatchEvent(new Event('resize')), 60);   // 星圖、圖表重新計算大小
