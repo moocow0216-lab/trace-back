@@ -860,7 +860,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-22j';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-23a';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1876,7 +1876,7 @@ http.createServer(async (req, res) => {
     if (req.method === 'POST' && u.pathname.startsWith('/api/')) {
       // 個人設定：每個帳號都能改「自己的」；其他（掃描條件、浮盈規則、回測、帳號管理、AWS）只有管理員能改
       // 個人（每個帳號）：自己的 API、Discord、交易設定、平倉；管理員（灰色）：帳號管理；其他全站設定只有擁有者能改
-      const PERSONAL = ['/api/bind', '/api/bitunix', '/api/lt/config', '/api/lt/testOpen', '/api/lt/close', '/api/lt/closeAll', '/api/lt/adopt', '/api/notify', '/api/notify/test'];
+      const PERSONAL = ['/api/bind', '/api/bitunix', '/api/lt/config', '/api/lt/testOpen', '/api/lt/close', '/api/lt/closeAll', '/api/lt/adopt', '/api/notify', '/api/notify/test', '/api/me/password'];
       const ADMIN = ['/api/users', '/api/users/delete', '/api/users/kick', '/api/check'];
       if (ADMIN.includes(u.pathname) && !admin) return send(res, 403, { error: '這個功能只有管理員可以用' });
       if (!PERSONAL.includes(u.pathname) && !ADMIN.includes(u.pathname) && !owner) return send(res, 403, { error: '這個設定只有擁有者可以改' });
@@ -2074,6 +2074,18 @@ http.createServer(async (req, res) => {
         const pct = Math.min(1, Math.max(0.01, +b.pct || 1));
         try { const r = await ltClosePos(X, String(b.positionId), pct, 'manual'); setTimeout(() => bxPollOne(X), 1500); return send(res, 200, { ok: true, r }); }
         catch (e) { return send(res, 400, { error: e.message }); }
+      }
+      if (u.pathname === '/api/me/password') {         // 🔑 改自己的密碼：要先輸入目前的密碼；改完其他裝置登出，這台保持登入
+        if (!me) return send(res, 400, { error: '用管理金鑰登入不能改密碼' });
+        const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
+        if (!pwOk(me, String(b.old || ''))) { failed(ip); return send(res, 400, { error: '目前的密碼不對' }); }
+        if (!validPw(b.password)) return send(res, 400, { error: '新密碼至少 8 個字' });
+        if (String(b.password) === String(b.old)) return send(res, 400, { error: '新密碼跟目前的一樣' });
+        Object.assign(me, hashPw(b.password));
+        const m0 = String(req.headers.authorization || '').match(/^Bearer\s+([0-9a-f]{64})$/i), keep = m0 ? tokHash(m0[1]) : '';
+        const n0 = ST.sessions.length; ST.sessions = ST.sessions.filter(x => x.uid !== me.uid || x.h === keep); dirty = true;
+        log('改自己的密碼', me.uid); dcX(ctx(me.uid), `🔑 **你的密碼已經更改**${n0 - ST.sessions.length ? `，其他 ${n0 - ST.sessions.length} 個裝置已登出` : ''}。如果不是你本人，請馬上聯絡擁有者。`);
+        return send(res, 200, { ok: true, out: n0 - ST.sessions.length });
       }
       if (u.pathname === '/api/lt/adopt') {            // 🤖 把一筆手動單改成自動單：之後照「那個帳號自己」的規則管理（鎖利、停損、到期、一鍵平倉），交易所也補掛止損
         let XA = X;                                      // 👑 擁有者可以在帳號管理後台幫別人改（對方的 Discord 會收到通知）
