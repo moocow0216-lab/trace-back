@@ -556,8 +556,10 @@ body.mode-pat #qPanel,body.mode-news #qPanel,body.mode-pat #newsPanel,body.mode-
 .mnshade{position:fixed;inset:0;background:rgba(4,7,15,.6);z-index:90}
 .mndrawer{position:fixed;top:0;right:0;bottom:0;width:min(300px,82vw);background:#11151d;border-left:1px solid #262d3a;z-index:91;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);box-shadow:-12px 0 40px rgba(0,0,0,.45)}
 .mnhead{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #262d3a}.mnhead b{font-size:16px}
-.mnitem{display:flex;align-items:center;gap:10px;width:100%;min-height:50px;padding:0 18px;background:none;border:none;border-bottom:1px solid #1d232e;color:#e6e9ef;font:inherit;font-size:15px;text-align:left;cursor:pointer}
-.mnitem:hover,.mnitem:focus-visible{background:#182030}.mnno{color:#8b95a7;min-width:20px}.mnic{width:22px;text-align:center}
+.mnhead+#mnList{display:flex;flex-direction:column;gap:8px;padding:12px;overflow:auto}
+.mnitem{display:flex;align-items:center;gap:10px;width:100%;min-height:50px;padding:0 14px;background:color-mix(in srgb,var(--mc) 8%,transparent);border:1.5px solid var(--mc);border-radius:12px;color:#e6e9ef;font:inherit;font-size:15px;text-align:left;cursor:pointer}
+.mnitem:hover,.mnitem:focus-visible{background:color-mix(in srgb,var(--mc) 20%,transparent);outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--mc) 35%,transparent)}
+.mnno{color:var(--mc);min-width:22px;font-weight:700}.mnic{width:22px;text-align:center}
 .mnsheet{position:fixed;inset:0;z-index:80;background:var(--bg,#0b0f16);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
 .mnsheethead{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid #262d3a;background:rgba(11,15,22,.96)}.mnsheethead h2{margin:0;font-size:17px}
 .mnsheetbody{flex:1;overflow:auto;padding:14px 16px calc(24px + env(safe-area-inset-bottom,0px))}
@@ -890,7 +892,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-23a</div>
+      <div class="qver" id="qVer">網站版本 2026-10-23b</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3309,7 +3311,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-23a・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-23b・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -3706,8 +3708,8 @@ $('qGuideBtn').onclick = () => gdOpen(0);
 /* ---------- ☰ 選單：右上角打開，每一項是一個全螢幕頁面；內容是從主畫面「搬」進來的，主畫面不再重複顯示 ---------- */
 var MN_PAGE = '';
 const MN_ITEMS = [
-  ['set', '👤', '設定', 'mnpSet'], ['heat', '🔥', '熱力圖', 'qHeatHost'], ['cards', '📡', '訊號卡片', 'qSidePanel'], ['news', '📰', '加密新聞', 'newsPanel'],
-  ['bt', '📊', '回測數據', 'qBtHost'], ['hist', '📋', '歷史紀錄', 'qTabPanel'], ['whale', '🐋', '幣安鯨魚大單', 'whalePanel'], ['guide', '📖', '使用說明', '']];
+  ['set', '👤', '設定', 'mnpSet', '#7aa2ff'], ['heat', '🔥', '熱力圖', 'qHeatHost', '#fb923c'], ['cards', '📡', '訊號卡片', 'qSidePanel', '#22d3ee'], ['pat', '📈', '歷史走勢', '', '#a78bfa'],
+  ['news', '📰', '加密新聞', 'newsPanel', '#f472b6'], ['bt', '📊', '回測數據', 'qBtHost', '#34d399'], ['hist', '📋', '歷史紀錄', 'qTabPanel', '#fbbf24'], ['whale', '🐋', '幣安鯨魚大單', 'whalePanel', '#38bdf8'], ['guide', '📖', '使用說明', '', '#94a3b8']];   // 最後一欄是選單框的顏色
 function mnInit() {
   const body = $('mnSheetBody');
   for (const [k, , , id] of MN_ITEMS) {                // 每一項一個頁面容器；把原本的區塊搬進來
@@ -3715,14 +3717,15 @@ function mnInit() {
     const pg = document.createElement('div'); pg.className = 'mnpage'; pg.dataset.p = k; pg.hidden = true; body.appendChild(pg);
     if (k === 'set') { pg.appendChild($('mnpSet')); pg.appendChild($('qSrv')); } else pg.appendChild($(id));
   }
-  $('mnList').innerHTML = MN_ITEMS.map(([k, ic, t], i) => `<button class="mnitem" data-k="${k}"><span class="mnno">${i + 1}.</span><span class="mnic" aria-hidden="true">${ic}</span>${t}</button>`).join('');
-  for (const id of ['qModeNews', 'qModeBt', 'qModeHeat', 'qGuideBtn', 'qSrvBtn', 'qLtCfgBtn', 'qLogout']) if ($(id)) $(id).hidden = true;   // 選單裡有的，主畫面不再放
+  $('mnList').innerHTML = MN_ITEMS.map(([k, ic, t, , col], i) => `<button class="mnitem" data-k="${k}" style="--mc:${col}"><span class="mnno">${i + 1}.</span><span class="mnic" aria-hidden="true">${ic}</span>${t}</button>`).join('');
+  for (const id of ['qModePat', 'qModeNews', 'qModeBt', 'qModeHeat', 'qGuideBtn', 'qSrvBtn', 'qLtCfgBtn', 'qLogout']) if ($(id)) $(id).hidden = true;   // 選單裡有的，主畫面不再放
   document.body.classList.add('mn');
 }
 function mnDrawer(open) { $('mnDrawer').hidden = !open; $('mnShade').hidden = !open; $('mnBtn').setAttribute('aria-expanded', String(open)); if (open) setTimeout(() => $('mnList').querySelector('button').focus(), 30); }
 function mnOpen(k) {
   mnDrawer(false);
   if (k === 'guide') { gdOpen(0); return; }
+  if (k === 'pat') { if (!$('mnSheet').hidden) mnClose(); if (MODE !== 'pat') setMode('pat'); return; }   // 📈 歷史走勢是一整個版面：直接切過去（左上角「✕ 關閉」回到合約量化）
   if (MODE !== 'quant') setMode('quant');             // 在歷史走勢頁時先回到合約量化，訊號卡片、歷史紀錄才會在
   const it = MN_ITEMS.find(x => x[0] === k); if (!it) return;
   if (MN_PAGE === 'heat' && k !== 'heat') htStop();
