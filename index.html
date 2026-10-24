@@ -597,6 +597,7 @@ body.mode-pat #qPanel,body.mode-news #qPanel,body.mode-pat #newsPanel,body.mode-
 .lvtip{position:absolute;z-index:3;pointer-events:none;min-width:230px;max-width:300px;background:rgba(22,26,33,.97);border:1px solid #333a46;border-radius:10px;padding:10px 12px;font-size:12.5px;color:#cfd6e0;box-shadow:0 6px 20px rgba(0,0,0,.45)}
 .lvtip h4{margin:0 0 6px;font-size:14px;color:#fff}.lvtip div{display:flex;justify-content:space-between;gap:12px;line-height:1.75}.lvtip span{color:#9aa4b2}.lvtip b{font-weight:600;color:#fff;text-align:right}.lvtip i{font-style:normal}
 .lvtip hr{border:none;border-top:1px solid #333a46;margin:6px 0}
+.qadmnote{max-width:220px;white-space:normal;word-break:break-word;font-size:12.5px;line-height:1.45}
 .lvminebar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 8px;font-size:13px;color:var(--muted)}
 .lvmine{border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--ink);border-radius:8px;padding:4px 9px;font:inherit;font-size:12.5px;cursor:pointer}.lvmine.on{border-color:#2f80ff;background:rgba(47,128,255,.15)}.lvmine i{font-style:normal}
 .lvbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:4px 0 10px}
@@ -861,7 +862,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-22h</div>
+      <div class="qver" id="qVer">網站版本 2026-10-22j</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3265,7 +3266,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-22h・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-22j・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -5239,6 +5240,7 @@ $('qb_out').onclick = async () => {
   LS.set('quantSrv', Object.assign({}, SRV, { token: '', role: '', key: '' })); location.reload();
 };
 /* ---------- 後台：帳號管理 ---------- */
+const ADM_NOTE = {};                                  // 帳號備註（給編輯視窗帶入原本的內容）
 async function admLoad() {
   try {
     const j = await srvFetch('/api/users');
@@ -5277,9 +5279,9 @@ async function admLoad() {
         });
       }
     }
-    $('qAdmTab').innerHTML = '<thead><tr><th>UID</th><th>權限</th><th>綁定（Google／手機）</th><th>Bitunix API</th><th>自動交易</th><th>自動單持倉</th><th>建立時間</th><th>最後登入</th><th>登入中裝置</th><th>操作</th></tr></thead><tbody>' +
-      j.users.map(u => `<tr><td><b>${esc(u.uid)}</b>${u.uid === SRV.uid ? '（你）' : ''}</td><td>${roleBadge(u.role, u.owner)}</td><td>${u.bind ? `${esc(u.bind.email)}${u.bind.google ? ' ✅' : ''}<br>${esc(u.bind.phone)}` : '<span style="color:var(--muted)">還沒綁定</span>'}</td><td>${u.api ? '已設定' : '<span style="color:var(--muted)">未設定</span>'}</td><td>${u.auto ? '<b class="qg">運作中</b>' : '暫停'}${OWN() ? `<br><button class="iconbtn" data-a="lt" data-on="${u.auto ? 0 : 1}" data-u="${esc(u.uid)}"${!u.auto && !u.api ? ' disabled title="還沒設定 Bitunix API"' : ''}>${u.auto ? '⏸ 暫停' : '▶ 開始'}</button>` : ''}</td><td>${u.open || 0} 筆</td><td>${u.created ? fmtT(u.created) : '—'}</td><td>${u.last ? fmtT(u.last) : '—'}</td><td>${u.sessions}</td>
-        <td><button class="iconbtn" data-a="view" data-u="${esc(u.uid)}">👁 查看</button>${(OWN() || u.uid === SRV.uid) ? ` <button class="iconbtn" data-a="pw" data-u="${esc(u.uid)}">改密碼</button>` : ''}${u.owner && !OWN() ? '' : `${u.bind ? ` <button class="iconbtn" data-a="unbind" data-u="${esc(u.uid)}">重設綁定</button>` : ''}${u.owner ? '' : ` <button class="iconbtn" data-a="role" data-r="${u.role === 'admin' ? 'viewer' : 'admin'}" data-u="${esc(u.uid)}">${u.role === 'admin' ? '改成一般' : '改成管理員'}</button>`}`}${u.owner && !OWN() ? '' : ` <button class="iconbtn" data-a="kick" data-u="${esc(u.uid)}">登出所有裝置</button>`}${u.owner ? '' : ` <button class="iconbtn" data-a="del" data-u="${esc(u.uid)}">刪除</button>`}</td></tr>`).join('') + '</tbody>';
+    $('qAdmTab').innerHTML = '<thead><tr><th>UID</th><th>權限</th><th>綁定（Google／手機）</th><th>Bitunix API</th><th>自動交易</th><th>自動單持倉</th><th>備註</th><th>建立時間</th><th>最後登入</th><th>登入中裝置</th><th>操作</th></tr></thead><tbody>' +
+      j.users.map(u => (ADM_NOTE[u.uid] = u.note || '', `<tr><td><b>${esc(u.uid)}</b>${u.uid === SRV.uid ? '（你）' : ''}</td><td>${roleBadge(u.role, u.owner)}</td><td>${u.bind ? `${esc(u.bind.email)}${u.bind.google ? ' ✅' : ''}<br>${esc(u.bind.phone)}` : '<span style="color:var(--muted)">還沒綁定</span>'}</td><td>${u.api ? '已設定' : '<span style="color:var(--muted)">未設定</span>'}</td><td>${u.auto ? '<b class="qg">運作中</b>' : '暫停'}${OWN() ? `<br><button class="iconbtn" data-a="lt" data-on="${u.auto ? 0 : 1}" data-u="${esc(u.uid)}"${!u.auto && !u.api ? ' disabled title="還沒設定 Bitunix API"' : ''}>${u.auto ? '⏸ 暫停' : '▶ 開始'}</button>` : ''}</td><td>${u.open || 0} 筆</td><td class="qadmnote">${u.note ? `<span title="${u.noteAt ? `${esc(u.noteBy)} 在 ${fmtT(u.noteAt)} 寫的` : ''}">${esc(u.note)}</span>` : '<span style="color:var(--muted)">—</span>'}${u.owner && !OWN() ? '' : ` <button class="iconbtn" data-a="note" data-u="${esc(u.uid)}" aria-label="編輯 ${esc(u.uid)} 的備註">✏</button>`}</td><td>${u.created ? fmtT(u.created) : '—'}</td><td>${u.last ? fmtT(u.last) : '—'}</td><td>${u.sessions}</td>
+        <td><button class="iconbtn" data-a="view" data-u="${esc(u.uid)}">👁 查看</button>${(OWN() || u.uid === SRV.uid) ? ` <button class="iconbtn" data-a="pw" data-u="${esc(u.uid)}">改密碼</button>` : ''}${u.owner && !OWN() ? '' : `${u.bind ? ` <button class="iconbtn" data-a="unbind" data-u="${esc(u.uid)}">重設綁定</button>` : ''}${u.owner ? '' : ` <button class="iconbtn" data-a="role" data-r="${u.role === 'admin' ? 'viewer' : 'admin'}" data-u="${esc(u.uid)}">${u.role === 'admin' ? '改成一般' : '改成管理員'}</button>`}`}${u.owner && !OWN() ? '' : ` <button class="iconbtn" data-a="kick" data-u="${esc(u.uid)}">登出所有裝置</button>`}${u.owner ? '' : ` <button class="iconbtn" data-a="del" data-u="${esc(u.uid)}">刪除</button>`}</td></tr>`)).join('') + '</tbody>';
   } catch (e) { $('qAdmTab').innerHTML = `<tbody><tr><td>${esc(e.message)}</td></tr></tbody>`; }
 }
 $('qAdmBtn').onclick = () => { $('qAdmDlg').showModal(); admLoad(); };
@@ -5289,6 +5291,10 @@ $('qAdmTab').addEventListener('click', async e => {
   const uid = b.dataset.u;
   try {
     if (b.dataset.a === 'view') return viewLoad(uid);
+    if (b.dataset.a === 'note') {                      // 📝 編輯備註（只有管理員看得到）
+      const v = prompt(`${uid} 的備註（最多 200 字，只有管理員看得到，留空＝刪除）`, ADM_NOTE[uid] || ''); if (v === null) return;
+      await srvFetch('/api/users', { uid, note: v });
+    }
     if (b.dataset.a === 'lt') {                        // 👑 擁有者：幫這個帳號開始／暫停自動交易
       const on = b.dataset.on === '1';
       if (!confirm(on ? `要幫 ${uid} 開始自動交易嗎？\n\n伺服器會用他的 Bitunix 帳戶「真實下單」，他的 Discord 會收到通知。` : `要幫 ${uid} 暫停自動交易嗎？\n\n已經開著的單會照常管理到平倉。`)) return;
@@ -5330,7 +5336,7 @@ async function viewLoad(uid) {
 }
 function viewHtml(v) {
   const box = (k, val) => `<div><span>${k}</span><b>${val}</b></div>`, L = v.lt || {};
-  const head = box('權限', (v.role === 'admin' ? '管理員' : '一般') + (v.owner ? '・擁有者' : '')) + box('Google 信箱', v.bind ? esc(v.bind.email) + (v.bind.google ? ' ✅' : '') : '還沒綁定') + box('手機', v.bind ? esc(v.bind.phone) : '—') + box('最後登入', v.last ? fmtT(v.last) : '—');
+  const head = box('權限', (v.role === 'admin' ? '管理員' : '一般') + (v.owner ? '・擁有者' : '')) + box('Google 信箱', v.bind ? esc(v.bind.email) + (v.bind.google ? ' ✅' : '') : '還沒綁定') + box('手機', v.bind ? esc(v.bind.phone) : '—') + box('最後登入', v.last ? fmtT(v.last) : '—') + (v.note ? box('備註', esc(v.note)) : '');
   if (v.empty || !v.api) return `<div class="qvgrid">${head}${box('Bitunix API', '還沒設定')}</div><p class="qrepnote">這個帳號還沒設定 Bitunix API，沒有持倉和交易紀錄。</p>`;
   const B = v.bot || {}, S = v.stats || {};
   const grid = head + box('Bitunix API', v.err ? '<span class="neg">讀取失敗</span>' : '已連上') + box('Discord', v.hook ? '已設定' : '沒設定') +
