@@ -860,7 +860,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-23a';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-23b';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -923,12 +923,13 @@ async function bxPoll(X) {
     const acct = await bxGet('/api/v1/futures/account', { marginCoin: 'USDT' }, C).catch(() => null);
     const pos = bxMapPos(data);
     const prev = new Map(BX.pos.map(p => [p.id, p])), now = new Map(pos.map(p => [p.id, p]));
-    if (BX.seeded && C.notify && N.enabled) {                       // 第一次讀到的持倉不算「新開倉」
+    if (false && BX.seeded && C.notify && N.enabled) {              // 手動單的開倉／平倉不發 Discord（使用者要求）；自動單另外有 🤖 通知
       const botPos = p => X.A.ltTrades.some(t => t.positionId === p.id || (t.sym === p.sym && t.dir === p.dir && Date.now() - t.et < 60000));   // 自動交易的單另外通知
       for (const p of pos) if (!prev.has(p.id) && !botPos(p)) dcX(X, `📥 **Bitunix 開倉** ${p.dir > 0 ? '🟢 做多' : '🔴 做空'} **${mdEsc(p.sym)}**\n開倉價 ${fpx(p.entry)}・${p.lev}x ${p.mode === 'CROSS' ? '全倉' : '逐倉'}・數量 ${p.qty}・保證金 ${p.margin.toFixed(2)}U${p.liq > 0 ? `\n強平價 ${fpx(p.liq)}` : ''}`);
       for (const p of BX.pos) if (!now.has(p.id) && !botPos(p)) dcX(X, `📤 **Bitunix 平倉** ${p.dir > 0 ? '做多' : '做空'} **${mdEsc(p.sym)}**\n開倉價 ${fpx(p.entry)}・${p.lev}x\n平倉前最後一次讀到的未實現損益 **${p.upnl >= 0 ? '+' : '−'}${Math.abs(p.upnl).toFixed(2)}U**（實際以交易所為準）`);
     }
-    if (C.liq && N.enabled) for (const p of pos) {                  // 現價離強平價太近就提醒（30 分鐘最多一次）
+    if (C.liq && N.enabled) for (const p of pos) {                  // 現價離強平價太近就提醒（30 分鐘最多一次）；只提醒自動單，手動單不發
+      if (!X.A.ltTrades.some(t => t.status === 'open' && t.positionId === p.id)) continue;
       const px = PX.map[p.sym]; if (!(px > 0 && p.liq > 0)) continue;
       const d = Math.abs(px - p.liq) / px * 100;
       if (d <= C.liqPct && Date.now() - (BX.warned[p.id] || 0) > 30 * 60000) {
