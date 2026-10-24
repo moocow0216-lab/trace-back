@@ -860,7 +860,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-22i';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-22j';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1830,13 +1830,13 @@ http.createServer(async (req, res) => {
     if (req.method === 'GET' && u.pathname === '/api/users') {
       if (!admin) return send(res, 403, { error: '只有管理員可以看' });
       return send(res, 200, { users: ST.users.map(x => { const A = ST.accts[x.uid]; return { uid: x.uid, role: x.role, created: x.created, last: x.last || 0, sessions: ST.sessions.filter(s => s.uid === x.uid && s.exp > Date.now()).length,
-        api: !!(A && A.bx.key), auto: !!(A && A.lt.on), open: A ? A.ltTrades.filter(t => t.status === 'open').length : 0, owner: x.uid === ownerUid(), bind: bindOut(x) }; }), google: gClient(), googleEnv: !!process.env.GOOGLE_CLIENT_ID, mail: { on: mailOn(), from: maskMail(MAIL.user) } });   // 只給管理員看「有沒有設」，不會給金鑰
+        api: !!(A && A.bx.key), auto: !!(A && A.lt.on), open: A ? A.ltTrades.filter(t => t.status === 'open').length : 0, owner: x.uid === ownerUid(), bind: bindOut(x), note: x.note || '', noteAt: x.noteAt || 0, noteBy: x.noteBy || '' }; }), google: gClient(), googleEnv: !!process.env.GOOGLE_CLIENT_ID, mail: { on: mailOn(), from: maskMail(MAIL.user) } });   // 只給管理員看「有沒有設」，不會給金鑰
     }
     if (req.method === 'GET' && u.pathname === '/api/users/view') {      // 管理員查看某個帳號的狀況：只能看，沒有任何能動倉位或資金的東西，也不會給金鑰
       if (!admin) return send(res, 403, { error: '只有管理員可以看' });
       const usr = ST.users.find(x => x.uid === String(u.searchParams.get('uid') || ''));
       if (!usr) return send(res, 404, { error: '找不到這個帳號' });
-      const out = { uid: usr.uid, role: usr.role, owner: usr.uid === ownerUid(), bind: bindOut(usr), last: usr.last || 0, created: usr.created || 0 };
+      const out = { uid: usr.uid, role: usr.role, owner: usr.uid === ownerUid(), bind: bindOut(usr), last: usr.last || 0, created: usr.created || 0, note: usr.note || '' };
       if (!ST.accts[usr.uid]) return send(res, 200, { ...out, api: false, empty: true });
       const V = ctx(usr.uid), L = V.A.lt, TR = V.A.ltTrades.filter(t => inStat(t, L.startAt));
       const done = TR.filter(t => t.status === 'closed'), net = done.reduce((a, t) => a + ltNet(t), 0);
@@ -1895,6 +1895,10 @@ http.createServer(async (req, res) => {
           if (b.role === 'viewer' && usr.uid === ownerUid()) return send(res, 400, { error: '擁有者帳號一定是管理員' });
           if (b.role === 'viewer' && usr.role === 'admin' && ST.users.filter(x => x.role === 'admin').length <= 1) return send(res, 400, { error: '至少要留一個管理員' });
           usr.role = b.role;
+        }
+        if (typeof b.note === 'string') {                // 📝 備註：只有管理員看得到；擁有者的備註只有擁有者能改（上面已經擋了）
+          usr.note = b.note.normalize('NFC').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 200);
+          usr.noteAt = Date.now(); usr.noteBy = me ? me.uid : '管理金鑰';
         }
         dirty = true; return send(res, 200, { ok: true });
       }
