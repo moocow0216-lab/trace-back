@@ -572,6 +572,14 @@ body.mode-pat #qPanel,body.mode-news #qPanel,body.mode-pat #newsPanel,body.mode-
 .tlhead{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap}.tlhead b{font-size:16px}
 .tlsub{display:block;font-size:12.5px;color:var(--muted);line-height:1.6}
 .tltools{align-items:center}
+/* 🗡 特級交易：紅色動態框 */
+.qspbtn{border-color:#b91c1c!important;color:#fecaca!important}.qspbtn.on{background:#3b0a0a!important}
+.qspst{color:#fca5a5}.qspst.on{color:#ef4444;font-weight:700}
+.qspmini{display:inline-block;margin-top:4px;font-size:12px;color:#fca5a5}.qspmini.on{color:#ef4444;font-weight:700}
+.qsptag{color:#ef4444;font-weight:700}
+.qspbox{position:relative;margin:12px 0;padding:12px 14px;border:2px solid transparent;border-radius:16px;background:linear-gradient(#141015,#120c10) padding-box,linear-gradient(120deg,#1a0000 0%,#7f1d1d 20%,#ef4444 40%,#f97316 50%,#ef4444 60%,#7f1d1d 80%,#1a0000 100%) border-box;background-size:100% 100%,300% 300%;animation:fireflow 3s linear infinite,fireglow 1.6s ease-in-out infinite}
+.qsph{display:flex;align-items:baseline;gap:10px;font-weight:700;font-size:16px;color:#fecaca;margin-bottom:8px}.qsph span{font-size:12.5px;font-weight:400;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){.qspbox{animation:none}}
 #tbBox{margin-bottom:14px}.tbctl{align-items:center;margin:6px 0 8px}.tbctl .btn{flex:none}.tbctl>.tlmut{flex:1 1 260px}
 .tbn{white-space:nowrap}.tbn input{width:64px;min-height:34px;margin-left:6px;border-radius:8px;border:1px solid var(--line);background:#0e1422;color:var(--ink);padding:0 8px;font:inherit}
 .tbsum{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:8px 0}
@@ -931,7 +939,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-23f</div>
+      <div class="qver" id="qVer">網站版本 2026-10-24a</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -1052,7 +1060,7 @@ header{align-items:center}
         <div class="qbxh"><b>💼 我的 Bitunix 持倉</b><span id="qBxInfo"></span></div>
         <div class="qlt" id="qLt" hidden>
           <span class="qltst" id="qLtSt"></span>
-          <button class="btn" id="qLtToggle"></button>
+          <button class="btn" id="qLtToggle"></button><span class="qltst qspst" id="qSpSt" hidden></span><button class="btn qspbtn" id="qSpToggle" hidden></button>
           <button class="btn qdanger" id="qLtAll">🛑 一鍵平倉（自動單）</button>
           <button class="btn" id="qLtCfgBtn">👤 我的設定</button>
           <div class="qltmsg" id="qLtEco" hidden style="color:#f5a524;font-weight:600"></div>
@@ -1073,6 +1081,7 @@ header{align-items:center}
       <div id="qHist" hidden>
         <div class="qdsrc"><label class="tzsel">資料 <select id="qDataSrc"><option value="real">🤖 實盤（Bitunix 真實下單）</option><option value="sim">模擬（訊號＋回測）</option></select></label><button class="iconbtn" id="qLtReset">從現在重新開始計算</button><span class="qltmsg" id="qDataNote"></span></div>
         <div id="qPnl"></div>
+        <div class="qspbox" id="qSpBox" hidden><div class="qsph">🗡 特級交易<span>特級咒具的訊號真實下單的成績</span></div><div id="qSpPnl"></div><div class="qkpi" id="qSpKpi"></div></div>
         <div id="qRecon" hidden></div>
         <div class="qeq">
           <div class="qeqh"><b>資金曲線</b><span id="qEqTitle"></span></div>
@@ -1214,6 +1223,8 @@ header{align-items:center}
       <h3 style="font-size:14px;margin:16px 0 6px">👑 所有帳號的自動交易</h3>
       <p class="qrepnote">一鍵讓所有帳號一起暫停或開始。暫停後已經開著的單照常管理（鎖利、失敗線、到期）；開始只會開有設定 Bitunix API 的帳號。每個人的 Discord 都會收到通知。</p>
       <div class="qbt"><button class="btn" id="qa_allOff">⏸ 全部暫停</button><button class="btn" id="qa_allOn">▶ 全部開始</button></div>
+          <p class="qrepnote" style="margin-top:10px">🗡 特級交易另外開關：只會開啟<b>有特級咒具權限</b>（輸入過密碼）而且有設定 API 的帳號，其他人自動跳過。</p>
+          <div class="qbt"><button class="btn" id="qa_spOff">⏸ 全部暫停特級交易</button><button class="btn qspbtn" id="qa_spOn">🗡 全部開始特級交易</button></div>
     </div>
     <div id="qOwnBox" hidden>
       <h3 style="font-size:14px;margin:16px 0 6px">👑 轉讓擁有者</h3>
@@ -3348,10 +3359,10 @@ async function srvPull() {
     if (j.notify) { tgShow(j.notify); GD.nt = j.notify; setTimeout(gdAuto, 0); }   // 📖 新帳號第一次登入：自動打開使用說明
     if (OWN() && !SV.pushed) { SV.pushed = true; pushTrade(); pushEq(); }
     if (j.rep) SRVREP.rep = j.rep;
-    if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
+    if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-23f・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-24a・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -5042,14 +5053,18 @@ function renderHist() {
     $('qPnl').innerHTML = w; $('qKpi').innerHTML = ''; $('qEqKpi').innerHTML = ''; return;
   }
   const all = allTrades().filter(x => qfOk(x.c.sym));
-  const RL = DATA === 'real' && SRV.on && SRVLT.cfg;
-  $('qKpi').innerHTML = kpi(RL ? '整體成功率（實盤：結單賺錢就算成功）' : `整體成功率（${T.lev}x，+${T.tp}%／−${T.sl}%）`, all) + kpi('做多', all.filter(x => x.c.dir > 0)) + kpi('做空', all.filter(x => x.c.dir < 0));
+  const RL = DATA === 'real' && SRV.on && SRVLT.cfg, SP = !!(RL && SRVLT.toolOk), isT = x => !!(x.t && x.t.src === 'tool');   // 🗡 有特級交易：一般、特級分開算
+  const allN = SP ? all.filter(x => !isT(x)) : all, allS = SP ? all.filter(isT) : [];
+  $('qKpi').innerHTML = kpi(RL ? `${SP ? '🤖 一般交易・' : ''}整體成功率（實盤：結單賺錢就算成功）` : `整體成功率（${T.lev}x，+${T.tp}%／−${T.sl}%）`, allN) + kpi('做多', allN.filter(x => x.c.dir > 0)) + kpi('做空', allN.filter(x => x.c.dir < 0));
+  $('qSpBox').hidden = !SP;
+  if (SP) $('qSpKpi').innerHTML = kpi('🗡 特級交易・整體成功率（結單賺錢就算成功）', allS) + kpi('做多', allS.filter(x => x.c.dir > 0)) + kpi('做空', allS.filter(x => x.c.dir < 0));
   const fs = $('qf_src').value, fd = $('qf_dir').value, fr = $('qf_res').value;
   HROWS = all.filter(x => (!fs || (fs === 'live') === x.live) && (!fd || +fd === x.c.dir) &&
     (!fr || (fr === 'fail' ? x.E.st === 'fail' || x.E.st === 'amb' : x.E.st === fr)));
   { const R = DATA === 'real' && SRV.on && SRVLT.cfg ? all.filter(x => x.E.live) : [];
     $('qRecon').innerHTML = R.length ? '計算用到的持倉：' + R.map(x => `${esc(x.c.sym)} <b class="${x.E.pnl >= 0 ? 'pos' : 'neg'}">${spct(x.E.pnl, 1)}</b>${x.linked ? '' : '（⚠ 找不到對應的交易所倉位）'}${Math.abs(x.partU) > 1e-9 ? `（含部分平倉 ${x.partU >= 0 ? '+' : '−'}${Math.abs(x.partU).toFixed(2)}U）` : ''}`).join('、') : ''; }
-  $('qPnl').innerHTML = pnlBox(all, `全部紀錄（${T.lev}x，+${T.tp}%／−${T.sl}%）`, HROWS);
+  $('qPnl').innerHTML = pnlBox(allN, `${SP ? '🤖 一般交易紀錄' : '全部紀錄'}（${T.lev}x，+${T.tp}%／−${T.sl}%）`, SP ? HROWS.filter(x => !isT(x)) : HROWS);
+  if (SP) $('qSpPnl').innerHTML = pnlBox(allS, `🗡 特級交易紀錄（${T.lev}x，+${T.tp}%／−${T.sl}%）`, HROWS.filter(isT));
   renderEquity(HROWS, fs || fd || fr);
   const rows = HROWS.slice(0, hMore);
   const FR = rate(HROWS);
@@ -5057,7 +5072,7 @@ function renderHist() {
   $('qTab').innerHTML = `<thead><tr><th>進場時間（${tzName()}）</th><th>幣種</th><th>方向</th><th>來源</th><th>異常項</th><th>進場價</th><th>結果</th><th>損益（藍＝現價）</th><th>最大浮盈</th><th>最大浮虧</th><th>用時／出場</th></tr></thead><tbody>` +
     (rows.length ? rows.map((x, i) => { const c = x.c, L = x.E.real && x.E.st === 'fail' ? ['失敗', 'lose'] : resLabel(x.E.st); return `<tr data-i="${i}" title="點一下開啟圖表">
       <td>${fmtT(c.et)}</td><td>${esc(c.sym)}</td><td><span class="chip ${c.dir > 0 ? 'long' : 'short'}">${c.dir > 0 ? '做多' : '做空'}</span></td>
-      <td>${x.live ? '即時' : '回測'}</td><td>${c.abN || '—'}／5</td><td>${fp(c.entry)}</td><td><span class="chip ${L[1]}">${L[0]}</span></td>
+      <td>${x.t && x.t.src === 'tool' ? '<span class="qsptag">🗡 特級</span>' : x.live ? '即時' : '回測'}</td><td>${c.abN || '—'}／5</td><td>${fp(c.entry)}</td><td><span class="chip ${L[1]}">${L[0]}</span></td>
       <td class="${x.E.live ? 'qb' : x.E.pnl > 0 ? 'qg' : x.E.pnl < 0 ? 'qr' : ''}"${x.E.live ? ' title="持有中，跟著現價變動"' : x.E.noPx ? ' title="舊紀錄沒有逾時當下的價格，暫以 0 計"' : ''}>${x.E.pnl === null || x.E.pnl === undefined ? '—' : pnlS(x.E.pnl)}</td>
       <td class="qg">${spct(roe(x.E.peak || x.E.fav), 1)}</td><td class="qr">${spct(-roe(x.E.adv), 1)}</td><td>${holdTxt(x.E, c)}</td></tr>`; }).join('')
       : `<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:16px">沒有紀錄。按「回測過去約 14 天」可以先看歷史成功率；即時訊號出現後也會自動記錄在這裡。</td></tr>`) +
@@ -5551,7 +5566,7 @@ async function admLoad() {
       }
     }
     $('qAdmTab').innerHTML = '<thead><tr><th>UID</th><th>權限</th><th>綁定（Google／手機）</th><th>Bitunix API</th><th>自動交易</th><th>自動單持倉</th><th>備註</th><th>建立時間</th><th>最後登入</th><th>登入中裝置</th><th>操作</th></tr></thead><tbody>' +
-      j.users.map(u => (ADM_NOTE[u.uid] = u.note || '', `<tr><td><b>${esc(u.uid)}</b>${u.uid === SRV.uid ? '（你）' : ''}</td><td>${roleBadge(u.role, u.owner)}</td><td>${u.bind ? `${esc(u.bind.email)}${u.bind.google ? ' ✅' : ''}<br>${esc(u.bind.phone)}` : '<span style="color:var(--muted)">還沒綁定</span>'}</td><td>${u.api ? '已設定' : '<span style="color:var(--muted)">未設定</span>'}</td><td>${u.auto ? '<b class="qg">運作中</b>' : '暫停'}${OWN() ? `<br><button class="iconbtn" data-a="lt" data-on="${u.auto ? 0 : 1}" data-u="${esc(u.uid)}"${!u.auto && !u.api ? ' disabled title="還沒設定 Bitunix API"' : ''}>${u.auto ? '⏸ 暫停' : '▶ 開始'}</button>` : ''}</td><td>${u.open || 0} 筆</td><td class="qadmnote">${u.note ? `<span title="${u.noteAt ? `${esc(u.noteBy)} 在 ${fmtT(u.noteAt)} 寫的` : ''}">${esc(u.note)}</span>` : '<span style="color:var(--muted)">—</span>'}${u.owner && !OWN() ? '' : ` <button class="iconbtn" data-a="note" data-u="${esc(u.uid)}" aria-label="編輯 ${esc(u.uid)} 的備註">✏</button>`}</td><td>${u.created ? fmtT(u.created) : '—'}</td><td>${u.last ? fmtT(u.last) : '—'}</td><td>${u.sessions}</td>
+      j.users.map(u => (ADM_NOTE[u.uid] = u.note || '', `<tr><td><b>${esc(u.uid)}</b>${u.uid === SRV.uid ? '（你）' : ''}</td><td>${roleBadge(u.role, u.owner)}</td><td>${u.bind ? `${esc(u.bind.email)}${u.bind.google ? ' ✅' : ''}<br>${esc(u.bind.phone)}` : '<span style="color:var(--muted)">還沒綁定</span>'}</td><td>${u.api ? '已設定' : '<span style="color:var(--muted)">未設定</span>'}</td><td>${u.auto ? '<b class="qg">運作中</b>' : '暫停'}${u.tool ? `<br><span class="qspmini${u.sp ? ' on' : ''}">🗡 特級：${u.sp ? '運作中' : '暫停'}</span>` : ''}${OWN() ? `<br><button class="iconbtn" data-a="lt" data-on="${u.auto ? 0 : 1}" data-u="${esc(u.uid)}"${!u.auto && !u.api ? ' disabled title="還沒設定 Bitunix API"' : ''}>${u.auto ? '⏸ 暫停' : '▶ 開始'}</button>` : ''}</td><td>${u.open || 0} 筆</td><td class="qadmnote">${u.note ? `<span title="${u.noteAt ? `${esc(u.noteBy)} 在 ${fmtT(u.noteAt)} 寫的` : ''}">${esc(u.note)}</span>` : '<span style="color:var(--muted)">—</span>'}${u.owner && !OWN() ? '' : ` <button class="iconbtn" data-a="note" data-u="${esc(u.uid)}" aria-label="編輯 ${esc(u.uid)} 的備註">✏</button>`}</td><td>${u.created ? fmtT(u.created) : '—'}</td><td>${u.last ? fmtT(u.last) : '—'}</td><td>${u.sessions}</td>
         <td><button class="iconbtn" data-a="view" data-u="${esc(u.uid)}">👁 查看</button>${(OWN() || u.uid === SRV.uid) ? ` <button class="iconbtn" data-a="pw" data-u="${esc(u.uid)}">改密碼</button>` : ''}${u.owner && !OWN() ? '' : `${u.bind ? ` <button class="iconbtn" data-a="unbind" data-u="${esc(u.uid)}">重設綁定</button>` : ''}${u.owner ? '' : ` <button class="iconbtn" data-a="role" data-r="${u.role === 'admin' ? 'viewer' : 'admin'}" data-u="${esc(u.uid)}">${u.role === 'admin' ? '改成一般' : '改成管理員'}</button>`}`}${u.owner && !OWN() ? '' : ` <button class="iconbtn" data-a="kick" data-u="${esc(u.uid)}">登出所有裝置</button>`}${u.owner ? '' : ` <button class="iconbtn" data-a="del" data-u="${esc(u.uid)}">刪除</button>`}</td></tr>`)).join('') + '</tbody>';
   } catch (e) { $('qAdmTab').innerHTML = `<tbody><tr><td>${esc(e.message)}</td></tr></tbody>`; }
 }
@@ -5585,6 +5600,13 @@ async function ltAll(on) {
   catch (e) { alert(e.message); }
 }
 $('qa_allOff').onclick = () => ltAll(false);
+async function spAll(on) {                            // 🗡 一鍵特級交易
+  if (!confirm(on ? '要讓「有特級咒具權限」的帳號一起開始特級交易嗎？\n\n沒有權限、沒有設定 API 的帳號會跳過。' : '要讓所有帳號一起暫停特級交易嗎？\n\n已經開著的單會照常管理到平倉。')) return;
+  try { const r = await srvFetch('/api/lt/all', { on, sp: true }); alert(`${on ? '已開始' : '已暫停'} ${r.n} 個帳號的特級交易${r.skip ? `（${r.skip} 個沒有權限或沒有 API，跳過）` : ''}。`); admLoad(); SV.lv = 0; srvPull(); }
+  catch (e) { alert(e.message); }
+}
+$('qa_spOff').onclick = () => spAll(false);
+$('qa_spOn').onclick = () => spAll(true);
 $('qa_allOn').onclick = () => ltAll(true);
 /* ---------- 管理員查看帳號：只能看，沒有任何能動倉位或資金的按鈕 ---------- */
 let VIEW_UID = '', VIEW_DATA = null;
@@ -5697,7 +5719,11 @@ function renderLt() {
   $('qLtEco').hidden = !ED.length;
   $('qLtEco').textContent = ED.length ? `📅 今天有美國重要數據（${ED.map(e => `${e.zh} ${fmtT(e.t).slice(-5)}`).join('、')}），自動交易整天不開新單、不反手；已開的單照常管理。` : '';
   $('qLtToggle').textContent = C.on ? '⏸ 暫停交易' : '▶ 開始交易';
-  $('qLtToggle').hidden = $('qLtAll').hidden = $('qLtCfgBtn').hidden = !MINE();
+  { const ok = !!(SRVLT.toolOk && MINE());              // 🗡 特級交易：只有特級咒具權限的人看得到
+    $('qSpToggle').hidden = $('qSpSt').hidden = !ok;
+    $('qSpToggle').textContent = C.sp ? '⏸ 暫停特級交易' : '🗡 開始特級交易'; $('qSpToggle').classList.toggle('on', !!C.sp);
+    $('qSpSt').textContent = C.sp ? '🗡 特級交易：運作中' : '🗡 特級交易：暫停中'; $('qSpSt').classList.toggle('on', !!C.sp); }
+  $('qLtToggle').hidden = $('qLtAll').hidden = !MINE(); $('qLtCfgBtn').hidden = !MINE() || document.body.classList.contains('mn');   // 選單版面：設定在「☰ 選單 → 設定」，這裡不重複放
   const B = SRVLT.bot, AE = SRVLT.acctEq || 0;
   $('qLtMsg').textContent = `${C.budget > 0 ? `投入 ${C.budget}U（帳戶 ${AE.toFixed(2)}U）・目前 ${B ? B.eq.toFixed(2) : '—'}U、可用 ${B ? Math.max(0, B.free).toFixed(2) : '—'}U・` : `用整個帳戶（${AE.toFixed(2)}U）・`}每筆 ${C.margin}U・${C.lev}x 全倉・最多 ${C.maxOpen || '不限'} 筆・今日 ${SRVLT.day >= 0 ? '+' : '−'}${Math.abs(SRVLT.day).toFixed(2)}U（上限 −${C.dayLoss}U）${SRVLT.msg ? '・' + SRVLT.msg : ''}`;
   ['budget', 'margin', 'lev', 'maxOpen', 'dayLoss', 'sl', 'step'].forEach(k => { const el = $('lt_' + k); if (document.activeElement !== el) el.value = C[k] || 0; });
@@ -5723,6 +5749,12 @@ $('qLtAll').onclick = () => {
   if (!confirm(`確定要把「自動下單」的 ${nBot} 筆持倉全部市價平倉嗎？${nMan ? `\n\n手動開的 ${nMan} 筆（含「符合訊號」）不會動。` : ''}`)) return;
   const pause = confirm('要不要同時暫停自動交易？\n按「確定」＝平倉並暫停；按「取消」＝只平倉，自動交易繼續。');
   ltCall('/api/lt/closeAll', { pause }, '已送出：自動單全部平倉。');
+};
+$('qSpToggle').onclick = () => {
+  const C = SRVLT.cfg || {};
+  if (C.sp) return ltCall('/api/lt/config', { sp: false }, '已暫停特級交易，已經開著的單照常管理。');
+  if (!confirm(`確定要開始「🗡 特級交易」嗎？\n\n特級咒具的莊家、CRT、獵殺進場訊號，會用你的 Bitunix 帳戶「真實下單」：每筆 ${C.margin}U、${C.lev}x 全倉，停損、鎖利、持有天數都照「我的設定」。\n\n跟一般自動交易分開開關；同一個幣已經有自動單時會跳過。全倉的虧損可能超過單筆保證金，請確認你能承擔。`)) return;
+  ltCall('/api/lt/config', { sp: true }, '🗡 特級交易已開始。');
 };
 $('qLtCfgBtn').onclick = () => {                     // 打開「👤 我的設定」並捲到交易設定
   $('qSetBox').hidden = false; $('qSetBtn').setAttribute('aria-expanded', 'true');
@@ -5792,6 +5824,33 @@ function realRows() {
     const E = { st, real: true, reasonZh, pnl: roePct, pnlU: netU, live: open, fav: Math.max(0, (t.fav || 0)) / 100 / (t.ruleLev || t.lev || T.lev) * (t.lev || T.lev) / T.lev, adv: Math.max(0, -(t.adv || 0)) / 100 / (t.ruleLev || t.lev || T.lev) * (t.lev || T.lev) / T.lev, /* 伺服器記的是「規則槓桿」的浮盈，換回實際槓桿，跟損益同單位 */ at: open ? 0 : t.exitAt, exitAt: open ? 0 : t.exitAt, exitHow: open ? 'open' : '' };
     return { c: { id: t.id, sym: t.sym, pid: t.sym, src: 'binance', spot: null, dir: t.dir, et: t.et, entry: t.entry, abN: t.abN, real: true }, live: true, E, t, linked: !open || !!P, partU };
   }).sort((a, b) => b.c.et - a.c.et);
+}
+function renderEq3(list, box, col, LWC, CAP) {          // 🗡 三條資金曲線：一般交易（藍）、特級交易（紅）、合計（紫），各自從起始本金開始，最後一點含持有中的現價
+  const isT = x => !!(x.t && x.t.src === 'tool'), Rn = simEquityReal(list.filter(x => !isT(x))), Rs = simEquityReal(list.filter(isT)), Ra = simEquityReal(list);
+  $('qEqNote').textContent = '三條線都從同一個起始本金開始：藍線只算一般自動交易、紅線只算 🗡 特級交易、紫線是兩者合計（＝你帳戶的自動交易資金）。每一筆結單時用 Bitunix 的實際損益（扣手續費、加減資金費），最後一點把持有中的單用現價算進去。';
+  if (!EQC || !box.contains(EQC.el) || EQC.mode !== 3) {
+    box.innerHTML = `<div class="qeqleg"><span><i style="background:#3b82f6"></i>一般交易</span><span><i style="background:#ef4444"></i>🗡 特級交易</span><span><i style="background:#a855f7"></i>合計</span><span><i style="background:${col('--muted')}"></i>起始本金</span></div>`;
+    const el = document.createElement('div'); el.style.cssText = 'position:absolute;inset:0'; box.appendChild(el);
+    const ch = LWC.createChart(el, {
+      layout: { background: { type: 'solid', color: col('--paper') }, textColor: col('--muted'), fontSize: 11, fontFamily: '"IBM Plex Sans","Noto Sans TC",system-ui,sans-serif' },
+      grid: { vertLines: { color: col('--grid') }, horzLines: { color: col('--grid') } },
+      rightPriceScale: { borderColor: col('--grid2'), scaleMargins: { top: 0.15, bottom: 0.08 } },
+      timeScale: { borderColor: col('--grid2'), timeVisible: true, secondsVisible: false, tickMarkFormatter: LW_TIME.tick }, crosshair: { mode: 0 },
+      localization: LW_TIME.localization
+    });
+    const fmt = { type: 'custom', minMove: 0.01, formatter: v => v.toFixed(2) + 'U' }, mk = (c, w) => ch.addLineSeries({ color: c, lineWidth: w, lineType: 0, priceFormat: fmt, lastValueVisible: true, priceLineVisible: false });
+    const n = mk('#3b82f6', 2), sp = mk('#ef4444', 2), a = mk('#a855f7', 3);
+    new ResizeObserver(() => { if (el.clientWidth && el.clientHeight) ch.resize(el.clientWidth, el.clientHeight); }).observe(el);
+    a.applyOptions({ autoscaleInfoProvider: o => { const r = o(); if (!r || !r.priceRange) return r; return { priceRange: { minValue: Math.min(r.priceRange.minValue, CAP), maxValue: Math.max(r.priceRange.maxValue, CAP) }, margins: r.margins }; } });
+    EQC = { el, ch, n, sp, a, line: null, fitKey: '', mode: 3 };
+  }
+  const sec = t => Math.floor((t + tzOff(t)) / 1000), now = Date.now();
+  const data = R => { const m = new Map(); R.pts.concat([{ t: now, v: R.eq + R.unreal }]).forEach(p => m.set(sec(p.t), p.v)); return [...m].sort((x, y) => x[0] - y[0]).map(([time, value]) => ({ time, value: Math.round(value * 100) / 100 })); };
+  const dA = data(Ra); EQC.n.setData(data(Rn)); EQC.sp.setData(data(Rs)); EQC.a.setData(dA);
+  if (EQC.line) EQC.a.removePriceLine(EQC.line);
+  EQC.line = EQC.a.createPriceLine({ price: CAP, color: col('--muted'), lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: '本金' });
+  const key = dA.length + ':' + (dA[0] ? dA[0].time : 0);
+  if (EQC.fitKey !== key) { EQC.ch.timeScale().fitContent(); EQC.fitKey = key; }
 }
 function simEquityReal(list) {
   const C = SRVLT.cfg || { startCap: 0, startAt: 0 }, cap = C.startCap || 0, ev = [];
@@ -5974,7 +6033,8 @@ async function renderEquity(list, filtered) {
   try { await loadLW(); } catch (e) { $('qEqChart').innerHTML = `<div class="loading">${esc(e.message)}</div>`; return; }
   const LWC = window.LightweightCharts, box = $('qEqChart');
   const css = getComputedStyle(document.documentElement), col = n => css.getPropertyValue(n).trim();
-  if (!EQC || !box.contains(EQC.el)) {
+  if (REAL && SRVLT.toolOk) return renderEq3(list, box, col, LWC, CAP);   // 🗡 有特級交易：三條線
+  if (!EQC || !box.contains(EQC.el) || EQC.mode !== 2) {
     box.innerHTML = `<div class="qeqleg"><span><i style="background:${col('--green')}"></i>已實現資金</span><span><i style="background:#3b82f6"></i>含持有中（現價）</span><span><i style="background:${col('--muted')}"></i>起始本金</span></div>`;
     const el = document.createElement('div'); el.style.cssText = 'position:absolute;inset:0'; box.appendChild(el);
     const ch = LWC.createChart(el, {
@@ -5989,7 +6049,7 @@ async function renderEquity(list, filtered) {
     const live = ch.addLineSeries({ color: '#3b82f6', lineWidth: 2, lineType: 0, priceFormat: fmt, lastPriceAnimation: 1, crosshairMarkerRadius: 4 });   // 最後一點會一直閃動
     new ResizeObserver(() => { if (el.clientWidth && el.clientHeight) ch.resize(el.clientWidth, el.clientHeight); }).observe(el);
     real.applyOptions({ autoscaleInfoProvider: o => { const a = o(); if (!a || !a.priceRange) return a; return { priceRange: { minValue: Math.min(a.priceRange.minValue, EQ.cap), maxValue: Math.max(a.priceRange.maxValue, EQ.cap) }, margins: a.margins }; } });   // 本金線一定在畫面內
-    EQC = { el, ch, real, live, line: null, fitKey: '' };
+    EQC = { el, ch, real, live, line: null, fitKey: '', mode: 2 };
   }
   const sec = t => Math.floor((t + tzOff(t)) / 1000), uniq = arr => { const m = new Map(); arr.forEach(p => m.set(sec(p.t), p.v)); return [...m].sort((a, b) => a[0] - b[0]).map(([time, value]) => ({ time, value: Math.round(value * 100) / 100 })); };
   const realD = uniq(R.pts);
