@@ -860,7 +860,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-23c';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-23d';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1268,7 +1268,7 @@ async function ltReconcile(X, pos) {
    移植自擁有者的兩套 TradingView 指標（只有這三種進場；BigBeluga 的清算熱力圖沒有用到）。
    兩組週期：4H→15 分、1H→5 分。每根小週期 K 棒收盤後，掃描成交額前 N 個幣，出現進場就記下來、傳 Discord。
    莊家淨額：原指標用 1 分 K 的漲跌方向推估主動買賣；這裡改用幣安直接給的主動買入成交額（主動買 − 主動賣），更準但數字會跟 TradingView 有些差 */
-const DEF_TOOL = { pw: null, grants: [], hooks: {}, set: { n: 30, h4: true, h1: true, zh: true, crt: true, hunt: true }, sigs: [], seen: {}, scan: { at: 0, coins: 0, err: '', n: 0 } };
+const DEF_TOOL = { pw: null, grants: [], hooks: {}, px: {}, set: { n: 30, h4: true, h1: true, zh: true, crt: true, hunt: true }, sigs: [], seen: {}, scan: { at: 0, coins: 0, err: '', n: 0 } };
 ST.tool = { ...DEF_TOOL, ...(ST.tool || {}) }; ST.tool.set = { ...DEF_TOOL.set, ...(ST.tool.set || {}) }; ST.tool.scan = { ...DEF_TOOL.scan };
 let TOOLV = 1;
 const TOOL_P = { h4: { ltf: '15m', lms: 15 * 60000, htf: '4h', hms: 4 * HOUR, slotH: 4, maxSlot: 5, name: '4H→15 分', crt: 'H4' }, h1: { ltf: '5m', lms: 5 * 60000, htf: '1h', hms: HOUR, slotH: 1, maxSlot: 23, name: '1H→5 分', crt: 'H1' } };
@@ -1410,6 +1410,7 @@ async function toolScan(pair) {
       const L = await toolKl(sym, P.ltf, 500, P.lms), H = await toolKl(sym, P.htf, 120, P.hms);
       if (L.length < 120 || H.length < 3) continue;
       n++;
+      { const a = L[L.length - 1], k = Math.round(24 * HOUR / P.lms), b0 = L[L.length - 1 - k]; T.px = T.px || {}; T.px[sym] = { c: a.c, chg: b0 ? (a.c / b0.c - 1) * 100 : null, at: Date.now() }; }   // 卡片上的現價、24 小時漲跌
       const sb = toolStruct(L, 50), ib = toolStruct(L, 5), atr = toolAtr(L, 14), last = L.length - 1, found = [];
       if (S.zh) for (const x of toolZh(L, P, ib)) found.push({ ...x, type: 'zh' });
       if (S.crt) for (const x of toolCrt(L, H, P, sb, ib, atr)) found.push({ ...x, type: 'crt' });
@@ -2262,7 +2263,7 @@ http.createServer(async (req, res) => {
           dirty = true; log('特級咒具解鎖', me ? me.uid : ''); return send(res, 200, { ok: true });
         }
         if (!toolOk(me, owner)) return send(res, 403, { error: '特級咒具還沒解鎖', locked: true, hasPw: !!T.pw });
-        if (op === 'get') return send(res, 200, { owner, v: TOOLV, sigs: T.sigs.slice(0, 400), set: T.set, scan: T.scan, hook: me && T.hooks[me.uid] ? '已設定' : '', hasPw: !!T.pw, grants: owner ? T.grants : undefined });
+        if (op === 'get') return send(res, 200, { owner, v: TOOLV, px: T.px || {}, sigs: T.sigs.slice(0, 400), set: T.set, scan: T.scan, hook: me && T.hooks[me.uid] ? '已設定' : '', hasPw: !!T.pw, grants: owner ? T.grants : undefined });
         if (op === 'hook') {
           if (!me) return send(res, 400, { error: '用管理金鑰登入不能設定' });
           const w = String(b.webhook || '').replace(/\s+/g, '');
