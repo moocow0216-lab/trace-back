@@ -861,7 +861,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-22f</div>
+      <div class="qver" id="qVer">網站版本 2026-10-22g</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3265,7 +3265,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-22f・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-22g・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -5037,7 +5037,7 @@ function renderBx(b) {
         <td class="qblink ${p.upnl >= 0 ? 'qg' : 'qr'}" style="${bk}">${u2(p.upnl)}U</td><td class="qblink ${roe >= 0 ? 'qg' : 'qr'}" style="${bk}">${roe === null ? '—' : spct(roe, 1)}</td><td>${p.margin.toFixed(2)}U</td>
         <td>${p.liq > 0 ? fpx(p.liq) : '低風險'}</td><td class="${d !== null && d <= b.liqPct ? 'qr' : ''}">${d === null ? '—' : d.toFixed(2) + '%'}</td>
         <td>${p.ctime ? fmtT(p.ctime) : '—'}</td><td>${p.bot ? '<span class="chip win">🤖 自動</span>' : p.sig ? '<span class="chip open">符合訊號</span>' : '<span style="color:var(--muted)">手動</span>'}</td>
-        <td>${MINE() ? `<button class="iconbtn" data-cl="1" data-id="${esc(p.id)}" data-s="${esc(p.sym)}">全部平倉</button> <button class="iconbtn" data-cl="part" data-id="${esc(p.id)}" data-s="${esc(p.sym)}">部分平倉</button>` : '—'}</td></tr>`;
+        <td>${MINE() ? `<button class="iconbtn" data-cl="1" data-id="${esc(p.id)}" data-s="${esc(p.sym)}">全部平倉</button> <button class="iconbtn" data-cl="part" data-id="${esc(p.id)}" data-s="${esc(p.sym)}">部分平倉</button>${p.bot ? '' : ` <button class="iconbtn" data-adopt="${esc(p.id)}" data-s="${esc(p.sym)}" data-dir="${p.dir}" data-lev="${p.lev}" data-ct="${p.ctime || 0}">🤖 改成自動單</button>`}` : '—'}</td></tr>`;
     }).join('') + '</tbody>';
 }
 $('qbx_save').onclick = () => {
@@ -5465,6 +5465,14 @@ $('lt_budget').onchange = () => {
   ltCall('/api/lt/config', Object.assign({ budget: v }, keep ? {} : { reset: true }));
 };
 $('qBxTab').addEventListener('click', e => {
+  const a = e.target.closest('button[data-adopt]');
+  if (a) {                                            // 🤖 手動單改成自動單：先講清楚會照什麼規則管理
+    const C = SRVLT.cfg || {}, lev = +a.dataset.lev || C.lev, k = lev / (C.lev || lev), r = v => Math.round(v * k * 10) / 10, ct = +a.dataset.ct, hold = C.hold || T.hold;
+    const old = ct > 0 && Date.now() - ct > hold * HOUR_MS;
+    if (!confirm(`要把 ${a.dataset.s}（${+a.dataset.dir > 0 ? '做多' : '做空'}・${lev}x）改成自動單嗎？\n\n之後伺服器會照你的規則管理：\n・浮盈 +${r(C.tp || T.tp)}% 開始鎖利，每多 ${r(C.step ?? 50)}% 往上調\n・浮虧 −${r(C.sl || 250)}% 停損（交易所也會補掛止損）\n・持有 ${Math.round(hold / 24 * 10) / 10} 天到期平倉\n・一鍵平倉也會包含它\n\n${old ? '⚠️ 這筆已經開超過持有期限，改成自動單後會「馬上平倉」。\n' : ''}如果現在的浮盈浮虧已經超過上面的線，也會馬上平倉。`)) return;
+    ltCall('/api/lt/adopt', { positionId: a.dataset.adopt }, '已改成自動單，之後由伺服器照你的規則管理。');
+    return;
+  }
   const b = e.target.closest('button[data-cl]'); if (!b) return;
   let pct = 1;
   if (b.dataset.cl === 'part') {
