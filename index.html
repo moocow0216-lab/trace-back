@@ -861,7 +861,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-22g</div>
+      <div class="qver" id="qVer">網站版本 2026-10-22h</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3265,7 +3265,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-22g・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-22h・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -5310,13 +5310,22 @@ async function ltAll(on) {
 $('qa_allOff').onclick = () => ltAll(false);
 $('qa_allOn').onclick = () => ltAll(true);
 /* ---------- 管理員查看帳號：只能看，沒有任何能動倉位或資金的按鈕 ---------- */
-let VIEW_UID = '';
+let VIEW_UID = '', VIEW_DATA = null;
+$('qViewBody').addEventListener('click', async e => {   // 👑 擁有者：幫這個帳號把手動單改成自動單（照「他自己」的規則管理）
+  const a = e.target.closest('button[data-vadopt]'); if (!a || !OWN()) return;
+  const L = (VIEW_DATA && VIEW_DATA.lt) || {}, lev = +a.dataset.lev || L.lev, k = lev / (L.lev || lev), r = v => Math.round(v * k * 10) / 10, ct = +a.dataset.ct, hold = L.hold || 168;
+  const old = ct > 0 && Date.now() - ct > hold * HOUR_MS;
+  if (!confirm(`要幫 ${VIEW_UID} 把 ${a.dataset.s}（${+a.dataset.dir > 0 ? '做多' : '做空'}・${lev}x）改成自動單嗎？\n\n之後伺服器會用「他自己的設定」管理：\n・浮盈 +${r(L.tp || 250)}% 開始鎖利，每多 ${r(L.step ?? 50)}% 往上調\n・浮虧 −${r(L.sl || 250)}% 停損（交易所也會補掛止損）\n・持有 ${Math.round(hold / 24 * 10) / 10} 天到期平倉\n\n${old ? '⚠️ 這筆已經開超過持有期限，改成自動單後會「馬上平倉」。\n' : ''}如果現在的浮盈浮虧已經超過上面的線，也會馬上平倉。\n他的 Discord 會收到「擁有者幫你改的」通知。`)) return;
+  a.disabled = true;
+  try { await srvFetch('/api/lt/adopt', { uid: VIEW_UID, positionId: a.dataset.vadopt }); alert('已改成自動單。'); viewLoad(VIEW_UID); }
+  catch (err) { alert(err.message); a.disabled = false; }
+});
 const vU = v => (v >= 0 ? '+' : '−') + Math.abs(v || 0).toFixed(2) + 'U';
 async function viewLoad(uid) {
   VIEW_UID = uid; $('qViewTitle').textContent = `👁 查看帳號 ${uid}`;
   if (!$('qViewDlg').open) $('qViewDlg').showModal();
   $('qViewBody').innerHTML = '<p class="qrepnote">讀取中…</p>';
-  try { const v = await srvFetch('/api/users/view?uid=' + encodeURIComponent(uid)); if (VIEW_UID === uid) $('qViewBody').innerHTML = viewHtml(v); }
+  try { const v = await srvFetch('/api/users/view?uid=' + encodeURIComponent(uid)); if (VIEW_UID === uid) { VIEW_DATA = v; $('qViewBody').innerHTML = viewHtml(v); } }
   catch (e) { $('qViewBody').innerHTML = `<p class="qgerr">${esc(e.message)}</p>`; }
 }
 function viewHtml(v) {
@@ -5330,7 +5339,7 @@ function viewHtml(v) {
     box('已結單', `${S.n || 0} 筆・賺 ${S.win || 0} 筆`) + box('累計淨損益', `<span class="${S.net >= 0 ? 'qg' : 'qr'}">${vU(S.net)}</span>`) + box('手續費合計', (S.fee || 0).toFixed(2) + 'U');
   const cfg = `每筆 ${L.margin}U・${L.lev}x・單日虧損上限 ${L.dayLoss}U・浮虧 −${L.sl}% 平倉・鎖利每 ${L.step}% 上調・最長持有 ${+(L.hold / 24).toFixed(1)} 天${v.msg ? '・' + esc(v.msg) : ''}`;
   const pos = (v.pos || []).length ? `<div class="tablewrap"><table class="stat"><thead><tr><th>幣種</th><th>方向</th><th>槓桿</th><th>數量</th><th>開倉價</th><th>現價</th><th>未實現損益</th><th>保證金</th><th>強平價</th><th>開倉時間</th><th>來源</th></tr></thead><tbody>` +
-    v.pos.map(p => `<tr><td><b>${esc(p.sym)}</b></td><td>${p.dir > 0 ? '做多' : '做空'}</td><td>${p.lev}x</td><td>${p.qty}</td><td>${p.entry}</td><td>${p.px ?? '—'}</td><td class="${p.upnl >= 0 ? 'qg' : 'qr'}">${vU(p.upnl)}</td><td>${(+p.margin).toFixed(2)}U</td><td>${p.liq > 0 ? p.liq : '低風險'}</td><td>${p.ctime ? fmtT(p.ctime) : '—'}</td><td>${p.bot ? '🤖 自動' : '手動'}</td></tr>`).join('') + '</tbody></table></div>' : '<p class="qrepnote">目前沒有持倉。</p>';
+    v.pos.map(p => `<tr><td><b>${esc(p.sym)}</b></td><td>${p.dir > 0 ? '做多' : '做空'}</td><td>${p.lev}x</td><td>${p.qty}</td><td>${p.entry}</td><td>${p.px ?? '—'}</td><td class="${p.upnl >= 0 ? 'qg' : 'qr'}">${vU(p.upnl)}</td><td>${(+p.margin).toFixed(2)}U</td><td>${p.liq > 0 ? p.liq : '低風險'}</td><td>${p.ctime ? fmtT(p.ctime) : '—'}</td><td>${p.bot ? '🤖 自動' : `手動${OWN() && p.id ? `<br><button class="iconbtn" data-vadopt="${esc(p.id)}" data-s="${esc(p.sym)}" data-dir="${p.dir}" data-lev="${p.lev}" data-ct="${p.ctime || 0}">🤖 幫他改成自動單</button>` : ''}`}</td></tr>`).join('') + '</tbody></table></div>' : '<p class="qrepnote">目前沒有持倉。</p>';
   const RS = { win: '達標', lock: '鎖利', fail: '失敗線', timeout: '到期', manual: '手動平倉', all: '一鍵平倉', liq: '強平', exchange: '交易所平倉', flip: '反手' };
   const tr = (v.trades || []).length ? `<div class="tablewrap"><table class="stat"><thead><tr><th>幣種</th><th>方向</th><th>開倉</th><th>平倉</th><th>結果</th><th>淨損益</th></tr></thead><tbody>` +
     v.trades.map(t => `<tr><td><b>${esc(t.sym)}</b></td><td>${t.dir > 0 ? '做多' : '做空'}</td><td>${fmtT(t.et)}</td><td>${t.exitAt ? fmtT(t.exitAt) : '持有中'}</td><td>${t.status === 'open' ? '—' : esc(RS[t.reason] || t.reason)}</td><td class="${(t.status === 'open' ? t.net + t.upnl : t.net) >= 0 ? 'qg' : 'qr'}">${vU(t.status === 'open' ? t.net + t.upnl : t.net)}</td></tr>`).join('') + '</tbody></table></div>' : '<p class="qrepnote">還沒有自動交易紀錄。</p>';
