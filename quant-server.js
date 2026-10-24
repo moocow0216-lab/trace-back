@@ -860,7 +860,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-22h';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-22i';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1219,6 +1219,37 @@ async function ltReconcile(X, pos) {
     Object.assign(t, { status: 'closed', exitAt: Date.now(), reason, qty: 0, upnl: 0 }); ch = true;
     const net = ltNet(t), nm = '🤖 **實盤平倉**｜' + ({ win: '✅ 達標出場', lock: `🔒 鎖利出場（鎖利線 +${pctK(t.lockLv || TT(X).tp, rk(t, t.ruleLev || t.lev))}%）`, fail: '❌ 失敗線出場', timeout: '⏱ 持有到期出場', manual: '🖐 手動平倉', all: '🛑 一鍵平倉（自動單）', flip: '🔄 反手平倉', liq: '💥 強平', exchange: '📤 交易所平倉（止損或在 App 平倉）' }[reason] || reason);
     dcX(X, `${nm} **${mdEsc(t.sym)}** ${t.dir > 0 ? '做多' : '做空'}\n淨損益 **${net >= 0 ? '+' : '−'}${Math.abs(net).toFixed(2)}U**（${(net / (t.m0 || X.A.lt.margin) * 100).toFixed(0)}%）・持有 ${durTxt(Date.now() - t.et)}${t.closePx ? `・平倉均價 ${fpx(t.closePx)}` : ''}`);
+  }
+  // 🔍 第二層判斷：沒被管理的倉位，如果其實是伺服器開的，就自動接回管理（每筆倉位每 5 分鐘檢查一次）
+  //    ① 跟訊號卡片同幣、同方向，開倉時間跟卡片進場時間差 20 秒內（人看到通知再手動跟單通常要更久，不會被誤接）
+  //    ② 交易所的開倉訂單有伺服器下單時加的標記（q 開頭的 clientId），手動在 App 下的單沒有
+  const OC = X.LT.orphan || (X.LT.orphan = {});
+  for (const p of pos) {
+    if (TR.some(t => t.status === 'open' && (t.positionId === p.id || t.sym === p.sym))) continue;
+    if (!(p.ctime > 0) || Date.now() - (OC[p.id] || 0) < 5 * 60000) continue;
+    OC[p.id] = Date.now();
+    let why = '';
+    const card = ST.cards.find(c => c.sym === p.sym && c.dir === p.dir && c.et && (Math.abs(p.ctime - c.et) <= 20000 || (c.btcLate && Math.abs(p.ctime - c.btcLate) <= 30000)));
+    if (card) why = `跟訊號卡片同時進場（${tw(card.et)}）`;
+    if (!why) {
+      try {
+        const r = await bxGet('/api/v1/futures/trade/get_history_orders', { symbol: p.sym, limit: 20 }, K);
+        const L0 = Array.isArray(r) ? r : (r && (r.orderList || r.list)) || [];
+        if (L0.find(o => /^q[0-9a-z]{6,}$/.test(String(o.clientId || o.clientOrderId || '')) && sideDir(o.side) === p.dir && Math.abs(msT(num(o.ctime)) - p.ctime) <= 60000)) why = '開倉訂單有伺服器下單的標記';
+      } catch (e) {}
+    }
+    if (!why) continue;
+    const C = X.A.lt, px = PX.map[p.sym] || p.entry, roe = p.dir * (px / p.entry - 1) * C.lev * 100;
+    const t = {
+      id: 'lt-found-' + Date.now(), sym: p.sym, dir: p.dir, card: card ? card.id : '', abN: card ? card.abN : 0, et: p.ctime, lev: p.lev,
+      entry: p.entry, qty: p.qty, qty0: p.qty, margin: p.margin, m0: p.margin || C.margin, positionId: p.id, orderId: '', status: 'open', ruleLev: C.lev,
+      realized: p.rpnl || 0, fee: p.fee || 0, funding: p.funding || 0, closes: [], locked: false, fav: Math.max(0, roe), adv: Math.min(0, roe), exSL: false, found: Date.now(), prec: 0, minQty: 0
+    };
+    const pr = await ltPair(p.sym).catch(() => null); if (pr) { t.prec = +pr.basePrecision || 0; t.minQty = +pr.minTradeVolume || 0; }
+    TR.unshift(t); ch = true; log('偵測到伺服器開的單，自動接回', X.uid, p.sym, why);
+    const T = TT(X), k = rk(t, C.lev);
+    dcX(X, `🔧 **偵測到伺服器開的單** ${p.dir > 0 ? '🟢 做多' : '🔴 做空'} **${mdEsc(p.sym)}**（${p.lev}x）\n${why}，但之前沒被記到，已經自動接回管理\n浮盈 **+${pctK(T.tp, k)}%** 開始鎖利、浮虧 **−${pctK(T.sl, k)}%** 停損、持有 ${T.hold} 小時到期`);
+    setTimeout(() => ltSyncSL(X).catch(e => log('補掛止損失敗', X.uid, e.message)), 500);
   }
   // 單日虧損上限（台北時間每天 00:00 重算）
   const L = X.A.lt, LT = X.LT, day = new Date(Date.now() + TZ).toISOString().slice(0, 10), d0 = Date.parse(day + 'T00:00:00Z') - TZ;
