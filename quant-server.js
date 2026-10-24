@@ -39,7 +39,7 @@ const DEF_REP = { cap: 100, btN: 50, days: 14, next: 0 };                   // �
 let ST = { cards: [], bt: { at: 0, coins: 0, trades: [] }, set: { ...DEF_SET }, trade: { ...DEF_TRADE }, google: { clientId: '' }, eq: { ...DEF_EQ }, rep: { ...DEF_REP }, reports: [], users: [], sessions: [], accts: {}, owner: '' };
 try {
   const j = JSON.parse(fs.readFileSync(FILE, 'utf8'));
-  ST = { cards: j.cards || [], bt: j.bt || ST.bt, set: { ...DEF_SET, ...(j.set || {}) }, trade: { ...DEF_TRADE, ...(j.trade || {}) }, google: { clientId: '', ...(j.google || {}) }, eq: { ...DEF_EQ, ...(j.eq || {}) }, rep: { ...DEF_REP, ...(j.rep || {}) }, reports: j.reports || [], users: j.users || [], sessions: j.sessions || [], aws: j.aws || {}, accts: j.accts || {}, owner: j.owner || '', bstat: j.bstat || null, hb: j.hb || '', ecoDay: j.ecoDay || '' };
+  ST = { cards: j.cards || [], bt: j.bt || ST.bt, set: { ...DEF_SET, ...(j.set || {}) }, trade: { ...DEF_TRADE, ...(j.trade || {}) }, google: { clientId: '', ...(j.google || {}) }, eq: { ...DEF_EQ, ...(j.eq || {}) }, rep: { ...DEF_REP, ...(j.rep || {}) }, reports: j.reports || [], users: j.users || [], sessions: j.sessions || [], aws: j.aws || {}, accts: j.accts || {}, owner: j.owner || '', bstat: j.bstat || null, hb: j.hb || '', ecoDay: j.ecoDay || '', tool: j.tool || null };
   // 舊版（只有一個帳號）：原本的 Bitunix 金鑰、自動交易、實盤紀錄、Discord 搬到擁有者（第一個管理員）的帳號底下
   if (!j.accts && (j.bx || j.lt || j.ltTrades || j.notify)) {
     const a = ST.users.find(u => u.role === 'admin'), uid = a ? a.uid : '__owner';
@@ -860,7 +860,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-23b';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-23c';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1263,6 +1263,181 @@ async function ltReconcile(X, pos) {
   }
   if (ch) touchLT(X);
 }
+
+/* ================= 🗡 特級咒具：莊家進場、H4/H1 CRT 進場、獵殺進場 =================
+   移植自擁有者的兩套 TradingView 指標（只有這三種進場；BigBeluga 的清算熱力圖沒有用到）。
+   兩組週期：4H→15 分、1H→5 分。每根小週期 K 棒收盤後，掃描成交額前 N 個幣，出現進場就記下來、傳 Discord。
+   莊家淨額：原指標用 1 分 K 的漲跌方向推估主動買賣；這裡改用幣安直接給的主動買入成交額（主動買 − 主動賣），更準但數字會跟 TradingView 有些差 */
+const DEF_TOOL = { pw: null, grants: [], hooks: {}, set: { n: 30, h4: true, h1: true, zh: true, crt: true, hunt: true }, sigs: [], seen: {}, scan: { at: 0, coins: 0, err: '', n: 0 } };
+ST.tool = { ...DEF_TOOL, ...(ST.tool || {}) }; ST.tool.set = { ...DEF_TOOL.set, ...(ST.tool.set || {}) }; ST.tool.scan = { ...DEF_TOOL.scan };
+let TOOLV = 1;
+const TOOL_P = { h4: { ltf: '15m', lms: 15 * 60000, htf: '4h', hms: 4 * HOUR, slotH: 4, maxSlot: 5, name: '4H→15 分', crt: 'H4' }, h1: { ltf: '5m', lms: 5 * 60000, htf: '1h', hms: HOUR, slotH: 1, maxSlot: 23, name: '1H→5 分', crt: 'H1' } };
+const toolUsers = () => [ownerUid(), ...ST.tool.grants.filter(u => ST.users.some(x => x.uid === u))];
+const toolOk = (me, owner) => owner || !!(me && ST.tool.grants.includes(me.uid));
+async function toolKl(sym, iv, limit, ms) {           // 只要已經收盤的 K 棒
+  const r = await getJSON(`${BF}/fapi/v1/klines?symbol=${sym}&interval=${iv}&limit=${limit}`);
+  return (Array.isArray(r) ? r : []).map(x => ({ t: +x[0], o: +x[1], h: +x[2], l: +x[3], c: +x[4], qv: +x[7], tb: +x[10] })).filter(b => b.t + ms <= Date.now());
+}
+// CHoCH／BOS（照指標的 f_leg／f_structure）：每根 K 棒有沒有看漲、看跌結構突破
+function toolStruct(B, len) {
+  const n = B.length, bull = new Array(n).fill(false), bear = new Array(n).fill(false), tagB = new Array(n).fill(''), tagS = new Array(n).fill('');
+  let leg = 0, prevLeg = 0, swH = NaN, swL = NaN, hX = false, lX = false, bias = 0, pH = NaN, pL = NaN;
+  for (let i = 0; i < n; i++) {
+    if (i >= len) {                                    // high[len] 跟最近 len 根（不含它）比
+      let mh = -Infinity, ml = Infinity; for (let k = i - len + 1; k <= i; k++) { if (B[k].h > mh) mh = B[k].h; if (B[k].l < ml) ml = B[k].l; }
+      if (B[i - len].h > mh) leg = 0; else if (B[i - len].l < ml) leg = 1;
+    }
+    if (i > 0 && leg !== prevLeg) { if (leg === 1) { swL = B[i - len].l; lX = false; } else { swH = B[i - len].h; hX = false; } }
+    prevLeg = leg;
+    const c = B[i].c, cp = i ? B[i - 1].c : NaN;
+    const up = !isNaN(swH) && !isNaN(pH) && c > swH && cp <= pH, dn = !isNaN(swL) && !isNaN(pL) && c < swL && cp >= pL;   // ta.crossover／crossunder
+    if (up && !hX) { bull[i] = true; hX = true; tagB[i] = bias === -1 ? 'CHoCH' : 'BOS'; bias = 1; }
+    if (dn && !lX) { bear[i] = true; lX = true; tagS[i] = bias === 1 ? 'CHoCH' : 'BOS'; bias = -1; }
+    pH = swH; pL = swL;
+  }
+  return { bull, bear, tagB, tagS };
+}
+function toolAtr(B, len) {                            // ta.atr（RMA）
+  const out = new Array(B.length).fill(NaN); let rma = NaN, sum = 0;
+  for (let i = 0; i < B.length; i++) {
+    const b = B[i], tr = i ? Math.max(b.h - b.l, Math.abs(b.h - B[i - 1].c), Math.abs(b.l - B[i - 1].c)) : b.h - b.l;
+    if (i < len) { sum += tr; if (i === len - 1) rma = sum / len; } else rma = (rma * (len - 1) + tr) / len;
+    out[i] = rma;
+  }
+  return out;
+}
+// 🎯 獵殺進場（天神下凡）：同一天（UTC）連續兩根 4H／1H：前跌後漲且後低破前低＝看漲窗口；前漲後跌且後高破前高＝看跌窗口 → 窗口內出現同方向 CHoCH/BOS，下一根標示進場
+function toolHunt(L, P, sb, ib) {
+  const out = []; let day = [], curDay = null, acc = null, win = { dir: 0, trig: false }, pend = null;
+  for (let i = 0; i < L.length; i++) {
+    const b = L[i], slot = Math.floor(new Date(b.t).getUTCHours() / P.slotH) + 1, dayId = Math.floor(b.t / 86400000);
+    if (!acc || slot !== acc.slot || dayId !== acc.day) {
+      if (acc && dayId !== acc.day && win.dir && !win.trig) win = { dir: 0, trig: false };   // 新的一天：還沒觸發的窗口取消
+      if (acc) {
+        if (acc.day !== curDay) { day = []; curDay = acc.day; }
+        day.push(acc);
+        const n = day.length;
+        if (n >= 2) {
+          const p = day[n - 2], q = day[n - 1];
+          if (q.slot === p.slot + 1 && q.slot <= P.maxSlot) {
+            const lp = p.c < p.o && q.c > q.o && q.l < p.l, sp = p.c > p.o && q.c < q.o && q.h > p.h;
+            if (lp || sp) win = { dir: lp ? 1 : -1, trig: false };
+          }
+        }
+      }
+      acc = { o: b.o, h: b.h, l: b.l, c: b.c, slot, day: dayId };
+    } else { acc.h = Math.max(acc.h, b.h); acc.l = Math.min(acc.l, b.l); acc.c = b.c; }
+    if (win.dir && !win.trig) {
+      const brk = win.dir === 1 ? (sb.bull[i] || ib.bull[i]) : (sb.bear[i] || ib.bear[i]);
+      if (brk) { win.trig = true; pend = { dir: win.dir, i, tag: win.dir === 1 ? (ib.tagB[i] || sb.tagB[i]) : (ib.tagS[i] || sb.tagS[i]) }; }
+    }
+    if (pend && i === pend.i + 1) { out.push({ i, dir: pend.dir, tag: pend.tag }); pend = null; }
+  }
+  return out;
+}
+// 💰 莊家進場：大週期 K 棒收跌但淨額為正＝吸貨背離、收漲但淨額為負＝出貨背離 → 小週期同方向 CHoCH/BOS（Internal）進場；反向結構出現就取消背離；每個背離只進場一次
+function toolZh(L, P, ib) {
+  const out = []; let acc = null, setup = 0, used = false;
+  for (let i = 0; i < L.length; i++) {
+    const b = L[i], hs = Math.floor(b.t / P.hms) * P.hms; let bull = false, bear = false;
+    if (!acc || hs !== acc.t) {
+      if (acc && acc.full) { if (acc.c < acc.o && acc.net > 0) bull = true; if (acc.c > acc.o && acc.net < 0) bear = true; }
+      acc = { t: hs, o: b.o, c: b.c, net: 0, full: b.t === hs };   // 資料開頭不完整的那根大週期不判斷
+    }
+    acc.net += 2 * b.tb - b.qv; acc.c = b.c;
+    if (bull) { setup = 1; used = false; acc.div = 1; }
+    if (bear) { setup = -1; used = false; }
+    const bB = ib.bull[i], bS = ib.bear[i];
+    if (setup === 1 && !used && bB) { out.push({ i, dir: 1, tag: ib.tagB[i] }); used = true; }
+    if (setup === -1 && !used && bS) { out.push({ i, dir: -1, tag: ib.tagS[i] }); used = true; }
+    if ((setup === 1 && bS) || (setup === -1 && bB)) { setup = 0; used = false; }
+  }
+  return out;
+}
+// 🕯 H4/H1 CRT 進場：大週期掃前一根高低點再收回（嚴格：前一根顏色相反）→ 之後第 1～2 根大週期內，小週期結構轉向（武裝）後回踩 FVG，風險距離 ≥ 0.3 ATR → 進場；止盈＝盈虧比 1:1
+function toolCrt(L, H, P, sb, ib, atr) {
+  const st = []; let dir = 0, ci = -1, top = NaN, bot = NaN;
+  for (let j = 0; j < H.length; j++) {
+    if (j >= 1) {
+      const a = H[j - 1], b = H[j];
+      if (b.l < a.l && b.c > a.l && b.c > b.o && a.c < a.o) { dir = 1; ci = j; top = Math.max(a.h, b.h); bot = a.l; }
+      if (b.h > a.h && b.c < a.h && b.c < b.o && a.c > a.o) { dir = -1; ci = j; top = a.h; bot = Math.min(a.l, b.l); }
+    }
+    st.push({ dir, ci, top, bot });
+  }
+  const out = []; let bias = 0, la = false, sa = false, bz = [], sz = [], k = -1;
+  for (let i = 0; i < L.length; i++) {
+    const b = L[i], ct = b.t + P.lms;
+    while (k + 1 < H.length && H[k + 1].t + P.hms <= ct) k++;   // 這根小 K 收盤時，已經收盤的最後一根大週期（等同 lookahead_off）
+    const S = k >= 0 ? st[k] : null, since = S && S.ci >= 0 ? k - S.ci : NaN, act = !!(S && S.dir && since >= 1 && since <= 2), cdir = act ? S.dir : 0;
+    const anyB = sb.bull[i] || ib.bull[i], anyS = sb.bear[i] || ib.bear[i];
+    if (anyB) { bias = 1; la = true; sa = false; }
+    if (anyS) { bias = -1; sa = true; la = false; }
+    if (anyB) bz = []; if (anyS) sz = [];
+    if (i >= 2) {
+      const p1 = L[i - 1], p2 = L[i - 2], d = (p1.c - p1.o) / (p1.o * 100);
+      if (b.l > p2.h && p1.c > p2.h && d > 0) { bz.unshift({ top: b.l, bot: p2.h, i }); if (bz.length > 5) bz.pop(); }
+      if (b.h < p2.l && p1.c < p2.l && -d > 0) { sz.unshift({ top: p2.l, bot: b.h, i }); if (sz.length > 5) sz.pop(); }
+    }
+    bz = bz.filter(z => !(b.c < z.bot)); sz = sz.filter(z => !(b.c > z.top));
+    const bh = Math.max(b.o, b.c), bl = Math.min(b.o, b.c), hit = Z => Z.some(z => z.i !== i && b.h >= z.bot && b.l <= z.top && !(bl <= z.bot && bh >= z.top));
+    const lh = hit(bz), sh = hit(sz), A = atr[i];
+    if (la && bias === 1 && lh && cdir === 1 && b.c - S.bot >= 0.3 * A) { out.push({ i, dir: 1, sl: S.bot, tp: b.c + (b.c - S.bot) }); la = false; }
+    if (sa && bias === -1 && sh && cdir === -1 && S.top - b.c >= 0.3 * A) { out.push({ i, dir: -1, sl: S.top, tp: b.c - (S.top - b.c) }); sa = false; }
+  }
+  return out;
+}
+const TOOLU = { at: 0, list: [] };
+async function toolUniverse(n) {                       // 成交額前 N 個 USDT 永續（每小時更新一次）
+  if (Date.now() - TOOLU.at > HOUR || !TOOLU.list.length) {
+    const r = await getJSON(`${BF}/fapi/v1/ticker/24hr`);
+    TOOLU.list = (Array.isArray(r) ? r : []).filter(x => /USDT$/.test(x.symbol) && !x.symbol.includes('_')).sort((a, b) => +b.quoteVolume - +a.quoteVolume).map(x => x.symbol); TOOLU.at = Date.now();
+  }
+  return TOOLU.list.slice(0, n);
+}
+function toolNotify(s) {
+  const P = TOOL_P[s.pair], nm = { zh: '莊家進場', crt: `${P.crt} CRT 進場`, hunt: '獵殺進場' }[s.type];
+  const msg = `🗡 **特級咒具**｜${s.dir > 0 ? '🟢 **做多**' : '🔴 **做空**'} **${mdEsc(s.sym)}**・**${nm}**（${P.name}）\n進場時間 ${tw(s.t)}（台北）・價格 ${fpx(s.px)}${s.tag ? `・${s.tag}` : ''}${s.type === 'crt' ? `\n止損 ${fpx(s.sl)}・止盈 ${fpx(s.tp)}（盈虧比 1:1）` : ''}`;
+  const seen = new Set();
+  for (const uid of toolUsers()) { let h = ''; try { h = dec(ST.tool.hooks[uid] || ''); } catch (e) {} if (!h || seen.has(h)) continue; seen.add(h); dcSend(msg, { webhook: h }); }
+}
+const TOOLR = { h4: 0, h1: 0, busy: false };
+async function toolScan(pair) {
+  const T = ST.tool, S = T.set, P = TOOL_P[pair]; let n = 0, newN = 0;
+  const syms = await toolUniverse(Math.max(5, Math.min(100, +S.n || 30)));
+  for (const sym of syms) {
+    try {
+      const L = await toolKl(sym, P.ltf, 500, P.lms), H = await toolKl(sym, P.htf, 120, P.hms);
+      if (L.length < 120 || H.length < 3) continue;
+      n++;
+      const sb = toolStruct(L, 50), ib = toolStruct(L, 5), atr = toolAtr(L, 14), last = L.length - 1, found = [];
+      if (S.zh) for (const x of toolZh(L, P, ib)) found.push({ ...x, type: 'zh' });
+      if (S.crt) for (const x of toolCrt(L, H, P, sb, ib, atr)) found.push({ ...x, type: 'crt' });
+      if (S.hunt) for (const x of toolHunt(L, P, sb, ib)) found.push({ ...x, type: 'hunt' });
+      for (const x of found) {
+        const b = L[x.i], key = `${sym}|${x.type}|${pair}|${b.t}|${x.dir}`;
+        if (T.seen[key]) continue; T.seen[key] = Date.now();
+        const sg = { id: key, sym, type: x.type, pair, dir: x.dir, t: b.t + P.lms, px: b.c, sl: x.sl || 0, tp: x.tp || 0, tag: x.tag || '' };
+        T.sigs.push(sg); newN++;
+        if (x.i >= last - 1 && Date.now() - sg.t < 3 * P.lms) toolNotify(sg);   // 剛收盤的才通知；往回補的舊訊號只放進列表
+      }
+    } catch (e) { T.scan.err = `${sym}：${e.message}`; }
+  }
+  T.sigs.sort((a, b) => b.t - a.t); T.sigs = T.sigs.slice(0, 400);
+  const cut = Date.now() - 8 * 24 * HOUR; for (const k of Object.keys(T.seen)) if (T.seen[k] < cut) delete T.seen[k];
+  T.scan = { ...T.scan, at: Date.now(), coins: n, n: syms.length };
+  if (newN) { dirty = true; TOOLV++; }
+}
+setInterval(async () => {                              // 每根 5 分／15 分 K 收盤後約 20 秒掃一次
+  if (TOOLR.busy) return;
+  const t = Date.now() - 20000, S = ST.tool.set;
+  for (const pair of ['h1', 'h4']) {
+    const ms = TOOL_P[pair].lms, slot = Math.floor(t / ms);
+    if (!S[pair] || slot <= TOOLR[pair]) continue;
+    TOOLR[pair] = slot; TOOLR.busy = true;
+    try { await toolScan(pair); } catch (e) { ST.tool.scan.err = e.message; } finally { TOOLR.busy = false; }
+  }
+}, 15000);
 
 /* ---------------- 📅 數據公布（經濟數據行事曆，來源：Forex Factory 公開 JSON） ----------------
    只看美國（USD）的高影響數據；公布前 30 分鐘、公布時各發一次 Discord，之後讀到實際值再補一次 */
@@ -1877,7 +2052,7 @@ http.createServer(async (req, res) => {
     if (req.method === 'POST' && u.pathname.startsWith('/api/')) {
       // 個人設定：每個帳號都能改「自己的」；其他（掃描條件、浮盈規則、回測、帳號管理、AWS）只有管理員能改
       // 個人（每個帳號）：自己的 API、Discord、交易設定、平倉；管理員（灰色）：帳號管理；其他全站設定只有擁有者能改
-      const PERSONAL = ['/api/bind', '/api/bitunix', '/api/lt/config', '/api/lt/testOpen', '/api/lt/close', '/api/lt/closeAll', '/api/lt/adopt', '/api/notify', '/api/notify/test', '/api/me/password'];
+      const PERSONAL = ['/api/bind', '/api/bitunix', '/api/lt/config', '/api/lt/testOpen', '/api/lt/close', '/api/lt/closeAll', '/api/lt/adopt', '/api/notify', '/api/notify/test', '/api/me/password', '/api/tool'];
       const ADMIN = ['/api/users', '/api/users/delete', '/api/users/kick', '/api/check'];
       if (ADMIN.includes(u.pathname) && !admin) return send(res, 403, { error: '這個功能只有管理員可以用' });
       if (!PERSONAL.includes(u.pathname) && !ADMIN.includes(u.pathname) && !owner) return send(res, 403, { error: '這個設定只有擁有者可以改' });
@@ -2075,6 +2250,41 @@ http.createServer(async (req, res) => {
         const pct = Math.min(1, Math.max(0.01, +b.pct || 1));
         try { const r = await ltClosePos(X, String(b.positionId), pct, 'manual'); setTimeout(() => bxPollOne(X), 1500); return send(res, 200, { ok: true, r }); }
         catch (e) { return send(res, 400, { error: e.message }); }
+      }
+      if (u.pathname === '/api/tool') {                // 🗡 特級咒具：擁有者直接能用；其他人要輸入擁有者設的密碼
+        const T = ST.tool, op = String(b.op || 'get');
+        if (op === 'unlock') {
+          if (toolOk(me, owner)) return send(res, 200, { ok: true });
+          if (!T.pw) return send(res, 400, { error: '擁有者還沒設定密碼' });
+          const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
+          if (!pwOk(T.pw, String(b.pw || ''))) { failed(ip); return send(res, 400, { error: '密碼不對' }); }
+          if (me && !T.grants.includes(me.uid)) T.grants.push(me.uid);
+          dirty = true; log('特級咒具解鎖', me ? me.uid : ''); return send(res, 200, { ok: true });
+        }
+        if (!toolOk(me, owner)) return send(res, 403, { error: '特級咒具還沒解鎖', locked: true, hasPw: !!T.pw });
+        if (op === 'get') return send(res, 200, { owner, v: TOOLV, sigs: T.sigs.slice(0, 400), set: T.set, scan: T.scan, hook: me && T.hooks[me.uid] ? '已設定' : '', hasPw: !!T.pw, grants: owner ? T.grants : undefined });
+        if (op === 'hook') {
+          if (!me) return send(res, 400, { error: '用管理金鑰登入不能設定' });
+          const w = String(b.webhook || '').replace(/\s+/g, '');
+          if (w && !/^https:\/\/(?:(?:canary|ptb)\.)?(?:discord|discordapp)\.com\/api\/webhooks\/\d+\/[\w-]+$/.test(w)) return send(res, 400, { error: '網址格式不對，應該是 https://discord.com/api/webhooks/ 開頭' });
+          T.hooks[me.uid] = w ? enc(w) : ''; dirty = true; return send(res, 200, { ok: true });
+        }
+        if (op === 'test') {
+          let h = ''; try { h = me ? dec(T.hooks[me.uid] || '') : ''; } catch (e) {}
+          if (!h) return send(res, 400, { error: '還沒設定 Webhook' });
+          return send(res, 200, { ok: await dcSend('🗡 **特級咒具**：通知設定成功，之後有進場訊號會傳到這裡。', { webhook: h }) });
+        }
+        if (!owner) return send(res, 403, { error: '只有擁有者可以改' });
+        if (op === 'pw') {
+          if (!validPw(b.pw)) return send(res, 400, { error: '密碼至少 8 個字' });
+          T.pw = hashPw(String(b.pw)); const n0 = T.grants.length; T.grants = []; dirty = true; log('特級咒具改密碼');
+          return send(res, 200, { ok: true, revoked: n0 });
+        }
+        if (op === 'set') {
+          const x = b.set || {}; T.set = { n: Math.max(5, Math.min(100, Math.round(+x.n || T.set.n))), h4: x.h4 !== false, h1: x.h1 !== false, zh: x.zh !== false, crt: x.crt !== false, hunt: x.hunt !== false };
+          dirty = true; return send(res, 200, { ok: true, set: T.set });
+        }
+        return send(res, 400, { error: '不認得的操作' });
       }
       if (u.pathname === '/api/me/password') {         // 🔑 改自己的密碼：要先輸入目前的密碼；改完其他裝置登出，這台保持登入
         if (!me) return send(res, 400, { error: '用管理金鑰登入不能改密碼' });
