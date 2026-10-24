@@ -353,9 +353,13 @@ markSettledNotified();
 // Webhook 網址長這樣：https://discord.com/api/webhooks/數字/一長串英數字
 const DC_RE = /^https:\/\/(?:(?:canary|ptb)\.)?discord(?:app)?\.com\/api\/webhooks\/\d+\/[\w-]+$/;
 const DC_OK = u => DC_RE.test(u) || (process.env.DC_TEST === '1' && /^http:\/\/127\.0\.0\.1:\d+\/api\/webhooks\//.test(u));
-const DC = { q: [], busy: false };
-function dcSend(content, cfg) {
+const DC = { q: [], busy: false, st: new Map() };        // st：每個 Webhook 最後一次的傳送結果（給網站顯示，不存檔）
+const dcErr = (status, txt) => status === 404 ? 'Webhook 不存在（可能被刪掉了），請到 Discord 重新複製網址' : status === 401 || status === 403 ? 'Webhook 網址無效，請重新複製' : status === 400 ? `Discord 拒收這則訊息（${String(txt).slice(0, 80)}）` : `Discord 回應錯誤 ${status}`;
+function dcStat(url) { const x = url && DC.st.get(url); return x ? { ok: x.ok, at: x.at, err: x.err || '' } : null; }
+function dcSend(content, cfg, force) {
   if (!cfg || !cfg.webhook) return Promise.resolve(false);
+  const x = DC.st.get(cfg.webhook);
+  if (!force && x && x.pauseTo > Date.now()) return Promise.resolve(false);   // 這個網址連續失敗：暫停 5 分鐘，不要卡住別人的通知（測試訊息不受限）
   return new Promise(ok => { DC.q.push({ content, cfg, ok }); dcRun(); });
 }
 async function dcRun() {
@@ -366,14 +370,21 @@ async function dcRun() {
     for (let tries = 0; tries < 3 && !sent; tries++) {
       try {
         const r = await fetch(m.cfg.webhook, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(15000),
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(8000),
           body: JSON.stringify({ content: m.content.slice(0, 1900), username: '合約量化進場', allowed_mentions: { parse: [] } })
         });
         if (r.status === 429) { const j = await r.json().catch(() => ({})); await sleep(Math.ceil((+j.retry_after || 2) * 1000) + 200); continue; }   // Discord 限速，等一下再送
-        if (!r.ok) { log('Discord 傳送失敗', r.status, (await r.text().catch(() => '')).slice(0, 200)); break; }
+        if (!r.ok) { const tx = (await r.text().catch(() => '')).slice(0, 200); log('Discord 傳送失敗', r.status, tx); m.err = dcErr(r.status, tx); break; }
         sent = true;
-      } catch (e) { log('Discord 傳送失敗', e.message); await sleep(2000); }
+      } catch (e) {
+        log('Discord 傳送失敗', e.message); const to = /timeout|abort/i.test(e.name + e.message);
+        m.err = to ? '連不到 Discord（逾時）' : `連不到 Discord（${e.message}）`;
+        if (to) break;                                 // 逾時代表整個連不上：不重試，免得卡住其他人的通知
+        await sleep(1500);
+      }
     }
+    { const prev = DC.st.get(m.cfg.webhook) || {}, fails = sent ? 0 : (prev.fails || 0) + 1;
+      DC.st.set(m.cfg.webhook, { ok: sent, at: Date.now(), err: sent ? '' : (m.err || '傳送失敗'), fails, pauseTo: fails >= 3 ? Date.now() + 5 * 60000 : 0 }); }
     m.ok(sent);
     await sleep(800);
   }
@@ -860,7 +871,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-23d';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-23f';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1401,6 +1412,93 @@ function toolNotify(s) {
   const seen = new Set();
   for (const uid of toolUsers()) { let h = ''; try { h = dec(ST.tool.hooks[uid] || ''); } catch (e) {} if (!h || seen.has(h)) continue; seen.add(h); dcSend(msg, { webhook: h }); }
 }
+/* ---------- 🗡 特級咒具回測：三種進場 × 兩組週期，用「我的設定」的出場規則（停損、開始鎖利、鎖利上調、持有天數、槓桿）、每筆保證金、初始資金、手續費全部算進去 ---------- */
+const TBT = { run: false, done: 0, total: 0, msg: '' };
+async function toolKlRange(sym, iv, ms, from, to) {     // 分段抓一段期間的 K 線（只要已收盤的）
+  const out = []; let s0 = from;
+  while (s0 < to) {
+    const r = await getJSON(`${BF}/fapi/v1/klines?symbol=${sym}&interval=${iv}&startTime=${s0}&limit=1500`);
+    if (!Array.isArray(r) || !r.length) break;
+    for (const x of r) { const t = +x[0]; if (t + ms <= Date.now() && (!out.length || t > out[out.length - 1].t)) out.push({ t, o: +x[1], h: +x[2], l: +x[3], c: +x[4], qv: +x[7], tb: +x[10] }); }
+    const last = +r[r.length - 1][0]; if (r.length < 1500 || last + ms >= to) break; s0 = last + ms;
+  }
+  return out;
+}
+// 一筆單的出場：K 棒內的走法——收漲的 K 棒當作「開→低→高→收」、收跌的當作「開→高→低→收」，照順序檢查停損、鎖利、最高浮盈；到期用收盤價
+function toolExit(B, i0, d, e, T, lev, lms) {
+  const roe = p => d * (p / e - 1) * lev * 100, et = B[i0].t + lms, holdMs = (T.hold || 168) * HOUR;
+  let peak = 0, locked = false;
+  for (let i = i0 + 1; i < B.length; i++) {
+    const b = B[i], tEnd = b.t + lms, path = b.c >= b.o ? [b.o, b.l, b.h, b.c] : [b.o, b.h, b.l, b.c];
+    for (const p of path) {
+      const r = roe(p);
+      if (!locked && r <= -T.sl) return { t: tEnd, roe: -T.sl, how: 'fail' };
+      if (locked) { const lv = lockAt(peak, T); if (r <= lv) return { t: tEnd, roe: lv, how: 'lock' }; }
+      if (r > peak) peak = r;
+      if (!locked && peak >= T.tp) locked = true;
+    }
+    if (tEnd - et >= holdMs) return { t: tEnd, roe: roe(b.c), how: 'hold' };
+  }
+  const z = B[B.length - 1]; return { t: z.t + lms, roe: roe(z.c), how: 'open' };
+}
+async function toolBacktest(X, cfg) {
+  const S = ST.tool.set, days = [7, 14, 30].includes(+cfg.days) ? +cfg.days : 14, n = Math.max(5, Math.min(50, Math.round(+cfg.n || S.n || 30)));
+  const L0 = X.A.lt, T = TT(X), lev = L0.lev || 100, m = L0.margin || 0.3, cap0 = L0.budget > 0 ? L0.budget : 100, fee = ((ST.eq && ST.eq.fee) ?? 0.05) / 100;
+  const start = Date.now() - days * 24 * HOUR, warm = 2 * 24 * HOUR, pairs = ['h4', 'h1'].filter(p => S[p]);
+  const syms = await toolUniverse(n); TBT.total = syms.length * pairs.length; TBT.done = 0;
+  const cand = [];
+  for (const sym of syms) for (const pair of pairs) {
+    const P = TOOL_P[pair];
+    try {
+      TBT.msg = `${sym} ${P.name}`;
+      const L = await toolKlRange(sym, P.ltf, P.lms, start - warm, Date.now()), H = await toolKlRange(sym, P.htf, P.hms, start - warm - 10 * P.hms, Date.now());
+      if (L.length < 200 || H.length < 3) continue;
+      const sb = toolStruct(L, 50), ib = toolStruct(L, 5), atr = toolAtr(L, 14), found = [];
+      if (S.zh) for (const x of toolZh(L, P, ib)) found.push({ ...x, type: 'zh' });
+      if (S.crt) for (const x of toolCrt(L, H, P, sb, ib, atr)) found.push({ ...x, type: 'crt' });
+      if (S.hunt) for (const x of toolHunt(L, P, sb, ib)) found.push({ ...x, type: 'hunt' });
+      for (const x of found) {
+        const et = L[x.i].t + P.lms; if (et < start) continue;
+        const ex = toolExit(L, x.i, x.dir, L[x.i].c, T, lev, P.lms);
+        cand.push({ sym, type: x.type, pair, dir: x.dir, et, entry: L[x.i].c, xt: ex.t, roe: ex.roe, how: ex.how });
+      }
+    } catch (e) { TBT.msg = `${sym}：${e.message}`; }
+    TBT.done++;
+  }
+  // 資金模擬：照時間先後；同一個幣還開著就跳過；可用資金不夠也跳過
+  cand.sort((a, b) => a.et - b.et);
+  const open = [], trades = [], eq = [[start, cap0]]; let cash = cap0, used = 0, peakEq = cap0, mdd = 0, maxOpen = 0, skipCoin = 0, skipCash = 0;
+  const settle = until => {
+    open.sort((a, b) => a.xt - b.xt);
+    while (open.length && open[0].xt <= until && open[0].how !== 'open') {
+      const t = open.shift(); used -= m; cash += t.pnl; eq.push([t.xt, +(cash).toFixed(4)]);
+      peakEq = Math.max(peakEq, cash); mdd = Math.max(mdd, peakEq > 0 ? (peakEq - cash) / peakEq * 100 : 0);
+    }
+  };
+  for (const c of cand) {
+    settle(c.et);
+    if (open.some(o => o.sym === c.sym)) { skipCoin++; continue; }
+    if (cash - used < m) { skipCash++; continue; }
+    c.pnl = m * c.roe / 100 - 2 * m * lev * fee; c.net = c.pnl / m * 100;   // 損益（U）＝保證金 × 報酬率 − 開平倉手續費
+    open.push(c); used += m; trades.push(c); maxOpen = Math.max(maxOpen, open.length);
+  }
+  settle(Infinity);
+  const unreal = open.reduce((a, t) => a + t.pnl, 0);
+  const grp = L => { const done = L.filter(t => t.how !== 'open'), win = done.filter(t => t.pnl > 0).length;
+    return { n: L.length, done: done.length, win, rate: done.length ? +(win / done.length * 100).toFixed(1) : null, avg: done.length ? +(done.reduce((a, t) => a + t.net, 0) / done.length).toFixed(1) : null, sum: +L.reduce((a, t) => a + t.pnl, 0).toFixed(3),
+      fail: done.filter(t => t.how === 'fail').length, lock: done.filter(t => t.how === 'lock').length, hold: done.filter(t => t.how === 'hold').length }; };
+  ST.tool.bt = {
+    at: Date.now(), start, end: Date.now(), days, coins: syms.length, pairs,
+    rule: { tp: T.tp, step: T.step, sl: T.sl, hold: T.hold, lev, m, cap0, fee: fee * 100 },
+    all: grp(trades), by: { zh: grp(trades.filter(t => t.type === 'zh')), crt: grp(trades.filter(t => t.type === 'crt')), hunt: grp(trades.filter(t => t.type === 'hunt')) },
+    byPair: { h4: grp(trades.filter(t => t.pair === 'h4')), h1: grp(trades.filter(t => t.pair === 'h1')) },
+    endCap: +(cash + unreal).toFixed(3), realCap: +cash.toFixed(3), mdd: +mdd.toFixed(1), maxOpen, skipCoin, skipCash, found: cand.length,
+    eq: eq.length > 400 ? eq.filter((_, i) => i % Math.ceil(eq.length / 400) === 0 || i === eq.length - 1) : eq,
+    trades: trades.slice(-300).reverse().map(t => ({ sym: t.sym, type: t.type, pair: t.pair, dir: t.dir, et: t.et, entry: t.entry, xt: t.xt, how: t.how, net: +t.net.toFixed(1), pnl: +t.pnl.toFixed(4) }))
+  };
+  dirty = true; TOOLV++;
+}
+
 const TOOLR = { h4: 0, h1: 0, busy: false };
 async function toolScan(pair) {
   const T = ST.tool, S = T.set, P = TOOL_P[pair]; let n = 0, newN = 0;
@@ -2035,7 +2133,7 @@ http.createServer(async (req, res) => {
       const out = {
         time: Date.now(), ver: VER, cv: CV, bv: BV * 2 + (X.A.lt.btcF ? 1 : 0), set: ST.set, trade: ST.trade, canWrite: !!ADMIN_KEY,
         scan: { ...SCAN, pause: RL.pause }, bt: { at: ST.bt.at, coins: ST.bt.coins, n: btActive().length, cmp: btCompare() }, btp: BTP, bstat: { busy: BSTAT.busy, msg: BSTAT.msg, v: BSTAT.v || ST.bstat || null },
-        notify: { enabled: X.A.notify.enabled, entry: X.A.notify.entry, exit: X.A.notify.exit, hasHook: !!X.A.notify.webhook, name: X.A.notify.name },
+        notify: { enabled: X.A.notify.enabled, entry: X.A.notify.entry, exit: X.A.notify.exit, hasHook: !!X.A.notify.webhook, name: X.A.notify.name, last: dcStat(X.A.notify.webhook) },
         me: { uid: me ? me.uid : '管理金鑰', admin: !!admin, owner: !!owner },
         eq: ST.eq, rep: { ...ST.rep, busy: REP.busy, msg: REP.msg }, rv: RV,
         bx: { set: hasKey(X), notify: X.A.bx.notify, liq: X.A.bx.liq, liqPct: X.A.bx.liqPct, at: X.BX.at, err: X.BX.err, acct: X.BX.acct,
@@ -2263,7 +2361,7 @@ http.createServer(async (req, res) => {
           dirty = true; log('特級咒具解鎖', me ? me.uid : ''); return send(res, 200, { ok: true });
         }
         if (!toolOk(me, owner)) return send(res, 403, { error: '特級咒具還沒解鎖', locked: true, hasPw: !!T.pw });
-        if (op === 'get') return send(res, 200, { owner, v: TOOLV, px: T.px || {}, sigs: T.sigs.slice(0, 400), set: T.set, scan: T.scan, hook: me && T.hooks[me.uid] ? '已設定' : '', hasPw: !!T.pw, grants: owner ? T.grants : undefined });
+        if (op === 'get') return send(res, 200, { owner, v: TOOLV, px: T.px || {}, bt: T.bt || null, btRun: { run: TBT.run, done: TBT.done, total: TBT.total, msg: TBT.msg }, sigs: T.sigs.slice(0, 400), set: T.set, scan: T.scan, hook: me && T.hooks[me.uid] ? '已設定' : '', hookLast: (() => { try { return me && T.hooks[me.uid] ? dcStat(dec(T.hooks[me.uid])) : null; } catch (e) { return null; } })(), hasPw: !!T.pw, grants: owner ? T.grants : undefined });
         if (op === 'hook') {
           if (!me) return send(res, 400, { error: '用管理金鑰登入不能設定' });
           const w = String(b.webhook || '').replace(/\s+/g, '');
@@ -2273,9 +2371,16 @@ http.createServer(async (req, res) => {
         if (op === 'test') {
           let h = ''; try { h = me ? dec(T.hooks[me.uid] || '') : ''; } catch (e) {}
           if (!h) return send(res, 400, { error: '還沒設定 Webhook' });
-          return send(res, 200, { ok: await dcSend('🗡 **特級咒具**：通知設定成功，之後有進場訊號會傳到這裡。', { webhook: h }) });
+          const ok = await dcSend('🗡 **特級咒具**：通知設定成功，之後有進場訊號會傳到這裡。', { webhook: h }, true), st = dcStat(h);
+          return ok ? send(res, 200, { ok: true }) : send(res, 400, { error: `傳送失敗：${(st && st.err) || '原因不明'}` });
         }
         if (!owner) return send(res, 403, { error: '只有擁有者可以改' });
+        if (op === 'bt') {                               // 🗡 特級咒具回測（在背景跑，幾分鐘）
+          if (TBT.run) return send(res, 400, { error: '回測進行中，請稍等' });
+          TBT.run = true; TBT.msg = '準備中…';
+          toolBacktest(X, b).catch(e => { TBT.msg = '回測失敗：' + e.message; log('特級咒具回測失敗', e.message); }).finally(() => { TBT.run = false; });
+          return send(res, 200, { ok: true });
+        }
         if (op === 'pw') {
           if (!validPw(b.pw)) return send(res, 400, { error: '密碼至少 8 個字' });
           T.pw = hashPw(String(b.pw)); const n0 = T.grants.length; T.grants = []; dirty = true; log('特級咒具改密碼');
@@ -2378,8 +2483,10 @@ http.createServer(async (req, res) => {
         return send(res, 200, { ok: true, ...awsNext() });
       }
       if (u.pathname === '/api/notify/test') {
-        const ok = await dcX(X, '🔔 **合約量化進場**：通知測試成功！之後每次有新訊號進場、結單，都會傳到這個頻道。');
-        return ok ? send(res, 200, { ok: true }) : send(res, 400, { error: '傳送失敗，請確認 Webhook 網址有儲存成功' });
+        if (!X.A.notify.webhook) return send(res, 400, { error: '還沒儲存 Webhook 網址' });
+        const ok = await dcSend('🔔 **合約量化進場**：通知測試成功！之後每次有新訊號進場、結單，都會傳到這個頻道。', X.A.notify, true);
+        const st = dcStat(X.A.notify.webhook);
+        return ok ? send(res, 200, { ok: true }) : send(res, 400, { error: `傳送失敗：${(st && st.err) || '原因不明'}` });
       }
     }
     send(res, 404, { error: 'not found' });
