@@ -860,7 +860,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-22e';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-22f';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -909,10 +909,11 @@ async function bxGet(path, params, cfg) {              // cfg 一定要指定是
 const sideDir = v => { const x = String(v || '').toUpperCase(); return x === 'LONG' || x === 'BUY' ? 1 : x === 'SHORT' || x === 'SELL' ? -1 : 0; };
 const num = v => { const n = +v; return Number.isFinite(n) ? n : 0; };
 const bxEquity = X => { const A = X.BX.acct; return A ? A.avail + A.frozen + A.margin + A.cross + A.iso : 0; };
+const msT = v => (v > 0 && v < 1e12 ? v * 1000 : v);   // 交易所回傳的時間有時是秒、有時是毫秒，統一成毫秒
 const bxMapPos = data => (Array.isArray(data) ? data : []).map(p => ({
   id: String(p.positionId), sym: p.symbol, dir: sideDir(p.side), side: p.side, qty: num(p.qty), lev: num(p.leverage), mode: p.marginMode,
   entry: num(p.avgOpenPrice), margin: num(p.margin), upnl: num(p.unrealizedPNL), rpnl: num(p.realizedPNL), fee: num(p.fee), funding: num(p.funding),
-  liq: num(p.liqPrice), ctime: num(p.ctime), mtime: num(p.mtime), pmode: p.positionMode
+  liq: num(p.liqPrice), ctime: msT(num(p.ctime)), mtime: msT(num(p.mtime)), pmode: p.positionMode
 }));
 async function bxPoll(X) {
   const C = X.A.bx, BX = X.BX, N = X.A.notify;
@@ -1047,9 +1048,9 @@ async function ltOpen(X, c) {
       if (!/sl|stop|price/i.test(e.message)) throw e;
       exSL = false; o = await bxPost('/api/v1/futures/trade/place_order', base, K);
     }
-    await sleep(1500);
-    const ps = await bxGet('/api/v1/futures/position/get_pending_positions', { symbol: c.sym }, K).catch(() => []);
-    const p = (ps || []).find(x => sideDir(x.side) === c.dir);
+    let p = null;                                      // 交易所處理需要時間：最多重試 6 次（約 9 秒）拿到這筆倉位的編號，沒有編號伺服器就管不到它
+    for (let k = 0; k < 6 && !p; k++) { await sleep(1500); const ps = await bxGet('/api/v1/futures/position/get_pending_positions', { symbol: c.sym }, K).catch(() => []); p = (ps || []).find(x => sideDir(x.side) === c.dir) || null; }
+    if (!p) log('開倉後查不到倉位編號，之後對帳時再認領', X.uid, c.sym);
     const t = {
       id: 'lt-' + Date.now(), sym: c.sym, dir: c.dir, card: c.id, abN: c.abN, et: Date.now(), lev,
       entry: p ? num(p.avgOpenPrice) : px, qty: p ? num(p.qty) : qty, qty0: p ? num(p.qty) : qty, margin: p ? num(p.margin) : C.margin, m0: p ? num(p.margin) || C.margin : C.margin,
@@ -1180,16 +1181,21 @@ async function ltManageX(X) {
 async function ltReconcile(X, pos) {
   const K = X.A.bx, TR = X.A.ltTrades, byId = new Map(pos.map(p => [p.id, p])); let ch = false;
   // 修正舊版的錯：方向判斷錯誤時，倉位明明還在卻被當成已平倉 → 找回來重新追蹤
+  // 交易所偶爾回傳不完整的持倉清單，舊版會把還開著的自動單誤記成「交易所平倉」→ 倉位變成「手動單」、伺服器不再管理。只要倉位還在就接回來
   for (const t of TR) {
-    if (t.status !== 'closed' || t.reason !== 'exchange' || t.positionId || Date.now() - t.et > 7 * 24 * HOUR) continue;
-    const p = pos.find(x => x.sym === t.sym && x.dir === t.dir && Math.abs((x.ctime || 0) - t.et) < 5 * 60000 && !TR.some(o => o.status === 'open' && o.positionId === x.id));
+    if (t.status !== 'closed' || t.reason !== 'exchange' || Date.now() - t.et > 7 * 24 * HOUR) continue;
+    const free = x => !TR.some(o => o.status === 'open' && o.positionId === x.id);
+    const p = t.positionId ? pos.find(x => x.id === t.positionId && free(x))
+      : pos.find(x => x.sym === t.sym && x.dir === t.dir && free(x) && Math.abs(x.entry / t.entry - 1) < 0.002 && (!(x.ctime > 0) || Math.abs(x.ctime - t.et) < 5 * 60000));
     if (!p) continue;
-    Object.assign(t, { status: 'open', reason: '', exitAt: 0, positionId: p.id, entry: p.entry, qty: p.qty, qty0: p.qty, m0: p.margin || t.m0, lev: p.lev || t.lev, closes: (t.closes || []).slice(0, -1) });
-    ch = true; log('找回被誤判平倉的單', X.uid, t.sym);
+    Object.assign(t, { status: 'open', reason: '', exitAt: 0, positionId: p.id, entry: p.entry, qty: p.qty, qty0: Math.max(t.qty0 || 0, p.qty), m0: p.margin || t.m0, lev: p.lev || t.lev, closes: (t.closes || []).slice(0, -1), miss: 0 });
+    ch = true; log('找回被誤判平倉的自動單', X.uid, t.sym);
+    dcX(X, `🔧 **找回自動單** ${mdEsc(t.sym)} ${t.dir > 0 ? '做多' : '做空'}：這筆單之前被誤記成已平倉，其實還開著，伺服器已經重新接管（鎖利、停損、到期照常）`);
   }
   for (const t of ltOpenTrades(X)) {
     let p = t.positionId ? byId.get(t.positionId) : pos.find(x => x.sym === t.sym && x.dir === t.dir && Math.abs((x.ctime || 0) - t.et) < 5 * 60000);   // 只認自動下單那一刻開的倉，手動開的不算
     if (p && !t.positionId) { t.positionId = p.id; t.entry = p.entry; t.qty = t.qty0 = p.qty; t.m0 = p.margin || t.m0; ch = true; }
+    if (p) t.miss = 0;
     if (p) {
       if (p.qty < t.qty - 1e-12) {                    // 部分平倉（網站或交易所 App）
         const pnl = p.rpnl - (t.realized || 0);
@@ -1201,9 +1207,11 @@ async function ltReconcile(X, pos) {
       continue;
     }
     if (!t.positionId && Date.now() - t.et < 60000) continue;
-    // 倉位不見了＝已平倉：去歷史持倉拿最後的結果
+    // 倉位不見了：去歷史持倉確認。是我們自己平的、或歷史紀錄查得到這筆，才算平倉；不然要連續 3 次（約 30 秒）都不見才算（交易所偶爾回傳不完整的清單）
+    t.miss = (t.miss || 0) + 1;
     let h = null;
     try { const r = await bxGet('/api/v1/futures/position/get_history_positions', t.positionId ? { positionId: t.positionId } : { symbol: t.sym, limit: 5 }, K); h = (r && r.positionList || []).find(x => !t.positionId || String(x.positionId) === t.positionId) || null; } catch (e) {}
+    if (!t.pendReason && !(t.positionId && h) && t.miss < 3) { ch = true; continue; }
     const reason = t.pendReason || (h && num(h.liqQty) > 0 ? 'liq' : 'exchange');
     if (h) Object.assign(t, { realized: num(h.realizedPNL), fee: num(h.fee), funding: num(h.funding), closePx: num(h.closePrice) });
     const prevPart = t.closes.reduce((a, c) => a + c.pnl, 0);
@@ -1883,6 +1891,14 @@ http.createServer(async (req, res) => {
         if (BSTAT.busy) return send(res, 400, { error: '還在統計中' });
         btcStat(Math.min(180, Math.max(7, +b.days || 90)));
         return send(res, 200, { ok: true });
+      }
+      if (u.pathname === '/api/users/lt') {            // 👑 擁有者在帳號管理後台：幫某個帳號開始／暫停自動交易
+        const usr = ST.users.find(x => x.uid === String(b.uid || '')); if (!usr) return send(res, 404, { error: '找不到這個帳號' });
+        if (typeof b.on !== 'boolean') return send(res, 400, { error: '要指定開始或暫停' });
+        const XA = ctx(usr.uid);
+        if (b.on && !hasKey(XA)) return send(res, 400, { error: `${usr.uid} 還沒設定 Bitunix API，不能開始交易` });
+        if (XA.A.lt.on !== b.on) { XA.A.lt.on = b.on; touchLT(XA); dcX(XA, b.on ? '▶️ **自動交易已開始**（擁有者幫你開啟）' : '⏸ **自動交易已暫停**（擁有者幫你暫停，已開的單照常管理）'); log(b.on ? '擁有者幫帳號開始交易' : '擁有者幫帳號暫停交易', usr.uid); }
+        return send(res, 200, { ok: true, on: XA.A.lt.on });
       }
       if (u.pathname === '/api/lt/all') {             // 👑 擁有者：所有帳號一起暫停／開始自動交易（沒有 API 的帳號跳過）
         if (typeof b.on !== 'boolean') return send(res, 400, { error: '要指定開始或暫停' });
