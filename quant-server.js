@@ -34,12 +34,13 @@ const lockAt = (peak, T = ST.trade) => (T.step > 0 && peak > T.tp ? T.tp + Math.
 const DEF_NOTIFY = { webhook: '', name: '', enabled: true, entry: true, exit: true };
 const DEF_EQ = { mode: 'fixed', amt: 0.3, fee: 0.05, max: 0 };
 const DEF_BX = { key: '', secret: '', notify: true, liq: true, liqPct: 3 };
+const RESUME = [];                                       // 🔄 重開前在跑的帳號
 const DEF_LT = { on: false, sp: false, spLev: null, spMargin: null, spBudget: 0, spStartAt: 0, spDayLoss: null, spTp: null, spStep: null, spSl: null, spHold: null, margin: 0.3, lev: 100, mode: 'CROSS', maxOpen: 0, dayLoss: 20, startCap: 0, startAt: 0, budget: 0, tp: 250, sl: 250, step: 50, hold: 168, btcF: 1 };   // tp：浮盈達到幾 % 開始鎖利（每個帳號自己設）   // btcF：自己要不要用 BTC 方向過濾（預設開）   // sl：浮虧多少 % 平倉；step：鎖利線每多幾 % 上調；hold：最長持有（小時）——每個帳號自己設定   // budget：投入資金（0＝整個合約帳戶）   // startCap＝0 代表等偵測到帳戶資金再開始算   // 自動下單（預設暫停）   // Bitunix 唯讀 API 金鑰（只存在這台伺服器）            // 資金模擬：每筆保證金、手續費、最多同時持倉
 const DEF_REP = { cap: 100, btN: 50, days: 14, next: 0 };                   // 雙週結算：每期本金、回測幣數、幾天一期、下次結算時間
 let ST = { cards: [], bt: { at: 0, coins: 0, trades: [] }, set: { ...DEF_SET }, trade: { ...DEF_TRADE }, google: { clientId: '' }, eq: { ...DEF_EQ }, rep: { ...DEF_REP }, reports: [], users: [], sessions: [], accts: {}, owner: '' };
 try {
   const j = JSON.parse(fs.readFileSync(FILE, 'utf8'));
-  ST = { cards: j.cards || [], bt: j.bt || ST.bt, set: { ...DEF_SET, ...(j.set || {}) }, trade: { ...DEF_TRADE, ...(j.trade || {}) }, google: { clientId: '', ...(j.google || {}) }, eq: { ...DEF_EQ, ...(j.eq || {}) }, rep: { ...DEF_REP, ...(j.rep || {}) }, reports: j.reports || [], users: j.users || [], sessions: j.sessions || [], aws: j.aws || {}, accts: j.accts || {}, owner: j.owner || '', bstat: j.bstat || null, hb: j.hb || '', ecoDay: j.ecoDay || '', tool: j.tool || null };
+  ST = { cards: j.cards || [], bt: j.bt || ST.bt, set: { ...DEF_SET, ...(j.set || {}) }, trade: { ...DEF_TRADE, ...(j.trade || {}) }, google: { clientId: '', ...(j.google || {}) }, eq: { ...DEF_EQ, ...(j.eq || {}) }, rep: { ...DEF_REP, ...(j.rep || {}) }, reports: j.reports || [], users: j.users || [], sessions: j.sessions || [], aws: j.aws || {}, accts: j.accts || {}, owner: j.owner || '', bstat: j.bstat || null, hb: j.hb || '', ecoDay: j.ecoDay || '', tool: j.tool || null, alive: j.alive || 0, boots: j.boots || [] };
   // 舊版（只有一個帳號）：原本的 Bitunix 金鑰、自動交易、實盤紀錄、Discord 搬到擁有者（第一個管理員）的帳號底下
   if (!j.accts && (j.bx || j.lt || j.ltTrades || j.notify)) {
     const a = ST.users.find(u => u.role === 'admin'), uid = a ? a.uid : '__owner';
@@ -47,7 +48,8 @@ try {
     if (a) ST.owner = a.uid;
     log('舊存檔搬到帳號', uid);
   }
-  for (const A of Object.values(ST.accts)) {        // 補齊欄位；伺服器重開後每個帳號的自動交易一律先暫停
+  for (const [uid, A] of Object.entries(ST.accts)) if (A.lt && (A.lt.on || A.lt.sp)) RESUME.push({ uid, on: !!A.lt.on, sp: !!A.lt.sp });   // 🔄 重開前在跑的帳號：約 1 分鐘後自動恢復
+  for (const A of Object.values(ST.accts)) {        // 補齊欄位；伺服器重開後每個帳號的自動交易先暫停，約 1 分鐘後再自動恢復（見下面）
     A.bx = { ...DEF_BX, ...(A.bx || {}) }; A.lt = { ...DEF_LT, sl: ST.trade.sl, step: ST.trade.step, hold: ST.trade.hold, ...(A.lt || {}), on: false, sp: false };
     for (const [k, f] of [['spLev', 'lev'], ['spMargin', 'margin'], ['spDayLoss', 'dayLoss'], ['spTp', 'tp'], ['spStep', 'step'], ['spSl', 'sl'], ['spHold', 'hold']]) if (A.lt[k] == null) A.lt[k] = A.lt[f];   // 🗡 特級交易設定：第一次照抄一般交易   // 舊帳號沒有個人參數：沿用原本的共用設定 A.notify = { ...DEF_NOTIFY, ...(A.notify || {}) }; A.ltTrades = A.ltTrades || [];
     if (A.lt.startCap === 100 && !A.ltTrades.length) { A.lt.startCap = 0; A.lt.startAt = 0; }   // 舊版預設把起始本金寫死成 100U
@@ -108,7 +110,36 @@ function backupTick() {
 }
 setTimeout(backupTick, 5 * 60000); setInterval(backupTick, 6 * HOUR);   // 每 6 小時看一次，當天還沒備份就備份
 setInterval(() => { try { save(); } catch (e) { log('存檔失敗', e.message); } }, 10000);
-for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => { dirty = true; try { save(); } catch (e) {} process.exit(0); });
+for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => { dirty = true; ST.alive = Date.now(); try { save(); } catch (e) {} process.exit(0); });
+setInterval(() => { ST.alive = Date.now(); dirty = true; }, 60000);   // 💓 心跳：重開時用來判斷停機多久
+// 🛡 當機保護：有錯誤沒接住時記下來、繼續運作，不要整個程式當掉（當掉會被系統重開，所有人的自動交易都會暫停）
+const ERRN = { at: 0 };
+function onCrash(kind, e) {
+  const msg = String((e && (e.stack || e.message)) || e).slice(0, 700); log('⚠️ ' + kind, msg);
+  if (Date.now() - ERRN.at > 10 * 60000) { ERRN.at = Date.now(); try { dcX(ctx(ownerUid()), `⚠️ **伺服器發生錯誤**（已經擋下來，程式繼續運作；10 分鐘內同類錯誤只通知一次）\n\`\`\`${msg.slice(0, 600)}\`\`\``); } catch (x) {} }
+}
+process.on('unhandledRejection', e => onCrash('沒有接住的錯誤', e));
+process.on('uncaughtException', e => onCrash('程式錯誤', e));
+// 🔄 重開後自動恢復：先等 1 分鐘讀好持倉和行情；30 分鐘內重開 3 次以上、或停機超過 15 分鐘就不恢復，改用 Discord 通知
+{ const now = Date.now(), down = ST.alive ? now - ST.alive : Infinity;
+  ST.boots = (ST.boots || []).filter(t => now - t < 30 * 60000).concat(now); dirty = true;
+  const loop = ST.boots.length >= 3;
+  setTimeout(() => {
+    for (const r of RESUME) {
+      const X = ctx(r.uid); if (!hasKey(X)) continue;
+      const parts = [r.on ? '自動交易' : '', r.sp && toolOkUid(r.uid) ? '🗡 特級交易' : ''].filter(Boolean); if (!parts.length) continue;
+      if (loop || down > 15 * 60000) {
+        X.LT.pause = { t: now, why: loop ? `伺服器 30 分鐘內重開了 ${ST.boots.length} 次，沒有自動恢復` : `伺服器停機 ${Math.round(down / 60000)} 分鐘，沒有自動恢復` };
+        dcX(X, `⏸ **伺服器重新啟動，${parts.join('和')}維持暫停**：${X.LT.pause.why}。確認沒問題後，請到網站重新按開始`); continue;
+      }
+      if (r.on) X.A.lt.on = true;
+      if (r.sp && toolOkUid(r.uid)) X.A.lt.sp = true;
+      touchLT(X); log('重開後自動恢復', r.uid, parts.join('、'));
+      dcX(X, `🔄 **伺服器重新啟動，已自動恢復${parts.join('和')}**（停機約 ${Math.max(1, Math.round(down / 60000))} 分鐘）`);
+    }
+  }, 60000);
+  setImmediate(() => { for (const r of RESUME) { const X = ctx(r.uid); X.LT.pause = { t: now, why: loop || down > 15 * 60000 ? '伺服器重新啟動' : '伺服器重新啟動，約 1 分鐘後自動恢復' }; } });   // 等整個程式載入完（帳號系統準備好）再記
+}
 
 /* ---------------- 幣安限速 ---------------- */
 const RL = { win: [], oi: [], pause: 0 };
@@ -872,7 +903,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-24c';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-24d';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1057,7 +1088,7 @@ async function ltOpen(X, c) {
     if (BX.acct && BX.acct.avail < M * 1.2) { LT.msg = `可用餘額不足（${BX.acct.avail.toFixed(2)}U），${c.sym} 不下單`; return; }
     if (BUD > 0) {                                // 只用你設定的投入資金，不碰帳戶裡其他的錢
       const B = sp ? ltSpEq(X) : ltBotEq(X);
-      if (B.eq <= 0) { if (sp) C.sp = false; else C.on = false; touchLT(X); dcX(X, `🛑 **${sp ? '🗡 特級交易的' : ''}投入資金 ${BUD}U 已經用完**（目前 ${B.eq.toFixed(2)}U），${NM}已暫停`); return; }
+      if (B.eq <= 0) { if (sp) C.sp = false; else C.on = false; LT.pause = { t: Date.now(), why: `${sp ? '特級交易的' : ''}投入資金用完` }; touchLT(X); dcX(X, `🛑 **${sp ? '🗡 特級交易的' : ''}投入資金 ${BUD}U 已經用完**（目前 ${B.eq.toFixed(2)}U），${NM}已暫停`); return; }
       if (B.free < M * 1.2) { LT.msg = `投入資金剩 ${B.free.toFixed(2)}U 可用（設定 ${BUD}U），${c.sym} 不下單`; return; }
     }
     const qty = fl(M * lev / px, +pr.basePrecision || 0);
@@ -1178,7 +1209,7 @@ async function ltClosePos(X, positionId, pct, reason) {
   const n = ps && ps.find(x => String(x.positionId) === positionId);
   if (n && num(n.qty) > p.qty + 1e-12) {
     await bxPost('/api/v1/futures/trade/flash_close_position', { positionId }, K).catch(() => {});
-    X.A.lt.on = false; X.A.lt.sp = false; touchLT(X);
+    X.A.lt.on = false; X.A.lt.sp = false; X.LT.pause = { t: Date.now(), why: `部分平倉異常（${p.sym}）` }; touchLT(X);
     dcX(X, `🚨 **部分平倉異常**：${mdEsc(p.sym)} 倉位變大，已全部平倉並暫停自動交易，請檢查交易所`);
     throw new Error('部分平倉後倉位變大，已緊急全部平倉並暫停自動交易');
   }
@@ -1293,11 +1324,11 @@ async function ltReconcile(X, pos) {
   for (const t of TR) { let v = 0; for (const c of t.closes || []) if (c.t >= d0) v += c.pnl; if (t.status === 'open') v += t.upnl || 0; if (t.src === 'tool') spDay += v; else dayPnl += v; }
   LT.dayPnl = dayPnl; LT.spDayPnl = spDay;
   if (L.sp && L.spDayLoss > 0 && spDay <= -L.spDayLoss && LT.spDayHit !== day) {   // 🗡 特級交易自己的單日虧損上限
-    LT.spDayHit = day; L.sp = false; ch = true;
+    LT.spDayHit = day; L.sp = false; LT.pause = { t: Date.now(), why: '特級交易超過單日虧損上限' }; ch = true;
     dcX(X, `🛑 **🗡 特級交易今天虧損 ${spDay.toFixed(2)}U，超過上限 ${L.spDayLoss}U，特級交易已暫停**（已開的單照常管理，可以在網站重新開始）`);
   }
   if (L.on && L.dayLoss > 0 && dayPnl <= -L.dayLoss && LT.dayHit !== day) {
-    LT.dayHit = day; L.on = false; ch = true;
+    LT.dayHit = day; L.on = false; LT.pause = { t: Date.now(), why: '超過單日虧損上限' }; ch = true;
     dcX(X, `🛑 **今天虧損 ${dayPnl.toFixed(2)}U，超過上限 ${L.dayLoss}U，自動交易已暫停**（已開的單照常管理，可以在網站重新開始）`);
   }
   if (ch) touchLT(X);
@@ -2170,7 +2201,7 @@ http.createServer(async (req, res) => {
         bx: { set: hasKey(X), notify: X.A.bx.notify, liq: X.A.bx.liq, liqPct: X.A.bx.liqPct, at: X.BX.at, err: X.BX.err, acct: X.BX.acct,
           pos: X.BX.pos.map(p => ({ ...p, px: PX.map[p.sym] || null, tp: ((X.BX.tpsl && X.BX.tpsl.get(p.id)) || {}).tp || 0, sl: ((X.BX.tpsl && X.BX.tpsl.get(p.id)) || {}).sl || 0, sig: !!ST.cards.find(c => c.sym === p.sym && c.dir === p.dir && c.et && isLive(c)), bot: !!X.A.ltTrades.find(t => t.status === 'open' && t.positionId === p.id) })) },
         eco: { list: ECO.list.filter(e => e.t > Date.now() - 7 * 24 * HOUR), at: ECO.at, err: ECO.err, hasNext: !!ECO.hasNext, today: ecoToday().map(e => ({ t: e.t, zh: e.zh || e.title })) },
-        lt: { cfg: X.A.lt, toolOk: toolOkUid(X.uid), spBot: ltSpEq(X), spDay: X.LT.spDayPnl || 0, msg: X.LT.msg, dayPnl: X.LT.dayPnl || 0, v: X.v, bot: ltBotEq(X), acctEq: bxEquity(X) },
+        lt: { cfg: X.A.lt, pause: X.LT.pause || null, toolOk: toolOkUid(X.uid), spBot: ltSpEq(X), spDay: X.LT.spDayPnl || 0, msg: X.LT.msg, dayPnl: X.LT.dayPnl || 0, v: X.v, bot: ltBotEq(X), acctEq: bxEquity(X) },
         aws: !(X.uid === ownerUid()) ? null : { on: ST.aws.on, created: ST.aws.created, auto: ST.aws.auto, price: ST.aws.price, detected: awsDetect(), ...awsNext() }
       };
       if (+u.searchParams.get('cv') !== CV) out.cards = ST.cards;
@@ -2238,7 +2269,7 @@ http.createServer(async (req, res) => {
         if (typeof b.on !== 'boolean') return send(res, 400, { error: '要指定開始或暫停' });
         const XA = ctx(usr.uid);
         if (b.on && !hasKey(XA)) return send(res, 400, { error: `${usr.uid} 還沒設定 Bitunix API，不能開始交易` });
-        if (XA.A.lt.on !== b.on) { XA.A.lt.on = b.on; touchLT(XA); dcX(XA, b.on ? '▶️ **自動交易已開始**（擁有者幫你開啟）' : '⏸ **自動交易已暫停**（擁有者幫你暫停，已開的單照常管理）'); log(b.on ? '擁有者幫帳號開始交易' : '擁有者幫帳號暫停交易', usr.uid); }
+        if (XA.A.lt.on !== b.on) { XA.A.lt.on = b.on; if (!b.on) XA.LT.pause = { t: Date.now(), why: '擁有者幫你暫停' }; touchLT(XA); dcX(XA, b.on ? '▶️ **自動交易已開始**（擁有者幫你開啟）' : '⏸ **自動交易已暫停**（擁有者幫你暫停，已開的單照常管理）'); log(b.on ? '擁有者幫帳號開始交易' : '擁有者幫帳號暫停交易', usr.uid); }
         return send(res, 200, { ok: true, on: XA.A.lt.on });
       }
       if (u.pathname === '/api/lt/all') {             // 👑 擁有者：所有帳號一起暫停／開始自動交易（沒有 API 的帳號跳過）
@@ -2257,7 +2288,7 @@ http.createServer(async (req, res) => {
         for (const XA of allX()) {
           if (b.on && !hasKey(XA)) { skip++; continue; }
           if (XA.A.lt.on === b.on) continue;
-          XA.A.lt.on = b.on; touchLT(XA); n++;
+          XA.A.lt.on = b.on; if (!b.on) XA.LT.pause = { t: Date.now(), why: '擁有者一鍵全部暫停' }; touchLT(XA); n++;
           dcX(XA, b.on ? '▶️ **自動交易已開始**（擁有者一鍵開啟全部帳號）' : '⏸ **自動交易已暫停**（擁有者一鍵暫停全部帳號，已開的單照常管理）');
         }
         log(b.on ? '一鍵全部開始' : '一鍵全部暫停', n, '個帳號');
@@ -2332,7 +2363,7 @@ http.createServer(async (req, res) => {
         const C = X.A.bx, BX = X.BX;
         if (b.clear) {
           if (ltOpenTrades(X).length) return send(res, 400, { error: `還有 ${ltOpenTrades(X).length} 筆自動單持倉，刪掉金鑰就沒辦法管理了，請先平倉` });
-          Object.assign(C, DEF_BX); X.A.lt.on = false; X.A.lt.sp = false; BX.pos = []; BX.acct = null; BX.seeded = false; touchLT(X); return send(res, 200, { ok: true });
+          Object.assign(C, DEF_BX); X.A.lt.on = false; X.A.lt.sp = false; X.LT.pause = { t: Date.now(), why: '刪除了 Bitunix API' }; BX.pos = []; BX.acct = null; BX.seeded = false; touchLT(X); return send(res, 200, { ok: true });
         }
         if (typeof b.key === 'string' && b.key.trim() && typeof b.secret === 'string' && b.secret.trim()) {
           const cfg = { ...C, key: b.key.trim(), secret: b.secret.trim() };
@@ -2343,18 +2374,18 @@ http.createServer(async (req, res) => {
           const changed = C.key !== cfg.key;
           if (changed && ltOpenTrades(X).length) return send(res, 400, { error: `還有 ${ltOpenTrades(X).length} 筆自動單持倉，換金鑰就沒辦法管理了，請先平倉` });
           C.key = cfg.key; C.secret = cfg.secret; BX.seeded = false; BX.pos = []; BX.acct = null;
-          if (changed) { X.A.lt.on = false; X.A.lt.sp = false; X.A.lt.startCap = 0; X.A.lt.startAt = Date.now(); X.LT.lev = {}; touchLT(X); }   // 換帳號：先暫停，統計等讀到新帳戶的資金再開始
+          if (changed) { X.A.lt.on = false; X.A.lt.sp = false; X.LT.pause = { t: Date.now(), why: '換了 Bitunix API 金鑰' }; X.A.lt.startCap = 0; X.A.lt.startAt = Date.now(); X.LT.lev = {}; touchLT(X); }   // 換帳號：先暫停，統計等讀到新帳戶的資金再開始
         }
         for (const k of ['notify', 'liq']) if (typeof b[k] === 'boolean') C[k] = b[k];
         if (+b.liqPct > 0) C.liqPct = +b.liqPct;
-        dirty = true; bxPollOne(X);
+        dirty = true; bxPollOne(X).catch(e => log('讀持倉失敗', X.uid, e.message));
         return send(res, 200, { ok: true });
       }
       if (u.pathname === '/api/lt/config') {
         const C = X.A.lt;
         if (typeof b.on === 'boolean') {
           if (b.on && !hasKey(X)) return send(res, 400, { error: '請先設定你自己的 Bitunix API 金鑰（要開交易權限）' });
-          C.on = b.on; dcX(X, b.on ? '▶️ **自動交易已開始**' : '⏸ **自動交易已暫停**（已開的單照常管理）');
+          C.on = b.on; if (!b.on) X.LT.pause = { t: Date.now(), why: '你按了暫停' }; dcX(X, b.on ? '▶️ **自動交易已開始**' : '⏸ **自動交易已暫停**（已開的單照常管理）');
         }
         if (typeof b.sp === 'boolean') {                 // 🗡 特級交易：只有特級咒具權限的人能開
           if (b.sp && !toolOkUid(X.uid)) return send(res, 403, { error: '特級交易要先解鎖特級咒具' });
@@ -2504,7 +2535,7 @@ http.createServer(async (req, res) => {
       if (u.pathname === '/api/lt/closeAll') {
         // 只平自動下單的倉位：手動開的單（含「符合訊號」）一律不動
         if (!hasKey(X)) return send(res, 400, { error: '還沒設定 Bitunix API 金鑰' });
-        if (b.pause) { X.A.lt.on = false; X.A.lt.sp = false; }
+        if (b.pause) { X.A.lt.on = false; X.A.lt.sp = false; X.LT.pause = { t: Date.now(), why: '一鍵平倉時選擇暫停' }; }
         let pos = X.BX.pos;
         try { pos = bxMapPos(await bxGet('/api/v1/futures/position/get_pending_positions', {}, X.A.bx)); } catch (e) {}   // 先重新讀一次，剛開的自動單也平得到
         const open = ltOpenTrades(X), ids = new Set(open.map(t => t.positionId).filter(Boolean));
