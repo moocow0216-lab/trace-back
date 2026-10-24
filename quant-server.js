@@ -860,7 +860,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-22f';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-22g';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1845,7 +1845,7 @@ http.createServer(async (req, res) => {
     if (req.method === 'POST' && u.pathname.startsWith('/api/')) {
       // 個人設定：每個帳號都能改「自己的」；其他（掃描條件、浮盈規則、回測、帳號管理、AWS）只有管理員能改
       // 個人（每個帳號）：自己的 API、Discord、交易設定、平倉；管理員（灰色）：帳號管理；其他全站設定只有擁有者能改
-      const PERSONAL = ['/api/bind', '/api/bitunix', '/api/lt/config', '/api/lt/testOpen', '/api/lt/close', '/api/lt/closeAll', '/api/notify', '/api/notify/test'];
+      const PERSONAL = ['/api/bind', '/api/bitunix', '/api/lt/config', '/api/lt/testOpen', '/api/lt/close', '/api/lt/closeAll', '/api/lt/adopt', '/api/notify', '/api/notify/test'];
       const ADMIN = ['/api/users', '/api/users/delete', '/api/users/kick', '/api/check'];
       if (ADMIN.includes(u.pathname) && !admin) return send(res, 403, { error: '這個功能只有管理員可以用' });
       if (!PERSONAL.includes(u.pathname) && !ADMIN.includes(u.pathname) && !owner) return send(res, 403, { error: '這個設定只有擁有者可以改' });
@@ -2039,6 +2039,27 @@ http.createServer(async (req, res) => {
         const pct = Math.min(1, Math.max(0.01, +b.pct || 1));
         try { const r = await ltClosePos(X, String(b.positionId), pct, 'manual'); setTimeout(() => bxPollOne(X), 1500); return send(res, 200, { ok: true, r }); }
         catch (e) { return send(res, 400, { error: e.message }); }
+      }
+      if (u.pathname === '/api/lt/adopt') {            // 🤖 把一筆手動單改成自動單：之後照你的規則管理（鎖利、停損、到期、一鍵平倉），交易所也補掛止損
+        if (!hasKey(X)) return send(res, 400, { error: '還沒設定 Bitunix API' });
+        await bxPollOne(X);
+        const p = X.BX.pos.find(x => x.id === String(b.positionId || ''));
+        if (!p) return send(res, 404, { error: '交易所上找不到這筆倉位，可能已經平倉了' });
+        if (ltOpenTrades(X).some(t => t.positionId === p.id)) return send(res, 400, { error: '這筆已經是自動單了' });
+        if (ltOpenTrades(X).some(t => t.sym === p.sym)) return send(res, 400, { error: `${p.sym} 已經有一筆自動單，同一個幣只能有一筆` });
+        const C = X.A.lt, px = PX.map[p.sym] || p.entry, roe = p.dir * (px / p.entry - 1) * C.lev * 100;   // 規則一樣用「設定的槓桿」換算
+        const t = {
+          id: 'lt-adopt-' + Date.now(), sym: p.sym, dir: p.dir, card: '', abN: 0, et: p.ctime > 0 ? p.ctime : Date.now(), lev: p.lev,
+          entry: p.entry, qty: p.qty, qty0: p.qty, margin: p.margin, m0: p.margin || C.margin, positionId: p.id, orderId: '', status: 'open', ruleLev: C.lev,
+          realized: p.rpnl || 0, fee: p.fee || 0, funding: p.funding || 0, closes: [], locked: false, fav: Math.max(0, roe), adv: Math.min(0, roe), exSL: false, adopted: Date.now(), prec: 0, minQty: 0
+        };
+        const pr = await ltPair(p.sym).catch(() => null); if (pr) { t.prec = +pr.basePrecision || 0; t.minQty = +pr.minTradeVolume || 0; }
+        X.A.ltTrades.unshift(t); touchLT(X);
+        log('手動單改成自動單', X.uid, p.sym);
+        const T = TT(X), k = rk(t, C.lev);
+        dcX(X, `🤖 **手動單改成自動單** ${p.dir > 0 ? '🟢 做多' : '🔴 做空'} **${mdEsc(p.sym)}**（${p.lev}x）\n開倉價 ${fpx(p.entry)}・數量 ${p.qty}\n之後照你的規則管理：浮盈 **+${pctK(T.tp, k)}%** 開始鎖利、浮虧 **−${pctK(T.sl, k)}%** 停損、持有 ${T.hold} 小時到期`);
+        setTimeout(() => ltSyncSL(X).catch(e => log('補掛止損失敗', X.uid, e.message)), 500);   // 交易所補掛止損
+        return send(res, 200, { ok: true });
       }
       if (u.pathname === '/api/lt/closeAll') {
         // 只平自動下單的倉位：手動開的單（含「符合訊號」）一律不動
