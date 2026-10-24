@@ -559,7 +559,25 @@ body.mode-pat #qPanel,body.mode-news #qPanel,body.mode-pat #newsPanel,body.mode-
 .mnhead+#mnList{display:flex;flex-direction:column;gap:8px;padding:12px;overflow:auto}
 .mnitem{display:flex;align-items:center;gap:10px;width:100%;min-height:50px;padding:0 14px;background:color-mix(in srgb,var(--mc) 8%,transparent);border:1.5px solid var(--mc);border-radius:12px;color:#e6e9ef;font:inherit;font-size:15px;text-align:left;cursor:pointer}
 .mnitem:hover,.mnitem:focus-visible{background:color-mix(in srgb,var(--mc) 20%,transparent);outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--mc) 35%,transparent)}
-.mnno{color:var(--mc);min-width:22px;font-weight:700}.mnic{width:22px;text-align:center}
+.mnno{color:var(--mc);min-width:22px;font-weight:700}
+/* 🗡 特級咒具：黑紅色、會冒火焰的框 */
+.mnitem.fire{position:relative;border:2px solid transparent;background:linear-gradient(#120406,#1a0507) padding-box,linear-gradient(120deg,#000 0%,#5a0b0b 20%,#ef4444 40%,#f97316 50%,#ef4444 60%,#5a0b0b 80%,#000 100%) border-box;background-size:100% 100%,300% 300%;animation:fireflow 2.6s linear infinite,fireglow 1.4s ease-in-out infinite;color:#ffe4e1;font-weight:700}
+.mnitem.fire .mnno{color:#ff6b4a}
+.mnitem.fire::after{content:"";position:absolute;left:10%;right:10%;top:-7px;height:12px;border-radius:50%;background:radial-gradient(ellipse at center,rgba(255,120,40,.55),rgba(239,68,68,0) 70%);filter:blur(3px);animation:fireflick 1.1s ease-in-out infinite alternate;pointer-events:none}
+@keyframes fireflow{to{background-position:0 0,300% 0}}
+@keyframes fireglow{0%,100%{box-shadow:0 0 8px rgba(239,68,68,.45),0 -3px 14px rgba(249,115,22,.25),inset 0 0 10px rgba(127,29,29,.55)}50%{box-shadow:0 0 16px rgba(239,68,68,.7),0 -6px 24px rgba(249,115,22,.45),inset 0 0 14px rgba(185,28,28,.6)}}
+@keyframes fireflick{0%{opacity:.55;transform:scaleX(.85) translateY(1px)}100%{opacity:1;transform:scaleX(1.05) translateY(-2px)}}
+@media (prefers-reduced-motion:reduce){.mnitem.fire,.mnitem.fire::after{animation:none}}
+.tlwrap{display:flex;flex-direction:column;gap:12px}
+.tlhead{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap}.tlhead b{font-size:16px}
+.tlsub{display:block;font-size:12.5px;color:var(--muted);line-height:1.6}
+.tltab td,.tltab th{white-space:nowrap}
+.tltype{display:inline-block;padding:2px 8px;border-radius:999px;border:1px solid var(--tc);color:var(--tc);font-size:12.5px;font-weight:700}
+.tlbox{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:rgba(255,255,255,.02);display:flex;flex-direction:column;gap:8px}
+.tlrow{display:flex;gap:8px;flex-wrap:wrap}.tlrow input{flex:1 1 220px;min-height:40px;border-radius:8px;border:1px solid var(--line);background:#0e1422;color:var(--ink);padding:0 10px;font:inherit}
+.tlset{display:flex;gap:8px 10px;flex-wrap:wrap;align-items:flex-end}.tlset label:first-child{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}.tlset input[type=number]{width:120px;min-height:38px;border-radius:8px;border:1px solid var(--line);background:#0e1422;color:var(--ink);padding:0 10px;font:inherit}
+.tllock{max-width:440px;margin:30px auto;text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center;border:2px solid #7f1d1d;border-radius:16px;padding:24px 20px;background:radial-gradient(circle at 50% 0,rgba(239,68,68,.12),transparent 60%)}
+.tllockic{font-size:40px}.tllock h3{margin:0}.tllock p{margin:0;color:var(--muted);line-height:1.6}.tllock .tlrow{width:100%}.mnic{width:22px;text-align:center}
 .mnsheet{position:fixed;inset:0;z-index:80;background:var(--bg,#0b0f16);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
 .mnsheethead{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid #262d3a;background:rgba(11,15,22,.96)}.mnsheethead h2{margin:0;font-size:17px}
 .mnsheetbody{flex:1;overflow:auto;padding:14px 16px calc(24px + env(safe-area-inset-bottom,0px))}
@@ -892,7 +910,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-23b</div>
+      <div class="qver" id="qVer">網站版本 2026-10-23c</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -1191,6 +1209,7 @@ header{align-items:center}
   <div class="mnsheethead"><button class="btn" id="mnBack">← 返回</button><h2 id="mnTitle"></h2></div>
   <div class="mnsheetbody" id="mnSheetBody"></div>
 </div>
+<div id="mnpTool" class="tlwrap" hidden></div>
 <div id="mnpSet" class="mnacctwrap">
   <div class="mnacct"><div><span class="mnlab">登入的 Bitunix UID</span><b id="mnUid"></b> <span id="mnRole"></span></div><button class="btn" id="mnLogout">登出</button></div>
   <div class="mnpw"><b>更改密碼</b>
@@ -3311,7 +3330,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-23b・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-23c・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -3709,15 +3728,69 @@ $('qGuideBtn').onclick = () => gdOpen(0);
 var MN_PAGE = '';
 const MN_ITEMS = [
   ['set', '👤', '設定', 'mnpSet', '#7aa2ff'], ['heat', '🔥', '熱力圖', 'qHeatHost', '#fb923c'], ['cards', '📡', '訊號卡片', 'qSidePanel', '#22d3ee'], ['pat', '📈', '歷史走勢', '', '#a78bfa'],
-  ['news', '📰', '加密新聞', 'newsPanel', '#f472b6'], ['bt', '📊', '回測數據', 'qBtHost', '#34d399'], ['hist', '📋', '歷史紀錄', 'qTabPanel', '#fbbf24'], ['whale', '🐋', '幣安鯨魚大單', 'whalePanel', '#38bdf8'], ['guide', '📖', '使用說明', '', '#94a3b8']];   // 最後一欄是選單框的顏色
+  ['news', '📰', '加密新聞', 'newsPanel', '#f472b6'], ['bt', '📊', '回測數據', 'qBtHost', '#34d399'], ['hist', '📋', '歷史紀錄', 'qTabPanel', '#fbbf24'], ['whale', '🐋', '幣安鯨魚大單', 'whalePanel', '#38bdf8'], ['guide', '📖', '使用說明', '', '#94a3b8'], ['tool', '🗡', '特級咒具', 'mnpTool', '#ef4444']];   // 最後一欄是選單框的顏色
+/* ---------- 🗡 特級咒具：上鎖（擁有者或輸入密碼的人才能用）；三種進場放在同一個列表；自己的 Discord ---------- */
+const TL = { d: null, f: 'all', timer: null };
+const TL_TYPE = { zh: ['莊家進場', '#f5c542'], crt: ['CRT 進場', '#a78bfa'], hunt: ['獵殺進場', '#ef4444'] };
+async function tlLoad() {
+  const box = $('mnpTool');
+  try { TL.d = await srvFetch('/api/tool', { op: 'get' }); tlRender(); }
+  catch (e) { TL.d = null; if (/還沒解鎖/.test(e.message) || /403/.test(e.message)) tlLocked(); else box.innerHTML = `<p class="mnmsg bad">${esc(e.message)}</p>`; }
+}
+function tlLocked() {
+  $('mnpTool').innerHTML = `<div class="tllock"><div class="tllockic" aria-hidden="true">🔒</div><h3>特級咒具還在開發中</h3>
+    <p>目前只開放給擁有者。如果擁有者給了你密碼，輸入後就能使用。</p>
+    <div class="tlrow"><input id="tlPw" type="password" autocomplete="off" placeholder="輸入密碼"><button class="btn primary" id="tlUnlock">解鎖</button></div><p class="mnmsg" id="tlMsg" role="status"></p></div>`;
+  $('tlUnlock').onclick = async () => {
+    const m = $('tlMsg');
+    try { await srvFetch('/api/tool', { op: 'unlock', pw: $('tlPw').value }); tlLoad(); }
+    catch (e) { m.className = 'mnmsg bad'; m.textContent = e.message; }
+  };
+  $('tlPw').onkeydown = e => { if (e.key === 'Enter') $('tlUnlock').click(); };
+}
+function tlRender() {
+  const d = TL.d, S = d.set, list = d.sigs.filter(s => TL.f === 'all' || s.type === TL.f);
+  const pr = p => p >= 1000 ? p.toFixed(1) : p >= 1 ? p.toFixed(4) : p.toPrecision(4);
+  const row = s => { const [nm, col] = TL_TYPE[s.type]; return `<tr><td>${fmtT(s.t)}</td><td><b>${esc(s.sym.replace(/USDT$/, ''))}</b></td><td><span class="chip ${s.dir > 0 ? 'qg' : 'qr'}" style="border-color:currentColor">${s.dir > 0 ? '做多' : '做空'}</span></td>
+    <td><span class="tltype" style="--tc:${col}">${s.type === 'crt' ? (s.pair === 'h4' ? 'H4 ' : 'H1 ') : ''}${nm}</span></td><td>${s.pair === 'h4' ? '4H→15 分' : '1H→5 分'}</td><td>${pr(s.px)}</td><td>${s.type === 'crt' ? `<span class="qr">${pr(s.sl)}</span> / <span class="qg">${pr(s.tp)}</span>` : (s.tag || '—')}</td></tr>`; };
+  $('mnpTool').innerHTML = `
+    <div class="tlhead"><div><b>🗡 進場訊號</b><span class="tlsub">掃描成交額前 ${S.n} 個幣・${[S.h4 ? '4H→15 分（每 15 分鐘）' : '', S.h1 ? '1H→5 分（每 5 分鐘）' : ''].filter(Boolean).join('、') || '已全部關閉'}・上次掃描 ${d.scan.at ? fmtT(d.scan.at) : '還沒掃描'}${d.scan.err ? `・<span class="qr">${esc(d.scan.err)}</span>` : ''}</span></div>
+      <label class="tzsel">進場方式 <select id="tlF"><option value="all">全部</option><option value="zh">莊家進場</option><option value="crt">CRT 進場</option><option value="hunt">獵殺進場</option></select></label></div>
+    <div class="tablewrap tltab"><table><thead><tr><th>進場時間（台北）</th><th>幣種</th><th>方向</th><th>進場方式</th><th>週期</th><th>價格</th><th>止損／止盈・結構</th></tr></thead><tbody>${list.length ? list.slice(0, 300).map(row).join('') : '<tr><td colspan="7" style="color:var(--muted)">還沒有訊號。伺服器每根 K 棒收盤後會掃描一次。</td></tr>'}</tbody></table></div>
+    <div class="tlbox"><b>💬 Discord 通知</b><span class="tlsub">${d.hook ? '<span class="qg">已設定</span>，有新的進場訊號會傳到你的頻道' : '還沒設定。可以跟一般通知用不同的頻道'}</span>
+      <div class="tlrow"><input id="tlHook" placeholder="https://discord.com/api/webhooks/…" autocomplete="off" spellcheck="false"><button class="btn primary" id="tlHookSave">儲存</button><button class="btn" id="tlHookTest">傳測試訊息</button>${d.hook ? '<button class="btn" id="tlHookDel">清除</button>' : ''}</div><p class="mnmsg" id="tlHookMsg" role="status"></p></div>
+    ${d.owner ? `<div class="tlbox"><b>👑 擁有者設定</b>
+      <div class="tlset"><label>掃描成交額前幾個幣<input id="tlN" type="number" min="5" max="100" value="${S.n}"></label>
+        <label class="lvck"><input type="checkbox" id="tlH4"${S.h4 ? ' checked' : ''}>4H→15 分</label><label class="lvck"><input type="checkbox" id="tlH1"${S.h1 ? ' checked' : ''}>1H→5 分</label>
+        <label class="lvck"><input type="checkbox" id="tlZh"${S.zh ? ' checked' : ''}>莊家進場</label><label class="lvck"><input type="checkbox" id="tlCrt"${S.crt ? ' checked' : ''}>CRT 進場</label><label class="lvck"><input type="checkbox" id="tlHunt"${S.hunt ? ' checked' : ''}>獵殺進場</label>
+        <button class="btn primary" id="tlSetSave">儲存設定</button></div>
+      <div class="tlrow" style="margin-top:10px"><input id="tlNewPw" type="password" autocomplete="new-password" placeholder="${d.hasPw ? '新的密碼（至少 8 個字）' : '設定密碼（至少 8 個字）'}"><button class="btn" id="tlPwSave">${d.hasPw ? '改密碼' : '設定密碼'}</button></div>
+      <span class="tlsub">${d.hasPw ? `目前有 ${d.grants.length} 個人用密碼解鎖了${d.grants.length ? `（${d.grants.map(esc).join('、')}）` : ''}。改密碼後，他們都要重新輸入。` : '還沒設定密碼，所以只有你能用。設定後把密碼給想開放的人。'}</span>
+      <p class="mnmsg" id="tlSetMsg" role="status"></p></div>` : ''}
+    <p class="tlsub">三種進場移植自你的兩套 TradingView 指標：💰 莊家淨額背離＋CHoCH/BOS、🕯 H4/H1 CRT＋回踩 FVG（止盈＝盈虧比 1:1）、🎯 4H/1H 掃流動性窗口＋CHoCH/BOS。只是訊號通知，不會自動下單。</p>`;
+  $('tlF').value = TL.f; $('tlF').onchange = () => { TL.f = $('tlF').value; tlRender(); };
+  const msg = (id, ok, t) => { $(id).className = 'mnmsg ' + (ok ? 'ok' : 'bad'); $(id).textContent = t; };
+  $('tlHookSave').onclick = async () => { try { await srvFetch('/api/tool', { op: 'hook', webhook: $('tlHook').value }); await tlLoad(); msg('tlHookMsg', 1, '已儲存，按「傳測試訊息」試試看。'); } catch (e) { msg('tlHookMsg', 0, e.message); } };
+  $('tlHookTest').onclick = async () => { try { await srvFetch('/api/tool', { op: 'test' }); msg('tlHookMsg', 1, '已送出，看看頻道有沒有收到。'); } catch (e) { msg('tlHookMsg', 0, e.message); } };
+  if ($('tlHookDel')) $('tlHookDel').onclick = async () => { if (!confirm('要清除特級咒具的 Discord 網址嗎？')) return; await srvFetch('/api/tool', { op: 'hook', webhook: '' }); tlLoad(); };
+  if (d.owner) {
+    $('tlSetSave').onclick = async () => { try { await srvFetch('/api/tool', { op: 'set', set: { n: +$('tlN').value, h4: $('tlH4').checked, h1: $('tlH1').checked, zh: $('tlZh').checked, crt: $('tlCrt').checked, hunt: $('tlHunt').checked } }); await tlLoad(); msg('tlSetMsg', 1, '已儲存，下一輪掃描開始套用。'); } catch (e) { msg('tlSetMsg', 0, e.message); } };
+    $('tlPwSave').onclick = async () => {
+      const pw = $('tlNewPw').value; if (pw.length < 8) return msg('tlSetMsg', 0, '密碼至少 8 個字');
+      if (d.hasPw && d.grants.length && !confirm(`改密碼後，目前用密碼解鎖的 ${d.grants.length} 個人都要重新輸入新密碼。確定嗎？`)) return;
+      try { const r = await srvFetch('/api/tool', { op: 'pw', pw }); await tlLoad(); msg('tlSetMsg', 1, `密碼已更新${r.revoked ? `，${r.revoked} 個人需要重新輸入` : ''}。`); } catch (e) { msg('tlSetMsg', 0, e.message); }
+    };
+  }
+}
 function mnInit() {
   const body = $('mnSheetBody');
   for (const [k, , , id] of MN_ITEMS) {                // 每一項一個頁面容器；把原本的區塊搬進來
     if (!id) continue;
     const pg = document.createElement('div'); pg.className = 'mnpage'; pg.dataset.p = k; pg.hidden = true; body.appendChild(pg);
     if (k === 'set') { pg.appendChild($('mnpSet')); pg.appendChild($('qSrv')); } else pg.appendChild($(id));
+    if (k === 'tool') $(id).hidden = false;
   }
-  $('mnList').innerHTML = MN_ITEMS.map(([k, ic, t, , col], i) => `<button class="mnitem" data-k="${k}" style="--mc:${col}"><span class="mnno">${i + 1}.</span><span class="mnic" aria-hidden="true">${ic}</span>${t}</button>`).join('');
+  $('mnList').innerHTML = MN_ITEMS.map(([k, ic, t, , col], i) => `<button class="mnitem${k === 'tool' ? ' fire' : ''}" data-k="${k}" style="--mc:${col}"><span class="mnno">${i + 1}.</span><span class="mnic" aria-hidden="true">${ic}</span>${t}</button>`).join('');
   for (const id of ['qModePat', 'qModeNews', 'qModeBt', 'qModeHeat', 'qGuideBtn', 'qSrvBtn', 'qLtCfgBtn', 'qLogout']) if ($(id)) $(id).hidden = true;   // 選單裡有的，主畫面不再放
   document.body.classList.add('mn');
 }
@@ -3735,6 +3808,8 @@ function mnOpen(k) {
   const el = it[3] && $(it[3]); if (el) el.hidden = false;
   if (k === 'set') { $('qSrv').hidden = false; mnAcct(); }
   if (k === 'heat') htStart();
+  clearInterval(TL.timer);
+  if (k === 'tool') { $('mnpTool').innerHTML = '<p class="tlsub">載入中…</p>'; tlLoad(); TL.timer = setInterval(() => { if (MN_PAGE === 'tool' && TL.d && !document.activeElement.closest('#mnpTool input')) tlLoad(); }, 20000); }
   try { if (k === 'cards') { $('qSidePanel').hidden = false; renderCards(); } if (k === 'hist') { $('qTabPanel').hidden = false; renderHist(); } } catch (e) { console.error(e); }   // 重畫出錯也要照樣打開頁面
   $('mnSheet').hidden = false; document.body.classList.add('mn-sheet'); $('mnSheet').scrollTop = 0; $('mnSheetBody').scrollTop = 0;
   setTimeout(() => window.dispatchEvent(new Event('resize')), 60);   // 星圖、圖表重新計算大小
@@ -3742,7 +3817,7 @@ function mnOpen(k) {
 }
 function mnClose() {
   if (MN_PAGE === 'heat') htStop();
-  MN_PAGE = ''; $('mnSheet').hidden = true; document.body.classList.remove('mn-sheet');
+  clearInterval(TL.timer); MN_PAGE = ''; $('mnSheet').hidden = true; document.body.classList.remove('mn-sheet');
   $('mnBtn').focus();
 }
 function mnAcct() {                                   // 設定頁最上面：登入的帳號、登出、改密碼
