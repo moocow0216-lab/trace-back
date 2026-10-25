@@ -549,6 +549,16 @@ dialog#qAdmDlg::backdrop{background:rgba(4,7,12,.62)}
 body.mode-pat .col.right,body.mode-news .col.right,body.mode-news .col.left{display:none!important}
 body.mode-pat #qPanel,body.mode-news #qPanel,body.mode-pat #newsPanel,body.mode-pat #mktPanel,body.mode-news #mktPanel,body.mode-news #resPanel{display:none!important}
 @media (min-width:881px){body.mode-pat .app{grid-template-columns:400px minmax(0,1fr)}body.mode-news .app{grid-template-columns:minmax(0,1fr)}}
+/* 📰 版本更新 */
+.nwdlg{padding:0;border:none;background:transparent;max-width:100vw;max-height:100dvh}.nwdlg::backdrop{background:rgba(4,7,15,.72)}
+.nwcard{width:min(520px,94vw);max-height:min(760px,90dvh);box-sizing:border-box;background:#0b1020;color:#e8ecf3;border:1px solid #2a3447;border-radius:18px;display:flex;flex-direction:column;padding:18px 20px;gap:12px}
+.nwhead h2{margin:0;font-size:20px}.nwhead p{margin:4px 0 0;color:#a3adbd;font-size:13.5px}
+.nwbody{flex:1;overflow:auto;display:flex;flex-direction:column;gap:12px}
+.nwent{display:flex;flex-direction:column;gap:8px}.nwent>b{font-size:14px;color:#c7d6ff}
+.nwit{display:flex;gap:10px;align-items:flex-start;padding:9px 12px;border:1px solid #2a3447;border-radius:12px;background:#141b2b}.nwit span{flex:none;width:22px;text-align:center}.nwit p{margin:0;font-size:13.5px;line-height:1.6;color:#d4dbe7}
+.nwit.sp{border-color:#7f1d1d;background:linear-gradient(90deg,rgba(239,68,68,.1),#141b2b 60%)}
+.nwfoot{display:grid;grid-template-columns:1fr 1fr;gap:10px}.nwfoot .gdbtn{min-height:46px}
+.gd2b{display:flex;gap:6px;align-items:center}
 /* ☰ 選單 */
 .mnbtn{font-weight:700;position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:14px;z-index:70;min-height:42px;padding:0 14px;background:rgba(17,21,29,.92)!important;box-shadow:0 4px 16px rgba(0,0,0,.45);backdrop-filter:blur(6px)}
 @media (max-width:640px){.mnbtn{top:calc(8px + env(safe-area-inset-top,0px));right:8px}}
@@ -941,7 +951,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-24j</div>
+      <div class="qver" id="qVer">網站版本 2026-10-25c</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -1246,7 +1256,7 @@ header{align-items:center}
       <h3 style="font-size:14px;margin:16px 0 6px">👑 所有帳號的自動交易</h3>
       <p class="qrepnote">一鍵讓所有帳號一起暫停或開始。暫停後已經開著的單照常管理（鎖利、失敗線、到期）；開始只會開有設定 Bitunix API 的帳號。每個人的 Discord 都會收到通知。</p>
       <div class="qbt"><button class="btn" id="qa_allOff">⏸ 全部暫停</button><button class="btn" id="qa_allOn">▶ 全部開始</button></div>
-          <p class="qrepnote" style="margin-top:10px">🗡 特級交易另外開關：只會開啟<b>有特級咒具權限</b>（輸入過密碼）而且有設定 API 的帳號，其他人自動跳過。</p>
+          <p class="qrepnote" style="margin-top:10px">「全部開始」只會恢復被「全部暫停」停掉的帳號；在那之前就已經暫停的（例如他自己按了暫停）維持暫停。🗡 特級交易另外開關，規則一樣，而且只會恢復<b>有特級咒具權限</b>、有設定 API 的帳號。</p>
           <div class="qbt"><button class="btn" id="qa_spOff">⏸ 全部暫停特級交易</button><button class="btn qspbtn" id="qa_spOn">🗡 全部開始特級交易</button></div>
     </div>
     <div id="qOwnBox" hidden>
@@ -1274,6 +1284,7 @@ header{align-items:center}
     <button class="btn primary" id="mnPwGo">更改密碼</button><p class="mnmsg" id="mnPwMsg" role="status"></p>
     <small>改完之後，其他裝置的登入會被登出，這台裝置保持登入。</small></div>
 </div>
+<dialog id="nwDlg" class="nwdlg" aria-labelledby="nwT"><div class="nwcard"><div class="nwhead"><h2 id="nwT">📰 版本更新</h2><p>這次更新了這些地方：</p></div><div class="nwbody" id="nwBody"></div><div class="nwfoot"><button class="gdbtn" id="nwAll">看完整的使用說明</button><button class="gdbtn pri" id="nwOk" autofocus>知道了</button></div></div></dialog>
 <dialog id="gdDlg" aria-label="使用說明"><div class="gdcard" id="gdBody"></div></dialog>
 <dialog id="htDlg" aria-labelledby="htDlgT" style="padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);width:min(560px,96vw)">
   <div class="qdh"><h2 id="htDlgT">✏ 編輯自選幣種</h2><span class="spacer"></span><button class="btn" id="htClr">全部清除</button><button class="btn primary" id="htDone">完成</button></div>
@@ -3385,7 +3396,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-24j・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-25c・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -3623,7 +3634,7 @@ $('qModeBt').onclick = () => setMode(MODE === 'bt' ? 'quant' : 'bt');
 $('qModeHeat').onclick = () => setMode(MODE === 'heat' ? 'quant' : 'heat');
 /* ---------- 📖 使用說明書：第一次登入的設定步驟＋功能介紹（右上角都可以略過） ---------- */
 const GD = { i: 0, nt: null, auto: false, busy: false };
-const GD_PAGES = ['api', 'dc', 'fund', 'tp', 'f1', 'f2', 'f3', 'f4', 'f5', 'done'];
+
 const gdC = () => (SRVLT && SRVLT.cfg) || {};
 const gdHasApi = () => !!(SRVBX && SRVBX.set);
 const gdTip = (txt, warn) => `<div class="gdtip${warn ? ' warn' : ''}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${warn ? '<path d="M12 3l9.5 17h-19z"></path><path d="M12 10v4"></path><path d="M12 17v.01"></path>' : '<circle cx="12" cy="12" r="9"></circle><path d="M12 8v5"></path><path d="M12 16.5v.01"></path>'}</svg><p>${txt}</p></div>`;
@@ -3712,7 +3723,7 @@ function gdPage(p) {
 function gdCalc() {                                   // 第 3、4 步的試算
   const el = $('gd_calc'); if (!el) return;
   const m = +($('gd_margin') ? $('gd_margin').value : gdC().margin) || 0.3, lev = +($('gd_lev') ? $('gd_lev').value : gdC().lev) || 100;
-  if (GD_PAGES[GD.i] === 'fund') { el.innerHTML = `<span class="gdcl">照這個設定</span><p>每筆 <b>${m}U</b> × <b>${lev}x</b> ＝ 倉位約 <b>${+(m * lev).toFixed(2)}U</b></p><small>全倉模式下，虧損可能超過單筆保證金，請確認你能承擔。</small>`; return; }
+  if (gdPages()[GD.i] === 'fund') { el.innerHTML = `<span class="gdcl">照這個設定</span><p>每筆 <b>${m}U</b> × <b>${lev}x</b> ＝ 倉位約 <b>${+(m * lev).toFixed(2)}U</b></p><small>全倉模式下，虧損可能超過單筆保證金，請確認你能承擔。</small>`; return; }
   const tp = +$('gd_tp').value || 250, st = +$('gd_step').value || 0, sl = +$('gd_sl').value || 250, C = gdC(), mm = C.margin || 0.3, L = C.lev || 100;
   const lockAt2 = pk => (st > 0 && pk > tp ? tp + Math.floor((pk - tp) / st + 1e-9) * st : tp), u = p => (mm * p / 100).toFixed(2);
   const a = tp - 10, b = tp + 10, c = tp + Math.max(st, 50) + 20;
@@ -3724,14 +3735,17 @@ async function gdSave(body, okMsg) {                  // 用網站原本的 API 
   catch (e) { if (msg) { msg.className = 'gdmsg bad'; msg.textContent = e.message; } return null; }
 }
 function gdRender() {
-  const p = GD_PAGES[GD.i], setup = GD.i < 4, feat = GD.i >= 4 && GD.i < 9, done = p === 'done';
-  const head = done ? '' : `<div class="gdhead"><span>${setup ? `設定 ${GD.i + 1}／4` : `功能介紹 ${GD.i - 3}／5`}</span><button class="gdbtn" id="gd_skip">${setup ? '略過' : '略過介紹'}</button></div>
-    ${setup ? `<div class="gdprog">${[0, 1, 2, 3].map(k => `<i class="${k <= GD.i ? 'on' : ''}"></i>`).join('')}</div>` : `<div class="gddots">${[4, 5, 6, 7, 8].map(k => `<i class="${k === GD.i ? 'on' : ''}"></i>`).join('')}</div>`}`;
-  const nextTxt = p === 'tp' ? '完成設定，看功能介紹' : p === 'f5' ? '看完了' : done ? '開始使用' : '下一步';
-  $('gdBody').innerHTML = `${head}<div class="gdscroll">${gdPage(p)}</div><div class="gdfoot${GD.i === 0 || done ? ' one' : ''}">${GD.i === 0 || done ? '' : `<button class="gdbtn" id="gd_prev">${feat ? '上一個' : '上一步'}</button>`}<button class="gdbtn pri" id="gd_next">${nextTxt}</button></div>`;
+  if (GD.news) return gdNews();
+  const PG = gdPages(), last = PG.length - 1, nF = PG.length - 5; if (GD.i > last) GD.i = last;
+  const p = PG[GD.i], setup = GD.i < 4, feat = GD.i >= 4 && GD.i < last, done = p === 'done';
+  const head = done ? '' : `<div class="gdhead"><span>${setup ? `設定 ${GD.i + 1}／4` : `功能介紹 ${GD.i - 3}／${nF}`}</span><span class="gd2b"><button class="gdbtn sm" id="gd_news">📰 更新紀錄</button><button class="gdbtn" id="gd_skip">${setup ? '略過' : '略過介紹'}</button></span></div>
+    ${setup ? `<div class="gdprog">${[0, 1, 2, 3].map(k => `<i class="${k <= GD.i ? 'on' : ''}"></i>`).join('')}</div>` : `<div class="gddots">${PG.slice(4, last).map((_, k) => `<i class="${k + 4 === GD.i ? 'on' : ''}"></i>`).join('')}</div>`}`;
+  const nextTxt = p === 'tp' ? '完成設定，看功能介紹' : GD.i === last - 1 ? '看完了' : done ? '開始使用' : '下一步';
+  $('gdBody').innerHTML = `${head}<div class="gdscroll">${gdPage2(p)}</div><div class="gdfoot${GD.i === 0 || done ? ' one' : ''}">${GD.i === 0 || done ? '' : `<button class="gdbtn" id="gd_prev">${feat ? '上一個' : '上一步'}</button>`}<button class="gdbtn pri" id="gd_next">${nextTxt}</button></div>`;
   $('gdBody').querySelector('.gdscroll').scrollTop = 0;
   const on = (id, f) => { const el = $(id); if (el) el.onclick = f; };
-  on('gd_skip', () => { GD.i = setup ? GD.i + 1 : 9; gdRender(); });
+  on('gd_skip', () => { GD.i = setup ? GD.i + 1 : last; gdRender(); });
+  on('gd_news', () => { GD.news = true; gdRender(); }); on('gd_news2', () => { GD.news = true; gdRender(); });
   on('gd_prev', () => { GD.i = Math.max(0, GD.i - 1); gdRender(); });
   on('gd_next', () => gdNext());
   on('gd_copyIp', () => { navigator.clipboard && navigator.clipboard.writeText('3.107.254.240').then(() => { $('gd_copyIp').textContent = '已複製'; }).catch(() => {}); });
@@ -3755,7 +3769,7 @@ function gdRender() {
 }
 async function gdNext() {
   if (GD.busy) return;
-  const p = GD_PAGES[GD.i];
+  const p = gdPages()[GD.i];
   GD.busy = true;
   try {
     if (p === 'api' && $('gd_key').value.trim() && $('gd_sec').value.trim()) { $('gd_apiSave').click(); return; }   // 有填就先存，存好再按一次下一步
@@ -3775,7 +3789,7 @@ async function gdNext() {
     GD.i++; gdRender();
   } finally { GD.busy = false; }
 }
-function gdOpen(i) { GD.i = i || 0; gdRender(); if (!$('gdDlg').open) $('gdDlg').showModal(); }
+function gdOpen(i) { if (GD.newsKeep) GD.newsKeep = false; else if (!GD.newsNext) GD.news = false; GD.newsNext = false; GD.i = i || 0; gdRender(); if (!$('gdDlg').open) $('gdDlg').showModal(); }
 function gdClose() { if (SRV.uid) LS.set('quantGuide:' + SRV.uid, 1); if ($('gdDlg').open) $('gdDlg').close(); }
 $('gdDlg').addEventListener('close', () => { if (SRV.uid) LS.set('quantGuide:' + SRV.uid, 1); });
 $('qGuideBtn').onclick = () => gdOpen(0);
@@ -3964,9 +3978,76 @@ $('mnPwGo').onclick = async () => {
   $('mnPwGo').disabled = false;
 };
 mnInit();
+/* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
+const CHANGELOG = [
+  { id: '2026-10-25', title: '2026/10/25 更新', items: [
+    { ic: '☰', t: '右上角新增「選單」：設定、熱力圖、訊號卡片、歷史走勢、加密新聞、回測數據、歷史紀錄、幣安鯨魚大單、使用說明都收進選單，主畫面只留持倉和成功率，更清爽。' },
+    { ic: '🔑', t: '「選單 → 設定」最上面可以改自己的密碼（要先輸入目前的密碼，改完其他裝置會登出）。' },
+    { ic: '🔄', t: '伺服器更新或重開後，約 1 分鐘會自動恢復自動交易，不用再自己按開始；持倉區會用黃字寫出「上次暫停」的時間和原因。' },
+    { ic: '💰', t: '投入資金＝起始本金：改投入資金時過去的盈虧照算（例如 100U 虧到 98U，改成 50U 就是 48U），資金曲線的起點也跟著改。投入資金用完會自動暫停。' },
+    { ic: '⚠️', t: '資金不足提醒：投入資金設得比帳戶還多會擋下來；帳戶的錢不夠時，持倉區會出現紅字提醒。' },
+    { ic: '💸', t: '新增「收回資金」（在「選單 → 設定 → 我的交易設定」）：只改目前的金額，盈虧率和資金曲線不變；全部收回後自動交易會暫停。' },
+    { ic: '🤖', t: '手動單旁邊可以按「改成自動單」，交給伺服器照你的規則鎖利、停損、到期平倉；也修好了自動單偶爾被誤認成手動單的問題（會自動找回）。' },
+    { ic: '💬', t: 'Discord：通知開關回到設定頁；設定頁會顯示最後一次傳送成功或失敗的原因；手動單、訊號模擬結果不再發通知。' },
+    { ic: '🗡', sp: true, t: '特級咒具：莊家進場、H4/H1 CRT 進場、獵殺進場三種訊號，一個幣一張卡片，可以設定自己的 Discord 通知，也能在「回測數據」做回測。' },
+    { ic: '🗡', sp: true, t: '特級交易：用特級咒具的訊號自動下單。跟一般交易分開開關，有自己的投入資金、槓桿、鎖利、停損、單日虧損上限和收回資金；同一個幣反方向訊號會反手。' },
+    { ic: '🗡', sp: true, t: '主畫面多了紅框的「特級持倉」和「特級交易」統計；資金曲線改成三條報酬率線：一般藍、特級紅、綜合紫。' },
+    { ic: '🗡', sp: true, t: 'Bitunix 是「雙向持倉」時，一般單和特級單可以多空雙開；單向持倉會自動跳過，不會抵銷你原本的倉位。' }
+  ] }
+];
+const NW_LAST = CHANGELOG[0].id;
+const nwItems = e => e.items.filter(x => !x.sp || SRVLT.toolOk);   // 沒有特級權限：不看特級的更新
+function nwHtml(list) { return list.map(e => { const it = nwItems(e); return it.length ? `<div class="nwent"><b>${esc(e.title)}</b>${it.map(x => `<div class="nwit${x.sp ? ' sp' : ''}"><span aria-hidden="true">${x.ic}</span><p>${esc(x.t)}</p></div>`).join('')}</div>` : ''; }).join(''); }
+function nwAuto() {                                   // 登入後第一次進畫面：有新的更新就跳一次
+  if (!SRV.uid) return;
+  const key = 'quantSeen:' + SRV.uid, seen = LS.get(key);
+  if (seen === NW_LAST) return;
+  const k = CHANGELOG.findIndex(e => e.id === seen), list = k > 0 ? CHANGELOG.slice(0, k) : CHANGELOG.slice(0, 1);
+  LS.set(key, NW_LAST);
+  if (!list.some(e => nwItems(e).length)) return;
+  $('nwBody').innerHTML = nwHtml(list); $('nwDlg').showModal();
+}
+$('nwOk').onclick = () => $('nwDlg').close();
+$('nwAll').onclick = () => { $('nwDlg').close(); GD.news = true; GD.newsNext = true; gdOpen(0); };
+/* ---------- 📖 使用說明書：功能介紹（頁數依權限：有特級咒具權限多一頁） ---------- */
+const gdPages = () => ['api', 'dc', 'fund', 'tp', 'f1', 'f2', 'f3', 'f4', 'f5', ...(SRVLT.toolOk ? ['f6'] : []), 'done'];
+function gdPage2(p) {
+  if (p === 'fund') return gdPage('fund') + gdTip('投入資金就是起始本金：之後改投入資金，過去的盈虧會照算進去。帳戶的錢不夠時會提醒「資金不足」；不想讓自動交易用了，可以在設定裡「收回資金」。');
+  if (p === 'f1') return `<div class="gdmock"><div class="gd2"><span class="gdbtn pri fake">▶ 開始交易</span><span class="gdbtn red fake">一鍵平倉（自動單）</span></div>
+      <div class="gdmrow sm"><span>BTCUSDT <span class="gdchip gr">🤖 自動</span></span><span class="dim">ETHUSDT <span class="gdchip">手動</span>　🤖 改成自動單</span></div><div class="gdmrow sm" style="color:#f5c46a">⏸ 上次暫停：10/25 14:03・伺服器重新啟動，約 1 分鐘後自動恢復</div></div>
+    <h2>主畫面：持倉與自動交易</h2>
+    ${gdPt('<path d="M8 5v14l11-7z"></path>', '按<b>「開始交易」</b>才會真的下單。關掉網頁、手機鎖螢幕，伺服器照樣 24 小時運作。')}
+    ${gdPt('<rect x="4" y="10" width="16" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path>', '鎖利、停損、持有到期都會自動平倉，交易所上也會掛好止損單。「一鍵平倉」只平自動單。')}
+    ${gdPt('<circle cx="12" cy="8" r="4"></circle><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"></path>', '你自己在 App 開的是<b>手動單</b>，系統不會動它；想交給伺服器管理，按旁邊的「🤖 改成自動單」。')}
+    ${gdPt('<path d="M21 12a9 9 0 1 1-3-6.7"></path><path d="M21 4v5h-5"></path>', '伺服器更新或重開後，<b class="or">約 1 分鐘自動恢復</b>。按鈕下方的黃字會寫「上次暫停」的時間和原因；紅字「資金不足」代表帳戶的錢不夠。')}`;
+  if (p === 'f2') return `<div class="gdmock"><svg width="100%" height="64" viewBox="0 0 320 64" preserveAspectRatio="none" aria-hidden="true"><path d="M0 54 L40 48 L80 51 L120 36 L160 40 L200 27 L240 31 L280 16 L320 10" fill="none" stroke="#5ec8e0" stroke-width="2.5"></path><path d="M0 54 L40 48 L80 51 L120 36 L160 40 L200 27 L240 31 L280 16 L320 10 L320 64 L0 64 Z" fill="#5ec8e0" fill-opacity=".12"></path></svg></div>
+    <h2>成功率、資金曲線與紀錄</h2>
+    ${gdPt('<path d="M3 17l6-6 4 4 8-8"></path><path d="M15 7h6v6"></path>', '主畫面下方：<b>實盤</b>看你帳戶真正的賺賠、成功率、做多做空、資金曲線；<b>訊號模擬</b>看所有訊號照規則跑的成績。')}
+    ${gdPt('<rect x="4" y="4" width="16" height="16" rx="2"></rect><path d="M4 10h16"></path><path d="M10 10v10"></path>', '<b>「☰ 選單 → 歷史紀錄」</b>：每一筆的進場價、最大浮盈浮虧、出場原因，點一行看圖表，也能匯出 CSV。')}
+    ${gdPt('<circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path>', '<b>「☰ 選單 → 回測數據」</b>：用過去的資料看這套規則以前會賺還是賠。')}`;
+  if (p === 'f3') return `<h2>右上角「☰ 選單」</h2><p class="gdsub">主畫面只放持倉和成功率，其他功能都在右上角的選單裡，每一項用不同顏色框起來。</p>
+    ${[['👤', '設定', 'Bitunix API、Discord 通知、我的交易設定、收回資金、改密碼'], ['🔥', '熱力圖', '市場漲跌、資金費率、清算地圖'], ['📡', '訊號卡片', '系統找到的進場機會'], ['📈', '歷史走勢', '畫出走勢，找歷史上相似的段落'], ['📰', '加密新聞', '新聞列表和新聞星圖'], ['📊', '回測數據', '回測、回測報告、BTC 急漲急跌統計'], ['📋', '歷史紀錄', '每一筆交易的紀錄'], ['🐋', '幣安鯨魚大單', '即時大單'], ['📖', '使用說明', '就是這份說明書，還有更新紀錄'], ['🗡', '特級咒具', SRVLT.toolOk ? '三種特級進場訊號和特級交易（下一頁介紹）' : '開發中的新功能，需要擁有者給的密碼']].map(([i, t, d]) => `<div class="gdfeat"><span class="gdic" style="font-size:20px;text-align:center" aria-hidden="true">${i}</span><div><b>${t}</b><p>${d}</p></div></div>`).join('')}`;
+  if (p === 'f4') return gdPage('f1').replace('每 10 秒掃描幣安', '<b>「☰ 選單 → 訊號卡片」</b>：每 10 秒掃描幣安');
+  if (p === 'f5') return gdPage('f4').replace('<h2>熱力圖：一眼看懂整個市場</h2>', '<h2>熱力圖：一眼看懂整個市場</h2><p class="gdsub">在「☰ 選單 → 熱力圖」。</p>') + gdTip('最上方的黃框是美國重要經濟數據，有高影響數據的那一天，自動交易<b>整天不開新單</b>。Discord 會通知自動單的開倉、鎖利、平倉、快爆倉，手動單不通知。');
+  if (p === 'f6') return `<div class="gdmock" style="border-color:#7f1d1d"><div class="gdmrow"><b>🗡 特級咒具</b><span class="gdchip" style="border-color:#f5c542;color:#f5c542">莊家進場</span><span class="gdchip" style="border-color:#a78bfa;color:#a78bfa">CRT 進場</span><span class="gdchip rd">獵殺進場</span></div></div>
+    <h2>🗡 特級咒具與特級交易</h2>
+    ${gdPt('<path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"></path>', '<b>「☰ 選單 → 特級咒具」</b>：莊家、H4/H1 CRT、獵殺三種進場訊號，一個幣一張卡片。右上「⚙ 設定」可以設定自己的 Discord 通知。')}
+    ${gdPt('<path d="M8 5v14l11-7z"></path>', '持倉區「<b>🗡 開始特級交易</b>」：用這些訊號自動下單，跟一般交易分開開關。同一個幣出現反方向的特級訊號會反手。')}
+    ${gdPt('<circle cx="12" cy="12" r="3"></circle><path d="M12 2v3"></path><path d="M12 19v3"></path><path d="M2 12h3"></path><path d="M19 12h3"></path>', '<b>「☰ 選單 → 設定 → 🗡 特級交易設定」</b>：自己的投入資金、槓桿、鎖利、停損、持有天數、單日虧損上限，還有收回資金。')}
+    ${gdPt('<path d="M3 17l6-6 4 4 8-8"></path>', '主畫面的紅框「特級持倉」「特級交易」是特級自己的成績；資金曲線三條線：<b style="color:#60a5fa">一般藍</b>、<b style="color:#f87171">特級紅</b>、<b style="color:#c084fc">綜合紫</b>（都用報酬率）。')}
+    ${gdTip('Bitunix 是「雙向持倉」時，一般單和特級單可以多空雙開；單向持倉會自動跳過。「☰ 選單 → 回測數據」可以做特級咒具的回測。')}`;
+  if (p === 'done') return gdPage('done').replace('<p class="gdsub">之後想再看說明', '<button class="gdbtn" id="gd_news2" style="align-self:center">📰 看更新紀錄</button><p class="gdsub">之後想再看說明');
+  return gdPage(p);
+}
+function gdNews() {                                   // 📰 更新紀錄（在使用說明裡）
+  $('gdBody').innerHTML = `<div class="gdhead"><span>📰 更新紀錄</span><button class="gdbtn" id="gd_newsBack">回到使用說明</button></div><div class="gdscroll">${nwHtml(CHANGELOG) || '<p class="gdsub">還沒有更新紀錄。</p>'}</div><div class="gdfoot one"><button class="gdbtn pri" id="gd_newsX">關閉</button></div>`;
+  $('gd_newsBack').onclick = () => { GD.news = false; gdRender(); };
+  $('gd_newsX').onclick = () => gdClose();
+}
 function gdAuto() {                                   // 新帳號第一次登入、還沒設 API：自動打開一次
   if (GD.auto || !MINE() || !SRV.uid || !SRVBX) return; GD.auto = true;   // 等讀到 API 狀態才判斷（API 狀態比 Discord 晚一點讀到）
-  if (!LS.get('quantGuide:' + SRV.uid) && !gdHasApi()) gdOpen(0);
+  if (!LS.get('quantGuide:' + SRV.uid) && !gdHasApi()) { gdOpen(0); LS.set('quantSeen:' + SRV.uid, NW_LAST); return; }   // 新帳號先看說明書，不另外跳更新
+  nwAuto();                                            // 📰 有新的更新：跳一次
 }
 
 /* ---------- 🔥 熱力圖：市場漲跌、資金費率 ----------
@@ -5632,14 +5713,14 @@ $('qAdmTab').addEventListener('click', async e => {
   } catch (err) { alert(err.message); }
 });
 async function ltAll(on) {
-  if (!confirm(on ? '要讓「所有帳號」一起開始自動交易嗎？\n\n每個有設定 Bitunix API 的帳號都會開始用他自己的資金自動下單。' : '要讓「所有帳號」一起暫停自動交易嗎？\n\n已經開著的單會照常管理到平倉。')) return;
-  try { const r = await srvFetch('/api/lt/all', { on }); alert(`${on ? '已開始' : '已暫停'} ${r.n} 個帳號${r.skip ? `（${r.skip} 個沒有設定 API，跳過）` : ''}。`); admLoad(); SV.lv = 0; srvPull(); }
+  if (!confirm(on ? '要恢復被「全部暫停」停掉的帳號嗎？\n\n只會恢復你上次按「全部暫停」時停掉的帳號；在那之前就已經暫停的帳號（例如他自己按了暫停）會維持暫停。' : '要讓「所有帳號」一起暫停自動交易嗎？\n\n已經開著的單會照常管理到平倉。之後按「全部開始」只會恢復這次停掉的帳號。')) return;
+  try { const r = await srvFetch('/api/lt/all', { on }); alert(on ? (r.n || r.keep ? `已恢復 ${r.n} 個帳號${r.keep ? `；${r.keep} 個在一鍵暫停之前就已經暫停，維持暫停` : ''}${r.skip ? `；${r.skip} 個沒有 API，跳過` : ''}。` : '沒有可以恢復的帳號：「全部開始」只會恢復被「全部暫停」停掉的帳號。') : `已暫停 ${r.n} 個帳號。`); admLoad(); SV.lv = 0; srvPull(); }
   catch (e) { alert(e.message); }
 }
 $('qa_allOff').onclick = () => ltAll(false);
 async function spAll(on) {                            // 🗡 一鍵特級交易
-  if (!confirm(on ? '要讓「有特級咒具權限」的帳號一起開始特級交易嗎？\n\n沒有權限、沒有設定 API 的帳號會跳過。' : '要讓所有帳號一起暫停特級交易嗎？\n\n已經開著的單會照常管理到平倉。')) return;
-  try { const r = await srvFetch('/api/lt/all', { on, sp: true }); alert(`${on ? '已開始' : '已暫停'} ${r.n} 個帳號的特級交易${r.skip ? `（${r.skip} 個沒有權限或沒有 API，跳過）` : ''}。`); admLoad(); SV.lv = 0; srvPull(); }
+  if (!confirm(on ? '要恢復被「全部暫停特級交易」停掉的帳號嗎？\n\n只會恢復你上次一鍵暫停時停掉的帳號；在那之前就已經暫停的會維持暫停。沒有特級咒具權限的帳號一律跳過。' : '要讓所有帳號一起暫停特級交易嗎？\n\n已經開著的單會照常管理到平倉。之後按「全部開始特級交易」只會恢復這次停掉的帳號。')) return;
+  try { const r = await srvFetch('/api/lt/all', { on, sp: true }); alert(on ? (r.n || r.keep ? `已恢復 ${r.n} 個帳號的特級交易${r.keep ? `；${r.keep} 個在一鍵暫停之前就已經暫停，維持暫停` : ''}${r.skip ? `；${r.skip} 個沒有權限或沒有 API，跳過` : ''}。` : '沒有可以恢復的帳號：「全部開始特級交易」只會恢復被一鍵暫停的帳號。') : `已暫停 ${r.n} 個帳號的特級交易。`); admLoad(); SV.lv = 0; srvPull(); }
   catch (e) { alert(e.message); }
 }
 $('qa_spOff').onclick = () => spAll(false);
