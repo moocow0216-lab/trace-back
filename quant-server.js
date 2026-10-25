@@ -10,6 +10,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const crypto = require('crypto');
 
 const PORT = +process.env.PORT || 8787;
@@ -40,7 +41,7 @@ const DEF_REP = { cap: 100, btN: 50, days: 14, next: 0 };                   // �
 let ST = { cards: [], bt: { at: 0, coins: 0, trades: [] }, set: { ...DEF_SET }, trade: { ...DEF_TRADE }, google: { clientId: '' }, eq: { ...DEF_EQ }, rep: { ...DEF_REP }, reports: [], users: [], sessions: [], accts: {}, owner: '' };
 try {
   const j = JSON.parse(fs.readFileSync(FILE, 'utf8'));
-  ST = { cards: j.cards || [], bt: j.bt || ST.bt, set: { ...DEF_SET, ...(j.set || {}) }, trade: { ...DEF_TRADE, ...(j.trade || {}) }, google: { clientId: '', ...(j.google || {}) }, eq: { ...DEF_EQ, ...(j.eq || {}) }, rep: { ...DEF_REP, ...(j.rep || {}) }, reports: j.reports || [], users: j.users || [], sessions: j.sessions || [], aws: j.aws || {}, accts: j.accts || {}, owner: j.owner || '', bstat: j.bstat || null, hb: j.hb || '', ecoDay: j.ecoDay || '', tool: j.tool || null, alive: j.alive || 0, boots: j.boots || [] };
+  ST = { cards: j.cards || [], bt: j.bt || ST.bt, set: { ...DEF_SET, ...(j.set || {}) }, trade: { ...DEF_TRADE, ...(j.trade || {}) }, google: { clientId: '', ...(j.google || {}) }, eq: { ...DEF_EQ, ...(j.eq || {}) }, rep: { ...DEF_REP, ...(j.rep || {}) }, reports: j.reports || [], users: j.users || [], sessions: j.sessions || [], aws: j.aws || {}, accts: j.accts || {}, owner: j.owner || '', bstat: j.bstat || null, hb: j.hb || '', ecoDay: j.ecoDay || '', tool: j.tool || null, alive: j.alive || 0, boots: j.boots || [], exit: j.exit || null, hb2: j.hb2 || null, lastErr: j.lastErr || null };
   // 舊版（只有一個帳號）：原本的 Bitunix 金鑰、自動交易、實盤紀錄、Discord 搬到擁有者（第一個管理員）的帳號底下
   if (!j.accts && (j.bx || j.lt || j.ltTrades || j.notify)) {
     const a = ST.users.find(u => u.role === 'admin'), uid = a ? a.uid : '__owner';
@@ -112,35 +113,45 @@ function backupTick() {
 }
 setTimeout(backupTick, 5 * 60000); setInterval(backupTick, 6 * HOUR);   // 每 6 小時看一次，當天還沒備份就備份
 setInterval(() => { try { save(); } catch (e) { log('存檔失敗', e.message); } }, 10000);
-for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => { dirty = true; ST.alive = Date.now(); try { save(); } catch (e) {} process.exit(0); });
-setInterval(() => { ST.alive = Date.now(); dirty = true; }, 60000);   // 💓 心跳：重開時用來判斷停機多久
+for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => { dirty = true; ST.alive = Date.now(); ST.exit = { t: Date.now(), how: sig }; try { save(); } catch (e) {} process.exit(0); });   // 正常關機（更新、重開）：留紀錄
+const hbNow = () => { const m = process.memoryUsage(); return { t: Date.now(), rss: Math.round(m.rss / 1048576), heap: Math.round(m.heapUsed / 1048576), free: Math.round(os.freemem() / 1048576), total: Math.round(os.totalmem() / 1048576), load: +os.loadavg()[0].toFixed(2) }; };
+setInterval(() => { ST.alive = Date.now(); ST.hb2 = hbNow(); dirty = true; }, 60000);   // 💓 心跳：重開時用來判斷停機多久、停機前的記憶體
 // 🛡 當機保護：有錯誤沒接住時記下來、繼續運作，不要整個程式當掉（當掉會被系統重開，所有人的自動交易都會暫停）
 const ERRN = { at: 0 };
 function onCrash(kind, e) {
   const msg = String((e && (e.stack || e.message)) || e).slice(0, 700); log('⚠️ ' + kind, msg);
+  ST.lastErr = { t: Date.now(), kind, msg: msg.slice(0, 400) }; dirty = true;   // 留給下次停機的原因分析
   if (Date.now() - ERRN.at > 10 * 60000) { ERRN.at = Date.now(); try { dcX(ctx(ownerUid()), `⚠️ **伺服器發生錯誤**（已經擋下來，程式繼續運作；10 分鐘內同類錯誤只通知一次）\n\`\`\`${msg.slice(0, 600)}\`\`\``); } catch (x) {} }
 }
 process.on('unhandledRejection', e => onCrash('沒有接住的錯誤', e));
 process.on('uncaughtException', e => onCrash('程式錯誤', e));
-// 🔄 重開後自動恢復：先等 1 分鐘讀好持倉和行情；30 分鐘內重開 3 次以上、或停機超過 15 分鐘就不恢復，改用 Discord 通知
-{ const now = Date.now(), down = ST.alive ? now - ST.alive : Infinity;
-  ST.boots = (ST.boots || []).filter(t => now - t < 30 * 60000).concat(now); dirty = true;
-  const loop = ST.boots.length >= 3;
+// 🔄 重開後自動恢復：先等 1 分鐘讀好持倉和行情，之後一律恢復重開前在跑的交易（擁有者要求：每次停機都自動開始）
+//    停機超過 5 分鐘、或 30 分鐘內重開 3 次以上：另外分析停機原因，發到擁有者的 Discord
+{ const now = Date.now(), a0 = ST.alive || 0, down = a0 ? now - a0 : Infinity, ex = ST.exit, hb = ST.hb2, err = ST.lastErr;   // 剛重開時先把停機前的資料存起來（之後心跳會覆蓋）
+  ST.boots = (ST.boots || []).filter(t => now - t < 30 * 60000).concat(now); ST.exit = null; dirty = true;
+  const loop = ST.boots.length >= 3, mins = isFinite(down) ? Math.max(1, Math.round(down / 60000)) : null;
   setTimeout(() => {
     for (const r of RESUME) {
       const X = ctx(r.uid); if (!hasKey(X)) continue;
       const parts = [r.on ? '自動交易' : '', r.sp && toolOkUid(r.uid) ? '🗡 特級交易' : ''].filter(Boolean); if (!parts.length) continue;
-      if (loop || down > 15 * 60000) {
-        X.LT.pause = { t: now, why: loop ? `伺服器 30 分鐘內重開了 ${ST.boots.length} 次，沒有自動恢復` : isFinite(down) ? `伺服器停機 ${Math.round(down / 60000)} 分鐘，沒有自動恢復` : '沒有上次運作的紀錄（剛更新到新版），沒有自動恢復' };
-        dcX(X, `⏸ **伺服器重新啟動，${parts.join('和')}維持暫停**：${X.LT.pause.why}。確認沒問題後，請到網站重新按開始`); continue;
-      }
       if (r.on) X.A.lt.on = true;
       if (r.sp && toolOkUid(r.uid)) X.A.lt.sp = true;
-      touchLT(X); log('重開後自動恢復', r.uid, parts.join('、'));
-      dcX(X, `🔄 **伺服器重新啟動，已自動恢復${parts.join('和')}**（停機約 ${Math.max(1, Math.round(down / 60000))} 分鐘）`);
+      X.LT.pause = null; touchLT(X); log('重開後自動恢復', r.uid, parts.join('、'));
+      dcX(X, `🔄 **伺服器重新啟動，已自動恢復${parts.join('和')}**${mins ? `（停機約 ${mins} 分鐘）` : ''}`);
     }
   }, 60000);
-  setImmediate(() => { for (const r of RESUME) { const X = ctx(r.uid); X.LT.pause = { t: now, why: loop || down > 15 * 60000 ? '伺服器重新啟動' : '伺服器重新啟動，約 1 分鐘後自動恢復' }; } });   // 等整個程式載入完（帳號系統準備好）再記
+  setImmediate(() => { for (const r of RESUME) { const X = ctx(r.uid); X.LT.pause = { t: now, why: '伺服器重新啟動，約 1 分鐘後自動恢復' }; } });
+  if (!isFinite(down) || down > 5 * 60000 || loop) setTimeout(() => {   // 🔎 停機原因分析
+    const L = [], up = os.uptime() * 1000;
+    L.push(ex && ex.t >= a0 - 120000 ? `✅ 關機方式：**正常關機**（收到 ${ex.how}，例如你更新或重開伺服器）` : '❗ 關機方式：**沒有正常關機的紀錄**，代表程式是被強制關掉或當掉的');
+    L.push(isFinite(down) && up < down + 60000 ? `❗ 主機：**整台主機在 ${Math.round(up / 60000)} 分鐘前重新開機**（可能是 AWS 維護、主機當機或被重開）` : `✅ 主機：沒有重新開機（已經開了 ${Math.round(up / 3600000)} 小時）`);
+    if (hb) { const low = hb.free < Math.max(80, hb.total * 0.08); L.push(`${low ? '❗' : '✅'} 停機前的記憶體：程式用了 ${hb.rss}MB，主機剩 **${hb.free}MB**／${hb.total}MB${low ? '（偏低，很可能是記憶體不足被系統關掉）' : ''}・負載 ${hb.load}`); }
+    if (err && (!a0 || err.t >= a0 - 30 * 60000)) L.push(`❗ 停機前 30 分鐘內最後一個錯誤（${err.kind}）：\n\`\`\`${err.msg.slice(0, 300)}\`\`\``);
+    const nowHb = hbNow(); L.push(`📊 現在：程式用了 ${nowHb.rss}MB，主機剩 ${nowHb.free}MB／${nowHb.total}MB`);
+    const head = loop ? `🔎 **伺服器 30 分鐘內重開了 ${ST.boots.length} 次**` : `🔎 **伺服器停機${mins ? ` ${mins} 分鐘` : '（沒有上次運作的紀錄）'}**`;
+    dcX(ctx(ownerUid()), `${head}，交易已照常自動恢復。停機原因分析：\n${L.join('\n')}\n-# 如果看不懂，把這則訊息貼給 Claude`);
+    log('停機原因分析', L.join(' / '));
+  }, 70000);
 }
 
 /* ---------------- 幣安限速 ---------------- */
@@ -905,7 +916,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-24i';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-25b';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
