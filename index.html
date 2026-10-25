@@ -725,15 +725,14 @@ body.mode-bt .col.right,body.mode-bt .col.left,body.mode-bt #qPanel,body.mode-bt
 @media (min-width:881px){body.mode-bt .app{grid-template-columns:minmax(0,1fr)}}
 #qBtHost #qBtArea{margin-top:4px}
 #qBxHost .qbx{margin:0}
-/* 動態星空背景（深色模式）：畫在最底層，卡片維持原本不透明的底色，數字不受影響 */
-#qStars{position:fixed;inset:0;width:100vw;height:100vh;z-index:-1;pointer-events:none;display:none}
+/* 深色模式：固定的純色背景（原本的動態星空已拿掉，比較順） */
 @media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]) #qStars{display:block}
+  
   :root:not([data-theme="light"]),:root:not([data-theme="light"]) body{background:#03050c}
   :root:not([data-theme="light"]) body{background:transparent}
   :root:not([data-theme="light"]) .qgate{background:rgba(3,5,12,.55)}
 }
-:root[data-theme="dark"] #qStars{display:block}
+
 :root[data-theme="dark"],:root[data-theme="dark"] body{background:#03050c}
 :root[data-theme="dark"] body{background:transparent}
 :root[data-theme="dark"] .qgate{background:rgba(3,5,12,.55)}
@@ -772,7 +771,6 @@ header{align-items:center}
 </style>
 </head>
 <body class="quant-on mn">
-<canvas id="qStars" aria-hidden="true"></canvas>
 <div class="qgate" id="qGate">
   <div class="qgatebox" id="qGateWait"><h1>無量空處</h1><p class="qgsub">驗證登入中…</p></div>
   <form class="qgatebox" id="qGateForm" autocomplete="on" onsubmit="return false" hidden>
@@ -952,7 +950,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-25f</div>
+      <div class="qver" id="qVer">網站版本 2026-10-25g</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3398,7 +3396,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-25f・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-25g・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -5778,36 +5776,6 @@ $('qa_save').onclick = async () => {
   try { await srvFetch('/api/users', Object.assign({ uid }, password ? { password } : {}, role ? { role } : {})); alert('已儲存。'); $('qa_pw').value = ''; admLoad(); }
   catch (e) { alert(e.message); }
 };
-/* ---------- 動態星空 ---------- */
-(() => {
-  const cv = $('qStars'), cx = cv.getContext('2d');
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let W = 0, H = 0, DPR = 1, stars = [], neb = null, shoot = null, nextShoot = 0, last = 0;
-  const rnd = (a, b) => a + Math.random() * (b - a);
-  const COLORS = ['255,255,255', '200,220,255', '170,200,255', '255,235,200', '255,210,230'];
-  function build() {
-    DPR = Math.min(2, window.devicePixelRatio || 1); W = innerWidth; H = innerHeight;
-    cv.width = W * DPR; cv.height = H * DPR; cx.setTransform(DPR, 0, 0, DPR, 0, 0);
-    const n = Math.min(520, Math.round(W * H / 3600));
-    stars = Array.from({ length: n }, () => {
-      const z = Math.random();                                  // 越大越近：越亮、移動越快
-      return { x: rnd(0, W), y: rnd(0, H), z, r: 0.35 + z * z * 1.5, a: 0.25 + z * 0.65, tw: rnd(0.4, 2.2), ph: rnd(0, 6.28), c: COLORS[Math.random() < 0.8 ? 0 : 1 + (Math.random() * 4 | 0)] };
-    });
-    // 淡淡的星雲，畫一次存起來
-    neb = document.createElement('canvas'); neb.width = W; neb.height = H; const g = neb.getContext('2d');
-    const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, '#04060f'); bg.addColorStop(1, '#070a18'); g.fillStyle = bg; g.fillRect(0, 0, W, H);
-    [[0.18, 0.25, 'rgba(70,60,160,0.16)'], [0.82, 0.18, 'rgba(30,90,170,0.13)'], [0.62, 0.78, 'rgba(120,40,140,0.11)'], [0.28, 0.82, 'rgba(20,110,150,0.10)']].forEach(([fx, fy, col]) => {
-      const rad = Math.max(W, H) * rnd(0.32, 0.5), gr = g.createRadialGradient(fx * W, fy * H, 0, fx * W, fy * H, rad);
-      gr.addColorStop(0, col); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
-    });
-  }
-  function drawStatic() {                              // ✨ 靜態星空：只在打開和視窗大小改變時畫一次（原本每秒重畫 30 次，手機很吃效能）
-    cx.drawImage(neb, 0, 0, W, H);
-    for (const s of stars) { cx.fillStyle = `rgba(${s.c},${s.a})`; cx.beginPath(); cx.arc(s.x, s.y, s.r, 0, 6.283); cx.fill(); }
-  }
-  build(); drawStatic();
-  let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { build(); drawStatic(); }, 200); });
-})();
 /* ---------- 🤖 自動交易（實盤）：控制、平倉 ---------- */
 var SRVLT = { cfg: null, msg: '', day: 0, trades: [] };
 var SRVECO = null;                                    // 伺服器傳來的經濟數據（持倉區要知道今天有沒有重要數據）
