@@ -114,7 +114,11 @@ function backupTick() {
 setTimeout(backupTick, 5 * 60000); setInterval(backupTick, 6 * HOUR);   // 每 6 小時看一次，當天還沒備份就備份
 setInterval(() => { try { save(); } catch (e) { log('存檔失敗', e.message); } }, 10000);
 for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => { dirty = true; ST.alive = Date.now(); ST.exit = { t: Date.now(), how: sig }; try { save(); } catch (e) {} process.exit(0); });   // 正常關機（更新、重開）：留紀錄
-const hbNow = () => { const m = process.memoryUsage(); return { t: Date.now(), rss: Math.round(m.rss / 1048576), heap: Math.round(m.heapUsed / 1048576), free: Math.round(os.freemem() / 1048576), total: Math.round(os.totalmem() / 1048576), load: +os.loadavg()[0].toFixed(2) }; };
+const hbNow = () => {                                  // 記憶體：用 Linux 的「可用」（含可釋放的快取）＋虛擬記憶體剩餘，不是「完全空著」的量
+  const m = process.memoryUsage(), mb = v => Math.round(v / 1048576); let avail = os.freemem(), swapFree = 0, swapTotal = 0;
+  try { const t = fs.readFileSync('/proc/meminfo', 'utf8'), g = k => { const x = t.match(new RegExp('^' + k + ':\\s+(\\d+)', 'm')); return x ? +x[1] * 1024 : null; }; avail = g('MemAvailable') ?? avail; swapFree = g('SwapFree') || 0; swapTotal = g('SwapTotal') || 0; } catch (e) {}
+  return { t: Date.now(), rss: mb(m.rss), heap: mb(m.heapUsed), free: mb(avail), swapFree: mb(swapFree), swapTotal: mb(swapTotal), total: mb(os.totalmem()), load: +os.loadavg()[0].toFixed(2) };
+};
 setInterval(() => { ST.alive = Date.now(); ST.hb2 = hbNow(); dirty = true; }, 60000);   // 💓 心跳：重開時用來判斷停機多久、停機前的記憶體
 // 🛡 當機保護：有錯誤沒接住時記下來、繼續運作，不要整個程式當掉（當掉會被系統重開，所有人的自動交易都會暫停）
 const ERRN = { at: 0 };
@@ -145,9 +149,9 @@ process.on('uncaughtException', e => onCrash('程式錯誤', e));
     const L = [], up = os.uptime() * 1000;
     L.push(ex && ex.t >= a0 - 120000 ? `✅ 關機方式：**正常關機**（收到 ${ex.how}，例如你更新或重開伺服器）` : '❗ 關機方式：**沒有正常關機的紀錄**，代表程式是被強制關掉或當掉的');
     L.push(isFinite(down) && up < down + 60000 ? `❗ 主機：**整台主機在 ${Math.round(up / 60000)} 分鐘前重新開機**（可能是 AWS 維護、主機當機或被重開）` : `✅ 主機：沒有重新開機（已經開了 ${Math.round(up / 3600000)} 小時）`);
-    if (hb) { const low = hb.free < Math.max(80, hb.total * 0.08); L.push(`${low ? '❗' : '✅'} 停機前的記憶體：程式用了 ${hb.rss}MB，主機剩 **${hb.free}MB**／${hb.total}MB${low ? '（偏低，很可能是記憶體不足被系統關掉）' : ''}・負載 ${hb.load}`); }
+    if (hb) { const room = hb.free + (hb.swapFree || 0), low = room < 100; L.push(`${low ? '❗' : '✅'} 停機前的記憶體：程式用了 ${hb.rss}MB，主機可用 ${hb.free}MB／${hb.total}MB${hb.swapTotal ? `＋虛擬記憶體剩 ${hb.swapFree}MB／${hb.swapTotal}MB` : '（沒有虛擬記憶體）'}${low ? '（**偏低**，很可能是記憶體不足被系統關掉）' : ''}・負載 ${hb.load}`); }
     if (err && (!a0 || err.t >= a0 - 30 * 60000)) L.push(`❗ 停機前 30 分鐘內最後一個錯誤（${err.kind}）：\n\`\`\`${err.msg.slice(0, 300)}\`\`\``);
-    const nowHb = hbNow(); L.push(`📊 現在：程式用了 ${nowHb.rss}MB，主機剩 ${nowHb.free}MB／${nowHb.total}MB`);
+    const nowHb = hbNow(); L.push(`📊 現在：程式用了 ${nowHb.rss}MB，主機可用 ${nowHb.free}MB／${nowHb.total}MB${nowHb.swapTotal ? `＋虛擬記憶體剩 ${nowHb.swapFree}MB` : ''}`);
     const head = loop ? `🔎 **伺服器 30 分鐘內重開了 ${ST.boots.length} 次**` : `🔎 **伺服器停機${mins ? ` ${mins} 分鐘` : '（沒有上次運作的紀錄）'}**`;
     dcX(ctx(ownerUid()), `${head}，交易已照常自動恢復。停機原因分析：\n${L.join('\n')}\n-# 如果看不懂，把這則訊息貼給 Claude`);
     log('停機原因分析', L.join(' / '));
@@ -916,7 +920,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-25c';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-25d';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
