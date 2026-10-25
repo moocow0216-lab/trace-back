@@ -916,7 +916,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-25b';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-25c';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -2292,30 +2292,30 @@ http.createServer(async (req, res) => {
         if (typeof b.on !== 'boolean') return send(res, 400, { error: '要指定開始或暫停' });
         const XA = ctx(usr.uid);
         if (b.on && !hasKey(XA)) return send(res, 400, { error: `${usr.uid} 還沒設定 Bitunix API，不能開始交易` });
+        XA.A.lt.allOff = false;
         if (XA.A.lt.on !== b.on) { XA.A.lt.on = b.on; if (!b.on) XA.LT.pause = { t: Date.now(), why: '擁有者幫你暫停' }; touchLT(XA); dcX(XA, b.on ? '▶️ **自動交易已開始**（擁有者幫你開啟）' : '⏸ **自動交易已暫停**（擁有者幫你暫停，已開的單照常管理）'); log(b.on ? '擁有者幫帳號開始交易' : '擁有者幫帳號暫停交易', usr.uid); }
         return send(res, 200, { ok: true, on: XA.A.lt.on });
       }
-      if (u.pathname === '/api/lt/all') {             // 👑 擁有者：所有帳號一起暫停／開始自動交易（沒有 API 的帳號跳過）
+      if (u.pathname === '/api/lt/all') {             // 👑 擁有者：一鍵全部暫停／開始。「全部開始」只恢復被「全部暫停」停掉的帳號，在那之前就暫停的維持暫停
         if (typeof b.on !== 'boolean') return send(res, 400, { error: '要指定開始或暫停' });
-        let n = 0, skip = 0;
-        if (b.sp) {                                      // 🗡 一鍵特級交易：沒有特級咒具權限、沒有 API 的帳號跳過
-          for (const XA of allX()) {
-            if (b.on && (!toolOkUid(XA.uid) || !hasKey(XA))) { if (XA.A.lt.sp) { XA.A.lt.sp = false; touchLT(XA); } skip++; continue; }
-            if (XA.A.lt.sp === b.on) continue;
-            XA.A.lt.sp = b.on; touchLT(XA); n++;
-            dcX(XA, b.on ? '🗡 **特級交易已開始**（擁有者一鍵開啟）' : '⏸ **特級交易已暫停**（擁有者一鍵暫停，已開的單照常管理）');
-          }
-          log(b.on ? '一鍵全部開始特級交易' : '一鍵全部暫停特級交易', n, '個帳號');
-          return send(res, 200, { ok: true, n, skip });
-        }
+        const sp = !!b.sp, ON = sp ? 'sp' : 'on', MARK = sp ? 'spAllOff' : 'allOff', NM = sp ? '🗡 特級交易' : '自動交易';
+        let n = 0, skip = 0, keep = 0;
         for (const XA of allX()) {
-          if (b.on && !hasKey(XA)) { skip++; continue; }
-          if (XA.A.lt.on === b.on) continue;
-          XA.A.lt.on = b.on; if (!b.on) XA.LT.pause = { t: Date.now(), why: '擁有者一鍵全部暫停' }; touchLT(XA); n++;
-          dcX(XA, b.on ? '▶️ **自動交易已開始**（擁有者一鍵開啟全部帳號）' : '⏸ **自動交易已暫停**（擁有者一鍵暫停全部帳號，已開的單照常管理）');
+          const L = XA.A.lt;
+          if (!b.on) {                                   // 全部暫停：只停有在跑的，並記下「是被擁有者一鍵暫停的」
+            if (!L[ON]) continue;
+            L[ON] = false; L[MARK] = true; XA.LT.pause = { t: Date.now(), why: `擁有者一鍵全部暫停${sp ? '特級交易' : ''}` }; touchLT(XA); n++;
+            dcX(XA, `⏸ **${NM}已暫停**（擁有者一鍵暫停，已開的單照常管理）`);
+            continue;
+          }
+          if (L[ON]) continue;
+          if (!hasKey(XA) || (sp && !toolOkUid(XA.uid))) { if (L[MARK]) { L[MARK] = false; touchLT(XA); } skip++; continue; }   // 沒有 API（或沒有特級權限）：跳過
+          if (!L[MARK]) { keep++; continue; }            // 在一鍵暫停之前就已經暫停：維持暫停
+          L[ON] = true; L[MARK] = false; touchLT(XA); n++;
+          dcX(XA, `▶️ **${NM}已恢復**（擁有者一鍵恢復）`);
         }
-        log(b.on ? '一鍵全部開始' : '一鍵全部暫停', n, '個帳號');
-        return send(res, 200, { ok: true, n, skip });
+        log(b.on ? `一鍵恢復${sp ? '特級交易' : ''}` : `一鍵全部暫停${sp ? '特級交易' : ''}`, n, '個帳號', b.on ? `維持暫停 ${keep}` : '');
+        return send(res, 200, { ok: true, n, skip, keep });
       }
       if (u.pathname === '/api/owner/transfer') {      // 👑 轉讓擁有者：一定要用 Google 驗證「擁有者綁定的信箱」才能轉
         const cid = gClient(), O = ST.users.find(x => x.uid === ownerUid());
@@ -2408,11 +2408,12 @@ http.createServer(async (req, res) => {
         const C = X.A.lt;
         if (typeof b.on === 'boolean') {
           if (b.on && !hasKey(X)) return send(res, 400, { error: '請先設定你自己的 Bitunix API 金鑰（要開交易權限）' });
-          C.on = b.on; if (!b.on) X.LT.pause = { t: Date.now(), why: '你按了暫停' }; dcX(X, b.on ? '▶️ **自動交易已開始**' : '⏸ **自動交易已暫停**（已開的單照常管理）');
+          C.on = b.on; C.allOff = false; if (!b.on) X.LT.pause = { t: Date.now(), why: '你按了暫停' }; dcX(X, b.on ? '▶️ **自動交易已開始**' : '⏸ **自動交易已暫停**（已開的單照常管理）');
         }
         if (typeof b.sp === 'boolean') {                 // 🗡 特級交易：只有特級咒具權限的人能開
           if (b.sp && !toolOkUid(X.uid)) return send(res, 403, { error: '特級交易要先解鎖特級咒具' });
           if (b.sp && !hasKey(X)) return send(res, 400, { error: '請先設定你自己的 Bitunix API 金鑰（要開交易權限）' });
+          C.spAllOff = false;
           if (C.sp !== b.sp) { C.sp = b.sp; dcX(X, b.sp ? `🗡 **特級交易已開始**：特級咒具的莊家、CRT、獵殺進場訊號會用你的帳戶真實下單\n每筆 ${C.spMargin}U・${C.spLev}x・浮盈 +${C.spTp}% 開始鎖利、每 ${C.spStep}% 上調・浮虧 −${C.spSl}% 停損・持有 ${Math.round(C.spHold / 24 * 10) / 10} 天${C.spBudget > 0 ? `・投入 ${C.spBudget}U` : ''}${C.spDayLoss > 0 ? `・單日虧損上限 ${C.spDayLoss}U` : ''}` : '⏸ **特級交易已暫停**（已開的單照常管理）'); }
         }
         if (+b.margin > 0) C.margin = +b.margin;
