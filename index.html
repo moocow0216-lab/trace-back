@@ -953,7 +953,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-26h</div>
+      <div class="qver" id="qVer">網站版本 2026-10-27a</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3400,7 +3400,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-26h・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-27a・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -3916,7 +3916,9 @@ function tbRender(d) {
         const cat = (title, rows) => `<div class="tablewrap"><table><thead><tr><th>${title}</th><th>筆數</th><th>成功率</th><th>平均報酬率</th><th>每筆都做的總損益</th></tr></thead><tbody>${rows.map(([nm, x]) => `<tr><td>${nm}</td><td>${x.n}</td><td>${g(x)}</td><td>${a(x)}</td><td class="${x.sum >= 0 ? 'qg' : 'qr'}">${u(x.sum)}</td></tr>`).join('')}</tbody></table></div>`;
         const R2 = Z.rule2 && Z.rule2.passHi ? Z.rule2 : null, R3 = Z.rule3 && Z.rule3.all && Z.rule3.n != null ? Z.rule3 : null;
         return `<div class="tbrule"><h4>📐 新規則模擬</h4>
-        <div class="tablewrap"><table><thead><tr><th>做法</th><th>實際下單</th><th>成功率</th><th>總損益</th><th>期末資金</th><th>最大回撤</th><th>最多同時</th></tr></thead><tbody>${row('全部都做（現在的做法）', b, true)}${row('📐 規則一：BTC 方向＋天圖', Q)}${R2 ? row('📐 規則二：+2（BTC 方向）或 0 分（天圖）＋紅綠燈', R2) : ''}${R3 ? row('📐 規則三：只看 −1、−2，天圖', R3) : ''}</tbody></table></div>
+        <div class="tablewrap"><table><thead><tr><th>做法</th><th>實際下單</th><th>成功率</th><th>總損益</th><th>期末資金</th><th>最大回撤</th><th>最多同時</th></tr></thead><tbody>${row('全部都做（現在的做法）', b, true)}${row('📐 規則一：BTC 方向＋天圖', Q)}${R2 ? row('📐 規則二：+2（BTC 方向）或 0 分（天圖）＋紅綠燈', R2) : ''}${R3 ? row('📐 規則三：只看 −1、−2，天圖', R3) : ''}${Z.rule45 ? Z.rule45.more.map(x => row(x.nm, x)).join('') : ''}</tbody></table></div>
+        ${Z.rule45 ? `<p class="tlsub"><b>規則二＋三合併</b>：規則二（+2、0 分）和規則三（−1、−2）管的幣不重疊，滿足其中一條就進場。<b>規則四</b>：只做跟天圖同方向的單，不看 BTC 共振、不看紅綠燈。<b>規則五</b>：規則四再擋掉 BTC 共振 −2（高度連動卻逆著 BTC）。<b>同方向最多 N 筆</b>：多單、空單分開算，例如空單已經有 N 筆時，新的空單跳過。</p>
+        ${cat('規則四、五・每一筆單獨看', [['✅ 規則四會做的（天圖同方向）', Z.rule45.pass4], ['⛔ 逆著天圖', Z.rule45.day], ['✅ 規則五會做的', Z.rule45.pass5], ['⛔ 規則五多擋掉的（天圖同方向但 BTC −2）', Z.rule45.cut5]])}` : ''}
         <p class="tlsub">三個規則的出場都照原本的保本鎖利：浮盈到開始鎖利後跑回鎖利線出場、鎖利線往上調；沒到開始鎖利就照停損和持有天數。</p>
         ${R2 ? `<p class="tlsub"><b>規則二</b>：BTC 共振 <b>+2</b> 的跟 BTC 同方向＋紅綠燈 5 取 3，這一群最多同時 5 筆${R2.skipCap ? `（滿 5 筆跳過了 ${R2.skipCap} 筆）` : ''}；<b>0 分</b>的要天圖同方向（不明確就都做）＋紅綠燈 5 取 3；<b>+1、−1、−2</b> 擋掉。實際下單 ${R2.n} 筆：+2 那一群 ${R2.nHi} 筆、0 分那一群 ${R2.nZero} 筆。</p>
         ${cat('規則二・每一筆單獨看', [['✅ 會做的（+2 那一群）', R2.passHi], ['✅ 會做的（0 分那一群）', R2.passZero], ['⛔ BTC 共振 +1、−1、−2', R2.btc], ['⛔ 0 分但逆著天圖', R2.day], ['⛔ BTC 或天圖有過，但紅綠燈不到 5 取 3', R2.light]])}` : ''}
