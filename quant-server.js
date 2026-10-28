@@ -49,7 +49,10 @@ try {
     if (a) ST.owner = a.uid;
     log('舊存檔搬到帳號', uid);
   }
-  for (const [uid, A] of Object.entries(ST.accts)) if (A.lt && (A.lt.on || A.lt.sp)) RESUME.push({ uid, on: !!A.lt.on, sp: !!A.lt.sp });   // 🔄 重開前在跑的帳號：約 1 分鐘後自動恢復
+  for (const [uid, A] of Object.entries(ST.accts)) {   // 🔄 重開前在跑的帳號（或上次重開還在等恢復的）：約 1 分鐘後自動恢復
+    const L = A.lt || {}, on = !!(L.on || L.rsOn), sp = !!(L.sp || L.rsSp);
+    if (on || sp) { RESUME.push({ uid, on, sp }); L.rsOn = on; L.rsSp = sp; }   // 存檔：1 分鐘內又重開也記得要恢復
+  }
   for (const A of Object.values(ST.accts)) {        // 補齊欄位；伺服器重開後每個帳號的自動交易先暫停，約 1 分鐘後再自動恢復（見下面）
     A.bx = { ...DEF_BX, ...(A.bx || {}) }; A.lt = { ...DEF_LT, sl: ST.trade.sl, step: ST.trade.step, hold: ST.trade.hold, ...(A.lt || {}), on: false, sp: false };
     for (const [k, f] of [['spLev', 'lev'], ['spMargin', 'margin'], ['spDayLoss', 'dayLoss'], ['spTp', 'tp'], ['spStep', 'step'], ['spSl', 'sl'], ['spHold', 'hold']]) if (A.lt[k] == null) A.lt[k] = A.lt[f];   // 🗡 特級交易設定：第一次照抄一般交易   // 舊帳號沒有個人參數：沿用原本的共用設定 A.notify = { ...DEF_NOTIFY, ...(A.notify || {}) }; A.ltTrades = A.ltTrades || [];
@@ -138,8 +141,11 @@ process.on('uncaughtException', e => onCrash('程式錯誤', e));
     for (const r of RESUME) {
       const X = ctx(r.uid); if (!hasKey(X)) continue;
       const parts = [r.on ? '自動交易' : '', r.sp && toolOkUid(r.uid) ? '🗡 特級交易' : ''].filter(Boolean); if (!parts.length) continue;
-      if (r.on) X.A.lt.on = true;
-      if (r.sp && toolOkUid(r.uid)) X.A.lt.sp = true;
+      const L = X.A.lt, on = r.on && L.rsOn, sp = r.sp && L.rsSp && toolOkUid(r.uid);   // 這 1 分鐘內他自己按了暫停：以他的操作為準
+      L.rsOn = L.rsSp = false;
+      if (!on && !sp) { touchLT(X); continue; }
+      if (on) L.on = true;
+      if (sp) L.sp = true;
       X.LT.pause = null; touchLT(X); log('重開後自動恢復', r.uid, parts.join('、'));
       dcX(X, `🔄 **伺服器重新啟動，已自動恢復${parts.join('和')}**${mins ? `（停機約 ${mins} 分鐘）` : ''}`);
     }
@@ -920,7 +926,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-25d';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-26f';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1095,28 +1101,35 @@ const toolOkUid = uid => uid === ownerUid() || ST.tool.grants.includes(uid);   /
 async function ltOpen(X, c) {
   const C = X.A.lt, K = X.A.bx, LT = X.LT, BX = X.BX, sp = c.src === 'tool';
   const M = sp ? C.spMargin || C.margin : C.margin, LV = sp ? C.spLev || C.lev : C.lev, BUD = sp ? C.spBudget : C.budget, NM = sp ? '特級交易' : '自動交易';   // 🗡 特級交易用自己的設定（先替換再插入，避免這行也被換掉）   // sp：🗡 特級交易（特級咒具的訊號）
-  if (!(sp ? C.sp && toolOkUid(X.uid) : C.on) || !hasKey(X) || LT.busy.has(c.sym)) return;
-  if (!sp && C.btcF && c.btcPass === false) { LT.msg = `${c.sym} 沒過 BTC 方向過濾（${c.abN} 項，需要 ${c.btcNeed} 項），不下單`; return; }
-  { const L = ecoToday(); if (L.length) { LT.msg = `今天有美國重要數據（${ecoNames(L)}），整天不開新單：${c.sym} 略過`; return; } }
+  const skip = (why, once) => {                         // ⏭️ 不下單的原因：一般交易寫在持倉區；🗡 特級交易另外發 Discord、記在「最近沒下單的特級訊號」
+    LT.msg = why; if (!sp) return;
+    (LT.spSkip = LT.spSkip || []).unshift({ t: Date.now(), sym: c.sym, dir: c.dir, ty: c.ttype || '', why }); if (LT.spSkip.length > 20) LT.spSkip.length = 20;
+    if (once) { const d = new Date(Date.now() + TZ).toISOString().slice(0, 10); if (LT.spOnce === d + once) return; LT.spOnce = d + once; }
+    dcX(X, `⏭️ **🗡 特級交易沒有下單** ${c.dir > 0 ? '🟢 做多' : '🔴 做空'} **${mdEsc(c.sym)}**：${why}`);
+  };
+  if (!(sp ? C.sp && toolOkUid(X.uid) : C.on) || !hasKey(X)) return;
+  if (LT.busy.has(c.sym)) return skip('同一個幣正在下單中（另一個訊號剛好同時出現），這次略過');
+  if (!sp && C.btcF && c.btcPass === false) return skip(`${c.sym} 沒過 BTC 方向過濾（${c.abN} 項，需要 ${c.btcNeed} 項），不下單`);
+  { const L = ecoToday(); if (L.length) return skip(`今天有美國重要數據（${ecoNames(L)}），整天不開新單`, 'eco'); }
   LT.busy.add(c.sym);
   try {
-    if (C.maxOpen && ltOpenTrades(X).length >= C.maxOpen) { LT.msg = `已達最多同時持倉 ${C.maxOpen} 筆，${c.sym} 這次不下單`; return; }
-    if (BX.pos.some(p => p.sym === c.sym && p.dir === c.dir) || ltOpenTrades(X).some(t => t.sym === c.sym && t.dir === c.dir)) return;   // 這個幣已經有同方向的倉位：不加碼（雙向持倉下會被交易所合成一個倉位，分不清是誰的）
+    if (C.maxOpen && ltOpenTrades(X).length >= C.maxOpen) return skip(`已達最多同時持倉 ${C.maxOpen} 筆，${c.sym} 這次不下單`);
+    if (BX.pos.some(p => p.sym === c.sym && p.dir === c.dir) || ltOpenTrades(X).some(t => t.sym === c.sym && t.dir === c.dir)) { const own = ltOpenTrades(X).find(t => t.sym === c.sym && t.dir === c.dir); return skip(`這個幣已經有${c.dir > 0 ? '多單' : '空單'}（${own ? (own.src === 'tool' ? '特級交易的單' : '一般自動單') : '手動單'}），同方向不加碼`); }   // 這個幣已經有同方向的倉位：不加碼（雙向持倉下會被交易所合成一個倉位，分不清是誰的）
     { const opp = BX.pos.filter(p => p.sym === c.sym && p.dir !== c.dir), oppT = ltOpenTrades(X).some(t => t.sym === c.sym && t.dir !== c.dir);
       if (opp.length || oppT) {                        // 有反方向的倉位（另一套系統的單或手動單）：只有「雙向持倉」才能多空雙開，單向持倉下反方向的單會把原本的倉位抵銷掉
         const hedge = opp.length > 0 && opp.every(p => String(p.pmode || '').toUpperCase() === 'HEDGE');
-        if (!hedge) { LT.msg = `${c.sym} 已經有反方向的倉位，帳戶${opp.length ? '是單向持倉' : '的持倉模式還讀不到'}，不能多空雙開，這次不下單（要雙開請到 Bitunix 改成「雙向持倉」）`; return; }
+        if (!hedge) return skip(`${c.sym} 已經有反方向的倉位，帳戶${opp.length ? '是單向持倉' : '的持倉模式還讀不到'}，不能多空雙開，這次不下單（要雙開請到 Bitunix 改成「雙向持倉」）`);
       }
     }
     const pr = await ltPair(c.sym);
-    if (!pr) { LT.msg = `Bitunix 沒有 ${c.sym}，略過`; return; }
-    if (pr.symbolStatus !== 'OPEN') { LT.msg = `${c.sym} 在 Bitunix 暫停交易，略過`; return; }
+    if (!pr) return skip(`Bitunix 沒有 ${c.sym}，略過`);
+    if (pr.symbolStatus !== 'OPEN') return skip(`${c.sym} 在 Bitunix 暫停交易，略過`);
     const px = PX.map[c.sym] || c.last, lev = Math.max(1, Math.min(LV, +pr.maxLeverage || LV));
-    if (BX.acct && BX.acct.avail < M * 1.2) { LT.msg = `可用餘額不足（${BX.acct.avail.toFixed(2)}U），${c.sym} 不下單`; return; }
+    if (BX.acct && BX.acct.avail < M * 1.2) return skip(`可用餘額不足（${BX.acct.avail.toFixed(2)}U），${c.sym} 不下單`);
     if (BUD > 0) {                                // 只用你設定的投入資金，不碰帳戶裡其他的錢
       const B = sp ? ltSpEq(X) : ltBudEq(X);
       if (B.eq <= 0) { if (sp) C.sp = false; else C.on = false; LT.pause = { t: Date.now(), why: `${sp ? '特級交易的' : ''}投入資金用完` }; touchLT(X); dcX(X, `🛑 **${sp ? '🗡 特級交易的' : ''}投入資金 ${BUD}U 已經用完**（目前 ${B.eq.toFixed(2)}U），${NM}已暫停`); return; }
-      if (B.free < M * 1.2) { LT.msg = `投入資金剩 ${B.free.toFixed(2)}U 可用（設定 ${BUD}U），${c.sym} 不下單`; return; }
+      if (B.free < M * 1.2) return skip(`投入資金剩 ${B.free.toFixed(2)}U 可用（設定 ${BUD}U），${c.sym} 不下單`);
     }
     const qty = fl(M * lev / px, +pr.basePrecision || 0);
     if (!(qty > 0) || qty < +pr.minTradeVolume) { LT.msg = `${c.sym} 用 ${M}U×${lev}x 買不到最小下單量（${pr.minTradeVolume}），略過`; dcX(X, `⏭️ ${mdEsc(c.sym)} 下單量太小，略過（最小 ${pr.minTradeVolume}，需要的保證金比 ${M}U 多）`); return; }
@@ -1350,12 +1363,12 @@ async function ltReconcile(X, pos) {
   let dayPnl = 0, spDay = 0;
   for (const t of TR) { let v = 0; for (const c of t.closes || []) if (c.t >= d0) v += c.pnl; if (t.status === 'open') v += t.upnl || 0; if (t.src === 'tool') spDay += v; else dayPnl += v; }
   LT.dayPnl = dayPnl; LT.spDayPnl = spDay;
-  if (L.sp && L.spDayLoss > 0 && spDay <= -L.spDayLoss && LT.spDayHit !== day) {   // 🗡 特級交易自己的單日虧損上限
-    LT.spDayHit = day; L.sp = false; LT.pause = { t: Date.now(), why: '特級交易超過單日虧損上限' }; ch = true;
+  if (L.sp && L.spDayLoss > 0 && spDay <= -L.spDayLoss && L.spDayHit !== day) {   // 🗡 特級交易自己的單日虧損上限（今天觸發過就存檔，重開不會再觸發一次）
+    L.spDayHit = day; L.sp = false; LT.pause = { t: Date.now(), why: '特級交易超過單日虧損上限' }; ch = true;
     dcX(X, `🛑 **🗡 特級交易今天虧損 ${spDay.toFixed(2)}U，超過上限 ${L.spDayLoss}U，特級交易已暫停**（已開的單照常管理，可以在網站重新開始）`);
   }
-  if (L.on && L.dayLoss > 0 && dayPnl <= -L.dayLoss && LT.dayHit !== day) {
-    LT.dayHit = day; L.on = false; LT.pause = { t: Date.now(), why: '超過單日虧損上限' }; ch = true;
+  if (L.on && L.dayLoss > 0 && dayPnl <= -L.dayLoss && L.dayHit !== day) {   // 今天觸發過就存檔，重開不會再觸發一次
+    L.dayHit = day; L.on = false; LT.pause = { t: Date.now(), why: '超過單日虧損上限' }; ch = true;
     dcX(X, `🛑 **今天虧損 ${dayPnl.toFixed(2)}U，超過上限 ${L.dayLoss}U，自動交易已暫停**（已開的單照常管理，可以在網站重新開始）`);
   }
   if (ch) touchLT(X);
@@ -1527,60 +1540,147 @@ function toolExit(B, i0, d, e, T, lev, lms) {
   }
   const z = B[B.length - 1]; return { t: z.t + lms, roe: roe(z.c), how: 'open' };
 }
+// 🧮 評分用：兩組漲跌幅的相關係數（−1～+1）
+function toolCorr(a, b) {
+  const n = a.length; if (n < 30) return null;
+  let ma = 0, mb = 0; for (let i = 0; i < n; i++) { ma += a[i]; mb += b[i]; } ma /= n; mb /= n;
+  let sab = 0, saa = 0, sbb = 0; for (let i = 0; i < n; i++) { const x = a[i] - ma, y = b[i] - mb; sab += x * y; saa += x * x; sbb += y * y; }
+  return saa > 0 && sbb > 0 ? sab / Math.sqrt(saa * sbb) : null;
+}
+function toolEma(B, n) {                             // ta.ema：前 n 根用平均當起點
+  const out = new Array(B.length).fill(NaN), a = 2 / (n + 1); let e = NaN, sum = 0;
+  for (let i = 0; i < B.length; i++) { if (i < n) { sum += B[i].c; if (i === n - 1) e = sum / n; } else e = B[i].c * a + e * (1 - a); out[i] = e; }
+  return out;
+}
+function toolAgg(B, ms) {                             // 把 15 分 K 合成 45 分 K（每天 00:00 UTC 起算，跟 TradingView 一樣）
+  const out = []; let cur = null;
+  for (const b of B) { const d0 = Math.floor(b.t / 86400000) * 86400000, t = d0 + Math.floor((b.t - d0) / ms) * ms;
+    if (!cur || cur.t !== t) { if (cur) out.push(cur); cur = { t, o: b.o, h: b.h, l: b.l, c: b.c, n: 1 }; } else { cur.h = Math.max(cur.h, b.h); cur.l = Math.min(cur.l, b.l); cur.c = b.c; cur.n++; } }
+  if (cur) out.push(cur);
+  return out.filter(x => x.n === ms / 900000);         // 只要完整的 45 分 K
+}
+const lastClosed = (B, t, ms) => { let lo = 0, hi = B.length - 1, k = -1; while (lo <= hi) { const mid = (lo + hi) >> 1; if (B[mid].t + ms <= t) { k = mid; lo = mid + 1; } else hi = mid - 1; } return k; };
 async function toolBacktest(X, cfg) {
   const S = ST.tool.set, days = [7, 14, 30].includes(+cfg.days) ? +cfg.days : 14, n = Math.max(5, Math.min(50, Math.round(+cfg.n || S.n || 30)));
   const L0 = X.A.lt, T = TS(X), lev = L0.spLev || L0.lev || 100, m = L0.spMargin || L0.margin || 0.3, cap0 = L0.spBudget > 0 ? L0.spBudget : 100, fee = ((ST.eq && ST.eq.fee) ?? 0.05) / 100;
-  const start = Date.now() - days * 24 * HOUR, warm = 2 * 24 * HOUR, pairs = ['h4', 'h1'].filter(p => S[p]);
-  const syms = await toolUniverse(n); TBT.total = syms.length * pairs.length; TBT.done = 0;
-  const cand = [];
-  for (const sym of syms) for (const pair of pairs) {
-    const P = TOOL_P[pair];
+  const start = Date.now() - days * 24 * HOUR, warm = 2 * 24 * HOUR, pairs = ['h4', 'h1'].filter(p => S[p]), M15 = 15 * 60000, D1 = 24 * HOUR;
+  const syms = await toolUniverse(n); TBT.total = syms.length + 1; TBT.done = 0;
+  TBT.msg = 'BTC（評分用）';
+  const btc = await toolKlRange('BTCUSDT', '15m', M15, start - warm, Date.now()); TBT.done++;   // 🧮 BTC 方向、相關係數
+  const cand = [], c15 = {}, cD = {}, cL = {};
+  for (const sym of syms) {
     try {
-      TBT.msg = `${sym} ${P.name}`;
-      const L = await toolKlRange(sym, P.ltf, P.lms, start - warm, Date.now()), H = await toolKlRange(sym, P.htf, P.hms, start - warm - 10 * P.hms, Date.now());
-      if (L.length < 200 || H.length < 3) continue;
-      const sb = toolStruct(L, 50), ib = toolStruct(L, 5), atr = toolAtr(L, 14), found = [];
-      if (S.zh) for (const x of toolZh(L, P, ib)) found.push({ ...x, type: 'zh' });
-      if (S.crt) for (const x of toolCrt(L, H, P, sb, ib, atr)) found.push({ ...x, type: 'crt' });
-      if (S.hunt) for (const x of toolHunt(L, P, sb, ib)) found.push({ ...x, type: 'hunt' });
-      for (const x of found) {
-        const et = L[x.i].t + P.lms; if (et < start) continue;
-        const ex = toolExit(L, x.i, x.dir, L[x.i].c, T, lev, P.lms);
-        cand.push({ sym, type: x.type, pair, dir: x.dir, et, entry: L[x.i].c, xt: ex.t, roe: ex.roe, how: ex.how });
+      TBT.msg = sym;
+      const L15 = await toolKlRange(sym, '15m', M15, start - 6 * D1, Date.now()); c15[sym] = L15;
+      cD[sym] = await toolKlRange(sym, '1d', D1, start - 40 * D1, Date.now());   // 🧮 天圖偏見
+      { const TF = [['4h', 4 * HOUR, await toolKlRange(sym, '4h', 4 * HOUR, start - 40 * D1, Date.now())], ['1h', HOUR, await toolKlRange(sym, '1h', HOUR, start - 12 * D1, Date.now())],
+          ['45m', 45 * 60000, toolAgg(L15, 45 * 60000)], ['30m', 30 * 60000, await toolKlRange(sym, '30m', 30 * 60000, start - 6 * D1, Date.now())], ['15m', M15, L15]];
+        cL[sym] = TF.map(([nm, ms, B]) => ({ nm, ms, B, e12: toolEma(B, 12), e144: toolEma(B, 144), e169: toolEma(B, 169) })); }   // 🚦 紅綠燈（Enors：EMA12 在 EMA144／169 上方＝綠、下方＝紅）
+      for (const pair of pairs) {
+        const P = TOOL_P[pair];
+        const L = pair === 'h4' ? L15 : await toolKlRange(sym, P.ltf, P.lms, start - warm, Date.now()), H = await toolKlRange(sym, P.htf, P.hms, start - warm - 10 * P.hms, Date.now());
+        if (L.length < 200 || H.length < 3) continue;
+        const sb = toolStruct(L, 50), ib = toolStruct(L, 5), atr = toolAtr(L, 14), found = [];
+        if (S.zh) for (const x of toolZh(L, P, ib)) found.push({ ...x, type: 'zh' });
+        if (S.crt) for (const x of toolCrt(L, H, P, sb, ib, atr)) found.push({ ...x, type: 'crt' });
+        if (S.hunt) for (const x of toolHunt(L, P, sb, ib)) found.push({ ...x, type: 'hunt' });
+        for (const x of found) {
+          const et = L[x.i].t + P.lms; if (et < start) continue;
+          const ex = toolExit(L, x.i, x.dir, L[x.i].c, T, lev, P.lms);
+          const pnl = m * ex.roe / 100 - 2 * m * lev * fee;   // 損益（U）＝保證金 × 報酬率 − 開平倉手續費
+          cand.push({ sym, type: x.type, pair, dir: x.dir, et, entry: L[x.i].c, xt: ex.t, roe: ex.roe, how: ex.how, pnl, net: pnl / m * 100 });
+        }
       }
     } catch (e) { TBT.msg = `${sym}：${e.message}`; }
     TBT.done++;
   }
-  // 資金模擬：照時間先後；同一個幣還開著就跳過；可用資金不夠也跳過
   cand.sort((a, b) => a.et - b.et);
-  const open = [], trades = [], eq = [[start, cap0]]; let cash = cap0, used = 0, peakEq = cap0, mdd = 0, maxOpen = 0, skipCoin = 0, skipCash = 0;
-  const settle = until => {
-    open.sort((a, b) => a.xt - b.xt);
-    while (open.length && open[0].xt <= until && open[0].how !== 'open') {
-      const t = open.shift(); used -= m; cash += t.pnl; eq.push([t.xt, +(cash).toFixed(4)]);
-      peakEq = Math.max(peakEq, cash); mdd = Math.max(mdd, peakEq > 0 ? (peakEq - cash) / peakEq * 100 : 0);
-    }
-  };
+  // 🧮 評分：BTC 共振（−2～+2）＋特級三種進場共振（−1～+2）＋天圖偏見（−1～+1）
+  const bySym = {}; for (const c of cand) (bySym[c.sym] = bySym[c.sym] || []).push(c);
   for (const c of cand) {
-    settle(c.et);
-    if (open.some(o => o.sym === c.sym)) { skipCoin++; continue; }
-    if (cash - used < m) { skipCash++; continue; }
-    c.pnl = m * c.roe / 100 - 2 * m * lev * fee; c.net = c.pnl / m * 100;   // 損益（U）＝保證金 × 報酬率 − 開平倉手續費
-    open.push(c); used += m; trades.push(c); maxOpen = Math.max(maxOpen, open.length);
+    let sB = 0, corr = null;
+    const bi = lastClosed(btc, c.et, M15);
+    if (bi >= 96) {
+      const chg = btc[bi].c / btc[bi - 16].c - 1, bdir = chg > 0.003 ? 1 : chg < -0.003 ? -1 : 0;   // BTC 最近 4 小時往哪走
+      const mp = new Map((c15[c.sym] || []).map(b => [b.t, b.c])), ra = [], rb = [];
+      for (let k = bi - 95; k <= bi; k++) { const a1 = mp.get(btc[k].t), a0 = mp.get(btc[k - 1].t); if (a1 && a0) { ra.push(a1 / a0 - 1); rb.push(btc[k].c / btc[k - 1].c - 1); } }
+      corr = toolCorr(ra, rb);
+      const ce = corr === null ? 1 : corr, w = ce >= 0.6 ? 2 : ce >= 0.3 ? 1 : 0;   // 算不出來（K 線不夠）就當作高連動，比較保守
+      sB = bdir ? (bdir === c.dir ? w : -w) : 0;
+    }
+    const near = bySym[c.sym].filter(o => o !== c && o.et < c.et && c.et - o.et <= 4 * HOUR), same = new Set(near.filter(o => o.dir === c.dir).map(o => o.type + o.pair)); same.delete(c.type + c.pair);
+    const sC = Math.min(2, same.size) - (near.some(o => o.dir !== c.dir) ? 1 : 0);
+    // 天圖：照擁有者 Enors 指標的 1D 日線偏見（d1＝昨天、d2＝前天，兩根都是已收盤的日 K）
+    let dB = 0; const D = cD[c.sym] || [], k = lastClosed(D, c.et, D1);
+    if (k >= 1) {
+      const d1 = D[k], d2 = D[k - 1], d1Bull = d1.c > d1.o, d2Bull = d2.c > d2.o;
+      dB = d2Bull && d1Bull ? (d1.c > d2.c ? 1 : -1) : !d2Bull && d1Bull ? (d1.c > d2.o ? 1 : -1) : !d2Bull && !d1Bull ? (d1.c < d2.c ? -1 : 1) : (d1.c < d2.o ? -1 : 1);
+    }
+    const sD = dB ? (dB === c.dir ? 1 : -1) : 0;
+    // 📐 新規則：跟 BTC 共振的幣只做 BTC 的方向；BTC 共振 0 分的看天圖（看跌只做空、看漲只做多、不明確都做）
+    const why = sB < 0 ? 'btc' : sB === 0 && dB && dB !== c.dir ? 'day' : '';
+    let g = 0, r = 0;                                   // 🚦 五個週期的紅綠燈（都用這筆進場前已經收盤的那根）
+    for (const L of cL[c.sym] || []) { const j = lastClosed(L.B, c.et, L.ms); if (j < 0 || isNaN(L.e169[j])) continue; const hi = Math.max(L.e144[j], L.e169[j]), lo = Math.min(L.e144[j], L.e169[j]); if (L.e12[j] > hi) g++; else if (L.e12[j] < lo) r++; }
+    const lightOk = c.dir > 0 ? g >= 3 : r >= 3;
+    const why2 = sB < 2 ? 'btc' : !lightOk ? 'light' : '';   // 📐 規則二：BTC 共振 +2 分＋紅綠燈 5 取 3（最多同時 5 筆在資金模擬裡限制）
+    const why3 = sB === 2 ? (!lightOk ? 'light' : '') : sB === 0 ? (dB && dB !== c.dir ? 'day' : !lightOk ? 'light' : '') : 'btc';   // 📐 規則三：+2 看 BTC 方向、0 分看天圖，兩種都要紅綠燈 5 取 3；±1、−2 擋掉
+    Object.assign(c, { sc: sB + sC, sB, sC, sD, dB, ok: !why, why, g, r, ok2: !why2, why2, ok3: !why3, why3, corr: corr === null ? null : +corr.toFixed(2) });
   }
-  settle(Infinity);
-  const unreal = open.reduce((a, t) => a + t.pnl, 0);
+  // 資金模擬：照時間先後；同一個幣還開著就跳過；可用資金不夠也跳過
+  const sim = (list, capN, capIf) => {                // capIf：只有符合的那一群才受「最多同時 capN 筆」限制
+    const inCap = c => !capIf || capIf(c);
+    const open = [], trades = [], eq = [[start, cap0]]; let cash = cap0, used = 0, peakEq = cap0, mdd = 0, maxOpen = 0, skipCoin = 0, skipCash = 0, skipCap = 0;
+    const settle = until => {
+      open.sort((a, b) => a.xt - b.xt);
+      while (open.length && open[0].xt <= until && open[0].how !== 'open') {
+        const t = open.shift(); used -= m; cash += t.pnl; eq.push([t.xt, +(cash).toFixed(4)]);
+        peakEq = Math.max(peakEq, cash); mdd = Math.max(mdd, peakEq > 0 ? (peakEq - cash) / peakEq * 100 : 0);
+      }
+    };
+    for (const c of list) {
+      settle(c.et);
+      if (open.some(o => o.sym === c.sym)) { skipCoin++; continue; }
+      if (cash - used < m) { skipCash++; continue; }
+      if (capN && inCap(c) && open.filter(inCap).length >= capN) { skipCap++; continue; }   // 最多同時幾筆
+      open.push(c); used += m; trades.push(c); maxOpen = Math.max(maxOpen, open.length);
+    }
+    settle(Infinity);
+    const unreal = open.reduce((a, t) => a + t.pnl, 0);
+    return { trades, eq, endCap: cash + unreal, realCap: cash, mdd, maxOpen, skipCoin, skipCash, skipCap };
+  };
   const grp = L => { const done = L.filter(t => t.how !== 'open'), win = done.filter(t => t.pnl > 0).length;
     return { n: L.length, done: done.length, win, rate: done.length ? +(win / done.length * 100).toFixed(1) : null, avg: done.length ? +(done.reduce((a, t) => a + t.net, 0) / done.length).toFixed(1) : null, sum: +L.reduce((a, t) => a + t.pnl, 0).toFixed(3),
       fail: done.filter(t => t.how === 'fail').length, lock: done.filter(t => t.how === 'lock').length, hold: done.filter(t => t.how === 'hold').length }; };
+  const R = sim(cand), trades = R.trades;
+  // 🧮 評分模擬：分數分組（每一筆單獨看）、只做 N 分以上（資金模擬）、各項目單獨看
+  const buckets = [['−3～−1 分', c => c.sc <= -1], ['0 分', c => c.sc === 0], ['1 分', c => c.sc === 1], ['2 分', c => c.sc === 2], ['3 分以上', c => c.sc >= 3]].map(([label, f]) => ({ label, ...grp(cand.filter(f)) }));
+  const th = [null, -1, 0, 1, 2, 3].map(k => { const r = k === null ? R : sim(cand.filter(c => c.sc >= k)); return { k, n: r.trades.length, rate: grp(r.trades).rate, sum: +r.trades.reduce((a, t) => a + t.pnl, 0).toFixed(3), endCap: +r.endCap.toFixed(3), mdd: +r.mdd.toFixed(1), maxOpen: r.maxOpen }; });
+  const comp = {}; for (const [key, nm] of [['sB', 'BTC 共振'], ['sC', '三種進場共振'], ['sD', '天圖（Enors 1D 日線偏見）']]) comp[key] = { nm, pos: grp(cand.filter(c => c[key] > 0)), zero: grp(cand.filter(c => c[key] === 0)), neg: grp(cand.filter(c => c[key] < 0)) };
+  const RR = sim(cand.filter(c => c.ok)), rule = {   // 📐 新規則模擬
+    n: RR.trades.length, rate: grp(RR.trades).rate, sum: +RR.trades.reduce((a, t) => a + t.pnl, 0).toFixed(3), endCap: +RR.endCap.toFixed(3), mdd: +RR.mdd.toFixed(1), maxOpen: RR.maxOpen,
+    pass: grp(cand.filter(c => c.ok)), btc: grp(cand.filter(c => c.why === 'btc')), day: grp(cand.filter(c => c.why === 'day')),
+    zeroDay: { bear: grp(cand.filter(c => c.sB === 0 && c.dB < 0)), bull: grp(cand.filter(c => c.sB === 0 && c.dB > 0)), none: grp(cand.filter(c => c.sB === 0 && !c.dB)) }
+  };
+  const R3 = sim(cand.filter(c => c.ok3), 5, c => c.sB === 2), rule3 = {   // 📐 規則三：+2（BTC 方向＋紅綠燈，這一群最多 5 筆）＋0 分（天圖＋紅綠燈）
+    n: R3.trades.length, rate: grp(R3.trades).rate, sum: +R3.trades.reduce((a, t) => a + t.pnl, 0).toFixed(3), endCap: +R3.endCap.toFixed(3), mdd: +R3.mdd.toFixed(1), maxOpen: R3.maxOpen, skipCap: R3.skipCap,
+    nHi: R3.trades.filter(t => t.sB === 2).length, nZero: R3.trades.filter(t => t.sB === 0).length,
+    pass: grp(cand.filter(c => c.ok3)), passHi: grp(cand.filter(c => c.ok3 && c.sB === 2)), passZero: grp(cand.filter(c => c.ok3 && c.sB === 0)),
+    btc: grp(cand.filter(c => c.why3 === 'btc')), day: grp(cand.filter(c => c.why3 === 'day')), light: grp(cand.filter(c => c.why3 === 'light'))
+  };
+  const R2 = sim(cand.filter(c => c.ok2), 5), rule2 = {   // 📐 規則二：BTC 共振 +2 分、紅綠燈 5 取 3、最多同時 5 筆
+    n: R2.trades.length, rate: grp(R2.trades).rate, sum: +R2.trades.reduce((a, t) => a + t.pnl, 0).toFixed(3), endCap: +R2.endCap.toFixed(3), mdd: +R2.mdd.toFixed(1), maxOpen: R2.maxOpen, skipCap: R2.skipCap,
+    pass: grp(cand.filter(c => c.ok2)), btc: grp(cand.filter(c => c.why2 === 'btc')), light: grp(cand.filter(c => c.why2 === 'light')),
+    eq: R2.eq.length > 300 ? R2.eq.filter((_, i) => i % Math.ceil(R2.eq.length / 300) === 0 || i === R2.eq.length - 1) : R2.eq
+  };
   ST.tool.bt = {
     at: Date.now(), start, end: Date.now(), days, coins: syms.length, pairs,
     rule: { tp: T.tp, step: T.step, sl: T.sl, hold: T.hold, lev, m, cap0, fee: fee * 100 },
     all: grp(trades), by: { zh: grp(trades.filter(t => t.type === 'zh')), crt: grp(trades.filter(t => t.type === 'crt')), hunt: grp(trades.filter(t => t.type === 'hunt')) },
     byPair: { h4: grp(trades.filter(t => t.pair === 'h4')), h1: grp(trades.filter(t => t.pair === 'h1')) },
-    endCap: +(cash + unreal).toFixed(3), realCap: +cash.toFixed(3), mdd: +mdd.toFixed(1), maxOpen, skipCoin, skipCash, found: cand.length,
-    eq: eq.length > 400 ? eq.filter((_, i) => i % Math.ceil(eq.length / 400) === 0 || i === eq.length - 1) : eq,
-    trades: trades.slice(-300).reverse().map(t => ({ sym: t.sym, type: t.type, pair: t.pair, dir: t.dir, et: t.et, entry: t.entry, xt: t.xt, how: t.how, net: +t.net.toFixed(1), pnl: +t.pnl.toFixed(4) }))
+    endCap: +R.endCap.toFixed(3), realCap: +R.realCap.toFixed(3), mdd: +R.mdd.toFixed(1), maxOpen: R.maxOpen, skipCoin: R.skipCoin, skipCash: R.skipCash, found: cand.length,
+    eq: R.eq.length > 400 ? R.eq.filter((_, i) => i % Math.ceil(R.eq.length / 400) === 0 || i === R.eq.length - 1) : R.eq,
+    score: { buckets, th, comp, rule, rule2, rule3 },
+    trades: trades.slice(-300).reverse().map(t => ({ sym: t.sym, type: t.type, pair: t.pair, dir: t.dir, et: t.et, entry: t.entry, xt: t.xt, how: t.how, net: +t.net.toFixed(1), pnl: +t.pnl.toFixed(4), sc: t.sc, sB: t.sB, sC: t.sC, sD: t.sD, dB: t.dB, ok: t.ok, why: t.why, g: t.g, r: t.r, ok2: t.ok2, why2: t.why2, ok3: t.ok3, why3: t.why3, corr: t.corr }))
   };
   dirty = true; TOOLV++;
 }
@@ -2228,7 +2328,7 @@ http.createServer(async (req, res) => {
         bx: { set: hasKey(X), notify: X.A.bx.notify, liq: X.A.bx.liq, liqPct: X.A.bx.liqPct, at: X.BX.at, err: X.BX.err, acct: X.BX.acct,
           pos: X.BX.pos.map(p => ({ ...p, px: PX.map[p.sym] || null, tp: ((X.BX.tpsl && X.BX.tpsl.get(p.id)) || {}).tp || 0, sl: ((X.BX.tpsl && X.BX.tpsl.get(p.id)) || {}).sl || 0, sig: !!ST.cards.find(c => c.sym === p.sym && c.dir === p.dir && c.et && isLive(c)), bot: !!X.A.ltTrades.find(t => t.status === 'open' && t.positionId === p.id) })) },
         eco: { list: ECO.list.filter(e => e.t > Date.now() - 7 * 24 * HOUR), at: ECO.at, err: ECO.err, hasNext: !!ECO.hasNext, today: ecoToday().map(e => ({ t: e.t, zh: e.zh || e.title })) },
-        lt: { cfg: X.A.lt, bud: ltBudEq(X), low: (() => { const C = X.A.lt, a = bxEquity(X), n = C.budget > 0 ? ltBotEq(X).eq : 0, p = C.spBudget > 0 && toolOkUid(X.uid) ? ltSpEq(X).eq : 0; return a > 0 && (C.budget > 0 || C.spBudget > 0) && n + p > a + 0.01 ? { acct: a, n, sp: p } : null; })(), pause: X.LT.pause || null, toolOk: toolOkUid(X.uid), spBot: ltSpEq(X), spDay: X.LT.spDayPnl || 0, msg: X.LT.msg, dayPnl: X.LT.dayPnl || 0, v: X.v, bot: ltBotEq(X), acctEq: bxEquity(X) },
+        lt: { cfg: X.A.lt, spSkip: X.LT.spSkip || [], bud: ltBudEq(X), low: (() => { const C = X.A.lt, a = bxEquity(X), n = C.budget > 0 ? ltBotEq(X).eq : 0, p = C.spBudget > 0 && toolOkUid(X.uid) ? ltSpEq(X).eq : 0; return a > 0 && (C.budget > 0 || C.spBudget > 0) && n + p > a + 0.01 ? { acct: a, n, sp: p } : null; })(), pause: X.LT.pause || null, toolOk: toolOkUid(X.uid), spBot: ltSpEq(X), spDay: X.LT.spDayPnl || 0, msg: X.LT.msg, dayPnl: X.LT.dayPnl || 0, v: X.v, bot: ltBotEq(X), acctEq: bxEquity(X) },
         aws: !(X.uid === ownerUid()) ? null : { on: ST.aws.on, created: ST.aws.created, auto: ST.aws.auto, price: ST.aws.price, detected: awsDetect(), ...awsNext() }
       };
       if (+u.searchParams.get('cv') !== CV) out.cards = ST.cards;
@@ -2412,19 +2512,24 @@ http.createServer(async (req, res) => {
         const C = X.A.lt;
         if (typeof b.on === 'boolean') {
           if (b.on && !hasKey(X)) return send(res, 400, { error: '請先設定你自己的 Bitunix API 金鑰（要開交易權限）' });
-          C.on = b.on; C.allOff = false; if (!b.on) X.LT.pause = { t: Date.now(), why: '你按了暫停' }; dcX(X, b.on ? '▶️ **自動交易已開始**' : '⏸ **自動交易已暫停**（已開的單照常管理）');
+          if (b.on && !(C.budget > 0)) return send(res, 400, { error: '請先到「☰ 選單 → 設定 → 我的交易設定」填「合約投入資金」，再開始交易' });
+          if (b.on && C.budget > 0) { const B = ltBudEq(X); if (B.eq <= 0) return send(res, 400, { error: `投入資金已經用完（目前 ${B.eq.toFixed(2)}U），開始了也會馬上暫停。請到「選單 → 設定」調高投入資金` }); }
+          C.on = b.on; C.allOff = false; C.rsOn = false; if (!b.on) X.LT.pause = { t: Date.now(), why: '你按了暫停' }; else if (X.LT.pause && !/特級/.test(X.LT.pause.why)) X.LT.pause = null;   // 自己按開始：一般交易的暫停原因清掉 dcX(X, b.on ? '▶️ **自動交易已開始**' : '⏸ **自動交易已暫停**（已開的單照常管理）');
         }
         if (typeof b.sp === 'boolean') {                 // 🗡 特級交易：只有特級咒具權限的人能開
           if (b.sp && !toolOkUid(X.uid)) return send(res, 403, { error: '特級交易要先解鎖特級咒具' });
           if (b.sp && !hasKey(X)) return send(res, 400, { error: '請先設定你自己的 Bitunix API 金鑰（要開交易權限）' });
-          C.spAllOff = false;
-          if (C.sp !== b.sp) { C.sp = b.sp; dcX(X, b.sp ? `🗡 **特級交易已開始**：特級咒具的莊家、CRT、獵殺進場訊號會用你的帳戶真實下單\n每筆 ${C.spMargin}U・${C.spLev}x・浮盈 +${C.spTp}% 開始鎖利、每 ${C.spStep}% 上調・浮虧 −${C.spSl}% 停損・持有 ${Math.round(C.spHold / 24 * 10) / 10} 天${C.spBudget > 0 ? `・投入 ${C.spBudget}U` : ''}${C.spDayLoss > 0 ? `・單日虧損上限 ${C.spDayLoss}U` : ''}` : '⏸ **特級交易已暫停**（已開的單照常管理）'); }
+          if (b.sp && !(C.spBudget > 0)) return send(res, 400, { error: '請先到「☰ 選單 → 設定 → 🗡 特級交易設定」填「特級交易投入資金」，再開始特級交易' });
+          if (b.sp && C.spBudget > 0) { const B = ltSpEq(X); if (B.eq <= 0) return send(res, 400, { error: `特級交易的投入資金已經用完（目前 ${B.eq.toFixed(2)}U），開始了也會馬上暫停。請到「選單 → 設定 → 特級交易設定」調高投入資金` }); }
+          C.spAllOff = false; C.rsSp = false;
+          if (C.sp !== b.sp) { C.sp = b.sp; if (!b.sp) X.LT.pause = { t: Date.now(), why: '你按了暫停特級交易' }; else if (X.LT.pause && /特級/.test(X.LT.pause.why)) X.LT.pause = null; dcX(X, b.sp ? `🗡 **特級交易已開始**：特級咒具的莊家、CRT、獵殺進場訊號會用你的帳戶真實下單\n每筆 ${C.spMargin}U・${C.spLev}x・浮盈 +${C.spTp}% 開始鎖利、每 ${C.spStep}% 上調・浮虧 −${C.spSl}% 停損・持有 ${Math.round(C.spHold / 24 * 10) / 10} 天${C.spBudget > 0 ? `・投入 ${C.spBudget}U` : ''}${C.spDayLoss > 0 ? `・單日虧損上限 ${C.spDayLoss}U` : ''}` : '⏸ **特級交易已暫停**（已開的單照常管理）'); }
         }
         if (+b.margin > 0) C.margin = +b.margin;
         if (+b.lev >= 1 && +b.lev <= 125) C.lev = Math.round(+b.lev);
         if (+b.maxOpen >= 0) C.maxOpen = Math.round(+b.maxOpen);
         if (+b.dayLoss >= 0) C.dayLoss = +b.dayLoss;
-        if (b.budget !== undefined && +b.budget >= 0) {
+        if (b.budget !== undefined && !(+b.budget > 0)) return send(res, 400, { error: '投入資金要填大於 0 的數字' });
+        if (b.budget !== undefined && +b.budget > 0) {
           const e = bxEquity(X);
           if (+b.budget > 0 && !hasKey(X)) return send(res, 400, { error: '請先設定 Bitunix API，才知道合約帳戶有多少資金' });
           if (+b.budget > 0 && !(e > 0)) return send(res, 400, { error: '還沒讀到合約帳戶的資金，請等 10 秒再試' });
@@ -2446,7 +2551,7 @@ http.createServer(async (req, res) => {
           if (hd !== undefined && !(hd >= 1 && hd <= 720)) return send(res, 400, { error: '特級交易的持有時間要在 1 小時～30 天之間' });
           if (bud !== undefined) {
             const e = bxEquity(X);
-            if (!(bud >= 0)) return send(res, 400, { error: '特級交易的投入資金不能是負的' });
+            if (!(bud > 0)) return send(res, 400, { error: '特級交易的投入資金要填大於 0 的數字' });
             if (bud > 0 && !(e > 0)) return send(res, 400, { error: '還沒讀到合約帳戶的資金，請等 10 秒再試' });
             if (bud > e + 1e-9) return send(res, 400, { error: `資金不足：合約帳戶目前只有 ${e.toFixed(2)}U，特級交易的投入資金不能設 ${bud}U` });
             if (bud > 0 && bud !== C.spBudget) { const M = ltBudMax(X, true); if (M && bud > M.max + 0.009) return send(res, 400, { error: `資金不足：合約帳戶 ${M.acct.toFixed(2)}U，一般交易目前用了 ${M.other.toFixed(2)}U，特級交易的投入資金最多只能設 ${Math.max(0, M.max).toFixed(2)}U` }); }
@@ -2515,7 +2620,7 @@ http.createServer(async (req, res) => {
         if (op === 'pw') {
           if (!validPw(b.pw)) return send(res, 400, { error: '密碼至少 8 個字' });
           T.pw = hashPw(String(b.pw)); const n0 = T.grants.length, old = T.grants; T.grants = []; dirty = true; log('特級咒具改密碼');
-          for (const uid of old) { const XA = ctx(uid); if (XA.A.lt.sp) { XA.A.lt.sp = false; touchLT(XA); dcX(XA, '⏸ **特級交易已暫停**：特級咒具的密碼改了，要重新輸入新密碼才能再開（已開的單照常管理）'); } }
+          for (const uid of old) { const XA = ctx(uid); if (XA.A.lt.sp) { XA.A.lt.sp = false; XA.LT.pause = { t: Date.now(), why: '特級咒具的密碼改了，要重新輸入新密碼' }; touchLT(XA); dcX(XA, '⏸ **特級交易已暫停**：特級咒具的密碼改了，要重新輸入新密碼才能再開（已開的單照常管理）'); } }
           return send(res, 200, { ok: true, revoked: n0 });
         }
         if (op === 'set') {
