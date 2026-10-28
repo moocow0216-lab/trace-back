@@ -589,6 +589,7 @@ body.mode-pat #qPanel,body.mode-news #qPanel,body.mode-pat #newsPanel,body.mode-
 .qspcfg{border:2px solid #7f1d1d!important;background:radial-gradient(circle at 0 0,rgba(239,68,68,.08),transparent 60%)!important}.qspcfg>b{color:#fecaca}.qspst.on{color:#ef4444;font-weight:700}
 .qspmini{display:inline-block;margin-top:4px;font-size:12px;color:#fca5a5}.qspmini.on{color:#ef4444;font-weight:700}
 .qsptag{color:#ef4444;font-weight:700}
+.qbxall{margin:4px 0 8px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.02);font-size:13.5px}.qbxall b.qg,.qbxall b.qr{font-size:16px;margin-left:4px}.qbxall span{display:block;margin-top:2px;font-size:12px;color:var(--muted)}
 .qspskip{margin-top:10px}.qspskip summary{cursor:pointer;color:#fca5a5;font-size:13px}.qspsk{display:flex;flex-wrap:wrap;gap:4px 10px;padding:6px 2px;border-bottom:1px solid #2a2a2a;font-size:13px}.qspsk>span:last-child{flex-basis:100%;color:#d4dbe7}
 .qspbox{position:relative;margin:12px 0;padding:12px 14px;border:2px solid transparent;border-radius:16px;background:linear-gradient(#141015,#120c10) padding-box,linear-gradient(120deg,#1a0000 0%,#7f1d1d 20%,#ef4444 40%,#f97316 50%,#ef4444 60%,#7f1d1d 80%,#1a0000 100%) border-box;background-size:100% 100%,300% 300%;animation:fireflow 3s linear infinite,fireglow 1.6s ease-in-out infinite}
 .qsph{display:flex;align-items:baseline;gap:10px;font-weight:700;font-size:16px;color:#fecaca;margin-bottom:8px}.qsph span{font-size:12.5px;font-weight:400;color:var(--muted)}
@@ -598,6 +599,8 @@ body.mode-pat #qPanel,body.mode-news #qPanel,body.mode-pat #newsPanel,body.mode-
 .tbsum{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:8px 0}
 .tbsum div{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:rgba(255,255,255,.02)}.tbsum span{display:block;font-size:12.5px;color:var(--muted)}.tbsum b{display:block;font-size:20px;margin:2px 0}.tbsum em{font-style:normal;font-size:12px;color:var(--muted)}
 .tbeq{width:100%;height:120px;display:block;margin:6px 0 10px;background:rgba(255,255,255,.02);border-radius:10px}
+.tbrule{margin:4px 0 12px;padding:10px 12px;border:1px solid #6b5422;border-radius:12px;background:rgba(245,182,66,.05)}.tbrule h4{margin:0 0 6px;font-size:15px}
+.tbsc{margin-top:14px;padding:12px 14px;border:1px solid #2a3447;border-radius:12px;background:rgba(122,162,255,.04)}.tbsc h4{margin:0 0 6px;font-size:15px}.tbsc .tablewrap{margin:8px 0 4px}
 .tbdet summary{cursor:pointer;color:var(--muted);font-size:13px;margin:6px 0}
 .tlcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
 .tlcard{position:relative;border:1px solid #2a3140;border-left:4px solid var(--dc);border-radius:18px;padding:16px;background:linear-gradient(180deg,#151a22,#10141b);display:flex;flex-direction:column;gap:12px}
@@ -950,7 +953,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-25g</div>
+      <div class="qver" id="qVer">網站版本 2026-10-26f</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -995,7 +998,7 @@ header{align-items:center}
         <div class="qtg" id="qMyTrade">
           <b>📈 我的交易設定</b><span id="qmt_stat"></span>
           <div class="params">
-            <label class="field">合約投入資金（U，不能大於合約帳戶資金）<input id="lt_budget" type="number" min="0" step="10"></label>
+            <label class="field">合約投入資金（U，必填，不能大於合約帳戶資金）<input id="lt_budget" type="number" min="1" step="10" placeholder="例如 50"></label>
             <label class="field">每筆保證金（U）<input id="lt_margin" type="number" min="0.01" step="0.1"></label>
             <label class="field">單日虧損上限（U，超過自動暫停）<input id="lt_dayLoss" type="number" min="0" step="1"></label>
             <label class="field">槓桿倍率（幣不支援就用最高）<input id="lt_lev" type="number" min="1" max="125" step="1"></label>
@@ -1013,7 +1016,7 @@ header{align-items:center}
         <div class="qtg qspcfg" id="qSpCfg" hidden>
           <b>🗡 特級交易設定</b><span id="qsp_stat"></span>
           <div class="params">
-            <label class="field">特級交易投入資金（U，0＝不限制）<input id="sp_budget" type="number" min="0" step="10"></label>
+            <label class="field">特級交易投入資金（U，必填）<input id="sp_budget" type="number" min="1" step="10" placeholder="例如 50"></label>
             <label class="field">每筆保證金（U）<input id="sp_margin" type="number" min="0.01" step="0.1"></label>
             <label class="field">單日虧損上限（U，0＝不限制）<input id="sp_dayLoss" type="number" min="0" step="1"></label>
             <label class="field">槓桿倍率（幣不支援就用最高）<input id="sp_lev" type="number" min="1" max="125" step="1"></label>
@@ -1100,6 +1103,7 @@ header{align-items:center}
         <div class="qcfg" id="qLtCfg" hidden>
           <div class="qcfgnote"><b>投入資金</b>：例如帳戶有 153U、這裡填 100，自動交易只會用這 100U（加上它自己賺的、扣掉它自己虧的）來下單，用完會自動暫停；實盤統計也從 100U 開始算。注意全倉模式下，交易所還是用整個帳戶當保證金，極端行情時帳戶裡其他的錢也可能被拖累。<br>保證金模式：<b>全倉</b>。出場規則用「⚙ 浮盈／槓桿設定」裡的成功線、失敗線、出場方式和最長持有時間。開倉單會同時掛交易所止損（失敗線）。伺服器重新啟動後，自動交易一律先暫停。</div>
         </div>
+        <div class="qbxall" id="qBxAll" hidden></div>
         <div class="qbxsum" id="qBxSum"></div>
         <div class="tablewrap"><table class="stat qbxtab" id="qBxTab"></table></div>
           <div class="qspbox" id="qSpBx" hidden><div class="qsph">🗡 特級持倉<span>特級咒具的訊號開的單</span></div><div class="qbxsum" id="qSpBxSum"></div><div class="tablewrap"><table class="stat qbxtab" id="qSpBxTab"></table></div><details class="qspskip" id="qSpSkip" hidden><summary></summary><div id="qSpSkipList"></div></details></div>
@@ -3396,7 +3400,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-25g・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-26f・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -3906,8 +3910,30 @@ function tbRender(d) {
     <div class="tablewrap"><table><thead><tr><th>分類</th><th>筆數</th><th>成功率</th><th>平均報酬率（扣手續費）</th><th>總損益</th><th>出場</th></tr></thead><tbody>
       ${row('all', R.all)}${row('zh', R.by.zh)}${row('crt', R.by.crt)}${row('hunt', R.by.hunt)}${R.pairs.map(p => row(p, R.byPair[p])).join('')}</tbody></table></div>
     <p class="tlsub">找到 ${R.found} 筆進場，實際模擬 ${R.all.n} 筆；跳過 ${R.skipCoin + R.skipCash} 筆（同一個幣還開著 ${R.skipCoin}、資金不夠 ${R.skipCash}）。成功＝扣完手續費還賺錢。K 棒內的走法：收漲的 K 棒當作「開→低→高→收」、收跌的當作「開→高→低→收」。回測沒有考慮滑價和資金費率，結果只供參考。</p>
-    <details class="tbdet"><summary>每一筆的明細（最近 ${R.trades.length} 筆）</summary><div class="tablewrap"><table><thead><tr><th>進場時間</th><th>幣種</th><th>方向</th><th>進場方式</th><th>週期</th><th>進場價</th><th>出場</th><th>報酬率</th><th>損益</th></tr></thead><tbody>
-      ${R.trades.map(t => `<tr><td>${fmtT(t.et)}</td><td>${esc(t.sym.replace(/USDT$/, ''))}</td><td class="${t.dir > 0 ? 'qg' : 'qr'}">${t.dir > 0 ? '做多' : '做空'}</td><td>${NM[t.type].slice(2)}</td><td>${NM[t.pair]}</td><td>${tlPr(t.entry)}</td><td>${HOW[t.how]}${t.how !== 'open' ? `<span class="tlmut">・${fmtT(t.xt).slice(-11)}</span>` : ''}</td><td class="${t.net >= 0 ? 'qg' : 'qr'}">${pct(t.net)}</td><td class="${t.pnl >= 0 ? 'qg' : 'qr'}">${u(t.pnl)}</td></tr>`).join('')}</tbody></table></div></details>` : ''}</div>`;
+    ${R.score ? (() => { const Z = R.score, g = x => x.rate == null ? '—' : x.rate + '%', a = x => x.avg == null ? '—' : `<span class="${x.avg >= 0 ? 'qg' : 'qr'}">${pct(x.avg)}</span>`, base = Z.th[0];
+      return `<div class="tbsc"><h4>🧮 評分模擬（只是回測，不影響實盤）</h4>
+      ${Z.rule ? (() => { const Q = Z.rule, b = Z.th[0], row = (nm, x, mute) => `<tr${mute ? ' style="color:var(--muted)"' : ''}><td>${nm}</td><td>${x.n} 筆</td><td>${x.rate == null ? '—' : x.rate + '%'}</td><td class="${x.sum >= 0 ? 'qg' : 'qr'}">${u(x.sum)}</td><td>${x.endCap}U</td><td class="${x.mdd < b.mdd ? 'qg' : x.mdd > b.mdd ? 'qr' : ''}">${x.mdd}%</td><td>${x.maxOpen} 筆</td></tr>`;
+        return `<div class="tbrule"><h4>📐 新規則模擬</h4>
+        <p class="tlsub"><b>① 跟 BTC 共振的幣</b>（BTC 共振不是 0 分）只做 BTC 的方向，逆著 BTC 的擋掉。<b>② BTC 共振 0 分的幣</b>（跟 BTC 連動低，或 BTC 最近 4 小時沒方向）看天圖（照你 Enors 指標的 1D 日線偏見，用昨天、前天兩根日 K）：看跌只做空、看漲只做多、不明確都做。</p>
+        <div class="tablewrap"><table><thead><tr><th>做法</th><th>實際下單</th><th>成功率</th><th>總損益</th><th>期末資金</th><th>最大回撤</th><th>最多同時</th></tr></thead><tbody>${row('全部都做（現在的做法）', b, true)}${row('📐 規則一：BTC 方向＋天圖', Q)}${Z.rule2 ? row('📐 規則二：BTC +2 分＋紅綠燈 5 取 3、最多 5 筆', Z.rule2) : ''}${Z.rule3 ? row('📐 規則三：+2（BTC 方向）或 0 分（天圖）＋紅綠燈', Z.rule3) : ''}</tbody></table></div>
+        ${Z.rule3 ? `<p class="tlsub"><b>規則三</b>：BTC 共振 <b>+2</b> 的跟 BTC 同方向＋紅綠燈 5 取 3，這一群最多同時 5 筆${Z.rule3.skipCap ? `（滿 5 筆跳過了 ${Z.rule3.skipCap} 筆）` : ''}；BTC 共振 <b>0 分</b>的要天圖同方向（不明確就都做）＋紅綠燈 5 取 3，不限筆數；BTC 共振 ±1、−2 全部擋掉。實際下單 ${Z.rule3.n} 筆：+2 那一群 ${Z.rule3.nHi} 筆、0 分那一群 ${Z.rule3.nZero} 筆。</p>
+        <div class="tablewrap"><table><thead><tr><th>規則三・每一筆單獨看</th><th>筆數</th><th>成功率</th><th>平均報酬率</th><th>每筆都做的總損益</th></tr></thead><tbody>
+          ${[['✅ 規則三會做的（+2 那一群）', Z.rule3.passHi], ['✅ 規則三會做的（0 分那一群）', Z.rule3.passZero], ['⛔ BTC 共振 ±1、−2', Z.rule3.btc], ['⛔ 0 分但逆著天圖', Z.rule3.day], ['⛔ BTC 或天圖有過，但紅綠燈不到 5 取 3', Z.rule3.light]].map(([nm, x]) => `<tr><td>${nm}</td><td>${x.n}</td><td>${g(x)}</td><td>${a(x)}</td><td class="${x.sum >= 0 ? 'qg' : 'qr'}">${u(x.sum)}</td></tr>`).join('')}</tbody></table></div>` : ''}
+        ${Z.rule2 ? `<p class="tlsub"><b>規則二</b>：BTC 共振一定要 +2 分（跟 BTC 連動 0.6 以上，而且訊號方向跟 BTC 最近 4 小時相同）＋紅綠燈 5 取 3（照你 Enors 的 4H、1H、45 分、30 分、15 分，EMA12 在 EMA144／169 上方＝綠燈、下方＝紅燈；做多至少 3 顆綠、做空至少 3 顆紅，不含天圖）＋最多同時 5 筆${Z.rule2.skipCap ? `（因為滿 5 筆跳過了 ${Z.rule2.skipCap} 筆）` : ''}。</p>
+        <div class="tablewrap"><table><thead><tr><th>規則二・每一筆單獨看</th><th>筆數</th><th>成功率</th><th>平均報酬率</th><th>每筆都做的總損益</th></tr></thead><tbody>
+          ${[['✅ 規則二會做的', Z.rule2.pass], ['⛔ BTC 共振不到 +2 分', Z.rule2.btc], ['⛔ BTC 有過，但紅綠燈不到 5 取 3', Z.rule2.light]].map(([nm, x]) => `<tr><td>${nm}</td><td>${x.n}</td><td>${g(x)}</td><td>${a(x)}</td><td class="${x.sum >= 0 ? 'qg' : 'qr'}">${u(x.sum)}</td></tr>`).join('')}</tbody></table></div>` : ''}
+        <div class="tablewrap"><table><thead><tr><th>規則一・每一筆單獨看</th><th>筆數</th><th>成功率</th><th>平均報酬率</th><th>每筆都做的總損益</th></tr></thead><tbody>
+          ${[['✅ 新規則會做的', Q.pass], ['⛔ 被 ① BTC 方向擋掉的', Q.btc], ['⛔ 被 ② 天圖擋掉的', Q.day]].map(([nm, x]) => `<tr><td>${nm}</td><td>${x.n}</td><td>${g(x)}</td><td>${a(x)}</td><td class="${x.sum >= 0 ? 'qg' : 'qr'}">${u(x.sum)}</td></tr>`).join('')}</tbody></table></div>
+        <p class="tlsub">👆 被擋掉的單如果「平均報酬率」是負的、總損益是虧的，就代表擋得對；如果被擋掉的反而賺錢，那條規則就要再調。BTC 共振 0 分的單裡，天圖看跌 ${Q.zeroDay.bear.n} 筆、看漲 ${Q.zeroDay.bull.n} 筆、不明確 ${Q.zeroDay.none.n} 筆（Enors 的日線偏見公式一定會算出看漲或看跌，只有日 K 資料不夠時才會不明確）。</p></div>`; })() : ''}
+      <p class="tlsub">每一筆進場的分數（總分 −3～+4）：<b>BTC 共振</b>（跟 BTC 的連動 ≥0.6 時，順著 BTC 最近 4 小時的方向 +2、逆著 −2；連動 0.3～0.6 時 ±1；連動低於 0.3 或 BTC 沒方向是 0 分）＋<b>三種進場共振</b>（過去 4 小時同一個幣有其他種特級進場同方向 +1，最多 +2；有反方向的 −1）。天圖不算進分數，只用在上面的新規則。</p>
+      <div class="tablewrap"><table><thead><tr><th>分數</th><th>筆數</th><th>成功率</th><th>平均報酬率</th><th>每筆都做的總損益</th></tr></thead><tbody>${Z.buckets.map(x => `<tr><td>${x.label}</td><td>${x.n}</td><td>${g(x)}</td><td>${a(x)}</td><td class="${x.sum >= 0 ? 'qg' : 'qr'}">${u(x.sum)}</td></tr>`).join('')}</tbody></table></div>
+      <p class="tlsub">👆 分數越高的組，成功率和平均報酬越好，就代表評分有用。</p>
+      <div class="tablewrap"><table><thead><tr><th>只做幾分以上</th><th>實際下單</th><th>成功率</th><th>總損益</th><th>期末資金</th><th>最大回撤</th><th>最多同時</th></tr></thead><tbody>${Z.th.map(x => `<tr${x.k === null ? ' style="color:var(--muted)"' : ''}><td>${x.k === null ? '全部都做（現在的做法）' : `≥ ${x.k} 分`}</td><td>${x.n} 筆</td><td>${x.rate == null ? '—' : x.rate + '%'}</td><td class="${x.sum >= 0 ? 'qg' : 'qr'}">${u(x.sum)}</td><td>${x.endCap}U</td><td class="${x.mdd < base.mdd ? 'qg' : x.mdd > base.mdd ? 'qr' : ''}">${x.mdd}%</td><td>${x.maxOpen} 筆</td></tr>`).join('')}</tbody></table></div>
+      <p class="tlsub">👆 用同一筆初始資金、同樣的規則模擬。<b>最大回撤</b>比「全部都做」小（綠色）＝比較不會一起停損；同時看總損益掉了多少，取一個平衡的門檻。</p>
+      <div class="tablewrap"><table><thead><tr><th>單獨看每一項</th><th>加分（順著）</th><th>0 分</th><th>扣分（逆著）</th></tr></thead><tbody>${Object.values(Z.comp).map(c => `<tr><td>${c.nm}</td>${[c.pos, c.zero, c.neg].map(x => `<td>${x.n} 筆・成功 ${g(x)}・平均 ${a(x)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+      <p class="tlsub">👆 看哪一項最有分辨力：「加分」那欄明顯比「扣分」好，那一項就有用；差不多的話，那一項可以拿掉。</p></div>`; })() : ''}
+    <details class="tbdet"><summary>每一筆的明細（最近 ${R.trades.length} 筆）</summary><div class="tablewrap"><table><thead><tr><th>進場時間</th><th>幣種</th><th>方向</th><th>進場方式</th><th>週期</th><th>進場價</th><th>出場</th><th>報酬率</th><th>損益</th><th>分數</th></tr></thead><tbody>
+      ${R.trades.map(t => `<tr><td>${fmtT(t.et)}</td><td>${esc(t.sym.replace(/USDT$/, ''))}</td><td class="${t.dir > 0 ? 'qg' : 'qr'}">${t.dir > 0 ? '做多' : '做空'}</td><td>${NM[t.type].slice(2)}</td><td>${NM[t.pair]}</td><td>${tlPr(t.entry)}</td><td>${HOW[t.how]}${t.how !== 'open' ? `<span class="tlmut">・${fmtT(t.xt).slice(-11)}</span>` : ''}</td><td class="${t.net >= 0 ? 'qg' : 'qr'}">${pct(t.net)}</td><td class="${t.pnl >= 0 ? 'qg' : 'qr'}">${u(t.pnl)}</td><td title="BTC 共振 ${t.sB ?? '—'}・三種進場共振 ${t.sC ?? '—'}・天圖 ${t.dB > 0 ? '看漲' : t.dB < 0 ? '看跌' : '不明確'}${t.corr != null ? `・跟 BTC 連動 ${t.corr}` : ''}${t.g != null ? `・紅綠燈 ${t.g} 綠 ${t.r} 紅` : ''}${t.why === 'btc' ? '・規則一：逆著 BTC 會擋掉' : t.why === 'day' ? '・規則一：逆著天圖會擋掉' : ''}${t.why2 === 'btc' ? '・規則二：BTC 共振不到 +2' : t.why2 === 'light' ? '・規則二：紅綠燈不到 5 取 3' : t.ok2 ? '・規則二：會做' : ''}${t.why3 === 'btc' ? '・規則三：BTC 共振 ±1／−2 擋掉' : t.why3 === 'day' ? '・規則三：逆著天圖' : t.why3 === 'light' ? '・規則三：紅綠燈不到 5 取 3' : t.ok3 ? '・規則三：會做' : ''}">${t.sc ?? '—'}${t.ok3 ? ' ✅' : ''}</td></tr>`).join('')}</tbody></table></div></details>` : ''}</div>`;
   if (d.owner) {
     $('tbDays').value = String((R && R.days) || 14);
     $('tbRun').onclick = async () => {
@@ -5421,6 +5447,9 @@ function renderBx(b) {
     ${B ? `<div><span>可用資金（自動）</span>${(() => { const C = SRVLT.cfg || {}, D = SRVLT.bud; return C.budget > 0 && D ? `<b>${Math.max(0, D.free).toFixed(2)}U</b>${sub(`投入資金 ${C.budget}U＋自動單損益，扣掉持倉保證金（虧完就自動暫停）`)}` : `<b>${B.free.toFixed(2)}U</b>${sub('自動交易的資金扣掉持倉保證金')}`; })()}</div><div><span>自動交易權益</span><b>${B.eq.toFixed(2)}U</b>${sub(A ? `整個帳戶約 ${(A.avail + A.frozen + A.margin + A.cross + A.iso).toFixed(2)}U（含手動單）` : '起始本金＋自動單損益')}</div>` : ''}
     <div><span>手續費合計</span><b>${feeSum.toFixed(2)}U</b><em style="font-style:normal;font-size:11.5px;color:var(--muted)">自動交易的單，從 ${C0.startAt ? fmtT(C0.startAt) : '一開始'} 起算</em></div>`;
   renderLt();
+  { const all = b.pos.reduce((a, p) => a + p.upnl, 0), nB = b.pos.filter(p => p.bot).length;   // 📊 全部倉位合計：跟 Bitunix App 的「盈虧」同一個算法
+    $('qBxAll').hidden = !b.pos.length;
+    if (b.pos.length) $('qBxAll').innerHTML = `📊 <b>全部倉位的未實現損益</b>（${SPV ? '一般＋特級＋手動' : '自動＋手動'}，共 ${b.pos.length} 筆，跟 Bitunix App 的「盈虧」對照）：<b class="${all >= 0 ? 'qg' : 'qr'}">${all >= 0 ? '+' : '−'}${Math.abs(all).toFixed(2)}U</b><span>數字是 Bitunix 算的，每 10 秒讀一次，App 是即時跳動的，所以會差一點。「現價」那一欄是幣安的價格，只是參考。</span>`; }
   $('qSpBx').hidden = !SPV;
   if (SPV) {                                           // 🗡 特級持倉：一樣的數字卡
     const sup = spPos.reduce((a, p) => a + p.upnl, 0), smg = spPos.reduce((a, p) => a + p.margin, 0), SB = SRVLT.spBot, SC = SRVLT.cfg || {};
@@ -5788,14 +5817,16 @@ function renderLt() {
   $('qLtEco').hidden = !ED.length;
   $('qLtEco').textContent = ED.length ? `📅 今天有美國重要數據（${ED.map(e => `${e.zh} ${fmtT(e.t).slice(-5)}`).join('、')}），自動交易整天不開新單、不反手；已開的單照常管理。` : '';
   $('qLtToggle').textContent = C.on ? '⏸ 暫停交易' : '▶ 開始交易';
-  { const L = SRVLT.low; $('qLtLow').hidden = !(L && MINE());   // ⚠️ 資金不足：一般＋特級的「目前」比帳戶的錢多
-    if (L && MINE()) $('qLtLow').textContent = `⚠️ 資金不足：合約帳戶只有 ${L.acct.toFixed(2)}U，但一般交易目前 ${L.n.toFixed(2)}U${L.sp ? `＋特級交易目前 ${L.sp.toFixed(2)}U` : ''}＝${(L.n + L.sp).toFixed(2)}U。實際能用的只有帳戶裡的錢，請調低投入資金或收回資金。`; }
-  { const P = SRVLT.pause, show = !!(P && MINE() && (!C.on || (SRVLT.toolOk && !C.sp)));   // ⏸ 上次暫停的原因
+  { const L = SRVLT.low, noB = MINE() && !(C.budget > 0), noS = MINE() && SRVLT.toolOk && !(C.spBudget > 0);   // ⚠️ 還沒填投入資金
+    $('qLtLow').hidden = !(L && MINE()) && !noB && !noS;
+    if (!(L && MINE()) && (noB || noS)) $('qLtLow').textContent = `⚠️ 還沒填${[noB ? '一般交易' : '', noS ? '🗡 特級交易' : ''].filter(Boolean).join('和')}的投入資金：請到「☰ 選單 → 設定」填一個大於 0 的數字${noB && C.on || noS && C.sp ? '（現在照常交易，但沒有資金上限）' : '，填好才能開始交易'}`;   // ⚠️ 資金不足：一般＋特級的「目前」比帳戶的錢多
+    else if (L && MINE()) $('qLtLow').textContent = `⚠️ 資金不足：合約帳戶只有 ${L.acct.toFixed(2)}U，但一般交易目前 ${L.n.toFixed(2)}U${L.sp ? `＋特級交易目前 ${L.sp.toFixed(2)}U` : ''}＝${(L.n + L.sp).toFixed(2)}U。實際能用的只有帳戶裡的錢，請調低投入資金或收回資金。`; }
+  { const P = SRVLT.pause, isSp = !!(P && /特級/.test(P.why)), show = !!(P && MINE() && (isSp ? SRVLT.toolOk && !C.sp : !C.on || (/重新啟動|擁有者一鍵|平倉異常|API/.test(P.why) && SRVLT.toolOk && !C.sp)));   // ⏸ 上次暫停的原因：一般、特級的原因各自只在那一邊暫停時顯示
     $('qLtWhy').hidden = !show; if (show) $('qLtWhy').textContent = `⏸ 上次暫停：${fmtT(P.t).slice(-11)}・${P.why}`; }
   { const ok = !!(SRVLT.toolOk && MINE()), SB = SRVLT.spBot;   // 🗡 特級交易設定：只有特級咒具權限的人看得到
     $('qSpCfg').hidden = !ok;
     if (ok) {
-      const v = { budget: C.spBudget || 0, margin: C.spMargin, dayLoss: C.spDayLoss, lev: C.spLev, tp: C.spTp, step: C.spStep, sl: C.spSl, hold: Math.round((C.spHold || 168) / 24 * 10) / 10 };
+      const v = { budget: C.spBudget || '', margin: C.spMargin, dayLoss: C.spDayLoss, lev: C.spLev, tp: C.spTp, step: C.spStep, sl: C.spSl, hold: Math.round((C.spHold || 168) / 24 * 10) / 10 };
       for (const k of Object.keys(v)) { const el = $('sp_' + k); if (el && document.activeElement !== el && !el.dataset.dirty) el.value = v[k] ?? ''; }
       $('qsp_stat').textContent = `（${C.spBudget > 0 ? `投入 ${C.spBudget}U・目前 ${SB ? SB.eq.toFixed(2) : '—'}U${C.spWd > 0 ? `（已收回 ${(+C.spWd).toFixed(2)}U）` : ''}、可用 ${SB ? Math.max(0, SB.free).toFixed(2) : '—'}U・` : '不限投入資金・'}今日 ${(SRVLT.spDay || 0) >= 0 ? '+' : '−'}${Math.abs(SRVLT.spDay || 0).toFixed(2)}U${C.spDayLoss > 0 ? `（上限 −${C.spDayLoss}U）` : ''}）`;
     }
@@ -5822,6 +5853,7 @@ async function ltCall(path, body, okMsg) {
 }
 $('qLtToggle').onclick = () => {
   const on = !(SRVLT.cfg && SRVLT.cfg.on);
+  if (!on && !confirm('確定要暫停自動交易嗎？\n\n暫停後不會開新單，已經開著的單照常管理到平倉。')) return;   // 暫停也要確認，手機上不容易點錯
   if (on && !confirm(`確定要開始自動交易嗎？\n\n伺服器會用你的 Bitunix 帳戶「真實下單」：每筆 ${SRVLT.cfg.margin}U 保證金、${SRVLT.cfg.lev} 倍、全倉。\n全倉的虧損可能超過單筆保證金，請確認你能承擔。`)) return;
   ltCall('/api/lt/config', { on });
 };
@@ -5843,14 +5875,15 @@ $('wd_nGo').onclick = () => wdGo('n');
 $('wd_spGo').onclick = () => wdGo('sp');
 for (const k of ['budget', 'margin', 'dayLoss', 'lev', 'tp', 'step', 'sl', 'hold']) $('sp_' + k).oninput = e => { e.target.dataset.dirty = '1'; };   // 改到一半不要被每 3 秒的更新蓋掉
 $('sp_save').onclick = async () => {
-  const g = k => $('sp_' + k).value, set = { budget: g('budget') || 0, margin: g('margin'), dayLoss: g('dayLoss') || 0, lev: g('lev'), tp: g('tp'), step: g('step'), sl: g('sl'), hold: g('hold') ? Math.round(+g('hold') * 24) : undefined };
+  if (!(+$('sp_budget').value > 0)) { $('sp_msg').textContent = '❌ 特級交易投入資金要填大於 0 的數字'; $('sp_msg').style.color = '#ff9aa2'; return; }
+  const g = k => $('sp_' + k).value, set = { budget: g('budget'), margin: g('margin'), dayLoss: g('dayLoss') || 0, lev: g('lev'), tp: g('tp'), step: g('step'), sl: g('sl'), hold: g('hold') ? Math.round(+g('hold') * 24) : undefined };
   const m = $('sp_msg'); m.textContent = '儲存中…'; m.style.color = '';
   try { await srvFetch('/api/lt/config', { sp_set: set }); for (const k of Object.keys(set)) delete $('sp_' + k).dataset.dirty; m.textContent = '✅ 已儲存，下一筆特級交易開始套用（已開的單停損、鎖利、到期也照新的設定）'; SV.lv = 0; srvPull(); }
   catch (e) { m.textContent = '❌ ' + e.message; m.style.color = '#ff9aa2'; }
 };
 $('qSpToggle').onclick = () => {
   const C = SRVLT.cfg || {};
-  if (C.sp) return ltCall('/api/lt/config', { sp: false }, '已暫停特級交易，已經開著的單照常管理。');
+  if (C.sp) { if (!confirm('確定要暫停 🗡 特級交易嗎？\n\n暫停後不會開新的特級單，已經開著的單照常管理到平倉。')) return; return ltCall('/api/lt/config', { sp: false }, '已暫停特級交易，已經開著的單照常管理。'); }
   if (!confirm(`確定要開始「🗡 特級交易」嗎？\n\n特級咒具的莊家、CRT、獵殺進場訊號，會用你的 Bitunix 帳戶「真實下單」，照「🗡 特級交易設定」：\n・每筆 ${C.spMargin}U、${C.spLev}x 全倉\n・浮盈 +${C.spTp}% 開始鎖利、每多 ${C.spStep}% 上調\n・浮虧 −${C.spSl}% 停損、持有 ${Math.round(C.spHold / 24 * 10) / 10} 天到期\n${C.spBudget > 0 ? `・投入資金 ${C.spBudget}U\n` : ''}${C.spDayLoss > 0 ? `・單日虧損上限 ${C.spDayLoss}U\n` : ''}\n同一個幣出現反方向訊號會反手（只動特級交易自己的單）。全倉的虧損可能超過單筆保證金，請確認你能承擔。`)) return;
   ltCall('/api/lt/config', { sp: true }, '🗡 特級交易已開始。');
 };
@@ -5872,12 +5905,13 @@ $('lt_hold').onchange = () => {
   ltCall('/api/lt/config', { hold: Math.round(d * 24) });
 };
 $('lt_budget').onchange = () => {
-  const v = +$('lt_budget').value; if (!(v >= 0)) return;
+  const v = +$('lt_budget').value;
+  if (!(v > 0)) { alert('投入資金要填大於 0 的數字'); $('lt_budget').value = SRVLT.cfg.budget || ''; return; }
   const AE = SRVLT.acctEq || 0;
   if (v > 0 && !(SRVBX && SRVBX.set)) { alert('請先設定 Bitunix API，才知道合約帳戶有多少資金。'); $('lt_budget').value = SRVLT.cfg.budget || 0; return; }
   if (v > 0 && AE > 0 && v > AE) { alert(`合約投入資金不能大於合約帳戶目前的資金 ${AE.toFixed(2)}U`); $('lt_budget').value = SRVLT.cfg.budget || 0; return; }
   // 「確定」＝只改金額（安全的預設）；要歸零重算才按「取消」，避免順手按確定就把統計清掉
-  const keep = confirm(`投入資金改成 ${v > 0 ? v + 'U' : '整個合約帳戶'}。\n\n按「確定」＝只改金額，資金曲線和統計照常累積（建議）\n按「取消」＝從現在開始用 ${v > 0 ? v + 'U' : '目前帳戶資金'}重新起算，之前的統計歸零`);
+  const keep = confirm(`投入資金改成 ${v}U。\n\n按「確定」＝只改金額，資金曲線和統計照常累積（建議）\n按「取消」＝從現在開始用 ${v}U 重新起算，之前的統計歸零`);
   ltCall('/api/lt/config', Object.assign({ budget: v }, keep ? {} : { reset: true }));
 };
 const bxTabClick = e => {
