@@ -926,7 +926,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-26f';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-26g';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1524,7 +1524,7 @@ async function toolKlRange(sym, iv, ms, from, to) {     // 分段抓一段期間
   return out;
 }
 // 一筆單的出場：K 棒內的走法——收漲的 K 棒當作「開→低→高→收」、收跌的當作「開→高→低→收」，照順序檢查停損、鎖利、最高浮盈；到期用收盤價
-function toolExit(B, i0, d, e, T, lev, lms) {
+function toolExit(B, i0, d, e, T, lev, lms, lx) {   // lx(t)：🚦 紅綠燈出場的檢查（給 true 就在這根收盤價出場）
   const roe = p => d * (p / e - 1) * lev * 100, et = B[i0].t + lms, holdMs = (T.hold || 168) * HOUR;
   let peak = 0, locked = false;
   for (let i = i0 + 1; i < B.length; i++) {
@@ -1536,6 +1536,7 @@ function toolExit(B, i0, d, e, T, lev, lms) {
       if (r > peak) peak = r;
       if (!locked && peak >= T.tp) locked = true;
     }
+    if (lx && !locked && tEnd % 900000 === 0 && lx(tEnd)) return { t: tEnd, roe: roe(b.c), how: 'light' };   // 還沒開始鎖利、紅綠燈只剩 1 顆同方向的燈：果斷出場
     if (tEnd - et >= holdMs) return { t: tEnd, roe: roe(b.c), how: 'hold' };
   }
   const z = B[B.length - 1]; return { t: z.t + lms, roe: roe(z.c), how: 'open' };
@@ -1558,6 +1559,11 @@ function toolAgg(B, ms) {                             // 把 15 分 K 合成 45 
     if (!cur || cur.t !== t) { if (cur) out.push(cur); cur = { t, o: b.o, h: b.h, l: b.l, c: b.c, n: 1 }; } else { cur.h = Math.max(cur.h, b.h); cur.l = Math.min(cur.l, b.l); cur.c = b.c; cur.n++; } }
   if (cur) out.push(cur);
   return out.filter(x => x.n === ms / 900000);         // 只要完整的 45 分 K
+}
+function toolLights(LS, t) {                         // 🚦 Enors 紅綠燈：在時間 t 時，五個週期各自最後一根已收盤 K 棒的燈號
+  let g = 0, r = 0;
+  for (const L of LS || []) { const j = lastClosed(L.B, t, L.ms); if (j < 0 || isNaN(L.e169[j])) continue; const hi = Math.max(L.e144[j], L.e169[j]), lo = Math.min(L.e144[j], L.e169[j]); if (L.e12[j] > hi) g++; else if (L.e12[j] < lo) r++; }
+  return { g, r };
 }
 const lastClosed = (B, t, ms) => { let lo = 0, hi = B.length - 1, k = -1; while (lo <= hi) { const mid = (lo + hi) >> 1; if (B[mid].t + ms <= t) { k = mid; lo = mid + 1; } else hi = mid - 1; } return k; };
 async function toolBacktest(X, cfg) {
@@ -1588,7 +1594,9 @@ async function toolBacktest(X, cfg) {
           const et = L[x.i].t + P.lms; if (et < start) continue;
           const ex = toolExit(L, x.i, x.dir, L[x.i].c, T, lev, P.lms);
           const pnl = m * ex.roe / 100 - 2 * m * lev * fee;   // 損益（U）＝保證金 × 報酬率 − 開平倉手續費
-          cand.push({ sym, type: x.type, pair, dir: x.dir, et, entry: L[x.i].c, xt: ex.t, roe: ex.roe, how: ex.how, pnl, net: pnl / m * 100 });
+          const LS = cL[sym], ex2 = toolExit(L, x.i, x.dir, L[x.i].c, T, lev, P.lms, t => { const q = toolLights(LS, t); return (x.dir > 0 ? q.g : q.r) <= 1; });   // 🚦 加紅綠燈出場
+          const pnl2 = m * ex2.roe / 100 - 2 * m * lev * fee;
+          cand.push({ sym, type: x.type, pair, dir: x.dir, et, entry: L[x.i].c, xt: ex.t, roe: ex.roe, how: ex.how, pnl, net: pnl / m * 100, xt2: ex2.t, roe2: ex2.roe, how2: ex2.how, pnl2, net2: pnl2 / m * 100 });
         }
       }
     } catch (e) { TBT.msg = `${sym}：${e.message}`; }
@@ -1619,11 +1627,9 @@ async function toolBacktest(X, cfg) {
     const sD = dB ? (dB === c.dir ? 1 : -1) : 0;
     // 📐 新規則：跟 BTC 共振的幣只做 BTC 的方向；BTC 共振 0 分的看天圖（看跌只做空、看漲只做多、不明確都做）
     const why = sB < 0 ? 'btc' : sB === 0 && dB && dB !== c.dir ? 'day' : '';
-    let g = 0, r = 0;                                   // 🚦 五個週期的紅綠燈（都用這筆進場前已經收盤的那根）
-    for (const L of cL[c.sym] || []) { const j = lastClosed(L.B, c.et, L.ms); if (j < 0 || isNaN(L.e169[j])) continue; const hi = Math.max(L.e144[j], L.e169[j]), lo = Math.min(L.e144[j], L.e169[j]); if (L.e12[j] > hi) g++; else if (L.e12[j] < lo) r++; }
-    const lightOk = c.dir > 0 ? g >= 3 : r >= 3;
-    const why2 = sB < 2 ? 'btc' : !lightOk ? 'light' : '';   // 📐 規則二：BTC 共振 +2 分＋紅綠燈 5 取 3（最多同時 5 筆在資金模擬裡限制）
-    const why3 = sB === 2 ? (!lightOk ? 'light' : '') : sB === 0 ? (dB && dB !== c.dir ? 'day' : !lightOk ? 'light' : '') : 'btc';   // 📐 規則三：+2 看 BTC 方向、0 分看天圖，兩種都要紅綠燈 5 取 3；±1、−2 擋掉
+    const { g, r } = toolLights(cL[c.sym], c.et), lightOk = c.dir > 0 ? g >= 3 : r >= 3;   // 🚦 五個週期的紅綠燈（都用這筆進場前已經收盤的那根）
+    const why2 = sB === 2 ? (!lightOk ? 'light' : '') : sB === 0 ? (dB && dB !== c.dir ? 'day' : !lightOk ? 'light' : '') : 'btc';   // 📐 規則二：+2 看 BTC 方向（最多 5 筆）、0 分看天圖，都要紅綠燈 5 取 3；±1、−2 擋掉
+    const why3 = sB === -1 || sB === -2 ? (dB && dB !== c.dir ? 'day' : !lightOk ? 'light' : '') : 'out';   // 📐 規則三：只看 BTC 共振 −1、−2 的幣，天圖同方向＋紅綠燈 5 取 3
     Object.assign(c, { sc: sB + sC, sB, sC, sD, dB, ok: !why, why, g, r, ok2: !why2, why2, ok3: !why3, why3, corr: corr === null ? null : +corr.toFixed(2) });
   }
   // 資金模擬：照時間先後；同一個幣還開著就跳過；可用資金不夠也跳過
@@ -1661,17 +1667,16 @@ async function toolBacktest(X, cfg) {
     pass: grp(cand.filter(c => c.ok)), btc: grp(cand.filter(c => c.why === 'btc')), day: grp(cand.filter(c => c.why === 'day')),
     zeroDay: { bear: grp(cand.filter(c => c.sB === 0 && c.dB < 0)), bull: grp(cand.filter(c => c.sB === 0 && c.dB > 0)), none: grp(cand.filter(c => c.sB === 0 && !c.dB)) }
   };
-  const R3 = sim(cand.filter(c => c.ok3), 5, c => c.sB === 2), rule3 = {   // 📐 規則三：+2（BTC 方向＋紅綠燈，這一群最多 5 筆）＋0 分（天圖＋紅綠燈）
-    n: R3.trades.length, rate: grp(R3.trades).rate, sum: +R3.trades.reduce((a, t) => a + t.pnl, 0).toFixed(3), endCap: +R3.endCap.toFixed(3), mdd: +R3.mdd.toFixed(1), maxOpen: R3.maxOpen, skipCap: R3.skipCap,
-    nHi: R3.trades.filter(t => t.sB === 2).length, nZero: R3.trades.filter(t => t.sB === 0).length,
-    pass: grp(cand.filter(c => c.ok3)), passHi: grp(cand.filter(c => c.ok3 && c.sB === 2)), passZero: grp(cand.filter(c => c.ok3 && c.sB === 0)),
-    btc: grp(cand.filter(c => c.why3 === 'btc')), day: grp(cand.filter(c => c.why3 === 'day')), light: grp(cand.filter(c => c.why3 === 'light'))
-  };
-  const R2 = sim(cand.filter(c => c.ok2), 5), rule2 = {   // 📐 規則二：BTC 共振 +2 分、紅綠燈 5 取 3、最多同時 5 筆
-    n: R2.trades.length, rate: grp(R2.trades).rate, sum: +R2.trades.reduce((a, t) => a + t.pnl, 0).toFixed(3), endCap: +R2.endCap.toFixed(3), mdd: +R2.mdd.toFixed(1), maxOpen: R2.maxOpen, skipCap: R2.skipCap,
-    pass: grp(cand.filter(c => c.ok2)), btc: grp(cand.filter(c => c.why2 === 'btc')), light: grp(cand.filter(c => c.why2 === 'light')),
-    eq: R2.eq.length > 300 ? R2.eq.filter((_, i) => i % Math.ceil(R2.eq.length / 300) === 0 || i === R2.eq.length - 1) : R2.eq
-  };
+  const alt = c => ({ ...c, xt: c.xt2, roe: c.roe2, how: c.how2, pnl: c.pnl2, net: c.net2 });   // 改用「加紅綠燈出場」的結果
+  const sumUp = (r) => ({ n: r.trades.length, rate: grp(r.trades).rate, sum: +r.trades.reduce((a, t) => a + t.pnl, 0).toFixed(3), endCap: +r.endCap.toFixed(3), mdd: +r.mdd.toFixed(1), maxOpen: r.maxOpen, skipCap: r.skipCap, ex: grp(r.trades), light: r.trades.filter(t => t.how === 'light').length });
+  const p2 = cand.filter(c => c.ok2), p3 = cand.filter(c => c.ok3);
+  const R2a = sim(p2, 5, c => c.sB === 2), R2b = sim(p2.map(alt), 5, c => c.sB === 2), R3b = sim(p3.map(alt));
+  const rule2 = { noLx: sumUp(R2a), lx: sumUp(R2b), nHi: R2b.trades.filter(t => t.sB === 2).length, nZero: R2b.trades.filter(t => t.sB === 0).length,
+    passHi: grp(p2.filter(c => c.sB === 2).map(alt)), passZero: grp(p2.filter(c => c.sB === 0).map(alt)),
+    btc: grp(cand.filter(c => c.why2 === 'btc')), day: grp(cand.filter(c => c.why2 === 'day')), light: grp(cand.filter(c => c.why2 === 'light')),
+    lxOut: grp(p2.map(alt).filter(t => t.how === 'light')), lxSame: grp(p2.filter(c => c.how2 === 'light')) };   // 被紅綠燈提早出場的：出場後的結果 vs 如果沒有提早出場
+  const g3 = cand.filter(c => c.sB === -1 || c.sB === -2);
+  const rule3 = { lx: sumUp(R3b), noLx: sumUp(sim(p3)), all: grp(g3), pass: grp(p3.map(alt)), day: grp(cand.filter(c => c.why3 === 'day')), light: grp(cand.filter(c => c.why3 === 'light')) };
   ST.tool.bt = {
     at: Date.now(), start, end: Date.now(), days, coins: syms.length, pairs,
     rule: { tp: T.tp, step: T.step, sl: T.sl, hold: T.hold, lev, m, cap0, fee: fee * 100 },
@@ -1680,7 +1685,7 @@ async function toolBacktest(X, cfg) {
     endCap: +R.endCap.toFixed(3), realCap: +R.realCap.toFixed(3), mdd: +R.mdd.toFixed(1), maxOpen: R.maxOpen, skipCoin: R.skipCoin, skipCash: R.skipCash, found: cand.length,
     eq: R.eq.length > 400 ? R.eq.filter((_, i) => i % Math.ceil(R.eq.length / 400) === 0 || i === R.eq.length - 1) : R.eq,
     score: { buckets, th, comp, rule, rule2, rule3 },
-    trades: trades.slice(-300).reverse().map(t => ({ sym: t.sym, type: t.type, pair: t.pair, dir: t.dir, et: t.et, entry: t.entry, xt: t.xt, how: t.how, net: +t.net.toFixed(1), pnl: +t.pnl.toFixed(4), sc: t.sc, sB: t.sB, sC: t.sC, sD: t.sD, dB: t.dB, ok: t.ok, why: t.why, g: t.g, r: t.r, ok2: t.ok2, why2: t.why2, ok3: t.ok3, why3: t.why3, corr: t.corr }))
+    trades: trades.slice(-300).reverse().map(t => ({ sym: t.sym, type: t.type, pair: t.pair, dir: t.dir, et: t.et, entry: t.entry, xt: t.xt, how: t.how, net: +t.net.toFixed(1), pnl: +t.pnl.toFixed(4), sc: t.sc, sB: t.sB, sC: t.sC, sD: t.sD, dB: t.dB, ok: t.ok, why: t.why, g: t.g, r: t.r, ok2: t.ok2, why2: t.why2, ok3: t.ok3, why3: t.why3, how2: t.how2, net2: +t.net2.toFixed(1), corr: t.corr }))
   };
   dirty = true; TOOLV++;
 }
