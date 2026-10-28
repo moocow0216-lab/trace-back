@@ -926,7 +926,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-27a';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-28a';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1380,6 +1380,7 @@ async function ltReconcile(X, pos) {
    莊家淨額：原指標用 1 分 K 的漲跌方向推估主動買賣；這裡改用幣安直接給的主動買入成交額（主動買 − 主動賣），更準但數字會跟 TradingView 有些差 */
 const DEF_TOOL = { pw: null, grants: [], hooks: {}, px: {}, set: { n: 30, h4: true, h1: true, zh: true, crt: true, hunt: true }, sigs: [], seen: {}, scan: { at: 0, coins: 0, err: '', n: 0 } };
 ST.tool = { ...DEF_TOOL, ...(ST.tool || {}) }; ST.tool.set = { ...DEF_TOOL.set, ...(ST.tool.set || {}) }; ST.tool.scan = { ...DEF_TOOL.scan };
+if (ST.tool.bt && ST.tool.bt.score) { ST.tool.bt = null; dirty = true; }   // 清掉舊版回測結果（評分、規則模擬），存檔變小
 let TOOLV = 1;
 const TOOL_P = { h4: { ltf: '15m', lms: 15 * 60000, htf: '4h', hms: 4 * HOUR, slotH: 4, maxSlot: 5, name: '4H→15 分', crt: 'H4' }, h1: { ltf: '5m', lms: 5 * 60000, htf: '1h', hms: HOUR, slotH: 1, maxSlot: 23, name: '1H→5 分', crt: 'H1' } };
 const toolUsers = () => [ownerUid(), ...ST.tool.grants.filter(u => ST.users.some(x => x.uid === u))];
@@ -1464,6 +1465,20 @@ function toolZh(L, P, ib) {
   }
   return out;
 }
+// 大週期擺盪高／低點（照 CRT 指標的 f_htfSwingLevels：f_leg 換腿時記下 len 根前的高／低點），每根大週期收盤時的值
+function toolSwingLv(H, len) {
+  const n = H.length, hi = new Array(n).fill(NaN), lo = new Array(n).fill(NaN);
+  let leg = 0, prev = 0, swH = NaN, swL = NaN;
+  for (let j = 0; j < n; j++) {
+    if (j >= len) {
+      let mh = -Infinity, ml = Infinity; for (let k = j - len + 1; k <= j; k++) { if (H[k].h > mh) mh = H[k].h; if (H[k].l < ml) ml = H[k].l; }
+      if (H[j - len].h > mh) leg = 0; else if (H[j - len].l < ml) leg = 1;
+    }
+    if (j > 0 && leg !== prev) { if (leg === 1) swL = H[j - len].l; else swH = H[j - len].h; }
+    prev = leg; hi[j] = swH; lo[j] = swL;
+  }
+  return { hi, lo };
+}
 // 🕯 H4/H1 CRT 進場：大週期掃前一根高低點再收回（嚴格：前一根顏色相反）→ 之後第 1～2 根大週期內，小週期結構轉向（武裝）後回踩 FVG，風險距離 ≥ 0.3 ATR → 進場；止盈＝盈虧比 1:1
 function toolCrt(L, H, P, sb, ib, atr) {
   const st = []; let dir = 0, ci = -1, top = NaN, bot = NaN;
@@ -1475,6 +1490,7 @@ function toolCrt(L, H, P, sb, ib, atr) {
     }
     st.push({ dir, ci, top, bot });
   }
+  const sw = toolSwingLv(H, 20);                       // 反向流動性目標：大週期擺盪高／低點（照指標 f_htfSwingLevels，20 根）
   const out = []; let bias = 0, la = false, sa = false, bz = [], sz = [], k = -1;
   for (let i = 0; i < L.length; i++) {
     const b = L[i], ct = b.t + P.lms;
@@ -1492,8 +1508,8 @@ function toolCrt(L, H, P, sb, ib, atr) {
     bz = bz.filter(z => !(b.c < z.bot)); sz = sz.filter(z => !(b.c > z.top));
     const bh = Math.max(b.o, b.c), bl = Math.min(b.o, b.c), hit = Z => Z.some(z => z.i !== i && b.h >= z.bot && b.l <= z.top && !(bl <= z.bot && bh >= z.top));
     const lh = hit(bz), sh = hit(sz), A = atr[i];
-    if (la && bias === 1 && lh && cdir === 1 && b.c - S.bot >= 0.3 * A) { out.push({ i, dir: 1, sl: S.bot, tp: b.c + (b.c - S.bot) }); la = false; }
-    if (sa && bias === -1 && sh && cdir === -1 && S.top - b.c >= 0.3 * A) { out.push({ i, dir: -1, sl: S.top, tp: b.c - (S.top - b.c) }); sa = false; }
+    if (la && bias === 1 && lh && cdir === 1 && b.c - S.bot >= 0.3 * A) { const rk = b.c - S.bot, g = sw.hi[k], ok = !isNaN(g) && g - b.c >= rk; out.push({ i, dir: 1, sl: S.bot, tp: b.c + rk, tps: ok ? g : b.c + rk, swUsed: ok }); la = false; }
+    if (sa && bias === -1 && sh && cdir === -1 && S.top - b.c >= 0.3 * A) { const rk = S.top - b.c, g = sw.lo[k], ok = !isNaN(g) && b.c - g >= rk; out.push({ i, dir: -1, sl: S.top, tp: b.c - rk, tps: ok ? g : b.c - rk, swUsed: ok }); sa = false; }
   }
   return out;
 }
@@ -1524,7 +1540,7 @@ async function toolKlRange(sym, iv, ms, from, to) {     // 分段抓一段期間
   return out;
 }
 // 一筆單的出場：K 棒內的走法——收漲的 K 棒當作「開→低→高→收」、收跌的當作「開→高→低→收」，照順序檢查停損、鎖利、最高浮盈；到期用收盤價
-function toolExit(B, i0, d, e, T, lev, lms, lx) {   // lx(t)：🚦 紅綠燈出場的檢查（給 true 就在這根收盤價出場）
+function toolExit(B, i0, d, e, T, lev, lms) {
   const roe = p => d * (p / e - 1) * lev * 100, et = B[i0].t + lms, holdMs = (T.hold || 168) * HOUR;
   let peak = 0, locked = false;
   for (let i = i0 + 1; i < B.length; i++) {
@@ -1536,55 +1552,36 @@ function toolExit(B, i0, d, e, T, lev, lms, lx) {   // lx(t)：🚦 紅綠燈出
       if (r > peak) peak = r;
       if (!locked && peak >= T.tp) locked = true;
     }
-    if (lx && !locked && tEnd % 900000 === 0 && lx(tEnd)) return { t: tEnd, roe: roe(b.c), how: 'light' };   // 還沒開始鎖利、紅綠燈只剩 1 顆同方向的燈：果斷出場
     if (tEnd - et >= holdMs) return { t: tEnd, roe: roe(b.c), how: 'hold' };
   }
   const z = B[B.length - 1]; return { t: z.t + lms, roe: roe(z.c), how: 'open' };
 }
-// 🧮 評分用：兩組漲跌幅的相關係數（−1～+1）
-function toolCorr(a, b) {
-  const n = a.length; if (n < 30) return null;
-  let ma = 0, mb = 0; for (let i = 0; i < n; i++) { ma += a[i]; mb += b[i]; } ma /= n; mb /= n;
-  let sab = 0, saa = 0, sbb = 0; for (let i = 0; i < n; i++) { const x = a[i] - ma, y = b[i] - mb; sab += x * y; saa += x * x; sbb += y * y; }
-  return saa > 0 && sbb > 0 ? sab / Math.sqrt(saa * sbb) : null;
+// 🕯 CRT 出場比較用：固定價格的止損／止盈（K 棒內走法同上；跳空穿過止損時用更差的價格出場；持有天數照「我的設定」）
+function toolExitPx(B, i0, d, e, sl, tp, T, lev, lms) {
+  const roe = p => d * (p / e - 1) * lev * 100, et = B[i0].t + lms, holdMs = (T.hold || 168) * HOUR;
+  for (let i = i0 + 1; i < B.length; i++) {
+    const b = B[i], tEnd = b.t + lms, path = b.c >= b.o ? [b.o, b.l, b.h, b.c] : [b.o, b.h, b.l, b.c];
+    for (const p of path) {
+      if (d > 0 ? p <= sl : p >= sl) return { t: tEnd, roe: roe(d > 0 ? Math.min(p, sl) : Math.max(p, sl)), how: 'sl' };
+      if (d > 0 ? p >= tp : p <= tp) return { t: tEnd, roe: roe(tp), how: 'tp' };
+    }
+    if (tEnd - et >= holdMs) return { t: tEnd, roe: roe(b.c), how: 'hold' };
+  }
+  const z = B[B.length - 1]; return { t: z.t + lms, roe: roe(z.c), how: 'open' };
 }
-function toolEma(B, n) {                             // ta.ema：前 n 根用平均當起點
-  const out = new Array(B.length).fill(NaN), a = 2 / (n + 1); let e = NaN, sum = 0;
-  for (let i = 0; i < B.length; i++) { if (i < n) { sum += B[i].c; if (i === n - 1) e = sum / n; } else e = B[i].c * a + e * (1 - a); out[i] = e; }
-  return out;
-}
-function toolAgg(B, ms) {                             // 把 15 分 K 合成 45 分 K（每天 00:00 UTC 起算，跟 TradingView 一樣）
-  const out = []; let cur = null;
-  for (const b of B) { const d0 = Math.floor(b.t / 86400000) * 86400000, t = d0 + Math.floor((b.t - d0) / ms) * ms;
-    if (!cur || cur.t !== t) { if (cur) out.push(cur); cur = { t, o: b.o, h: b.h, l: b.l, c: b.c, n: 1 }; } else { cur.h = Math.max(cur.h, b.h); cur.l = Math.min(cur.l, b.l); cur.c = b.c; cur.n++; } }
-  if (cur) out.push(cur);
-  return out.filter(x => x.n === ms / 900000);         // 只要完整的 45 分 K
-}
-function toolLights(LS, t) {                         // 🚦 Enors 紅綠燈：在時間 t 時，五個週期各自最後一根已收盤 K 棒的燈號
-  let g = 0, r = 0;
-  for (const L of LS || []) { const j = lastClosed(L.B, t, L.ms); if (j < 0 || isNaN(L.e169[j])) continue; const hi = Math.max(L.e144[j], L.e169[j]), lo = Math.min(L.e144[j], L.e169[j]); if (L.e12[j] > hi) g++; else if (L.e12[j] < lo) r++; }
-  return { g, r };
-}
-const lastClosed = (B, t, ms) => { let lo = 0, hi = B.length - 1, k = -1; while (lo <= hi) { const mid = (lo + hi) >> 1; if (B[mid].t + ms <= t) { k = mid; lo = mid + 1; } else hi = mid - 1; } return k; };
 async function toolBacktest(X, cfg) {
   const S = ST.tool.set, days = [7, 14, 30].includes(+cfg.days) ? +cfg.days : 14, n = Math.max(5, Math.min(50, Math.round(+cfg.n || S.n || 30)));
   const L0 = X.A.lt, T = TS(X), lev = L0.spLev || L0.lev || 100, m = L0.spMargin || L0.margin || 0.3, cap0 = L0.spBudget > 0 ? L0.spBudget : 100, fee = ((ST.eq && ST.eq.fee) ?? 0.05) / 100;
-  const start = Date.now() - days * 24 * HOUR, warm = 2 * 24 * HOUR, pairs = ['h4', 'h1'].filter(p => S[p]), M15 = 15 * 60000, D1 = 24 * HOUR;
-  const syms = await toolUniverse(n); TBT.total = syms.length + 1; TBT.done = 0;
-  TBT.msg = 'BTC（評分用）';
-  const btc = await toolKlRange('BTCUSDT', '15m', M15, start - warm, Date.now()); TBT.done++;   // 🧮 BTC 方向、相關係數
-  const cand = [], c15 = {}, cD = {}, cL = {};
+  const start = Date.now() - days * 24 * HOUR, warm = 2 * 24 * HOUR, pairs = ['h4', 'h1'].filter(p => S[p]);
+  const syms = await toolUniverse(n); TBT.total = syms.length; TBT.done = 0;
+  const cand = [], crtX = [];
+  const mk = (base, ex) => { const pnl = m * ex.roe / 100 - 2 * m * lev * fee; return { ...base, xt: ex.t, roe: ex.roe, how: ex.how, pnl, net: pnl / m * 100 }; };   // 損益（U）＝保證金 × 報酬率 − 開平倉手續費
   for (const sym of syms) {
     try {
       TBT.msg = sym;
-      const L15 = await toolKlRange(sym, '15m', M15, start - 6 * D1, Date.now()); c15[sym] = L15;
-      cD[sym] = await toolKlRange(sym, '1d', D1, start - 40 * D1, Date.now());   // 🧮 天圖偏見
-      { const TF = [['4h', 4 * HOUR, await toolKlRange(sym, '4h', 4 * HOUR, start - 40 * D1, Date.now())], ['1h', HOUR, await toolKlRange(sym, '1h', HOUR, start - 12 * D1, Date.now())],
-          ['45m', 45 * 60000, toolAgg(L15, 45 * 60000)], ['30m', 30 * 60000, await toolKlRange(sym, '30m', 30 * 60000, start - 6 * D1, Date.now())], ['15m', M15, L15]];
-        cL[sym] = TF.map(([nm, ms, B]) => ({ nm, ms, B, e12: toolEma(B, 12), e144: toolEma(B, 144), e169: toolEma(B, 169) })); }   // 🚦 紅綠燈（Enors：EMA12 在 EMA144／169 上方＝綠、下方＝紅）
       for (const pair of pairs) {
         const P = TOOL_P[pair];
-        const L = pair === 'h4' ? L15 : await toolKlRange(sym, P.ltf, P.lms, start - warm, Date.now()), H = await toolKlRange(sym, P.htf, P.hms, start - warm - 10 * P.hms, Date.now());
+        const L = await toolKlRange(sym, P.ltf, P.lms, start - warm, Date.now()), H = await toolKlRange(sym, P.htf, P.hms, start - warm - 60 * P.hms, Date.now());   // 大週期多抓 60 根，擺盪高低點才算得出來
         if (L.length < 200 || H.length < 3) continue;
         const sb = toolStruct(L, 50), ib = toolStruct(L, 5), atr = toolAtr(L, 14), found = [];
         if (S.zh) for (const x of toolZh(L, P, ib)) found.push({ ...x, type: 'zh' });
@@ -1592,48 +1589,19 @@ async function toolBacktest(X, cfg) {
         if (S.hunt) for (const x of toolHunt(L, P, sb, ib)) found.push({ ...x, type: 'hunt' });
         for (const x of found) {
           const et = L[x.i].t + P.lms; if (et < start) continue;
-          const ex = toolExit(L, x.i, x.dir, L[x.i].c, T, lev, P.lms);
-          const pnl = m * ex.roe / 100 - 2 * m * lev * fee;   // 損益（U）＝保證金 × 報酬率 − 開平倉手續費
-          cand.push({ sym, type: x.type, pair, dir: x.dir, et, entry: L[x.i].c, xt: ex.t, roe: ex.roe, how: ex.how, pnl, net: pnl / m * 100 });
+          const e = L[x.i].c, base = { sym, type: x.type, pair, dir: x.dir, et, entry: e };
+          const c = mk(base, toolExit(L, x.i, x.dir, e, T, lev, P.lms)); cand.push(c);
+          if (x.type === 'crt') crtX.push({ lock: c, rr: mk(base, toolExitPx(L, x.i, x.dir, e, x.sl, x.tp, T, lev, P.lms)), sw: mk(base, toolExitPx(L, x.i, x.dir, e, x.sl, x.tps, T, lev, P.lms)),
+            slRoe: Math.abs(x.sl / e - 1) * lev * 100, swUsed: x.swUsed });
         }
       }
     } catch (e) { TBT.msg = `${sym}：${e.message}`; }
     TBT.done++;
   }
-  cand.sort((a, b) => a.et - b.et);
-  // 🧮 評分：BTC 共振（−2～+2）＋特級三種進場共振（−1～+2）＋天圖偏見（−1～+1）
-  const bySym = {}; for (const c of cand) (bySym[c.sym] = bySym[c.sym] || []).push(c);
-  for (const c of cand) {
-    let sB = 0, corr = null;
-    const bi = lastClosed(btc, c.et, M15);
-    if (bi >= 96) {
-      const chg = btc[bi].c / btc[bi - 16].c - 1, bdir = chg > 0.003 ? 1 : chg < -0.003 ? -1 : 0;   // BTC 最近 4 小時往哪走
-      const mp = new Map((c15[c.sym] || []).map(b => [b.t, b.c])), ra = [], rb = [];
-      for (let k = bi - 95; k <= bi; k++) { const a1 = mp.get(btc[k].t), a0 = mp.get(btc[k - 1].t); if (a1 && a0) { ra.push(a1 / a0 - 1); rb.push(btc[k].c / btc[k - 1].c - 1); } }
-      corr = toolCorr(ra, rb);
-      const ce = corr === null ? 1 : corr, w = ce >= 0.6 ? 2 : ce >= 0.3 ? 1 : 0;   // 算不出來（K 線不夠）就當作高連動，比較保守
-      sB = bdir ? (bdir === c.dir ? w : -w) : 0;
-    }
-    const near = bySym[c.sym].filter(o => o !== c && o.et < c.et && c.et - o.et <= 4 * HOUR), same = new Set(near.filter(o => o.dir === c.dir).map(o => o.type + o.pair)); same.delete(c.type + c.pair);
-    const sC = Math.min(2, same.size) - (near.some(o => o.dir !== c.dir) ? 1 : 0);
-    // 天圖：照擁有者 Enors 指標的 1D 日線偏見（d1＝昨天、d2＝前天，兩根都是已收盤的日 K）
-    let dB = 0; const D = cD[c.sym] || [], k = lastClosed(D, c.et, D1);
-    if (k >= 1) {
-      const d1 = D[k], d2 = D[k - 1], d1Bull = d1.c > d1.o, d2Bull = d2.c > d2.o;
-      dB = d2Bull && d1Bull ? (d1.c > d2.c ? 1 : -1) : !d2Bull && d1Bull ? (d1.c > d2.o ? 1 : -1) : !d2Bull && !d1Bull ? (d1.c < d2.c ? -1 : 1) : (d1.c < d2.o ? -1 : 1);
-    }
-    const sD = dB ? (dB === c.dir ? 1 : -1) : 0;
-    // 📐 新規則：跟 BTC 共振的幣只做 BTC 的方向；BTC 共振 0 分的看天圖（看跌只做空、看漲只做多、不明確都做）
-    const why = sB < 0 ? 'btc' : sB === 0 && dB && dB !== c.dir ? 'day' : '';
-    const { g, r } = toolLights(cL[c.sym], c.et), lightOk = c.dir > 0 ? g >= 3 : r >= 3;   // 🚦 五個週期的紅綠燈（都用這筆進場前已經收盤的那根）
-    const why2 = sB === 2 ? (!lightOk ? 'light' : '') : sB === 0 ? (dB && dB !== c.dir ? 'day' : !lightOk ? 'light' : '') : 'btc';   // 📐 規則二：+2 看 BTC 方向（最多 5 筆）、0 分看天圖，都要紅綠燈 5 取 3；±1、−2 擋掉
-    const why3 = sB === -1 || sB === -2 ? (dB && dB !== c.dir ? 'day' : '') : 'out';   // 📐 規則三：只看 BTC 共振 −1、−2 的幣，天圖同方向就進場（不看紅綠燈）
-    Object.assign(c, { sc: sB + sC, sB, sC, sD, dB, ok: !why, why, g, r, ok2: !why2, why2, ok3: !why3, why3, corr: corr === null ? null : +corr.toFixed(2) });
-  }
+  cand.sort((a, b) => a.et - b.et); crtX.sort((a, b) => a.lock.et - b.lock.et);
   // 資金模擬：照時間先後；同一個幣還開著就跳過；可用資金不夠也跳過
-  const sim = (list, capN, capIf, capKey) => {        // capIf：只有符合的那一群才受「最多同時 capN 筆」限制；capKey：分組各自算（例如多空分開）
-    const inCap = c => !capIf || capIf(c), key = capKey || (() => 0);
-    const open = [], trades = [], eq = [[start, cap0]]; let cash = cap0, used = 0, peakEq = cap0, mdd = 0, maxOpen = 0, skipCoin = 0, skipCash = 0, skipCap = 0;
+  const sim = list => {
+    const open = [], trades = [], eq = [[start, cap0]]; let cash = cap0, used = 0, peakEq = cap0, mdd = 0, maxOpen = 0, skipCoin = 0, skipCash = 0;
     const settle = until => {
       open.sort((a, b) => a.xt - b.xt);
       while (open.length && open[0].xt <= until && open[0].how !== 'open') {
@@ -1645,39 +1613,27 @@ async function toolBacktest(X, cfg) {
       settle(c.et);
       if (open.some(o => o.sym === c.sym)) { skipCoin++; continue; }
       if (cash - used < m) { skipCash++; continue; }
-      if (capN && inCap(c) && open.filter(o => inCap(o) && key(o) === key(c)).length >= capN) { skipCap++; continue; }   // 最多同時幾筆
       open.push(c); used += m; trades.push(c); maxOpen = Math.max(maxOpen, open.length);
     }
     settle(Infinity);
     const unreal = open.reduce((a, t) => a + t.pnl, 0);
-    return { trades, eq, endCap: cash + unreal, realCap: cash, mdd, maxOpen, skipCoin, skipCash, skipCap };
+    return { trades, eq, endCap: cash + unreal, realCap: cash, mdd, maxOpen, skipCoin, skipCash };
   };
-  const grp = L => { const done = L.filter(t => t.how !== 'open'), win = done.filter(t => t.pnl > 0).length;
+  const grp = L => { const done = L.filter(t => t.how !== 'open'), win = done.filter(t => t.pnl > 0).length, cnt = h => done.filter(t => t.how === h).length;
     return { n: L.length, done: done.length, win, rate: done.length ? +(win / done.length * 100).toFixed(1) : null, avg: done.length ? +(done.reduce((a, t) => a + t.net, 0) / done.length).toFixed(1) : null, sum: +L.reduce((a, t) => a + t.pnl, 0).toFixed(3),
-      fail: done.filter(t => t.how === 'fail').length, lock: done.filter(t => t.how === 'lock').length, hold: done.filter(t => t.how === 'hold').length }; };
+      fail: cnt('fail'), lock: cnt('lock'), hold: cnt('hold'), tp: cnt('tp'), sl: cnt('sl') }; };
   const R = sim(cand), trades = R.trades;
-  // 🧮 評分模擬：分數分組（每一筆單獨看）、只做 N 分以上（資金模擬）、各項目單獨看
-  const buckets = [['−3～−1 分', c => c.sc <= -1], ['0 分', c => c.sc === 0], ['1 分', c => c.sc === 1], ['2 分', c => c.sc === 2], ['3 分以上', c => c.sc >= 3]].map(([label, f]) => ({ label, ...grp(cand.filter(f)) }));
-  const th = [null, -1, 0, 1, 2, 3].map(k => { const r = k === null ? R : sim(cand.filter(c => c.sc >= k)); return { k, n: r.trades.length, rate: grp(r.trades).rate, sum: +r.trades.reduce((a, t) => a + t.pnl, 0).toFixed(3), endCap: +r.endCap.toFixed(3), mdd: +r.mdd.toFixed(1), maxOpen: r.maxOpen }; });
-  const comp = {}; for (const [key, nm] of [['sB', 'BTC 共振'], ['sC', '三種進場共振'], ['sD', '天圖（Enors 1D 日線偏見）']]) comp[key] = { nm, pos: grp(cand.filter(c => c[key] > 0)), zero: grp(cand.filter(c => c[key] === 0)), neg: grp(cand.filter(c => c[key] < 0)) };
-  const RR = sim(cand.filter(c => c.ok)), rule = {   // 📐 新規則模擬
-    n: RR.trades.length, rate: grp(RR.trades).rate, sum: +RR.trades.reduce((a, t) => a + t.pnl, 0).toFixed(3), endCap: +RR.endCap.toFixed(3), mdd: +RR.mdd.toFixed(1), maxOpen: RR.maxOpen,
-    pass: grp(cand.filter(c => c.ok)), btc: grp(cand.filter(c => c.why === 'btc')), day: grp(cand.filter(c => c.why === 'day')),
-    zeroDay: { bear: grp(cand.filter(c => c.sB === 0 && c.dB < 0)), bull: grp(cand.filter(c => c.sB === 0 && c.dB > 0)), none: grp(cand.filter(c => c.sB === 0 && !c.dB)) }
-  };
-  const sumUp = r => ({ n: r.trades.length, rate: grp(r.trades).rate, sum: +r.trades.reduce((a, t) => a + t.pnl, 0).toFixed(3), endCap: +r.endCap.toFixed(3), mdd: +r.mdd.toFixed(1), maxOpen: r.maxOpen, skipCap: r.skipCap });
-  const p2 = cand.filter(c => c.ok2), p3 = cand.filter(c => c.ok3), R2 = sim(p2, 5, c => c.sB === 2);   // 出場都照原本的保本鎖利
-  const rule2 = { ...sumUp(R2), nHi: R2.trades.filter(t => t.sB === 2).length, nZero: R2.trades.filter(t => t.sB === 0).length,
-    passHi: grp(p2.filter(c => c.sB === 2)), passZero: grp(p2.filter(c => c.sB === 0)), btc: grp(cand.filter(c => c.why2 === 'btc')), day: grp(cand.filter(c => c.why2 === 'day')), light: grp(cand.filter(c => c.why2 === 'light')) };
-  const rule3 = { ...sumUp(sim(p3)), all: grp(cand.filter(c => c.sB === -1 || c.sB === -2)), pass: grp(p3), day: grp(cand.filter(c => c.why3 === 'day')) };
-  // 📐 規則四：只做天圖同方向；規則五：再擋掉 BTC 共振 −2；同方向（多空分開）最多 10／15 筆；規則二＋三合併
-  const p4 = cand.filter(c => !c.dB || c.dB === c.dir), p5 = p4.filter(c => c.sB !== -2), byDir = c => c.dir;
-  const more = [
-    ['r23', '📐 規則二＋三合併（滿足其中一條）', sim(cand.filter(c => c.ok2 || c.ok3), 5, c => c.sB === 2)],
-    ['r4', '📐 規則四：天圖同方向', sim(p4)], ['r4a', '　└ 同方向最多 15 筆', sim(p4, 15, null, byDir)], ['r4b', '　└ 同方向最多 10 筆', sim(p4, 10, null, byDir)],
-    ['r5', '📐 規則五：天圖同方向＋擋掉 BTC −2', sim(p5)], ['r5a', '　└ 同方向最多 15 筆', sim(p5, 15, null, byDir)], ['r5b', '　└ 同方向最多 10 筆', sim(p5, 10, null, byDir)]
-  ].map(([key, nm, r]) => ({ key, nm, ...sumUp(r) }));
-  const rule45 = { more, pass4: grp(p4), day: grp(cand.filter(c => c.dB && c.dB !== c.dir)), cut5: grp(p4.filter(c => c.sB === -2)), pass5: grp(p5) };
+  // 🕯 CRT 出場比較：只看 CRT 進場、同一批訊號，三種出場各自做一次資金模擬
+  let crtCmp = null;
+  if (crtX.length) {
+    const one = (key, nm, list) => { const r = sim(list), tr = r.trades;
+      return { key, nm, ...grp(tr), endCap: +r.endCap.toFixed(3), mdd: +r.mdd.toFixed(1), maxOpen: r.maxOpen,
+        sp: { h4: grp(tr.filter(t => t.pair === 'h4')), h1: grp(tr.filter(t => t.pair === 'h1')), long: grp(tr.filter(t => t.dir > 0)), short: grp(tr.filter(t => t.dir < 0)) } }; };
+    const sl = crtX.map(c => c.slRoe).sort((a, b) => a - b);
+    crtCmp = { sig: crtX.length, modes: [one('lock', '現在的做法（鎖利）', crtX.map(c => c.lock)), one('rr', 'CRT 原設計（邊緣止損＋1:1）', crtX.map(c => c.rr)), one('sw', '擺盪高低點（邊緣止損＋擺盪目標）', crtX.map(c => c.sw))],
+      slAvg: +(sl.reduce((a, v) => a + v, 0) / sl.length).toFixed(0), slMed: +sl[Math.floor(sl.length / 2)].toFixed(0), slMax: +sl[sl.length - 1].toFixed(0),
+      slOver: sl.filter(v => v > T.sl).length, slOver100: sl.filter(v => v > 100).length, swUsed: crtX.filter(c => c.swUsed).length };
+  }
   ST.tool.bt = {
     at: Date.now(), start, end: Date.now(), days, coins: syms.length, pairs,
     rule: { tp: T.tp, step: T.step, sl: T.sl, hold: T.hold, lev, m, cap0, fee: fee * 100 },
@@ -1685,8 +1641,8 @@ async function toolBacktest(X, cfg) {
     byPair: { h4: grp(trades.filter(t => t.pair === 'h4')), h1: grp(trades.filter(t => t.pair === 'h1')) },
     endCap: +R.endCap.toFixed(3), realCap: +R.realCap.toFixed(3), mdd: +R.mdd.toFixed(1), maxOpen: R.maxOpen, skipCoin: R.skipCoin, skipCash: R.skipCash, found: cand.length,
     eq: R.eq.length > 400 ? R.eq.filter((_, i) => i % Math.ceil(R.eq.length / 400) === 0 || i === R.eq.length - 1) : R.eq,
-    score: { buckets, th, comp, rule, rule2, rule3, rule45 },
-    trades: trades.slice(-300).reverse().map(t => ({ sym: t.sym, type: t.type, pair: t.pair, dir: t.dir, et: t.et, entry: t.entry, xt: t.xt, how: t.how, net: +t.net.toFixed(1), pnl: +t.pnl.toFixed(4), sc: t.sc, sB: t.sB, sC: t.sC, sD: t.sD, dB: t.dB, ok: t.ok, why: t.why, g: t.g, r: t.r, ok2: t.ok2, why2: t.why2, ok3: t.ok3, why3: t.why3, corr: t.corr }))
+    crtCmp,
+    trades: trades.slice(-300).reverse().map(t => ({ sym: t.sym, type: t.type, pair: t.pair, dir: t.dir, et: t.et, entry: t.entry, xt: t.xt, how: t.how, net: +t.net.toFixed(1), pnl: +t.pnl.toFixed(4) }))
   };
   dirty = true; TOOLV++;
 }
