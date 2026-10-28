@@ -953,7 +953,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-27a</div>
+      <div class="qver" id="qVer">網站版本 2026-10-28a</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3400,7 +3400,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-27a・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-28a・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -3889,7 +3889,7 @@ function tbRender(d) {
   const R = d.bt, run = d.btRun || {}, NM = { all: '全部', zh: '💰 莊家進場', crt: '🕯 CRT 進場', hunt: '🎯 獵殺進場', h4: '4H→15 分', h1: '1H→5 分' };
   const f = v => v == null ? '—' : v, pct = v => v == null ? '—' : `${v >= 0 ? '+' : ''}${v}%`, u = v => `${v >= 0 ? '+' : ''}${(+v).toFixed(2)}U`;
   const row = (k, g) => `<tr><td>${NM[k]}</td><td>${g.n}${g.n !== g.done ? `（持有中 ${g.n - g.done}）` : ''}</td><td>${f(g.rate)}${g.rate != null ? '%' : ''}</td><td class="${g.avg >= 0 ? 'qg' : 'qr'}">${pct(g.avg)}</td><td class="${g.sum >= 0 ? 'qg' : 'qr'}">${u(g.sum)}</td><td class="tlmut">鎖利 ${g.lock}・停損 ${g.fail}・到期 ${g.hold}</td></tr>`;
-  const HOW = { lock: '🔒 鎖利', fail: '❌ 停損', hold: '⏱ 到期', open: '持有中' };
+  const HOW = { lock: '🔒 鎖利', fail: '❌ 停損', hold: '⏱ 到期', open: '持有中', tp: '🎯 止盈', sl: '❌ 止損' };
   let eqSvg = '';
   if (R && R.eq && R.eq.length > 1) {                 // 資金曲線
     const xs = R.eq.map(p => p[0]), ys = R.eq.map(p => p[1]), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys, R.rule.cap0), y1 = Math.max(...ys, R.rule.cap0), W = 600, H = 120;
@@ -3910,31 +3910,16 @@ function tbRender(d) {
     <div class="tablewrap"><table><thead><tr><th>分類</th><th>筆數</th><th>成功率</th><th>平均報酬率（扣手續費）</th><th>總損益</th><th>出場</th></tr></thead><tbody>
       ${row('all', R.all)}${row('zh', R.by.zh)}${row('crt', R.by.crt)}${row('hunt', R.by.hunt)}${R.pairs.map(p => row(p, R.byPair[p])).join('')}</tbody></table></div>
     <p class="tlsub">找到 ${R.found} 筆進場，實際模擬 ${R.all.n} 筆；跳過 ${R.skipCoin + R.skipCash} 筆（同一個幣還開著 ${R.skipCoin}、資金不夠 ${R.skipCash}）。成功＝扣完手續費還賺錢。K 棒內的走法：收漲的 K 棒當作「開→低→高→收」、收跌的當作「開→高→低→收」。回測沒有考慮滑價和資金費率，結果只供參考。</p>
-    ${R.score ? (() => { const Z = R.score, g = x => x.rate == null ? '—' : x.rate + '%', a = x => x.avg == null ? '—' : `<span class="${x.avg >= 0 ? 'qg' : 'qr'}">${pct(x.avg)}</span>`, base = Z.th[0];
-      return `<div class="tbsc"><h4>🧮 評分模擬（只是回測，不影響實盤）</h4>
-      ${Z.rule ? (() => { const Q = Z.rule, b = Z.th[0], row = (nm, x, mute) => `<tr${mute ? ' style="color:var(--muted)"' : ''}><td>${nm}</td><td>${x.n} 筆</td><td>${x.rate == null ? '—' : x.rate + '%'}</td><td class="${x.sum >= 0 ? 'qg' : 'qr'}">${u(x.sum)}</td><td>${x.endCap}U</td><td class="${x.mdd < b.mdd ? 'qg' : x.mdd > b.mdd ? 'qr' : ''}">${x.mdd}%</td><td>${x.maxOpen} 筆</td></tr>`;
-        const cat = (title, rows) => `<div class="tablewrap"><table><thead><tr><th>${title}</th><th>筆數</th><th>成功率</th><th>平均報酬率</th><th>每筆都做的總損益</th></tr></thead><tbody>${rows.map(([nm, x]) => `<tr><td>${nm}</td><td>${x.n}</td><td>${g(x)}</td><td>${a(x)}</td><td class="${x.sum >= 0 ? 'qg' : 'qr'}">${u(x.sum)}</td></tr>`).join('')}</tbody></table></div>`;
-        const R2 = Z.rule2 && Z.rule2.passHi ? Z.rule2 : null, R3 = Z.rule3 && Z.rule3.all && Z.rule3.n != null ? Z.rule3 : null;
-        return `<div class="tbrule"><h4>📐 新規則模擬</h4>
-        <div class="tablewrap"><table><thead><tr><th>做法</th><th>實際下單</th><th>成功率</th><th>總損益</th><th>期末資金</th><th>最大回撤</th><th>最多同時</th></tr></thead><tbody>${row('全部都做（現在的做法）', b, true)}${row('📐 規則一：BTC 方向＋天圖', Q)}${R2 ? row('📐 規則二：+2（BTC 方向）或 0 分（天圖）＋紅綠燈', R2) : ''}${R3 ? row('📐 規則三：只看 −1、−2，天圖', R3) : ''}${Z.rule45 ? Z.rule45.more.map(x => row(x.nm, x)).join('') : ''}</tbody></table></div>
-        ${Z.rule45 ? `<p class="tlsub"><b>規則二＋三合併</b>：規則二（+2、0 分）和規則三（−1、−2）管的幣不重疊，滿足其中一條就進場。<b>規則四</b>：只做跟天圖同方向的單，不看 BTC 共振、不看紅綠燈。<b>規則五</b>：規則四再擋掉 BTC 共振 −2（高度連動卻逆著 BTC）。<b>同方向最多 N 筆</b>：多單、空單分開算，例如空單已經有 N 筆時，新的空單跳過。</p>
-        ${cat('規則四、五・每一筆單獨看', [['✅ 規則四會做的（天圖同方向）', Z.rule45.pass4], ['⛔ 逆著天圖', Z.rule45.day], ['✅ 規則五會做的', Z.rule45.pass5], ['⛔ 規則五多擋掉的（天圖同方向但 BTC −2）', Z.rule45.cut5]])}` : ''}
-        <p class="tlsub">三個規則的出場都照原本的保本鎖利：浮盈到開始鎖利後跑回鎖利線出場、鎖利線往上調；沒到開始鎖利就照停損和持有天數。</p>
-        ${R2 ? `<p class="tlsub"><b>規則二</b>：BTC 共振 <b>+2</b> 的跟 BTC 同方向＋紅綠燈 5 取 3，這一群最多同時 5 筆${R2.skipCap ? `（滿 5 筆跳過了 ${R2.skipCap} 筆）` : ''}；<b>0 分</b>的要天圖同方向（不明確就都做）＋紅綠燈 5 取 3；<b>+1、−1、−2</b> 擋掉。實際下單 ${R2.n} 筆：+2 那一群 ${R2.nHi} 筆、0 分那一群 ${R2.nZero} 筆。</p>
-        ${cat('規則二・每一筆單獨看', [['✅ 會做的（+2 那一群）', R2.passHi], ['✅ 會做的（0 分那一群）', R2.passZero], ['⛔ BTC 共振 +1、−1、−2', R2.btc], ['⛔ 0 分但逆著天圖', R2.day], ['⛔ BTC 或天圖有過，但紅綠燈不到 5 取 3', R2.light]])}` : ''}
-        ${R3 ? `<p class="tlsub"><b>規則三</b>：只看 BTC 共振 <b>−1、−2</b> 的幣（中度連動，或高度連動但逆著 BTC），天圖同方向就進場，不看紅綠燈。</p>
-        ${cat('規則三・每一筆單獨看', [['全部 −1、−2 的單（不篩選）', R3.all], ['✅ 規則三會做的（天圖同方向）', R3.pass], ['⛔ 逆著天圖', R3.day]])}` : ''}
-        ${cat('規則一・每一筆單獨看', [['✅ 新規則會做的', Q.pass], ['⛔ 被 ① BTC 方向擋掉的', Q.btc], ['⛔ 被 ② 天圖擋掉的', Q.day]])}
-        <p class="tlsub">👆 被擋掉的單如果「平均報酬率」是負的、總損益是虧的，就代表擋得對；如果被擋掉的反而賺錢，那條規則就要再調。<b>規則一</b>：BTC 共振不是 0 分的只做 BTC 的方向，0 分的看天圖。天圖照你 Enors 指標的 1D 日線偏見（昨天、前天兩根日 K），一定會算出看漲或看跌，只有日 K 資料不夠時才會不明確。</p></div>`; })() : ''}
-      <p class="tlsub">每一筆進場的分數（總分 −3～+4）：<b>BTC 共振</b>（跟 BTC 的連動 ≥0.6 時，順著 BTC 最近 4 小時的方向 +2、逆著 −2；連動 0.3～0.6 時 ±1；連動低於 0.3 或 BTC 沒方向是 0 分）＋<b>三種進場共振</b>（過去 4 小時同一個幣有其他種特級進場同方向 +1，最多 +2；有反方向的 −1）。天圖不算進分數，只用在上面的新規則。</p>
-      <div class="tablewrap"><table><thead><tr><th>分數</th><th>筆數</th><th>成功率</th><th>平均報酬率</th><th>每筆都做的總損益</th></tr></thead><tbody>${Z.buckets.map(x => `<tr><td>${x.label}</td><td>${x.n}</td><td>${g(x)}</td><td>${a(x)}</td><td class="${x.sum >= 0 ? 'qg' : 'qr'}">${u(x.sum)}</td></tr>`).join('')}</tbody></table></div>
-      <p class="tlsub">👆 分數越高的組，成功率和平均報酬越好，就代表評分有用。</p>
-      <div class="tablewrap"><table><thead><tr><th>只做幾分以上</th><th>實際下單</th><th>成功率</th><th>總損益</th><th>期末資金</th><th>最大回撤</th><th>最多同時</th></tr></thead><tbody>${Z.th.map(x => `<tr${x.k === null ? ' style="color:var(--muted)"' : ''}><td>${x.k === null ? '全部都做（現在的做法）' : `≥ ${x.k} 分`}</td><td>${x.n} 筆</td><td>${x.rate == null ? '—' : x.rate + '%'}</td><td class="${x.sum >= 0 ? 'qg' : 'qr'}">${u(x.sum)}</td><td>${x.endCap}U</td><td class="${x.mdd < base.mdd ? 'qg' : x.mdd > base.mdd ? 'qr' : ''}">${x.mdd}%</td><td>${x.maxOpen} 筆</td></tr>`).join('')}</tbody></table></div>
-      <p class="tlsub">👆 用同一筆初始資金、同樣的規則模擬。<b>最大回撤</b>比「全部都做」小（綠色）＝比較不會一起停損；同時看總損益掉了多少，取一個平衡的門檻。</p>
-      <div class="tablewrap"><table><thead><tr><th>單獨看每一項</th><th>加分（順著）</th><th>0 分</th><th>扣分（逆著）</th></tr></thead><tbody>${Object.values(Z.comp).map(c => `<tr><td>${c.nm}</td>${[c.pos, c.zero, c.neg].map(x => `<td>${x.n} 筆・成功 ${g(x)}・平均 ${a(x)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
-      <p class="tlsub">👆 看哪一項最有分辨力：「加分」那欄明顯比「扣分」好，那一項就有用；差不多的話，那一項可以拿掉。</p></div>`; })() : ''}
-    <details class="tbdet"><summary>每一筆的明細（最近 ${R.trades.length} 筆）</summary><div class="tablewrap"><table><thead><tr><th>進場時間</th><th>幣種</th><th>方向</th><th>進場方式</th><th>週期</th><th>進場價</th><th>出場</th><th>報酬率</th><th>損益</th><th>分數</th></tr></thead><tbody>
-      ${R.trades.map(t => `<tr><td>${fmtT(t.et)}</td><td>${esc(t.sym.replace(/USDT$/, ''))}</td><td class="${t.dir > 0 ? 'qg' : 'qr'}">${t.dir > 0 ? '做多' : '做空'}</td><td>${NM[t.type].slice(2)}</td><td>${NM[t.pair]}</td><td>${tlPr(t.entry)}</td><td>${HOW[t.how]}${t.how !== 'open' ? `<span class="tlmut">・${fmtT(t.xt).slice(-11)}</span>` : ''}</td><td class="${t.net >= 0 ? 'qg' : 'qr'}">${pct(t.net)}</td><td class="${t.pnl >= 0 ? 'qg' : 'qr'}">${u(t.pnl)}</td><td title="BTC 共振 ${t.sB ?? '—'}・三種進場共振 ${t.sC ?? '—'}・天圖 ${t.dB > 0 ? '看漲' : t.dB < 0 ? '看跌' : '不明確'}${t.corr != null ? `・跟 BTC 連動 ${t.corr}` : ''}${t.g != null ? `・紅綠燈 ${t.g} 綠 ${t.r} 紅` : ''}${t.why === 'btc' ? '・規則一：逆著 BTC 會擋掉' : t.why === 'day' ? '・規則一：逆著天圖會擋掉' : ''}${t.why2 === 'btc' ? '・規則二：BTC 共振 +1／−1／−2 擋掉' : t.why2 === 'day' ? '・規則二：逆著天圖' : t.why2 === 'light' ? '・規則二：紅綠燈不到 5 取 3' : t.ok2 ? '・規則二：會做' : ''}${t.why3 === 'day' ? '・規則三：逆著天圖' : t.ok3 ? '・規則三：會做' : ''}">${t.sc ?? '—'}${t.ok2 ? ' ✅' : t.ok3 ? ' 🔁' : ''}</td></tr>`).join('')}</tbody></table></div></details>` : ''}</div>`;
+    ${R.crtCmp ? (() => { const C = R.crtCmp, base = C.modes[0], g = x => x.rate == null ? '—' : x.rate + '%', a = x => x.avg == null ? '—' : `<span class="${x.avg >= 0 ? 'qg' : 'qr'}">${pct(x.avg)}</span>`;
+      const ex = x => x.key === 'lock' ? `鎖利 ${x.lock}・停損 ${x.fail}・到期 ${x.hold}` : `止盈 ${x.tp}・止損 ${x.sl}・到期 ${x.hold}`;
+      const SP = [['h4', '4H→15 分'], ['h1', '1H→5 分'], ['long', '做多'], ['short', '做空']];
+      return `<div class="tbrule"><h4>🕯 CRT 出場比較（只看 CRT 進場，同一批 ${C.sig} 個訊號）</h4>
+      <div class="tablewrap"><table><thead><tr><th>出場方式</th><th>實際下單</th><th>成功率</th><th>平均報酬率</th><th>總損益</th><th>期末資金</th><th>最大回撤</th><th>出場</th></tr></thead><tbody>${C.modes.map(x => `<tr${x.key === 'lock' ? ' style="color:var(--muted)"' : ''}><td>${x.nm}</td><td>${x.n} 筆</td><td>${g(x)}</td><td>${a(x)}</td><td class="${x.sum >= 0 ? 'qg' : 'qr'}">${u(x.sum)}</td><td>${x.endCap}U</td><td class="${x.key === 'lock' ? '' : x.mdd < base.mdd ? 'qg' : x.mdd > base.mdd ? 'qr' : ''}">${x.mdd}%</td><td class="tlmut">${ex(x)}</td></tr>`).join('')}</tbody></table></div>
+      <p class="tlsub"><b>現在的做法</b>：跟特級交易一樣，浮虧 −${R.rule.sl}% 停損、浮盈 +${R.rule.tp}% 開始鎖利。<b>CRT 原設計</b>：止損放在 CRT 邊緣，止盈＝進場價到止損的距離 × 1（1:1）。<b>擺盪高低點</b>：止損一樣在 CRT 邊緣，止盈改成大週期最近的擺盪高點（做空看擺盪低點，20 根）；目標不到 1:1 的就用 1:1（${C.sig} 個訊號裡有 ${C.swUsed} 個用到擺盪點）。三種都照「持有 ${Math.round(R.rule.hold / 24 * 10) / 10} 天到期」，到期用收盤價出場。</p>
+      <div class="tablewrap"><table><thead><tr><th>分開看</th>${C.modes.map(x => `<th>${x.nm.replace(/（.*）/, '')}</th>`).join('')}</tr></thead><tbody>${SP.map(([k, nm]) => `<tr><td>${nm}</td>${C.modes.map(x => { const y = x.sp[k]; return `<td>${y.n} 筆・成功 ${g(y)}・平均 ${a(y)}・<span class="${y.sum >= 0 ? 'qg' : 'qr'}">${u(y.sum)}</span></td>`; }).join('')}</tr>`).join('')}</tbody></table></div>
+      <p class="tlsub">👆 CRT 邊緣止損換算成 ${R.rule.lev}x 的報酬率：平均 −${C.slAvg}%、中間值 −${C.slMed}%、最遠 −${C.slMax}%。有 <b>${C.slOver100}</b> 個訊號的止損超過 −100%（價格反向超過 ${(100 / R.rule.lev).toFixed(2)}%），其中 <b>${C.slOver}</b> 個比現在的停損 −${R.rule.sl}% 還遠。超過 −100% 代表一筆虧掉的比保證金還多，要用全倉才撐得到止損；如果要用 CRT 原設計或擺盪高低點，要另外考慮降低槓桿。</p></div>`; })() : ''}
+    <details class="tbdet"><summary>每一筆的明細（最近 ${R.trades.length} 筆）</summary><div class="tablewrap"><table><thead><tr><th>進場時間</th><th>幣種</th><th>方向</th><th>進場方式</th><th>週期</th><th>進場價</th><th>出場</th><th>報酬率</th><th>損益</th></tr></thead><tbody>
+      ${R.trades.map(t => `<tr><td>${fmtT(t.et)}</td><td>${esc(t.sym.replace(/USDT$/, ''))}</td><td class="${t.dir > 0 ? 'qg' : 'qr'}">${t.dir > 0 ? '做多' : '做空'}</td><td>${NM[t.type].slice(2)}</td><td>${NM[t.pair]}</td><td>${tlPr(t.entry)}</td><td>${HOW[t.how]}${t.how !== 'open' ? `<span class="tlmut">・${fmtT(t.xt).slice(-11)}</span>` : ''}</td><td class="${t.net >= 0 ? 'qg' : 'qr'}">${pct(t.net)}</td><td class="${t.pnl >= 0 ? 'qg' : 'qr'}">${u(t.pnl)}</td></tr>`).join('')}</tbody></table></div></details>` : ''}</div>`;
   if (d.owner) {
     $('tbDays').value = String((R && R.days) || 14);
     $('tbRun').onclick = async () => {
@@ -4008,6 +3993,10 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-10-28', title: '2026/10/28 更新', items: [
+    { ic: '🗡', sp: true, t: '特級咒具回測變精簡：拿掉評分和規則一～五的模擬，回測跑得比較快、頁面也比較不卡。' },
+    { ic: '🕯', sp: true, t: '回測新增「CRT 出場比較」：同一批 CRT 訊號，比較現在的鎖利出場、CRT 原設計（邊緣止損＋1:1）、擺盪高低點目標三種出場，也分開看 4H／1H、做多／做空。' }
+  ] },
   { id: '2026-10-25', title: '2026/10/25 更新', items: [
     { ic: '☰', t: '右上角新增「選單」：設定、熱力圖、訊號卡片、歷史走勢、加密新聞、回測數據、歷史紀錄、幣安鯨魚大單、使用說明都收進選單，主畫面只留持倉和成功率，更清爽。' },
     { ic: '🔑', t: '「選單 → 設定」最上面可以改自己的密碼（要先輸入目前的密碼，改完其他裝置會登出）。' },
