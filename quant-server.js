@@ -926,7 +926,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-26h';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-27a';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1631,8 +1631,8 @@ async function toolBacktest(X, cfg) {
     Object.assign(c, { sc: sB + sC, sB, sC, sD, dB, ok: !why, why, g, r, ok2: !why2, why2, ok3: !why3, why3, corr: corr === null ? null : +corr.toFixed(2) });
   }
   // 資金模擬：照時間先後；同一個幣還開著就跳過；可用資金不夠也跳過
-  const sim = (list, capN, capIf) => {                // capIf：只有符合的那一群才受「最多同時 capN 筆」限制
-    const inCap = c => !capIf || capIf(c);
+  const sim = (list, capN, capIf, capKey) => {        // capIf：只有符合的那一群才受「最多同時 capN 筆」限制；capKey：分組各自算（例如多空分開）
+    const inCap = c => !capIf || capIf(c), key = capKey || (() => 0);
     const open = [], trades = [], eq = [[start, cap0]]; let cash = cap0, used = 0, peakEq = cap0, mdd = 0, maxOpen = 0, skipCoin = 0, skipCash = 0, skipCap = 0;
     const settle = until => {
       open.sort((a, b) => a.xt - b.xt);
@@ -1645,7 +1645,7 @@ async function toolBacktest(X, cfg) {
       settle(c.et);
       if (open.some(o => o.sym === c.sym)) { skipCoin++; continue; }
       if (cash - used < m) { skipCash++; continue; }
-      if (capN && inCap(c) && open.filter(inCap).length >= capN) { skipCap++; continue; }   // 最多同時幾筆
+      if (capN && inCap(c) && open.filter(o => inCap(o) && key(o) === key(c)).length >= capN) { skipCap++; continue; }   // 最多同時幾筆
       open.push(c); used += m; trades.push(c); maxOpen = Math.max(maxOpen, open.length);
     }
     settle(Infinity);
@@ -1670,6 +1670,14 @@ async function toolBacktest(X, cfg) {
   const rule2 = { ...sumUp(R2), nHi: R2.trades.filter(t => t.sB === 2).length, nZero: R2.trades.filter(t => t.sB === 0).length,
     passHi: grp(p2.filter(c => c.sB === 2)), passZero: grp(p2.filter(c => c.sB === 0)), btc: grp(cand.filter(c => c.why2 === 'btc')), day: grp(cand.filter(c => c.why2 === 'day')), light: grp(cand.filter(c => c.why2 === 'light')) };
   const rule3 = { ...sumUp(sim(p3)), all: grp(cand.filter(c => c.sB === -1 || c.sB === -2)), pass: grp(p3), day: grp(cand.filter(c => c.why3 === 'day')) };
+  // 📐 規則四：只做天圖同方向；規則五：再擋掉 BTC 共振 −2；同方向（多空分開）最多 10／15 筆；規則二＋三合併
+  const p4 = cand.filter(c => !c.dB || c.dB === c.dir), p5 = p4.filter(c => c.sB !== -2), byDir = c => c.dir;
+  const more = [
+    ['r23', '📐 規則二＋三合併（滿足其中一條）', sim(cand.filter(c => c.ok2 || c.ok3), 5, c => c.sB === 2)],
+    ['r4', '📐 規則四：天圖同方向', sim(p4)], ['r4a', '　└ 同方向最多 15 筆', sim(p4, 15, null, byDir)], ['r4b', '　└ 同方向最多 10 筆', sim(p4, 10, null, byDir)],
+    ['r5', '📐 規則五：天圖同方向＋擋掉 BTC −2', sim(p5)], ['r5a', '　└ 同方向最多 15 筆', sim(p5, 15, null, byDir)], ['r5b', '　└ 同方向最多 10 筆', sim(p5, 10, null, byDir)]
+  ].map(([key, nm, r]) => ({ key, nm, ...sumUp(r) }));
+  const rule45 = { more, pass4: grp(p4), day: grp(cand.filter(c => c.dB && c.dB !== c.dir)), cut5: grp(p4.filter(c => c.sB === -2)), pass5: grp(p5) };
   ST.tool.bt = {
     at: Date.now(), start, end: Date.now(), days, coins: syms.length, pairs,
     rule: { tp: T.tp, step: T.step, sl: T.sl, hold: T.hold, lev, m, cap0, fee: fee * 100 },
@@ -1677,7 +1685,7 @@ async function toolBacktest(X, cfg) {
     byPair: { h4: grp(trades.filter(t => t.pair === 'h4')), h1: grp(trades.filter(t => t.pair === 'h1')) },
     endCap: +R.endCap.toFixed(3), realCap: +R.realCap.toFixed(3), mdd: +R.mdd.toFixed(1), maxOpen: R.maxOpen, skipCoin: R.skipCoin, skipCash: R.skipCash, found: cand.length,
     eq: R.eq.length > 400 ? R.eq.filter((_, i) => i % Math.ceil(R.eq.length / 400) === 0 || i === R.eq.length - 1) : R.eq,
-    score: { buckets, th, comp, rule, rule2, rule3 },
+    score: { buckets, th, comp, rule, rule2, rule3, rule45 },
     trades: trades.slice(-300).reverse().map(t => ({ sym: t.sym, type: t.type, pair: t.pair, dir: t.dir, et: t.et, entry: t.entry, xt: t.xt, how: t.how, net: +t.net.toFixed(1), pnl: +t.pnl.toFixed(4), sc: t.sc, sB: t.sB, sC: t.sC, sD: t.sD, dB: t.dB, ok: t.ok, why: t.why, g: t.g, r: t.r, ok2: t.ok2, why2: t.why2, ok3: t.ok3, why3: t.why3, corr: t.corr }))
   };
   dirty = true; TOOLV++;
