@@ -652,6 +652,11 @@ body.mode-pat #qPanel,body.mode-news #qPanel,body.mode-pat #newsPanel,body.mode-
 .simbal{font-size:14px}.simwarn{margin:0;color:#fbbf24;font-size:13px}
 .simbadge{margin:0 6px;padding:2px 10px;border-radius:999px;border:1px solid #f59e0b;background:rgba(245,158,11,.15);color:#fbbf24;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
 body.simmode::before{content:"";position:fixed;inset:0 0 auto;height:3px;background:repeating-linear-gradient(90deg,#f59e0b 0 14px,transparent 14px 24px);z-index:200;pointer-events:none}
+.fvgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}.fvgrid .fvcard{flex:none}
+.fvcard.hist{border-top-color:var(--rc)}.fvcard.r-tp{--rc:#22c55e}.fvcard.r-sl{--rc:#ef4444}.fvcard.r-hold{--rc:#60a5fa}.fvcard.r-fail{--rc:#6b7280}
+.fvres{align-self:flex-start;padding:3px 10px;border-radius:999px;font-size:12.5px;font-weight:700;border:1px solid var(--rc);color:var(--rc);white-space:nowrap}.fvcard.r-fail .fvres{color:#cbd5e1}
+.fvst.fail .fvdot{border-color:#ef4444;color:#ef4444}.fvst.fail b{color:#fca5a5}
+.fvcard.r-fail .fvnext{border-color:#3a4455;background:rgba(148,163,184,.06)}.fvcard.r-fail .fvnext span{color:#cbd5e1}
 .tllockic{font-size:40px}.tllock h3{margin:0}.tllock p{margin:0;color:var(--muted);line-height:1.6}.tllock .tlrow{width:100%}.mnic{width:22px;text-align:center}
 .mnsheet{position:fixed;inset:0;z-index:80;background:var(--bg,#0b0f16);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
 .mnsheethead{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid #262d3a;background:rgba(11,15,22,.96)}.mnsheethead h2{margin:0;font-size:17px}
@@ -983,7 +988,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-29b</div>
+      <div class="qver" id="qVer">網站版本 2026-10-29c</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3433,7 +3438,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-29b・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-29c・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -3837,7 +3842,7 @@ const MN_ITEMS = [
   ['set', '👤', '設定', 'mnpSet', '#7aa2ff'], ['heat', '🔥', '熱力圖', 'qHeatHost', '#fb923c'], ['cards', '📡', '訊號卡片', 'qSidePanel', '#22d3ee'], ['pat', '📈', '歷史走勢', '', '#a78bfa'],
   ['news', '📰', '加密新聞', 'newsPanel', '#f472b6'], ['bt', '📊', '回測數據', 'qBtHost', '#34d399'], ['hist', '📋', '歷史紀錄', 'qTabPanel', '#fbbf24'], ['whale', '🐋', '幣安鯨魚大單', 'whalePanel', '#38bdf8'], ['guide', '📖', '使用說明', '', '#94a3b8'], ['tool', '🗡', '特級咒具', 'mnpTool', '#ef4444'], ['toolh', '📜', '特級咒具歷史', 'mnpToolH', '#f97316']];   // 最後一欄是選單框的顏色
 /* ---------- 🗡 特級咒具：上鎖（擁有者或輸入密碼的人才能用）；一個幣一張卡片；設定收在「⚙ 設定」裡 ---------- */
-const TL = { d: null, timer: null, hf: 'all' };
+const TL = { d: null, timer: null, hf: 'all', hn: 60 };
 const TL_PN = { h4: { hn: '4H', ln: '15M', nm: '4H→15M' }, h1: { hn: '1H', ln: '5M', nm: '1H→5M' } };
 async function tlLoad(page) {
   const host = page === 'toolh' ? 'mnpToolH' : 'mnpTool';
@@ -3892,16 +3897,33 @@ function tlCard(c) {
     <footer class="fvcf"><span class="tlmut">${c.st === 'entry' ? `持倉中・${tlAgo(c.entryAt)}進場` : `⚠ ${N.hn} 收盤${up ? '跌破' : '漲破'} ${tlPr(up ? c.lo : c.hi)} 就失效・${tlAgo(c.touchAt)}回踩`}</span>
       <a class="btn tltv" href="https://www.tradingview.com/chart/?symbol=BINANCE:${encodeURIComponent(c.sym)}.P" target="_blank" rel="noopener">TradingView</a></footer></article>`;
 }
-function tlHist() {                                    // 📜 特級咒具歷史：沒達成的、進場後已經出場的
-  const d = TL.d, H = (d.hist || []).filter(c => TL.hf === 'all' || (TL.hf === 'fail' ? c.st === 'fail' : c.st === 'done'));
-  const ok = (d.hist || []).filter(c => c.st === 'done'), w = ok.filter(c => c.how === 'tp').length, l = ok.filter(c => c.how === 'sl').length;
-  const res = c => c.st === 'done' ? ({ tp: '<b class="qg">🎯 止盈</b>', sl: '<b class="qr">❌ 止損</b>', hold: '⏱ 持有到期' }[c.how] || c.how) : `<span class="qy">✕ 失效</span><span class="tlmut">・${esc(c.why || '')}</span>`;
-  const reach = c => { const n = c.entryAt ? 4 : c.brkAt ? 3 : 2; return `<span class="fvreach" aria-label="走到第 ${n} 步">${[1, 2, 3, 4].map(k => `<i class="${k <= n ? 'on' : ''}">${k}</i>`).join('')}</span>`; };
-  $('mnpToolH').innerHTML = `<div class="tlhead"><div><b>📜 特級咒具歷史</b><span class="tlsub">卡片沒達成（失效）或進場後已經出場，就會移到這裡。共 ${(d.hist || []).length} 筆；有進場的 ${ok.length} 筆：止盈 ${w}、止損 ${l}${w + l ? `（勝率 ${(w / (w + l) * 100).toFixed(1)}%）` : ''}。這是訊號本身的結果，實際下單請看「歷史紀錄」。</span></div>
-    <div class="tlrow tltools"><label class="tzsel">顯示 <select id="tlHf"><option value="all">全部</option><option value="fail">沒達成（失效）</option><option value="done">有進場</option></select></label>${d.owner ? '<button class="btn" id="tlHClr">清除歷史</button>' : ''}<button class="btn" id="tlHBack">🗡 回到卡片</button></div></div>
-    ${H.length ? `<div class="tablewrap"><table class="tltab"><thead><tr><th>結束時間</th><th>幣種</th><th>方向</th><th>週期</th><th>數值</th><th>走到第幾步</th><th>結果</th><th>進場／止損／止盈</th></tr></thead><tbody>
-      ${H.map(c => `<tr><td>${tlT(c.endAt)}</td><td>${esc(c.sym.replace(/USDT$/, ''))}</td><td class="${c.dir > 0 ? 'qg' : 'qr'}">${c.dir > 0 ? '做多' : '做空'}</td><td>${TL_PN[c.pair].nm}</td><td>${c.val.toFixed(2)}%</td><td>${reach(c)}</td><td>${res(c)}</td><td class="tlmut">${c.entryAt ? `${tlPr(c.entry)}／${tlPr(c.sl)}／${tlPr(c.tp)}` : '—'}</td></tr>`).join('')}</tbody></table></div>` : '<p class="tlsub">還沒有紀錄。</p>'}`;
-  $('tlHf').value = TL.hf; $('tlHf').onchange = () => { TL.hf = $('tlHf').value; tlHist(); };
+function tlHCard(c) {                                 // 📜 歷史卡片：走到哪一步、卡在哪一步、結果
+  const N = TL_PN[c.pair], up = c.dir > 0, ok = c.st === 'done', reach = c.entryAt ? 4 : c.brkAt ? 3 : 2;
+  const rc = ok ? (c.how === 'tp' ? 'tp' : c.how === 'sl' ? 'sl' : 'hold') : 'fail';
+  const step = (k, title, det) => { const s = k <= reach ? 'done' : !ok && k === reach + 1 ? 'fail' : 'todo';
+    return `<li class="fvst ${s}"><span class="fvdot" aria-hidden="true">${s === 'done' ? '✓' : s === 'fail' ? '✕' : k}</span><div><b>${title}</b>${det ? `<span>${det}</span>` : ''}</div><span class="sr">${s === 'done' ? '已完成' : s === 'fail' ? '沒達成' : '沒走到'}</span></li>`; };
+  const R = ok && c.xp ? c.dir * (c.xp / c.entry - 1) / Math.abs(c.entry / c.sl - 1) : null;
+  const res = ok ? ({ tp: '🎯 止盈', sl: '❌ 止損', hold: '⏱ 持有到期' }[c.how] || c.how) : '✕ 失效';
+  const box = ok ? `${res}：進場 ${tlPr(c.entry)} → 出場 ${tlPr(c.xp)}${R != null ? `（<b class="${R >= 0 ? 'qg' : 'qr'}">${R >= 0 ? '+' : ''}${R.toFixed(2)}R</b>）` : ''}` : `${esc(c.why || '沒達成')}`;
+  return `<article class="fvcard hist r-${rc} ${up ? 'up' : 'dn'}" aria-label="${esc(c.sym)} ${up ? '做多' : '做空'} ${N.nm} ${res}">
+    <header class="fvch"><div><b class="tlsym">${esc(c.sym.replace(/USDT$/, ''))}</b><span class="fvdir">${up ? '做多' : '做空'}・${N.nm}</span></div><span class="fvres">${res}</span></header>
+    <ol class="fvsteps">
+      ${step(1, `出現 ${N.hn} FVG／OB　數值：${c.val.toFixed(2)}%`, `範圍 ${tlPr(c.lo)}～${tlPr(c.hi)}・${tlT(c.t)} 那根`)}
+      ${step(2, '回踩價格任務達成', c.touchAt ? `${tlT(c.touchAt)} 碰到 ${tlPr(up ? c.hi : c.lo)}` : '')}
+      ${step(3, `${N.ln} 出現 CHoCH 或 BOS`, c.brkAt ? `${tlT(c.brkAt)}・${esc(c.tag || '')}` : '')}
+      ${step(4, '目標達成正在進場', c.entryAt ? `${tlT(c.entryAt)} 進場 ${tlPr(c.entry)}<br>止損 <span class="qr">${tlPr(c.sl)}</span>・止盈 <span class="qg">${tlPr(c.tp)}</span>` : '')}
+    </ol>
+    <div class="fvnext"><span>${ok ? '結果' : '失效原因'}</span>${box}</div>
+    <footer class="fvcf"><span class="tlmut">結束 ${tlT(c.endAt)}</span><a class="btn tltv" href="https://www.tradingview.com/chart/?symbol=BINANCE:${encodeURIComponent(c.sym)}.P" target="_blank" rel="noopener">TradingView</a></footer></article>`;
+}
+function tlHist() {                                    // 📜 特級咒具歷史：沒達成的、進場後已經出場的（卡片）
+  const d = TL.d, all = d.hist || [], H = all.filter(c => TL.hf === 'all' || (TL.hf === 'fail' ? c.st === 'fail' : TL.hf === 'tp' ? c.how === 'tp' : TL.hf === 'sl' ? c.how === 'sl' : c.st === 'done'));
+  const ok = all.filter(c => c.st === 'done'), w = ok.filter(c => c.how === 'tp').length, l = ok.filter(c => c.how === 'sl').length, show = TL.hn || 60;
+  $('mnpToolH').innerHTML = `<div class="tlhead"><div><b>📜 特級咒具歷史</b><span class="tlsub">卡片沒達成（失效）或進場後已經出場，就會移到這裡。共 ${all.length} 筆；有進場的 ${ok.length} 筆：止盈 ${w}、止損 ${l}${w + l ? `（勝率 ${(w / (w + l) * 100).toFixed(1)}%）` : ''}。這是訊號本身的結果，實際下單請看「歷史紀錄」。</span></div>
+    <div class="tlrow tltools"><label class="tzsel">顯示 <select id="tlHf"><option value="all">全部</option><option value="fail">沒達成（失效）</option><option value="done">有進場</option><option value="tp">止盈</option><option value="sl">止損</option></select></label>${d.owner ? '<button class="btn" id="tlHClr">清除歷史</button>' : ''}<button class="btn" id="tlHBack">🗡 回到卡片</button></div></div>
+    ${H.length ? `<div class="fvgrid">${H.slice(0, show).map(tlHCard).join('')}</div>${H.length > show ? `<button class="btn" id="tlHMore" style="align-self:center">再顯示 ${Math.min(60, H.length - show)} 張（還有 ${H.length - show} 張）</button>` : ''}` : '<p class="tlsub">還沒有紀錄。</p>'}`;
+  $('tlHf').value = TL.hf; $('tlHf').onchange = () => { TL.hf = $('tlHf').value; TL.hn = 60; tlHist(); };
+  if ($('tlHMore')) $('tlHMore').onclick = () => { TL.hn = show + 60; tlHist(); };
   $('tlHBack').onclick = () => mnOpen('tool');
   if ($('tlHClr')) $('tlHClr').onclick = async () => { if (!confirm('要清除全部的特級咒具歷史嗎？')) return; try { await srvFetch('/api/tool', { op: 'clearHist' }); tlLoad('toolh'); } catch (e) { alert(e.message); } };
 }
@@ -4080,6 +4102,9 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-10-29c', title: '2026/10/29 更新（歷史卡片）', items: [
+    { ic: '📜', sp: true, t: '「特級咒具歷史」改成卡片：每張卡片看得到走到第幾步、卡在哪一步（紅色 ✕）、失效原因或止盈止損的結果；可以只看止盈或止損。' }
+  ] },
   { id: '2026-10-29b', title: '2026/10/29 更新（模擬盤）', items: [
     { ic: '🧪', t: '管理員和擁有者可以在「☰ 選單 → 設定」切換「💰 實盤／🧪 模擬盤」。模擬盤自己存入、提出模擬資金，下單用模擬資金，不會送到 Bitunix；資金、持倉、紀錄、設定都跟實盤分開。' }
   ] },
