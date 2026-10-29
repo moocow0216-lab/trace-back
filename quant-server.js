@@ -41,7 +41,7 @@ const DEF_REP = { cap: 100, btN: 50, days: 14, next: 0 };                   // �
 let ST = { cards: [], bt: { at: 0, coins: 0, trades: [] }, set: { ...DEF_SET }, trade: { ...DEF_TRADE }, google: { clientId: '' }, eq: { ...DEF_EQ }, rep: { ...DEF_REP }, reports: [], users: [], sessions: [], accts: {}, owner: '' };
 try {
   const j = JSON.parse(fs.readFileSync(FILE, 'utf8'));
-  ST = { cards: j.cards || [], bt: j.bt || ST.bt, set: { ...DEF_SET, ...(j.set || {}) }, trade: { ...DEF_TRADE, ...(j.trade || {}) }, google: { clientId: '', ...(j.google || {}) }, eq: { ...DEF_EQ, ...(j.eq || {}) }, rep: { ...DEF_REP, ...(j.rep || {}) }, reports: j.reports || [], users: j.users || [], sessions: j.sessions || [], aws: j.aws || {}, accts: j.accts || {}, owner: j.owner || '', bstat: j.bstat || null, hb: j.hb || '', ecoDay: j.ecoDay || '', tool: j.tool || null, alive: j.alive || 0, boots: j.boots || [], exit: j.exit || null, hb2: j.hb2 || null, lastErr: j.lastErr || null };
+  ST = { cards: j.cards || [], bt: j.bt || ST.bt, set: { ...DEF_SET, ...(j.set || {}) }, trade: { ...DEF_TRADE, ...(j.trade || {}) }, google: { clientId: '', ...(j.google || {}) }, eq: { ...DEF_EQ, ...(j.eq || {}) }, rep: { ...DEF_REP, ...(j.rep || {}) }, reports: j.reports || [], users: j.users || [], sessions: j.sessions || [], aws: j.aws || {}, accts: j.accts || {}, owner: j.owner || '', bstat: j.bstat || null, hb: j.hb || '', ecoDay: j.ecoDay || '', ecoUntil: j.ecoUntil || 0, tool: j.tool || null, alive: j.alive || 0, boots: j.boots || [], exit: j.exit || null, hb2: j.hb2 || null, lastErr: j.lastErr || null };
   // 舊版（只有一個帳號）：原本的 Bitunix 金鑰、自動交易、實盤紀錄、Discord 搬到擁有者（第一個管理員）的帳號底下
   if (!j.accts && (j.bx || j.lt || j.ltTrades || j.notify)) {
     const a = ST.users.find(u => u.role === 'admin'), uid = a ? a.uid : '__owner';
@@ -926,7 +926,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-29c';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-29d';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1167,16 +1167,28 @@ function ltBotEq(X) {                                 // 一般自動交易的�
   for (const t of X.A.ltTrades) { if (t.src === 'tool' || !inStat(t, C.startAt)) continue; e += ltNet(t) + (t.status === 'open' ? (t.upnl || 0) : 0); if (t.status === 'open') used += t.margin || t.m0 || 0; }
   return { eq: e, used, free: e - used };
 }
-// 📅 有美國高影響數據公布的那一天（台北時間 00:00–23:59）整天不開新單、不反手；已開的單照常管理
+// 📅 有美國高影響數據的那一天：從當天（台北）00:00 起不開新單、不反手，直到「最後一個數據公布後 4 小時」才恢復；已開的單照常管理
 const twDay = t => new Date(t + TZ).toISOString().slice(0, 10);
+const ECO_RESUME = 4 * HOUR;
 const ecoToday = (t = Date.now()) => ECO.list.filter(e => e.imp === 'H' && twDay(e.t) === twDay(t));
-const ecoBlock = (t = Date.now()) => ecoToday(t)[0] || null;
+function ecoBlockInfo(t = Date.now()) {               // 現在是不是在擋單的時段：回傳擋到幾點、是哪些數據
+  const L = ECO.list.filter(e => e.imp === 'H' && Date.parse(twDay(e.t) + 'T00:00:00Z') - TZ <= t && t < e.t + ECO_RESUME);
+  return L.length ? { list: L, until: Math.max(...L.map(e => e.t)) + ECO_RESUME } : null;
+}
+const ecoBlock = (t = Date.now()) => ecoBlockInfo(t);
 const ecoNames = L => L.map(e => `${e.zh || e.title} ${tw(e.t).slice(-5)}`).join('、');
-function ecoDayTick() {                               // 這種日子一開始就在 Discord 通知一次
-  const L = ecoToday(), day = twDay(Date.now());
-  if (!L.length || ST.ecoDay === day) return;
-  ST.ecoDay = day; dirty = true;
-  dcAll(`📅 **今天（${day.slice(5).replace('-', '/')}）有美國重要數據：${mdEsc(ecoNames(L))}**\n自動交易今天整天不開新單、也不反手；已經開著的單照常管理（鎖利、失敗線、到期）。`, N => N.enabled);
+function ecoDayTick() {                               // 這種日子一開始通知一次；數據公布滿 4 小時、恢復開新單時再通知一次
+  const B = ecoBlockInfo(), day = twDay(Date.now());
+  if (B) {
+    if (ST.ecoUntil !== B.until) { ST.ecoUntil = B.until; dirty = true; }
+    if (ST.ecoDay !== day && ecoToday().length) {
+      ST.ecoDay = day; dirty = true;
+      dcAll(`📅 **今天（${day.slice(5).replace('-', '/')}）有美國重要數據：${mdEsc(ecoNames(ecoToday()))}**\n自動交易先不開新單、不反手，數據公布後 4 小時（**${tw(B.until).slice(-5)}**）恢復；已經開著的單照常管理。`, N => N.enabled);
+    }
+  } else if (ST.ecoUntil) {
+    ST.ecoUntil = 0; dirty = true;
+    dcAll('📅 **數據公布已經過 4 小時，自動交易恢復開新單**', N => N.enabled);
+  }
 }
 setInterval(ecoDayTick, 60000); setTimeout(ecoDayTick, 90000);
 const toolOkUid = uid => { uid = String(uid).replace(/~sim$/, ''); return uid === ownerUid() || ST.tool.grants.includes(uid); };   // 模擬盤跟本人一樣   // 🗡 有特級咒具權限
@@ -1192,7 +1204,7 @@ async function ltOpen(X, c) {
   if (!(sp ? C.sp && toolOkUid(X.uid) : C.on) || !hasKey(X)) return;
   if (LT.busy.has(c.sym)) return skip('同一個幣正在下單中（另一個訊號剛好同時出現），這次略過');
   if (!sp && C.btcF && c.btcPass === false) return skip(`${c.sym} 沒過 BTC 方向過濾（${c.abN} 項，需要 ${c.btcNeed} 項），不下單`);
-  { const L = ecoToday(); if (L.length) return skip(`今天有美國重要數據（${ecoNames(L)}），整天不開新單`, 'eco'); }
+  { const B = ecoBlockInfo(); if (B) return skip(`美國重要數據（${ecoNames(B.list)}），數據公布後 4 小時（${tw(B.until).slice(-5)}）才恢復開新單`, 'eco'); }
   LT.busy.add(c.sym);
   try {
     if (C.maxOpen && ltOpenTrades(X).length >= C.maxOpen) return skip(`已達最多同時持倉 ${C.maxOpen} 筆，${c.sym} 這次不下單`);
@@ -1282,7 +1294,7 @@ async function ltFlipOpen(X, c) {
   if (sp && !(X.A.lt.sp && toolOkUid(X.uid))) return;
   if (!opp.length) return ltOpen(X, c);
   if (!sp && X.A.lt.btcF && c.btcPass === false) { LT.msg = `${c.sym} 出現反方向訊號，但沒過 BTC 方向過濾，維持原本的單`; return; }
-  if (ecoBlock()) { LT.msg = `${c.sym} 出現反方向訊號，但今天有美國重要數據，維持原本的單`; return; }
+  if (ecoBlock()) { LT.msg = `${c.sym} 出現反方向訊號，但還在美國重要數據公布後 4 小時內，維持原本的單`; return; }
   if (LT.flip && LT.flip.has(c.sym)) return;
   (LT.flip = LT.flip || new Set()).add(c.sym);
   try {
@@ -2336,7 +2348,7 @@ http.createServer(async (req, res) => {
         eq: ST.eq, rep: { ...ST.rep, busy: REP.busy, msg: REP.msg }, rv: RV,
         bx: { set: hasKey(X), notify: X.A.bx.notify, liq: X.A.bx.liq, liqPct: X.A.bx.liqPct, at: X.BX.at, err: X.BX.err, acct: X.BX.acct,
           pos: X.BX.pos.map(p => ({ ...p, px: PX.map[p.sym] || null, tp: ((X.BX.tpsl && X.BX.tpsl.get(p.id)) || {}).tp || 0, sl: ((X.BX.tpsl && X.BX.tpsl.get(p.id)) || {}).sl || 0, sig: !!ST.cards.find(c => c.sym === p.sym && c.dir === p.dir && c.et && isLive(c)), bot: !!X.A.ltTrades.find(t => t.status === 'open' && t.positionId === p.id) })) },
-        eco: { list: ECO.list.filter(e => e.t > Date.now() - 7 * 24 * HOUR), at: ECO.at, err: ECO.err, hasNext: !!ECO.hasNext, today: ecoToday().map(e => ({ t: e.t, zh: e.zh || e.title })) },
+        eco: { list: ECO.list.filter(e => e.t > Date.now() - 7 * 24 * HOUR), at: ECO.at, err: ECO.err, hasNext: !!ECO.hasNext, today: ecoToday().map(e => ({ t: e.t, zh: e.zh || e.title })), block: (() => { const B = ecoBlockInfo(); return B ? { until: B.until, list: B.list.map(e => ({ t: e.t, zh: e.zh || e.title })) } : null; })() },
         sim: admin && meU ? (() => { const L = ctx(meU.uid).A.lt, o = { on: simOn, liveOn: !!(L.on || L.sp) }; if (simOn) { const a = simAcct(X.A.bx); Object.assign(o, { bal: +X.A.bx.bal.toFixed(4), eq: +a.eq.toFixed(4), avail: +a.avail.toFixed(4), open: X.A.bx.pos.length }); } return o; })() : null,
         lt: { cfg: X.A.lt, spSkip: X.LT.spSkip || [], bud: ltBudEq(X), low: (() => { const C = X.A.lt, a = bxEquity(X), n = C.budget > 0 ? ltBotEq(X).eq : 0, p = C.spBudget > 0 && toolOkUid(X.uid) ? ltSpEq(X).eq : 0; return a > 0 && (C.budget > 0 || C.spBudget > 0) && n + p > a + 0.01 ? { acct: a, n, sp: p } : null; })(), pause: X.LT.pause || null, toolOk: toolOkUid(X.uid), spBot: ltSpEq(X), spDay: X.LT.spDayPnl || 0, msg: X.LT.msg, dayPnl: X.LT.dayPnl || 0, v: X.v, bot: ltBotEq(X), acctEq: bxEquity(X) },
         aws: !(X.base === ownerUid()) ? null : { on: ST.aws.on, created: ST.aws.created, auto: ST.aws.auto, price: ST.aws.price, detected: awsDetect(), ...awsNext() }
