@@ -806,6 +806,31 @@ header{align-items:center}
 .qecoi{display:inline-block;font-size:10.5px;border:1px solid var(--line);border-radius:4px;padding:0 4px;color:var(--muted);margin-left:4px}
 .qecoi.h{border-color:#f5c518;color:#f5c518}
 .qver{font-size:11px;color:var(--faint);margin:-2px 0 6px}
+
+/* ===== ⚜ 設定頁：黑金配色、簡約版面 ===== */
+.mnpage[data-p="set"]{--gd:#d4af37;--gd2:#f1d77a;--gdl:#3a3018;--gbg:#0c0b09;--gin:#15130e;--gtx:#ece4cf;--gmu:#9c927a}
+.mnpage[data-p="set"] .qcfg{border:1px solid var(--gdl);background:var(--gbg);border-radius:14px;padding:14px 16px;color:var(--gtx)}
+.mnpage[data-p="set"] .qtg{border-top:1px solid var(--gdl);margin-top:14px;padding-top:14px}
+.mnpage[data-p="set"] #qsv_stat+.qtg{border-top:none;margin-top:0;padding-top:0}
+.mnpage[data-p="set"] .field:has(.qtgck){grid-column:span 2}.mnpage[data-p="set"] .qtgck{gap:12px;flex-wrap:wrap}.mnpage[data-p="set"] .qtgck label{white-space:nowrap}
+.mnpage[data-p="set"] .qtg>b,.mnpage[data-p="set"] .qwd>b,.mnpage[data-p="set"] .mnpw>b,.mnpage[data-p="set"] .simhead>b{color:var(--gd);font-size:14.5px;letter-spacing:.02em}
+.mnpage[data-p="set"] .qtg>span{color:var(--gmu)}
+.mnpage[data-p="set"] .params{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px 12px;margin-top:10px}
+.mnpage[data-p="set"] .field{color:var(--gmu);font-size:12px}
+.mnpage[data-p="set"] .field input,.mnpage[data-p="set"] .field select,.mnpage[data-p="set"] .qwd input,.mnpage[data-p="set"] .mnpw input,.mnpage[data-p="set"] .mnsim input{background:var(--gin);border:1px solid var(--gdl);color:var(--gtx);border-radius:8px;min-height:36px;padding:0 10px}
+.mnpage[data-p="set"] input:focus,.mnpage[data-p="set"] select:focus{outline:none;border-color:var(--gd);box-shadow:0 0 0 2px rgba(212,175,55,.2)}
+.mnpage[data-p="set"] .qtgck label{color:var(--gtx)}.mnpage[data-p="set"] input[type=checkbox]{accent-color:var(--gd)}
+.mnpage[data-p="set"] .qcfgnote{color:var(--gmu);font-size:12px;margin-top:8px}.mnpage[data-p="set"] .qcfgnote b{color:var(--gd2)}
+.mnpage[data-p="set"] .btn{background:transparent;border:1px solid var(--gdl);color:var(--gtx);border-radius:8px}
+.mnpage[data-p="set"] .btn:hover{border-color:var(--gd);color:var(--gd2)}
+.mnpage[data-p="set"] .btn.primary{background:linear-gradient(180deg,#e2c25a,#b8902c);border-color:#b8902c;color:#14110a;font-weight:700}
+.mnpage[data-p="set"] .btn.primary:hover{filter:brightness(1.08);color:#14110a}
+.mnpage[data-p="set"] .qspcfg{border:1px solid #6b5420!important;background:linear-gradient(180deg,rgba(212,175,55,.07),transparent 70%)!important;border-radius:12px;padding:12px 14px}
+.mnpage[data-p="set"] .qspcfg>b{color:var(--gd2)}
+.mnpage[data-p="set"] .qspbtn{border-color:var(--gdl)!important;color:var(--gtx)!important}.mnpage[data-p="set"] .qspbtn.primary{color:#14110a!important;border-color:#b8902c!important}
+.mnpage[data-p="set"] .mnacct,.mnpage[data-p="set"] .mnpw,.mnpage[data-p="set"] .mnsim{border:1px solid var(--gdl);background:var(--gbg);border-radius:14px;color:var(--gtx)}
+.mnpage[data-p="set"] .mnlab,.mnpage[data-p="set"] .mnpw small{color:var(--gmu)}
+.mnpage[data-p="set"] .qltmsg{color:var(--gmu)}
 </style>
 </head>
 <body class="quant-on mn">
@@ -988,7 +1013,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-29c</div>
+      <div class="qver" id="qVer">網站版本 2026-10-29d</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -1007,62 +1032,61 @@ header{align-items:center}
           <b>💬 Discord 通知</b><span id="qtg_stat">（還沒設定）</span>
           <div class="params">
             <label class="field">頻道的 Webhook 網址<input id="qtg_hook" type="password" autocomplete="new-password" data-lpignore="true" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="https://discord.com/api/webhooks/..."></label>
-            <label class="field">通知開關（沒勾就收不到）<span class="qtgck"><label><input type="checkbox" id="qtg_on"> 開啟通知</label><label><input type="checkbox" id="qtg_entry"> 新訊號</label><label><input type="checkbox" id="qtg_exit"> 結單</label></span></label>
+            <label class="field">通知<span class="qtgck"><label><input type="checkbox" id="qtg_on"> 開啟通知</label><label><input type="checkbox" id="qtg_entry"> 新訊號</label><label><input type="checkbox" id="qtg_exit"> 結單</label></span></label>
           </div>
           <div class="qbt" style="margin:8px 0 0">
-            <button class="btn" id="qtg_save">1. 儲存 Webhook</button>
-            <button class="btn primary" id="qtg_test">2. 傳測試訊息</button>
-            <button class="btn" id="qtg_clear">清除網址（不收通知）</button>
+            <button class="btn" id="qtg_save">儲存</button>
+            <button class="btn primary" id="qtg_test">測試</button>
+            <button class="btn" id="qtg_clear">清除</button>
           </div>
-          <div class="qcfgnote">Discord 頻道設定 → 整合 → Webhook → 新增 → 複製 Webhook 網址，貼上後按「1. 儲存」，再按「2. 傳測試訊息」確認有收到。不想收通知就按「清除網址」。</div>
+          <div class="qcfgnote">頻道設定 → 整合 → Webhook → 複製網址，貼上後儲存、測試。</div>
         </div>
         <div class="qtg">
-          <b>💼 Bitunix API（讀取＋交易）</b><span id="qbx_stat">（還沒設定）</span>
+          <b>💼 Bitunix API</b><span id="qbx_stat">（還沒設定）</span>
           <div class="params">
             <label class="field">API Key<input id="qbx_key" type="password" autocomplete="new-password" data-lpignore="true" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
             <label class="field">Secret Key<input id="qbx_sec" type="password" autocomplete="new-password" data-lpignore="true" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
             <label class="field" hidden>通知<span class="qtgck"><label><input type="checkbox" id="qbx_notify"> 開倉／平倉</label></span></label>
-            <label class="field">⚠️ 快爆倉提醒（傳到 Discord）<span class="qtgck"><label><input type="checkbox" id="qbx_liq"> 現價離強平價 <input id="qbx_pct" type="number" min="0.5" max="50" step="0.5" style="width:60px"> % 以內就提醒</label></span></label>
+            <label class="field">快爆倉提醒<span class="qtgck"><label><input type="checkbox" id="qbx_liq"> 離強平價 <input id="qbx_pct" type="number" min="0.5" max="50" step="0.5" style="width:60px"> % 內</label></span></label>
           </div>
           <div class="qbt" style="margin:8px 0 0">
             <button class="btn primary" id="qbx_save">儲存並測試</button>
             <button class="btn" id="qbx_clear">刪除金鑰</button>
           </div>
-          <div class="qcfgnote" id="qbx_note">建立 API 時權限選<b>「交易」</b>（會包含讀取），<b>不要開提現</b>，IP 白名單填 <b>3.107.254.240</b>。<br>換新帳號或新金鑰：直接貼上新的兩串按「儲存並測試」，會自動<b>暫停自動交易</b>，實盤統計也會等讀到新帳戶的資金後重新開始計算。</div>
+          <div class="qcfgnote" id="qbx_note">權限選「交易」・不要開提現・IP 白名單 <b>3.107.254.240</b>。換金鑰會自動暫停交易。</div>
         </div>
         <div class="qtg" id="qMyTrade">
           <b>📈 我的交易設定</b><span id="qmt_stat"></span>
           <div class="params">
-            <label class="field">合約投入資金（U，必填，不能大於合約帳戶資金）<input id="lt_budget" type="number" min="1" step="10" placeholder="例如 50"></label>
+            <label class="field">投入資金（U）<input id="lt_budget" type="number" min="1" step="10" placeholder="例如 50"></label>
             <label class="field">每筆保證金（U）<input id="lt_margin" type="number" min="0.01" step="0.1"></label>
-            <label class="field">單日虧損上限（U，超過自動暫停）<input id="lt_dayLoss" type="number" min="0" step="1"></label>
-            <label class="field">槓桿倍率（幣不支援就用最高）<input id="lt_lev" type="number" min="1" max="125" step="1"></label>
-            <label class="field">開始鎖利（浮盈達到幾 %）<input id="lt_tp" type="number" min="10" max="1000" step="10"></label>
-            <label class="field">鎖利線上調（浮盈每多幾 %，0＝不上調）<input id="lt_step" type="number" min="0" max="1000" step="10"></label>
-            <label class="field">持有天數（到期就平倉）<input id="lt_hold" type="number" min="0.5" max="30" step="0.5"></label>
-            <label class="field">浮虧 % 數（虧到這裡就平倉）<input id="lt_sl" type="number" min="10" max="1000" step="10"></label>
-            <label class="field">🧭 BTC 方向過濾<select id="lt_btcF"><option value="1">開：順勢、逆勢的異常項數不夠就不進場</option><option value="0">關：所有訊號都進場</option></select></label>
+            <label class="field">單日虧損上限（U）<input id="lt_dayLoss" type="number" min="0" step="1"></label>
+            <label class="field">槓桿（倍）<input id="lt_lev" type="number" min="1" max="125" step="1"></label>
+            <label class="field">開始鎖利（%）<input id="lt_tp" type="number" min="10" max="1000" step="10"></label>
+            <label class="field">鎖利上調（%）<input id="lt_step" type="number" min="0" max="1000" step="10"></label>
+            <label class="field">持有天數<input id="lt_hold" type="number" min="0.5" max="30" step="0.5"></label>
+            <label class="field">停損（%）<input id="lt_sl" type="number" min="10" max="1000" step="10"></label>
+            <label class="field">BTC 方向過濾<select id="lt_btcF"><option value="1">開</option><option value="0">關</option></select></label>
             <input id="lt_maxOpen" type="hidden">
           </div>
           <div class="qcfgnote" id="qmt_note"></div>
-          <div class="qwd"><b>💸 收回資金（一般交易）</b><input id="wd_n" type="number" min="0" step="1" placeholder="收回多少 U，留空＝全部"><button class="btn" id="wd_nGo">收回</button><span class="qltmsg" id="wd_nMsg"></span>
-            <div class="qcfgnote">把一般交易「目前」的錢收回來：只改目前的金額，盈虧率、資金曲線、成功率都不變。全部收回後一般交易會暫停；之後重新設定投入資金就能再開始（收回的紀錄會清掉）。有持倉時，持倉之後的盈虧會繼續算進來，建議先平倉再收回。</div></div>
+          <div class="qwd"><b>💸 收回資金</b><input id="wd_n" type="number" min="0" step="1" placeholder="金額（U），留空＝全部"><button class="btn" id="wd_nGo">收回</button><span class="qltmsg" id="wd_nMsg"></span></div>
         </div>
         <div class="qtg qspcfg" id="qSpCfg" hidden>
           <b>🗡 特級交易設定</b><span id="qsp_stat"></span>
           <div class="params">
-            <label class="field">特級交易投入資金（U，必填）<input id="sp_budget" type="number" min="1" step="10" placeholder="例如 50"></label>
+            <label class="field">投入資金（U）<input id="sp_budget" type="number" min="1" step="10" placeholder="例如 50"></label>
             <label class="field">每筆保證金（U）<input id="sp_margin" type="number" min="0.01" step="0.1"></label>
-            <label class="field">單日虧損上限（U，0＝不限制）<input id="sp_dayLoss" type="number" min="0" step="1"></label>
-            <label class="field">槓桿倍率（幣不支援就用最高）<input id="sp_lev" type="number" min="1" max="125" step="1"></label>
+            <label class="field">單日虧損上限（U）<input id="sp_dayLoss" type="number" min="0" step="1"></label>
+            <label class="field">槓桿（倍）<input id="sp_lev" type="number" min="1" max="125" step="1"></label>
             <label class="field" hidden>停利線：開始鎖利（浮盈達到幾 %）<input id="sp_tp" type="number" min="10" max="1000" step="10"></label>
             <label class="field" hidden>鎖利線上調（浮盈每多幾 %，0＝不上調）<input id="sp_step" type="number" min="0" max="1000" step="10"></label>
             <label class="field" hidden>停損線（浮虧幾 % 就平倉）<input id="sp_sl" type="number" min="10" max="1000" step="10"></label>
-            <label class="field">持有天數（到期就平倉）<input id="sp_hold" type="number" min="0.5" max="30" step="0.5"></label>
+            <label class="field">持有天數<input id="sp_hold" type="number" min="0.5" max="30" step="0.5"></label>
           </div>
-          <div class="qbt" style="margin:8px 0 0"><button class="btn primary qspbtn" id="sp_save">儲存特級交易設定</button><span class="qltmsg" id="sp_msg"></span></div>
-          <div class="qwd"><b>💸 收回資金（特級交易）</b><input id="wd_sp" type="number" min="0" step="1" placeholder="收回多少 U，留空＝全部"><button class="btn qspbtn" id="wd_spGo">收回</button><span class="qltmsg" id="wd_spMsg"></span></div>
-          <div class="qcfgnote">只用在 🗡 特級交易，跟上面的一般交易分開：投入資金、單日虧損上限各算各的。同一個幣出現反方向的特級咒具訊號時會<b>反手</b>（只反手特級交易自己的單，不動一般自動單和手動單）。止損、止盈由特級咒具的策略決定：止損＝15M／5M FVG 的低點（做空＝高點），會掛在交易所；止盈 1:1，由伺服器監控。</div>
+          <div class="qbt" style="margin:8px 0 0"><button class="btn primary qspbtn" id="sp_save">儲存</button><span class="qltmsg" id="sp_msg"></span></div>
+          <div class="qwd"><b>💸 收回資金</b><input id="wd_sp" type="number" min="0" step="1" placeholder="金額（U），留空＝全部"><button class="btn qspbtn" id="wd_spGo">收回</button><span class="qltmsg" id="wd_spMsg"></span></div>
+          <div class="qcfgnote">止損＝15M／5M FVG 低點（做空＝高點）・止盈 1:1・同幣反向訊號會反手。</div>
         </div>
         <div class="qtg" id="qScanBox" hidden>
           <b>🔍 掃描條件</b><span>（全站共用，只有擁有者看得到、能改）</span>
@@ -3438,7 +3462,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-29c・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-29d・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -3754,7 +3778,7 @@ function gdPage(p) {
   if (p === 'f5') return `<h2>其他好用的功能</h2>
     <div class="gdfeat"><svg class="gdic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17c3-6 6 2 9-4s6-3 9-8"></path><path d="M3 21h18"></path></svg><div><b>歷史走勢</b><p>畫出你想找的走勢，或用目前的走勢，在歷史 K 線裡找相似的段落，看之後通常怎麼走。</p></div></div>
     <div class="gdfeat"><svg class="gdic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M7 9h10"></path><path d="M7 13h6"></path></svg><div><b>加密新聞</b><p>即時新聞列表和新聞星圖，剛進來的新聞會閃光提示。</p></div></div>
-    <div class="gdfeat"><svg class="gdic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18"></path><path d="M8 3v4"></path><path d="M16 3v4"></path></svg><div><b>數據公布</b><p>最上方的黃框是美國重要經濟數據。有高影響數據的那一天，自動交易<b class="or">整天不開新單</b>。</p></div></div>
+    <div class="gdfeat"><svg class="gdic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18"></path><path d="M8 3v4"></path><path d="M16 3v4"></path></svg><div><b>數據公布</b><p>最上方的黃框是美國重要經濟數據。有高影響數據的那一天，自動交易<b class="or">先不開新單，數據公布後 4 小時恢復</b>。</p></div></div>
     <div class="gdfeat"><svg class="gdic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3"></path><path d="M12 19v3"></path><path d="M2 12h3"></path><path d="M19 12h3"></path><path d="M4.9 4.9l2.1 2.1"></path><path d="M17 17l2.1 2.1"></path><path d="M4.9 19.1L7 17"></path><path d="M17 7l2.1-2.1"></path></svg><div><b>設定</b><p>「☰ 選單 → 設定」可以隨時改 API、Discord、資金、槓桿、鎖利和停損，也能開關 BTC 方向過濾。</p></div></div>`;
   const row = (k, v, cls) => `<div class="gdsum"><span>${k}</span><b${cls ? ` class="${cls}"` : ''}>${v}</b></div>`;
   return `<div class="gddone"><div class="gdcheck"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></div><h2>設定完成</h2><p class="gdsub">下面是你目前的設定，之後都可以在「☰ 選單 → 設定」修改。</p></div>
@@ -4102,6 +4126,10 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-10-29d', title: '2026/10/29 更新（數據日、設定頁）', items: [
+    { ic: '📅', t: '美國重要數據的那一天不再整天停單：從當天 00:00 先不開新單，最後一個數據公布後 4 小時就恢復自動進場，恢復時 Discord 會通知。' },
+    { ic: '⚜', t: '「設定」頁改成黑金配色，欄位名稱和說明精簡了。' }
+  ] },
   { id: '2026-10-29c', title: '2026/10/29 更新（歷史卡片）', items: [
     { ic: '📜', sp: true, t: '「特級咒具歷史」改成卡片：每張卡片看得到走到第幾步、卡在哪一步（紅色 ✕）、失效原因或止盈止損的結果；可以只看止盈或止損。' }
   ] },
@@ -4163,7 +4191,7 @@ function gdPage2(p) {
   if (p === 'f3') return `<h2>右上角「☰ 選單」</h2><p class="gdsub">主畫面只放持倉和成功率，其他功能都在右上角的選單裡，每一項用不同顏色框起來。</p>
     ${[['👤', '設定', 'Bitunix API、Discord 通知、我的交易設定、收回資金、改密碼'], ['🔥', '熱力圖', '市場漲跌、資金費率、清算地圖'], ['📡', '訊號卡片', '系統找到的進場機會'], ['📈', '歷史走勢', '畫出走勢，找歷史上相似的段落'], ['📰', '加密新聞', '新聞列表和新聞星圖'], ['📊', '回測數據', '回測、回測報告、BTC 急漲急跌統計'], ['📋', '歷史紀錄', '每一筆交易的紀錄'], ['🐋', '幣安鯨魚大單', '即時大單'], ['📖', '使用說明', '就是這份說明書，還有更新紀錄'], ['🗡', '特級咒具', SRVLT.toolOk ? 'FVG／OB 回踩策略的卡片和特級交易（下一頁介紹）' : '開發中的新功能，需要擁有者給的密碼']].map(([i, t, d]) => `<div class="gdfeat"><span class="gdic" style="font-size:20px;text-align:center" aria-hidden="true">${i}</span><div><b>${t}</b><p>${d}</p></div></div>`).join('')}`;
   if (p === 'f4') return gdPage('f1').replace('每 10 秒掃描幣安', '<b>「☰ 選單 → 訊號卡片」</b>：每 10 秒掃描幣安');
-  if (p === 'f5') return gdPage('f4').replace('<h2>熱力圖：一眼看懂整個市場</h2>', '<h2>熱力圖：一眼看懂整個市場</h2><p class="gdsub">在「☰ 選單 → 熱力圖」。</p>') + gdTip('最上方的黃框是美國重要經濟數據，有高影響數據的那一天，自動交易<b>整天不開新單</b>。Discord 會通知自動單的開倉、鎖利、平倉、快爆倉，手動單不通知。');
+  if (p === 'f5') return gdPage('f4').replace('<h2>熱力圖：一眼看懂整個市場</h2>', '<h2>熱力圖：一眼看懂整個市場</h2><p class="gdsub">在「☰ 選單 → 熱力圖」。</p>') + gdTip('最上方的黃框是美國重要經濟數據，有高影響數據的那一天，自動交易<b>先不開新單，數據公布後 4 小時恢復</b>。Discord 會通知自動單的開倉、鎖利、平倉、快爆倉，手動單不通知。');
   if (p === 'f6') return `<div class="gdmock" style="border-color:#7f1d1d"><div class="gdmrow"><b>🗡 特級咒具</b><span class="gdchip" style="border-color:#f5c542;color:#f5c542">FVG／OB 回踩</span><span class="gdchip">4H→15M</span><span class="gdchip">1H→5M</span></div></div>
     <h2>🗡 特級咒具與特級交易</h2>
     ${gdPt('<path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"></path>', '<b>「☰ 選單 → 特級咒具」</b>：4H／1H 的 FVG／OB 被價格回踩時出現卡片，卡片上一步一步寫出走到哪裡、下一步在等什麼。沒達成的移到「📜 特級咒具歷史」。右上「⚙ 設定」可以設定自己的 Discord 通知。')}
@@ -5921,9 +5949,9 @@ function renderLt() {
   if (!C) return;
   $('qLtSt').className = 'qltst ' + (C.on ? 'on' : 'off');
   $('qLtSt').textContent = C.on ? '🤖 自動交易：運作中' : '⏸ 自動交易：暫停中';
-  const ED = (SRVECO && SRVECO.today) || [];         // 📅 今天有美國重要數據：整天不開新單
-  $('qLtEco').hidden = !ED.length;
-  $('qLtEco').textContent = ED.length ? `📅 今天有美國重要數據（${ED.map(e => `${e.zh} ${fmtT(e.t).slice(-5)}`).join('、')}），自動交易整天不開新單、不反手；已開的單照常管理。` : '';
+  const EB = SRVECO && SRVECO.block;                 // 📅 美國重要數據：公布後 4 小時才恢復開新單
+  $('qLtEco').hidden = !EB;
+  $('qLtEco').textContent = EB ? `📅 美國重要數據（${EB.list.map(e => `${e.zh} ${fmtT(e.t).slice(-5)}`).join('、')}）：${fmtT(EB.until).slice(-5)} 前不開新單、不反手（公布後 4 小時恢復），已開的單照常管理。` : '';
   $('qLtToggle').textContent = C.on ? '⏸ 暫停交易' : '▶ 開始交易';
   { const L = SRVLT.low, noB = MINE() && !(C.budget > 0), noS = MINE() && SRVLT.toolOk && !(C.spBudget > 0);   // ⚠️ 還沒填投入資金
     $('qLtLow').hidden = !(L && MINE()) && !noB && !noS;
@@ -5936,7 +5964,7 @@ function renderLt() {
     if (ok) {
       const v = { budget: C.spBudget || '', margin: C.spMargin, dayLoss: C.spDayLoss, lev: C.spLev, tp: C.spTp, step: C.spStep, sl: C.spSl, hold: Math.round((C.spHold || 168) / 24 * 10) / 10 };
       for (const k of Object.keys(v)) { const el = $('sp_' + k); if (el && document.activeElement !== el && !el.dataset.dirty) el.value = v[k] ?? ''; }
-      $('qsp_stat').textContent = `（${C.spBudget > 0 ? `投入 ${C.spBudget}U・目前 ${SB ? SB.eq.toFixed(2) : '—'}U${C.spWd > 0 ? `（已收回 ${(+C.spWd).toFixed(2)}U）` : ''}、可用 ${SB ? Math.max(0, SB.free).toFixed(2) : '—'}U・` : '不限投入資金・'}今日 ${(SRVLT.spDay || 0) >= 0 ? '+' : '−'}${Math.abs(SRVLT.spDay || 0).toFixed(2)}U${C.spDayLoss > 0 ? `（上限 −${C.spDayLoss}U）` : ''}）`;
+      $('qsp_stat').textContent = C.spBudget > 0 ? `目前 ${SB ? SB.eq.toFixed(2) : '—'}U／投入 ${C.spBudget}U・可用 ${SB ? Math.max(0, SB.free).toFixed(2) : '—'}U・今日 ${(SRVLT.spDay || 0) >= 0 ? '+' : '−'}${Math.abs(SRVLT.spDay || 0).toFixed(2)}U` : `今日 ${(SRVLT.spDay || 0) >= 0 ? '+' : '−'}${Math.abs(SRVLT.spDay || 0).toFixed(2)}U`;
     }
   }
   { const ok = !!(SRVLT.toolOk && MINE());              // 🗡 特級交易：只有特級咒具權限的人看得到
@@ -5952,7 +5980,7 @@ function renderLt() {
   if (document.activeElement !== $('lt_btcF')) $('lt_btcF').value = C.btcF ? '1' : '0';
   const AE2 = SRVLT.acctEq || 0;
   $('qmt_stat').textContent = SRVBX && SRVBX.set ? `合約帳戶目前 ${AE2.toFixed(2)}U` : '（先設定 Bitunix API）';
-  $('qmt_note').innerHTML = `<b>合約投入資金</b>：自動交易只用這筆錢（加上它自己賺的、扣掉它自己虧的）來下單，用完自動暫停；不能大於合約帳戶的資金，0＝用整個合約帳戶。<br>出場規則：浮盈碰到 <b>+${T.tp}%</b> 開始鎖利${C.step > 0 ? `，之後每多 <b>${C.step}%</b> 鎖利線往上調一次` : '（鎖在 +' + T.tp + '%）'}，跑回鎖利線就平倉；浮虧到 <b>−${C.sl}%</b> 平倉；最長持有 <b>${+((C.hold || 168) / 24).toFixed(1)} 天</b>，到期平倉。改了之後，已經開著的單也會照新規則管理。<br>幣種開不到你的槓桿時（例如你設 ${C.lev || T.lev}x、幣只能開 50x），停利、停損、鎖利間距都按比例縮小（50x 就是 +${Math.round(T.tp * 50 / (C.lev || T.lev))}% 開始鎖利、−${Math.round(T.sl * 50 / (C.lev || T.lev))}% 停損），出場的價格不變。`;
+  $('qmt_note').innerHTML = `出場：+${T.tp}% 開始鎖利${C.step > 0 ? `・每 +${C.step}% 上調` : ''}・−${C.sl}% 停損・${+((C.hold || 168) / 24).toFixed(1)} 天到期`;
 }
 async function ltCall(path, body, okMsg) {
   if (!MINE()) { alert('請先登入。'); return; }
