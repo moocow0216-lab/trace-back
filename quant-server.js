@@ -926,7 +926,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-29b';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-29c';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1108,7 +1108,7 @@ async function bxPoll(X) {
     if (!(L.startCap > 0) && L.budget > 0) { L.startCap = L.budget; L.startAt = L.startAt || Date.now(); touchLT(X); }
     else if (!(L.startCap > 0) && eqNow >= 1) {          // 第一次看到帳戶有 1U 以上：實盤統計就從這個金額、這個時間開始（零頭不算，避免一直重複通知）
       L.startCap = Math.round(eqNow * 100) / 100; L.startAt = Date.now(); touchLT(X);
-      dcX(X, `💰 偵測到 Bitunix 帳戶資金 **${L.startCap}U**，實盤統計從現在開始計算`);
+      dcX(X, X.sim ? `💰 模擬帳戶資金 **${L.startCap}U**，模擬盤統計從現在開始計算` : `💰 偵測到 Bitunix 帳戶資金 **${L.startCap}U**，實盤統計從現在開始計算`);
     }
   } catch (e) { BX.err = e.message; }
 }
@@ -1460,10 +1460,7 @@ async function ltReconcile(X, pos) {
   if (ch) touchLT(X);
 }
 
-/* ================= 🗡 特級咒具：莊家進場、H4/H1 CRT 進場、獵殺進場 =================
-   移植自擁有者的兩套 TradingView 指標（只有這三種進場；BigBeluga 的清算熱力圖沒有用到）。
-   兩組週期：4H→15 分、1H→5 分。每根小週期 K 棒收盤後，掃描成交額前 N 個幣，出現進場就記下來、傳 Discord。
-   莊家淨額：原指標用 1 分 K 的漲跌方向推估主動買賣；這裡改用幣安直接給的主動買入成交額（主動買 − 主動賣），更準但數字會跟 TradingView 有些差 */
+/* ================= 🗡 特級咒具：設定、權限、狀態（策略本身在下面的「FVG／OB 回踩策略」） ================= */
 const DEF_TOOL = { pw: null, grants: [], hooks: {}, px: {}, set: { n: 10, h4: true, h1: true, vmin: 0, vmax: 0.5 }, cards: {}, hist: [], wait: {}, scan: { at: 0, coins: 0, err: '', n: 0 } };
 ST.tool = { ...DEF_TOOL, ...(ST.tool || {}) }; ST.tool.set = { ...DEF_TOOL.set, ...(ST.tool.set || {}) }; ST.tool.scan = { ...DEF_TOOL.scan };
 if (ST.tool.bt && ST.tool.bt.v !== 2) { ST.tool.bt = null; dirty = true; }   // 舊版策略的回測結果清掉
@@ -2556,7 +2553,7 @@ http.createServer(async (req, res) => {
           if (b.sp && !(C.spBudget > 0)) return send(res, 400, { error: '請先到「☰ 選單 → 設定 → 🗡 特級交易設定」填「特級交易投入資金」，再開始特級交易' });
           if (b.sp && C.spBudget > 0) { const B = ltSpEq(X); if (B.eq <= 0) return send(res, 400, { error: `特級交易的投入資金已經用完（目前 ${B.eq.toFixed(2)}U），開始了也會馬上暫停。請到「選單 → 設定 → 特級交易設定」調高投入資金` }); }
           C.spAllOff = false; C.rsSp = false;
-          if (C.sp !== b.sp) { C.sp = b.sp; if (!b.sp) X.LT.pause = { t: Date.now(), why: '你按了暫停特級交易' }; else if (X.LT.pause && /特級/.test(X.LT.pause.why)) X.LT.pause = null; dcX(X, b.sp ? `🗡 **特級交易已開始**：特級咒具的莊家、CRT、獵殺進場訊號會用你的帳戶真實下單\n每筆 ${C.spMargin}U・${C.spLev}x・浮盈 +${C.spTp}% 開始鎖利、每 ${C.spStep}% 上調・浮虧 −${C.spSl}% 停損・持有 ${Math.round(C.spHold / 24 * 10) / 10} 天${C.spBudget > 0 ? `・投入 ${C.spBudget}U` : ''}${C.spDayLoss > 0 ? `・單日虧損上限 ${C.spDayLoss}U` : ''}` : '⏸ **特級交易已暫停**（已開的單照常管理）'); }
+          if (C.sp !== b.sp) { C.sp = b.sp; if (!b.sp) X.LT.pause = { t: Date.now(), why: '你按了暫停特級交易' }; else if (X.LT.pause && /特級/.test(X.LT.pause.why)) X.LT.pause = null; dcX(X, b.sp ? `🗡 **特級交易已開始**：特級咒具的 🧱 FVG／OB 回踩進場會${X.sim ? '用模擬資金下單' : '用你的 Bitunix 帳戶真實下單'}\n每筆 ${C.spMargin}U・${C.spLev}x・止損＝15M／5M FVG 的低點（做空＝高點）・止盈 1:1・持有 ${Math.round(C.spHold / 24 * 10) / 10} 天${C.spBudget > 0 ? `・投入 ${C.spBudget}U` : ''}${C.spDayLoss > 0 ? `・單日虧損上限 ${C.spDayLoss}U` : ''}` : '⏸ **特級交易已暫停**（已開的單照常管理）'); }
         }
         if (+b.margin > 0) C.margin = +b.margin;
         if (+b.lev >= 1 && +b.lev <= 125) C.lev = Math.round(+b.lev);
