@@ -646,6 +646,12 @@ body.mode-pat #qPanel,body.mode-news #qPanel,body.mode-pat #newsPanel,body.mode-
 .fvcf{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:auto}.fvcf .tlmut{font-size:11.5px;line-height:1.4}
 .fvreach{display:inline-flex;gap:3px}.fvreach i{font-style:normal;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-size:11px;border:1px solid #3a4455;color:var(--faint)}.fvreach i.on{background:#22c55e;border-color:#22c55e;color:#06200f;font-weight:700}
 .fvlab{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+.mnsim{border:1px solid #6b5422;border-radius:12px;padding:12px 14px;background:rgba(245,182,66,.05);display:flex;flex-direction:column;gap:8px;margin:10px 0}
+.simhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.simseg{display:flex;gap:6px}
+.simseg .btn[aria-pressed="true"]{box-shadow:0 0 0 2px rgba(245,182,66,.45)}
+.simbal{font-size:14px}.simwarn{margin:0;color:#fbbf24;font-size:13px}
+.simbadge{margin:0 6px;padding:2px 10px;border-radius:999px;border:1px solid #f59e0b;background:rgba(245,158,11,.15);color:#fbbf24;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
+body.simmode::before{content:"";position:fixed;inset:0 0 auto;height:3px;background:repeating-linear-gradient(90deg,#f59e0b 0 14px,transparent 14px 24px);z-index:200;pointer-events:none}
 .tllockic{font-size:40px}.tllock h3{margin:0}.tllock p{margin:0;color:var(--muted);line-height:1.6}.tllock .tlrow{width:100%}.mnic{width:22px;text-align:center}
 .mnsheet{position:fixed;inset:0;z-index:80;background:var(--bg,#0b0f16);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
 .mnsheethead{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid #262d3a;background:rgba(11,15,22,.96)}.mnsheethead h2{margin:0;font-size:17px}
@@ -977,7 +983,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-29a</div>
+      <div class="qver" id="qVer">網站版本 2026-10-29b</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -1305,6 +1311,7 @@ header{align-items:center}
 <div id="mnpToolH" class="tlwrap" hidden></div>
 <div id="mnpSet" class="mnacctwrap">
   <div class="mnacct"><div><span class="mnlab">登入的 Bitunix UID</span><b id="mnUid"></b> <span id="mnRole"></span></div><button class="btn" id="mnLogout">登出</button></div>
+  <div class="mnsim" id="mnSim" hidden></div>
   <div class="mnpw"><b>更改密碼</b>
     <label>目前的密碼<input id="mnPwOld" type="password" autocomplete="current-password"></label>
     <label>新密碼（至少 8 個字）<input id="mnPw1" type="password" autocomplete="new-password"></label>
@@ -3422,10 +3429,11 @@ async function srvPull() {
     if (j.notify) { tgShow(j.notify); GD.nt = j.notify; setTimeout(gdAuto, 0); }   // 📖 新帳號第一次登入：自動打開使用說明
     if (OWN() && !SV.pushed) { SV.pushed = true; pushTrade(); pushEq(); }
     if (j.rep) SRVREP.rep = j.rep;
+    SRV.sim = j.sim || null; simUi();
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-29a・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-29b・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -3973,6 +3981,39 @@ function tbRender(d) {
     };
   }
 }
+/* ---------- 🧪 模擬盤／實盤（管理員、擁有者）：在「☰ 選單 → 設定」切換；模擬盤可以自己存入、提出模擬資金 ---------- */
+function simUi() {
+  const M = SRV.sim, box = $('mnSim'); if (!box) return;
+  document.body.classList.toggle('simmode', !!(M && M.on));
+  if ($('qSimB')) $('qSimB').innerHTML = M && M.on ? '<button class="simbadge" id="qSimGo" title="打開設定切換模式">🧪 模擬盤</button>' : '';
+  if ($('qSimGo')) $('qSimGo').onclick = () => mnOpen('set');
+  box.hidden = !M; if (!M) return;
+  if (!$('simLive')) {
+    box.innerHTML = `<div class="simhead"><b>交易模式</b><div class="simseg" role="group" aria-label="交易模式"><button class="btn" id="simLive">💰 實盤</button><button class="btn" id="simPaper">🧪 模擬盤</button></div></div>
+      <p class="tlsub">只有管理員和擁有者能用。模擬盤的資金、持倉、交易紀錄、交易設定都跟實盤分開，下單不會送到 Bitunix；成交價用幣安最新價，手續費照設定扣。切換後整個網站（持倉、資金曲線、歷史紀錄、自動交易、特級交易）都會換成那一邊。</p>
+      <div id="simFund" hidden><div class="simbal" id="simBal"></div>
+        <div class="tlrow"><input id="simAmt" type="number" min="0" step="10" placeholder="金額（U）" aria-label="模擬資金金額"><button class="btn primary" id="simIn">存入</button><button class="btn" id="simOut">提出</button><button class="btn" id="simReset">重置模擬盤</button></div>
+        <p class="mnmsg" id="simMsg" role="status"></p></div>
+      <p class="simwarn" id="simWarn" hidden></p>`;
+    const msg = (ok, t) => { $('simMsg').className = 'mnmsg ' + (ok ? 'ok' : 'bad'); $('simMsg').textContent = t; };
+    const go = async sim => {
+      if (!!SRV.sim.on === sim) return;
+      if (!confirm(sim ? '切到 🧪 模擬盤？\n\n之後網站上看的、按的都是模擬帳號，下單用模擬資金，不會送到 Bitunix。\n實盤如果開著自動交易或特級交易，會繼續在背景運作，不會因為切換而停止。' : '切回 💰 實盤？\n\n之後網站上看的、按的都是你的 Bitunix 真實帳戶。\n模擬盤如果開著自動交易，會繼續用模擬資金在背景運作。')) return;
+      try { await srvFetch('/api/sim', { op: 'mode', sim }); location.reload(); } catch (e) { alert(e.message); }
+    };
+    $('simLive').onclick = () => go(false); $('simPaper').onclick = () => go(true);
+    const fund = async sign => { const v = +$('simAmt').value; if (!(v > 0)) return msg(0, '請輸入金額');
+      try { await srvFetch('/api/sim', { op: 'fund', amount: sign * v }); $('simAmt').value = ''; msg(1, `已${sign > 0 ? '存入' : '提出'} ${v}U`); srvPull(); } catch (e) { msg(0, e.message); } };
+    $('simIn').onclick = () => fund(1); $('simOut').onclick = () => fund(-1);
+    $('simReset').onclick = async () => { if (!confirm('重置模擬盤？模擬資金歸零，模擬的交易紀錄全部清掉，自動交易、特級交易也會關掉（交易設定保留）。')) return;
+      try { await srvFetch('/api/sim', { op: 'reset' }); msg(1, '已重置，請重新存入模擬資金'); srvPull(); } catch (e) { msg(0, e.message); } };
+  }
+  $('simLive').setAttribute('aria-pressed', String(!M.on)); $('simPaper').setAttribute('aria-pressed', String(!!M.on));
+  $('simLive').classList.toggle('primary', !M.on); $('simPaper').classList.toggle('primary', !!M.on);
+  $('simFund').hidden = !M.on;
+  if (M.on) $('simBal').innerHTML = `模擬資金：餘額 <b>${M.bal.toFixed(2)}U</b>・權益 <b class="${M.eq >= M.bal ? 'qg' : 'qr'}">${M.eq.toFixed(2)}U</b>・可用 ${Math.max(0, M.avail).toFixed(2)}U・持倉 ${M.open} 筆`;
+  $('simWarn').hidden = !(M.on && M.liveOn); if (M.on && M.liveOn) $('simWarn').textContent = '⚠ 實盤的自動交易／特級交易還在運作（用真錢）。要停的話，請切回實盤按暫停。';
+}
 function mnInit() {
   const body = $('mnSheetBody');
   for (const [k, , , id] of MN_ITEMS) {                // 每一項一個頁面容器；把原本的區塊搬進來
@@ -4039,6 +4080,9 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-10-29b', title: '2026/10/29 更新（模擬盤）', items: [
+    { ic: '🧪', t: '管理員和擁有者可以在「☰ 選單 → 設定」切換「💰 實盤／🧪 模擬盤」。模擬盤自己存入、提出模擬資金，下單用模擬資金，不會送到 Bitunix；資金、持倉、紀錄、設定都跟實盤分開。' }
+  ] },
   { id: '2026-10-29', title: '2026/10/29 更新', items: [
     { ic: '🗡', sp: true, t: '特級咒具全部重做：改成 FVG／OB 回踩策略，只看成交額前 10 個幣。① 4H／1H 出現 FVG／OB（數值 ≤ 0.5%）→ ② 價格回踩 → ③ 15M／5M 出現 CHoCH 或 BOS → ④ 回踩 15M／5M FVG 進場。' },
     { ic: '🪜', sp: true, t: '特級咒具主畫面改成直式卡片、橫向排列：價格回踩時卡片出現，一步一步寫出完成到哪裡、下一步在等什麼。' },
@@ -5551,7 +5595,7 @@ function gateShow(msg) {
 function gateHide() {
   document.body.classList.remove('gated'); $('qGate').hidden = true;
   $('qUserBox').hidden = false; $('qUid').textContent = SRV.uid || '管理金鑰';
-  if (!$('qRoleB')) $('qLogout').insertAdjacentHTML('beforebegin', '<span id="qRoleB"></span>');
+  if (!$('qRoleB')) $('qLogout').insertAdjacentHTML('beforebegin', '<span id="qRoleB"></span><span id="qSimB"></span>');
   $('qRoleB').innerHTML = roleBadge(SRV.role, SRV.owner);
   $('qAdmBtn').hidden = !CANW();
   window.qWhaleFetch = (sym, a) => srvFetch(`/api/whale?sym=${encodeURIComponent(sym)}&a=${a || 0}`);   // 🐋 鯨魚大單改由伺服器收集
