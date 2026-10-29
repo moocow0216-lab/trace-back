@@ -1013,7 +1013,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-29d</div>
+      <div class="qver" id="qVer">網站版本 2026-10-29e</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3462,7 +3462,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-29d・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-29e・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -3778,7 +3778,7 @@ function gdPage(p) {
   if (p === 'f5') return `<h2>其他好用的功能</h2>
     <div class="gdfeat"><svg class="gdic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17c3-6 6 2 9-4s6-3 9-8"></path><path d="M3 21h18"></path></svg><div><b>歷史走勢</b><p>畫出你想找的走勢，或用目前的走勢，在歷史 K 線裡找相似的段落，看之後通常怎麼走。</p></div></div>
     <div class="gdfeat"><svg class="gdic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M7 9h10"></path><path d="M7 13h6"></path></svg><div><b>加密新聞</b><p>即時新聞列表和新聞星圖，剛進來的新聞會閃光提示。</p></div></div>
-    <div class="gdfeat"><svg class="gdic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18"></path><path d="M8 3v4"></path><path d="M16 3v4"></path></svg><div><b>數據公布</b><p>最上方的黃框是美國重要經濟數據。有高影響數據的那一天，自動交易<b class="or">先不開新單，數據公布後 4 小時恢復</b>。</p></div></div>
+    <div class="gdfeat"><svg class="gdic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18"></path><path d="M8 3v4"></path><path d="M16 3v4"></path></svg><div><b>數據公布</b><p>最上方的黃框是美國重要經濟數據。有高影響數據時，自動交易在<b class="or">公布前後各 4 小時不開新單</b>，其他時間照常。</p></div></div>
     <div class="gdfeat"><svg class="gdic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 2v3"></path><path d="M12 19v3"></path><path d="M2 12h3"></path><path d="M19 12h3"></path><path d="M4.9 4.9l2.1 2.1"></path><path d="M17 17l2.1 2.1"></path><path d="M4.9 19.1L7 17"></path><path d="M17 7l2.1-2.1"></path></svg><div><b>設定</b><p>「☰ 選單 → 設定」可以隨時改 API、Discord、資金、槓桿、鎖利和停損，也能開關 BTC 方向過濾。</p></div></div>`;
   const row = (k, v, cls) => `<div class="gdsum"><span>${k}</span><b${cls ? ` class="${cls}"` : ''}>${v}</b></div>`;
   return `<div class="gddone"><div class="gdcheck"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></div><h2>設定完成</h2><p class="gdsub">下面是你目前的設定，之後都可以在「☰ 選單 → 設定」修改。</p></div>
@@ -4126,8 +4126,8 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
-  { id: '2026-10-29d', title: '2026/10/29 更新（數據日、設定頁）', items: [
-    { ic: '📅', t: '美國重要數據的那一天不再整天停單：從當天 00:00 先不開新單，最後一個數據公布後 4 小時就恢復自動進場，恢復時 Discord 會通知。' },
+  { id: '2026-10-29e', title: '2026/10/29 更新（數據日、設定頁）', items: [
+    { ic: '📅', t: '美國重要數據不再整天停單：只有公布前 4 小時到公布後 4 小時不開新單，其他時間照常進場；停單、恢復時 Discord 都會通知。' },
     { ic: '⚜', t: '「設定」頁改成黑金配色，欄位名稱和說明精簡了。' }
   ] },
   { id: '2026-10-29c', title: '2026/10/29 更新（歷史卡片）', items: [
@@ -4191,7 +4191,7 @@ function gdPage2(p) {
   if (p === 'f3') return `<h2>右上角「☰ 選單」</h2><p class="gdsub">主畫面只放持倉和成功率，其他功能都在右上角的選單裡，每一項用不同顏色框起來。</p>
     ${[['👤', '設定', 'Bitunix API、Discord 通知、我的交易設定、收回資金、改密碼'], ['🔥', '熱力圖', '市場漲跌、資金費率、清算地圖'], ['📡', '訊號卡片', '系統找到的進場機會'], ['📈', '歷史走勢', '畫出走勢，找歷史上相似的段落'], ['📰', '加密新聞', '新聞列表和新聞星圖'], ['📊', '回測數據', '回測、回測報告、BTC 急漲急跌統計'], ['📋', '歷史紀錄', '每一筆交易的紀錄'], ['🐋', '幣安鯨魚大單', '即時大單'], ['📖', '使用說明', '就是這份說明書，還有更新紀錄'], ['🗡', '特級咒具', SRVLT.toolOk ? 'FVG／OB 回踩策略的卡片和特級交易（下一頁介紹）' : '開發中的新功能，需要擁有者給的密碼']].map(([i, t, d]) => `<div class="gdfeat"><span class="gdic" style="font-size:20px;text-align:center" aria-hidden="true">${i}</span><div><b>${t}</b><p>${d}</p></div></div>`).join('')}`;
   if (p === 'f4') return gdPage('f1').replace('每 10 秒掃描幣安', '<b>「☰ 選單 → 訊號卡片」</b>：每 10 秒掃描幣安');
-  if (p === 'f5') return gdPage('f4').replace('<h2>熱力圖：一眼看懂整個市場</h2>', '<h2>熱力圖：一眼看懂整個市場</h2><p class="gdsub">在「☰ 選單 → 熱力圖」。</p>') + gdTip('最上方的黃框是美國重要經濟數據，有高影響數據的那一天，自動交易<b>先不開新單，數據公布後 4 小時恢復</b>。Discord 會通知自動單的開倉、鎖利、平倉、快爆倉，手動單不通知。');
+  if (p === 'f5') return gdPage('f4').replace('<h2>熱力圖：一眼看懂整個市場</h2>', '<h2>熱力圖：一眼看懂整個市場</h2><p class="gdsub">在「☰ 選單 → 熱力圖」。</p>') + gdTip('最上方的黃框是美國重要經濟數據，有高影響數據時，自動交易在<b>公布前後各 4 小時不開新單</b>，其他時間照常。Discord 會通知自動單的開倉、鎖利、平倉、快爆倉，手動單不通知。');
   if (p === 'f6') return `<div class="gdmock" style="border-color:#7f1d1d"><div class="gdmrow"><b>🗡 特級咒具</b><span class="gdchip" style="border-color:#f5c542;color:#f5c542">FVG／OB 回踩</span><span class="gdchip">4H→15M</span><span class="gdchip">1H→5M</span></div></div>
     <h2>🗡 特級咒具與特級交易</h2>
     ${gdPt('<path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"></path>', '<b>「☰ 選單 → 特級咒具」</b>：4H／1H 的 FVG／OB 被價格回踩時出現卡片，卡片上一步一步寫出走到哪裡、下一步在等什麼。沒達成的移到「📜 特級咒具歷史」。右上「⚙ 設定」可以設定自己的 Discord 通知。')}
@@ -5949,9 +5949,9 @@ function renderLt() {
   if (!C) return;
   $('qLtSt').className = 'qltst ' + (C.on ? 'on' : 'off');
   $('qLtSt').textContent = C.on ? '🤖 自動交易：運作中' : '⏸ 自動交易：暫停中';
-  const EB = SRVECO && SRVECO.block;                 // 📅 美國重要數據：公布後 4 小時才恢復開新單
+  const EB = SRVECO && SRVECO.block;                 // 📅 美國重要數據：公布前後 4 小時不開新單（現在或 24 小時內的時段）
   $('qLtEco').hidden = !EB;
-  $('qLtEco').textContent = EB ? `📅 美國重要數據（${EB.list.map(e => `${e.zh} ${fmtT(e.t).slice(-5)}`).join('、')}）：${fmtT(EB.until).slice(-5)} 前不開新單、不反手（公布後 4 小時恢復），已開的單照常管理。` : '';
+  $('qLtEco').textContent = EB ? `📅 美國重要數據（${EB.list.map(e => `${e.zh} ${fmtT(e.t).slice(-5)}`).join('、')}）：${fmtT(EB.from).slice(-11)}～${fmtT(EB.until).slice(-11)} 不開新單、不反手${EB.on ? '（現在暫停中）' : '，其他時間照常'}；已開的單照常管理。` : '';
   $('qLtToggle').textContent = C.on ? '⏸ 暫停交易' : '▶ 開始交易';
   { const L = SRVLT.low, noB = MINE() && !(C.budget > 0), noS = MINE() && SRVLT.toolOk && !(C.spBudget > 0);   // ⚠️ 還沒填投入資金
     $('qLtLow').hidden = !(L && MINE()) && !noB && !noS;
