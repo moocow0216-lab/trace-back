@@ -926,7 +926,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-29e';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-29f';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1238,7 +1238,7 @@ async function ltOpen(X, c) {
       LT.lev[c.sym] = key;
     }
     // 失敗線用「設定的槓桿」換算價格（例如 100x、−250% ＝ 價格反向 2.5%）；幣只支援 50x 時實際虧損是 −125%，但跟訊號模擬同一個價格出場
-    const T = sp ? TS(X) : TT(X), pSL = sp && c.sl > 0, qp = +pr.quotePrecision || 4;   // 🗡 FVG／OB 策略：止損＝小週期 FVG 的低點（做空＝高點），止盈 1:1
+    const T = sp ? TS(X) : TT(X), pSL = sp && c.sl > 0, qp = +pr.quotePrecision || 4;   // 🗡 FVG／OB 策略：止損＝4H／1H FVG／OB 的低點（做空＝高點），止盈 1:1
     if (pSL && c.dir * (px - c.sl) <= 0) return skip(`${c.sym} 現價 ${fpx(px)} 已經超過止損 ${fpx(c.sl)}，不下單`);
     const slPx = pSL ? c.sl : px * (1 - c.dir * T.sl / 100 / LV);
     const base = { symbol: c.sym, qty: String(qty), side: c.dir > 0 ? 'BUY' : 'SELL', tradeSide: 'OPEN', orderType: 'MARKET', clientId: 'q' + Date.now().toString(36) };
@@ -1258,7 +1258,7 @@ async function ltOpen(X, c) {
     };
     X.A.ltTrades.unshift(t); X.A.ltTrades = X.A.ltTrades.slice(0, 2000); touchLT(X);
     log('自動開倉', X.uid, c.sym, c.dir > 0 ? '做多' : '做空', qty, '@', t.entry);
-    if (pSL) { const rl = (v) => (c.dir * (v / t.entry - 1) * lev * 100).toFixed(0); dcX(X, `🗡 **特級交易開倉**（🧱 FVG／OB 回踩・${c.tpair === 'h4' ? '4H→15 分' : '1H→5 分'}） ${c.dir > 0 ? '🟢 做多' : '🔴 做空'} **${mdEsc(c.sym)}**\n成交價 ${fpx(t.entry)}・${lev}x 全倉・數量 ${t.qty}・保證金約 ${t.margin.toFixed(2)}U\n止損 ${fpx(t.pSl)}（${rl(t.pSl)}%，小週期 FVG ${c.dir > 0 ? '低點' : '高點'}）${exSL ? '・已掛在交易所' : '・⚠️ 交易所止損沒設成功，改由伺服器監控'}\n止盈 ${fpx(t.pTp)}（+${rl(t.pTp)}%，盈虧比 1:1，伺服器監控）`); return; }
+    if (pSL) { const rl = (v) => (c.dir * (v / t.entry - 1) * lev * 100).toFixed(0); dcX(X, `🗡 **特級交易開倉**（🧱 FVG／OB 回踩・${c.tpair === 'h4' ? '4H→15 分' : '1H→5 分'}） ${c.dir > 0 ? '🟢 做多' : '🔴 做空'} **${mdEsc(c.sym)}**\n成交價 ${fpx(t.entry)}・${lev}x 全倉・數量 ${t.qty}・保證金約 ${t.margin.toFixed(2)}U\n止損 ${fpx(t.pSl)}（${rl(t.pSl)}%，${c.tpair === 'h4' ? '4H' : '1H'} FVG／OB ${c.dir > 0 ? '低點' : '高點'}）${exSL ? '・已掛在交易所' : '・⚠️ 交易所止損沒設成功，改由伺服器監控'}\n止盈 ${fpx(t.pTp)}（+${rl(t.pTp)}%，盈虧比 1:1，伺服器監控）`); return; }
     dcX(X, `${sp ? `🗡 **特級交易開倉**（${c.tpair === 'h4' ? '4H→15 分' : '1H→5 分'}）` : '🤖 **自動開倉**'} ${c.dir > 0 ? '🟢 做多' : '🔴 做空'} **${mdEsc(c.sym)}**\n成交價 ${fpx(t.entry)}・${lev}x 全倉・數量 ${t.qty}・保證金約 ${t.margin.toFixed(2)}U\n${exSL ? `交易所止損 ${fpx(slPx)}（−${pctK(T.sl, lev / LV)}%）` : '⚠️ 交易所止損沒設成功，改由伺服器監控'}\n出場規則：浮盈 **+${pctK(T.tp, lev / LV)}%** 開始鎖利、浮虧 **−${pctK(T.sl, lev / LV)}%** 停損${lev !== LV ? `\n-# 這個幣最高 ${lev}x，你設 ${LV}x：停利停損按 ${lev}÷${LV} 縮小（你的 +${T.tp}%／−${T.sl}%），出場價格不變` : ''}`);
   } catch (e) { LT.msg = `${c.sym} 自動下單失敗：${e.message}`; log(X.uid, LT.msg); dcX(X, `❗ **自動下單失敗** ${mdEsc(c.sym)}：${mdEsc(e.message)}`); }
   finally { LT.busy.delete(c.sym); }
@@ -1496,7 +1496,7 @@ async function toolKl(sym, iv, limit, ms) {           // 只要已經收盤的 K
    ① 4H／1H 出現 FVG／OB：照 BigBeluga「FVG Order Blocks」（缺口 % ＝數值，要在設定的範圍內）
    ② 價格回到 FVG／OB（用 15 分／5 分 K 看有沒有碰到）→ 卡片出現
    ③ 15 分／5 分出現同方向 CHoCH 或 BOS：照 LuxAlgo「Smart Money Concepts」（Swing 50＋Internal 5）
-   ④ 回踩 15 分／5 分 FVG：照「CRT + SMC」指標的 FVG 判斷 → 進場；止損＝那個 FVG 的低點（做空＝高點），止盈 1:1
+   ④ 回踩 15 分／5 分 FVG：照「CRT + SMC」指標的 FVG 判斷 → 進場；止損＝4H／1H FVG／OB 範圍的低點（做空＝高點），止盈 1:1
    失效（卡片丟到歷史）：回踩後 4H／1H 收盤收破整個 FVG／OB 範圍；FVG／OB 被指標刪掉；回踩後太久沒進場 */
 function toolAtr(B, len) {                            // ta.atr（RMA）
   const out = new Array(B.length).fill(NaN); let rma = NaN, sum = 0;
@@ -1583,7 +1583,7 @@ function toolStrat(H, L, P, o) {
         if (dn && z.st === 'brk') { z.st = 'touch'; z.resets = (z.resets || 0) + 1; z.brkAt = 0; z.tag = ''; }   // 反方向結構：回到等 CHoCH／BOS
         const f = z.dir > 0 ? hB : hS;
         if (z.st === 'brk' && i > z.bI && f) {          // ④ 回踩小週期 FVG → 進場
-          const e = b.c, sl = z.dir > 0 ? f.bot : f.top, rk = z.dir * (e - sl);
+          const e = b.c, sl = z.dir > 0 ? z.lo : z.hi, rk = z.dir * (e - sl);   // 止損＝4H／1H 的 FVG／OB 整個範圍的外緣（做多＝最低、做空＝最高）
           if (rk > 0) { Object.assign(z, { st: 'entry', entryAt: ct, eI: i, entry: e, sl, tp: e + z.dir * rk, fvgL: f.bot, fvgH: f.top }); continue; }
         }
       }
@@ -1614,11 +1614,11 @@ async function toolUniverse(n) {                       // 成交額前 N 個 USD
 }
 function toolNotify(s) {                               // 進場通知（Discord）
   const P = TOOL_P[s.pair];
-  const msg = `🗡 **特級咒具**｜${s.dir > 0 ? '🟢 **做多**' : '🔴 **做空**'} **${mdEsc(s.sym)}**・🧱 FVG／OB 回踩（${P.name}）\n① ${P.hn} FVG／OB 數值 ${s.val.toFixed(2)}%・② 回踩 ${tw(s.touchAt)}・③ ${P.ln} ${s.tag || 'CHoCH／BOS'}\n④ 進場 ${tw(s.entryAt)}（台北）・價格 ${fpx(s.entry)}\n止損 ${fpx(s.sl)}（${P.ln} FVG ${s.dir > 0 ? '低點' : '高點'}）・止盈 ${fpx(s.tp)}（1:1）`;
+  const msg = `🗡 **特級咒具**｜${s.dir > 0 ? '🟢 **做多**' : '🔴 **做空**'} **${mdEsc(s.sym)}**・🧱 FVG／OB 回踩（${P.name}）\n① ${P.hn} FVG／OB 數值 ${s.val.toFixed(2)}%・② 回踩 ${tw(s.touchAt)}・③ ${P.ln} ${s.tag || 'CHoCH／BOS'}\n④ 進場 ${tw(s.entryAt)}（台北）・價格 ${fpx(s.entry)}\n止損 ${fpx(s.sl)}（${P.hn} FVG／OB ${s.dir > 0 ? '低點' : '高點'}）・止盈 ${fpx(s.tp)}（1:1）`;
   const seen = new Set();
   for (const uid of toolUsers()) { let h = ''; try { h = dec(ST.tool.hooks[uid] || ''); } catch (e) {} if (!h || seen.has(h)) continue; seen.add(h); dcSend(msg, { webhook: h }); }
 }
-/* ---------- 🗡 特級咒具回測：同一套策略，用歷史 K 線從頭跑；止損＝小週期 FVG 低點、止盈 1:1；槓桿、每筆保證金、初始資金、手續費、持有天數照「特級交易設定」 ---------- */
+/* ---------- 🗡 特級咒具回測：同一套策略，用歷史 K 線從頭跑；止損＝4H／1H FVG／OB 低點（做空＝高點）、止盈 1:1；槓桿、每筆保證金、初始資金、手續費、持有天數照「特級交易設定」 ---------- */
 const TBT = { run: false, done: 0, total: 0, msg: '' };
 async function toolKlRange(sym, iv, ms, from, to) {     // 分段抓一段期間的 K 線（只要已收盤的）
   const out = []; let s0 = from;
@@ -1696,6 +1696,16 @@ function toolArchive(c, why) {                         // 卡片結束 → 歷�
   if (why) Object.assign(c, { st: 'fail', why, wc: 'gone', endAt: Date.now() });
   T.hist.unshift(c); T.hist.sort((a, b) => (b.endAt || 0) - (a.endAt || 0)); if (T.hist.length > 300) T.hist.length = 300;
 }
+setInterval(() => {                                    // 已進場的卡片：每 3 秒用即時價格看有沒有碰到止損／止盈，碰到就馬上移到歷史（不用等下一根 K 棒收盤）
+  const T = ST.tool; let ch = false;
+  for (const c of Object.values(T.cards)) {
+    if (c.st !== 'entry') continue; const px = PX.map[c.sym]; if (!(px > 0)) continue;
+    const now = Date.now(); c.xp = px;
+    if (c.dir * (px - c.sl) <= 0) { Object.assign(c, { st: 'done', how: 'sl', xt: now, xp: c.dir > 0 ? Math.min(px, c.sl) : Math.max(px, c.sl), endAt: now }); toolArchive(c); ch = true; }
+    else if (c.dir * (px - c.tp) >= 0) { Object.assign(c, { st: 'done', how: 'tp', xt: now, xp: c.tp, endAt: now }); toolArchive(c); ch = true; }
+  }
+  if (ch) { dirty = true; TOOLV++; }
+}, 3000);
 async function toolScan(pair) {
   const T = ST.tool, S = T.set, P = TOOL_P[pair], now = Date.now(), o = toolOpt(P, toolHold()); let n = 0, ch = false;
   const top = await toolUniverse(Math.max(1, Math.min(30, +S.n || 10))), mine = Object.values(T.cards).filter(c => c.pair === pair).map(c => c.sym);
@@ -2569,7 +2579,7 @@ http.createServer(async (req, res) => {
           if (b.sp && !(C.spBudget > 0)) return send(res, 400, { error: '請先到「☰ 選單 → 設定 → 🗡 特級交易設定」填「特級交易投入資金」，再開始特級交易' });
           if (b.sp && C.spBudget > 0) { const B = ltSpEq(X); if (B.eq <= 0) return send(res, 400, { error: `特級交易的投入資金已經用完（目前 ${B.eq.toFixed(2)}U），開始了也會馬上暫停。請到「選單 → 設定 → 特級交易設定」調高投入資金` }); }
           C.spAllOff = false; C.rsSp = false;
-          if (C.sp !== b.sp) { C.sp = b.sp; if (!b.sp) X.LT.pause = { t: Date.now(), why: '你按了暫停特級交易' }; else if (X.LT.pause && /特級/.test(X.LT.pause.why)) X.LT.pause = null; dcX(X, b.sp ? `🗡 **特級交易已開始**：特級咒具的 🧱 FVG／OB 回踩進場會${X.sim ? '用模擬資金下單' : '用你的 Bitunix 帳戶真實下單'}\n每筆 ${C.spMargin}U・${C.spLev}x・止損＝15M／5M FVG 的低點（做空＝高點）・止盈 1:1・持有 ${Math.round(C.spHold / 24 * 10) / 10} 天${C.spBudget > 0 ? `・投入 ${C.spBudget}U` : ''}${C.spDayLoss > 0 ? `・單日虧損上限 ${C.spDayLoss}U` : ''}` : '⏸ **特級交易已暫停**（已開的單照常管理）'); }
+          if (C.sp !== b.sp) { C.sp = b.sp; if (!b.sp) X.LT.pause = { t: Date.now(), why: '你按了暫停特級交易' }; else if (X.LT.pause && /特級/.test(X.LT.pause.why)) X.LT.pause = null; dcX(X, b.sp ? `🗡 **特級交易已開始**：特級咒具的 🧱 FVG／OB 回踩進場會${X.sim ? '用模擬資金下單' : '用你的 Bitunix 帳戶真實下單'}\n每筆 ${C.spMargin}U・${C.spLev}x・止損＝4H／1H FVG／OB 的低點（做空＝高點）・止盈 1:1・持有 ${Math.round(C.spHold / 24 * 10) / 10} 天${C.spBudget > 0 ? `・投入 ${C.spBudget}U` : ''}${C.spDayLoss > 0 ? `・單日虧損上限 ${C.spDayLoss}U` : ''}` : '⏸ **特級交易已暫停**（已開的單照常管理）'); }
         }
         if (+b.margin > 0) C.margin = +b.margin;
         if (+b.lev >= 1 && +b.lev <= 125) C.lev = Math.round(+b.lev);
@@ -2644,7 +2654,7 @@ http.createServer(async (req, res) => {
           dirty = true; log('特級咒具解鎖', me ? me.uid : ''); return send(res, 200, { ok: true });
         }
         if (!toolOk(me, owner)) return send(res, 403, { error: '特級咒具還沒解鎖', locked: true, hasPw: !!T.pw });
-        if (op === 'get') return send(res, 200, { owner, v: TOOLV, px: T.px || {}, bt: T.bt || null, btRun: { run: TBT.run, done: TBT.done, total: TBT.total, msg: TBT.msg }, cards: Object.values(T.cards).sort((a, b) => b.touchAt - a.touchAt), hist: T.hist.slice(0, 300), wait: Object.entries(T.wait).flatMap(([k, L]) => L.map(z => ({ sym: k.split('|')[0], pair: k.split('|')[1], ...z }))), set: T.set, scan: T.scan, hook: me && T.hooks[me.uid] ? '已設定' : '', hookLast: (() => { try { return me && T.hooks[me.uid] ? dcStat(dec(T.hooks[me.uid])) : null; } catch (e) { return null; } })(), hasPw: !!T.pw, grants: owner ? T.grants : undefined });
+        if (op === 'get') return send(res, 200, { owner, v: TOOLV, px: Object.fromEntries(Object.entries(T.px || {}).map(([k, v]) => [k, { ...v, c: PX.map[k] || v.c }])), bt: T.bt || null, btRun: { run: TBT.run, done: TBT.done, total: TBT.total, msg: TBT.msg }, cards: Object.values(T.cards).sort((a, b) => b.touchAt - a.touchAt), hist: T.hist.slice(0, 300), wait: Object.entries(T.wait).flatMap(([k, L]) => L.map(z => ({ sym: k.split('|')[0], pair: k.split('|')[1], ...z }))), set: T.set, scan: T.scan, hook: me && T.hooks[me.uid] ? '已設定' : '', hookLast: (() => { try { return me && T.hooks[me.uid] ? dcStat(dec(T.hooks[me.uid])) : null; } catch (e) { return null; } })(), hasPw: !!T.pw, grants: owner ? T.grants : undefined });
         if (op === 'hook') {
           if (!me) return send(res, 400, { error: '用管理金鑰登入不能設定' });
           const w = String(b.webhook || '').replace(/\s+/g, '');
