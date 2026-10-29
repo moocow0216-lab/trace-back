@@ -926,7 +926,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-29a';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-29b';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -935,11 +935,19 @@ function ownerUid() {                                  // 擁有者＝這台伺�
 }
 function ctx(uid) {
   uid = String(uid || ownerUid());
-  if (!ST.accts[uid]) { ST.accts[uid] = { bx: { ...DEF_BX }, lt: { ...DEF_LT }, ltTrades: [], notify: { ...DEF_NOTIFY } }; dirty = true; }
+  if (!ST.accts[uid]) {
+    if (uid.endsWith('~sim')) {                          // 🧪 第一次開模擬盤：交易設定照抄實盤（投入資金、開關、統計不抄），資金從 0 開始
+      const B = (ST.accts[uid.slice(0, -4)] || {}).lt || {}, keep = ['margin', 'lev', 'mode', 'maxOpen', 'dayLoss', 'tp', 'sl', 'step', 'hold', 'btcF', 'spLev', 'spMargin', 'spDayLoss', 'spTp', 'spStep', 'spSl', 'spHold'];
+      const lt = { ...DEF_LT }; for (const k of keep) if (B[k] != null) lt[k] = B[k];
+      ST.accts[uid] = { bx: { ...DEF_BX, sim: true, key: 'sim', secret: 'sim', bal: 0, pos: [], hist: [], ord: [], lev: {} }, lt, ltTrades: [], notify: { ...DEF_NOTIFY } };
+    } else ST.accts[uid] = { bx: { ...DEF_BX }, lt: { ...DEF_LT }, ltTrades: [], notify: { ...DEF_NOTIFY } };
+    dirty = true;
+  }
   { const L = ST.accts[uid].lt; for (const [k, f] of [['spLev', 'lev'], ['spMargin', 'margin'], ['spDayLoss', 'dayLoss'], ['spTp', 'tp'], ['spStep', 'step'], ['spSl', 'sl'], ['spHold', 'hold']]) if (L[k] == null) L[k] = L[f]; }
   let X = RT.get(uid);
   if (!X) { X = { uid, BX: { pos: [], acct: null, at: 0, err: '', seeded: false, warned: {} }, LT: { lev: {}, busy: new Set(), msg: '', dayHit: '', dayPnl: 0 }, v: Date.now(), polling: false, managing: false }; RT.set(uid, X); }
-  X.A = ST.accts[uid];
+  X.A = ST.accts[uid]; X.sim = uid.endsWith('~sim'); X.base = X.sim ? uid.slice(0, -4) : uid;
+  if (X.sim && ST.accts[X.base]) X.A.notify = ST.accts[X.base].notify;   // 模擬盤用本人的 Discord 設定（通知前面會加「模擬盤」）
   return X;
 }
 const allX = () => Object.keys(ST.accts).map(ctx);
@@ -948,8 +956,8 @@ const allX = () => Object.keys(ST.accts).map(ctx);
 const TT = X => ({ ...ST.trade, tp: X.A.lt.tp || ST.trade.tp, sl: X.A.lt.sl, step: X.A.lt.step, hold: X.A.lt.hold });
 const TS = X => { const L = X.A.lt; return { ...ST.trade, exit: 'lock', tp: L.spTp || L.tp, sl: L.spSl || L.sl, step: L.spStep ?? L.step, hold: L.spHold || L.hold, lev: L.spLev || L.lev }; };   // 🗡 特級交易自己的出場規則
 const TRule = (X, t) => (t && t.src === 'tool' ? TS(X) : TT(X));
-const hasKey = X => !!(X.A.bx.key && X.A.bx.secret);
-const dcX = (X, msg) => dcSend(msg, X.A.notify);                // 只傳到這個帳號自己的 Discord
+const hasKey = X => !!(X.A.bx.sim || (X.A.bx.key && X.A.bx.secret));
+const dcX = (X, msg) => { if (X.sim) { const B = ST.accts[X.base]; if (B) dcSend('🧪 **模擬盤**｜' + msg, B.notify); return; } dcSend(msg, X.A.notify); };   // 只傳到這個帳號自己的 Discord（模擬盤傳到本人的 Discord，前面加「模擬盤」）
 function dcAll(content, ok = () => true) {             // 大家共用的通知（訊號、數據公布、結算）：每個帳號自己的 Discord 各傳一次，同一個 Webhook 不重複
   const seen = new Set();
   for (const X of allX()) {
@@ -963,6 +971,7 @@ function dcAll(content, ok = () => true) {             // 大家共用的通知�
 const BXAPI = process.env.BITUNIX_API || 'https://fapi.bitunix.com';
 const sha = x => crypto.createHash('sha256').update(x, 'utf8').digest('hex');
 async function bxGet(path, params, cfg) {              // cfg 一定要指定是哪個帳號的金鑰，不能有預設值
+  if (cfg && cfg.sim) return simApi(cfg, path, params);   // 🧪 模擬盤
   if (!cfg || !cfg.key) throw new Error('沒有指定 Bitunix 金鑰');
   params = params || {};
   const keys = Object.keys(params).sort();
@@ -977,6 +986,78 @@ async function bxGet(path, params, cfg) {              // cfg 一定要指定是
 // 持倉方向：雙向持倉回傳 LONG／SHORT，單向持倉可能回傳 BUY／SELL，兩種都要認得
 const sideDir = v => { const x = String(v || '').toUpperCase(); return x === 'LONG' || x === 'BUY' ? 1 : x === 'SHORT' || x === 'SELL' ? -1 : 0; };
 const num = v => { const n = +v; return Number.isFinite(n) ? n : 0; };
+/* ---------------- 🧪 模擬盤：管理員、擁有者可以切換。模擬帳號＝「UID~sim」，跟實盤完全分開（資金、持倉、紀錄、設定各一份）
+   下單、平倉、止損、查持倉都照 Bitunix API 的回傳格式在伺服器裡模擬，所以自動交易、特級交易的邏輯完全一樣；成交價用幣安最新價，手續費照設定 ---------------- */
+const SIMK = '~sim';
+const isSimId = id => String(id).endsWith(SIMK), baseUid = id => String(id).replace(/~sim$/, '');
+const simFee = () => ((ST.eq && ST.eq.fee) ?? 0.05) / 100;
+function simPx(sym) { const p = PX.map[sym]; if (!(p > 0)) throw new Error(`模擬盤：拿不到 ${sym} 的最新價`); return p; }
+const simDir = p => (p.side === 'LONG' ? 1 : -1);
+const simUpnl = p => simDir(p) * ((PX.map[p.symbol] || p.avgOpenPrice) - p.avgOpenPrice) * p.qty;
+function simAcct(S) {                                 // 模擬帳戶：權益＝餘額＋未實現；可用＝餘額－保證金（未實現的盈虧不能拿來開新倉，比較保守）
+  const margin = S.pos.reduce((a, p) => a + p.margin, 0), upnl = S.pos.reduce((a, p) => a + simUpnl(p), 0);
+  return { margin, upnl, eq: S.bal + upnl, avail: S.bal - margin };
+}
+function simClose(S, p, q, px, liq) {                 // 平掉 q 的數量（全部或部分）：盈虧、手續費進餘額
+  q = Math.min(q, p.qty); const pnl = simDir(p) * (px - p.avgOpenPrice) * q, fee = q * px * simFee();
+  S.bal += pnl - fee; p.realizedPNL += pnl; p.fee += fee; p.margin -= p.margin * (q / p.qty); p.qty -= q; p.mtime = Date.now();
+  if (p.qty <= 1e-12) {
+    S.pos = S.pos.filter(x => x !== p);
+    S.hist.unshift({ positionId: p.positionId, symbol: p.symbol, side: p.side, realizedPNL: p.realizedPNL, fee: p.fee, funding: 0, closePrice: px, liqQty: liq ? q : 0, ctime: p.ctime, mtime: p.mtime });
+    if (S.hist.length > 300) S.hist.length = 300;
+  }
+}
+const simOut = p => ({ positionId: p.positionId, symbol: p.symbol, side: p.side, qty: String(p.qty), leverage: p.leverage, marginMode: 'CROSS', avgOpenPrice: String(p.avgOpenPrice), margin: String(p.margin),
+  unrealizedPNL: String(simUpnl(p)), realizedPNL: String(p.realizedPNL), fee: String(p.fee), funding: '0', liqPrice: '0', ctime: p.ctime, mtime: p.mtime, positionMode: 'HEDGE' });
+function simApi(S, path, b) {                         // 照 Bitunix API 的路徑和格式回傳
+  b = b || {}; S.pos = S.pos || []; S.hist = S.hist || []; S.ord = S.ord || []; S.lev = S.lev || {}; S.bal = +S.bal || 0;
+  const find = id => S.pos.find(p => p.positionId === String(id));
+  switch (path) {
+    case '/api/v1/futures/account': { const a = simAcct(S); return [{ available: String(a.avail), frozen: '0', margin: String(a.margin), crossUnrealizedPNL: String(a.upnl), isolationUnrealizedPNL: '0', bonus: '0' }]; }
+    case '/api/v1/futures/position/get_pending_positions': return S.pos.filter(p => !b.symbol || p.symbol === b.symbol).map(simOut);
+    case '/api/v1/futures/position/get_history_positions': return { positionList: S.hist.filter(h => b.positionId ? h.positionId === String(b.positionId) : !b.symbol || h.symbol === b.symbol).slice(0, +b.limit || 20) };
+    case '/api/v1/futures/trade/get_history_orders': return { orderList: S.ord.filter(o => !b.symbol || o.symbol === b.symbol).slice(0, +b.limit || 20) };
+    case '/api/v1/futures/account/change_leverage': S.lev[b.symbol] = +b.leverage; return {};
+    case '/api/v1/futures/account/change_margin_mode': return {};
+    case '/api/v1/futures/tpsl/get_pending_orders': return S.pos.filter(p => (!b.symbol || p.symbol === b.symbol) && (!b.positionId || p.positionId === String(b.positionId)) && (p.sl || p.tp)).map(p => ({ id: 'sl-' + p.positionId, positionId: p.positionId, slPrice: p.sl ? String(p.sl) : '', tpPrice: p.tp ? String(p.tp) : '' }));
+    case '/api/v1/futures/tpsl/position/modify_order': case '/api/v1/futures/tpsl/position/place_order': {
+      const p = find(b.positionId); if (!p) throw new Error('模擬盤：找不到這筆持倉');
+      if (+b.slPrice > 0) p.sl = +b.slPrice; if (+b.tpPrice > 0) p.tp = +b.tpPrice; return { orderId: 'sl-' + p.positionId };
+    }
+    case '/api/v1/futures/tpsl/cancel_order': { const p = S.pos.find(x => 'sl-' + x.positionId === String(b.orderId)); if (p) { p.sl = 0; p.tp = 0; } return {}; }
+    case '/api/v1/futures/trade/flash_close_position': { const p = find(b.positionId); if (!p) throw new Error('模擬盤：找不到這筆持倉'); simClose(S, p, p.qty, simPx(p.symbol)); return {}; }
+    case '/api/v1/futures/trade/close_all_position': { for (const p of S.pos.filter(x => x.symbol === b.symbol)) simClose(S, p, p.qty, simPx(p.symbol)); return {}; }
+    case '/api/v1/futures/trade/place_order': {
+      const px = simPx(b.symbol), q = +b.qty, side = String(b.side).toUpperCase();
+      if (!(q > 0)) throw new Error('模擬盤：數量不對');
+      if (b.tradeSide === 'CLOSE' || b.reduceOnly) {   // 平倉：雙向持倉用 positionId；單向用 reduceOnly（SELL 平多、BUY 平空）
+        const p = b.positionId ? find(b.positionId) : S.pos.find(x => x.symbol === b.symbol && x.side === (side === 'SELL' ? 'LONG' : 'SHORT'));
+        if (!p) throw new Error('模擬盤：找不到要平的持倉'); simClose(S, p, q, px); return { orderId: 'so' + Date.now() };
+      }
+      const lev = S.lev[b.symbol] || 20, margin = q * px / lev, fee = q * px * simFee(), a = simAcct(S);
+      if (a.avail - fee < margin) throw new Error(`模擬盤：可用資金不足（可用 ${a.avail.toFixed(2)}U，這筆要 ${(margin + fee).toFixed(2)}U）`);
+      const pside = side === 'BUY' ? 'LONG' : 'SHORT', now = Date.now(); S.bal -= fee;
+      let p = S.pos.find(x => x.symbol === b.symbol && x.side === pside);
+      if (p) { p.avgOpenPrice = (p.avgOpenPrice * p.qty + px * q) / (p.qty + q); p.qty += q; p.margin += margin; p.fee += fee; p.mtime = now; }
+      else { S.nid = (S.nid || 0) + 1; p = { positionId: 'sim' + now.toString(36) + S.nid, symbol: b.symbol, side: pside, qty: q, leverage: lev, avgOpenPrice: px, margin, realizedPNL: 0, fee, ctime: now, mtime: now, sl: 0, tp: 0 }; S.pos.push(p); }
+      if (+b.slPrice > 0) p.sl = +b.slPrice; if (+b.tpPrice > 0) p.tp = +b.tpPrice;
+      S.ord.unshift({ orderId: 'so' + now, clientId: b.clientId || '', symbol: b.symbol, side, ctime: now }); if (S.ord.length > 100) S.ord.length = 100;
+      return { orderId: 'so' + now };
+    }
+  }
+  throw new Error('模擬盤不支援這個操作：' + path);
+}
+setInterval(() => {                                    // 每 2 秒：模擬交易所的止損、止盈單；權益歸零就全部強平（全倉）
+  for (const A of Object.values(ST.accts)) {
+    const S = A.bx; if (!S.sim || !(S.pos && S.pos.length)) continue;
+    for (const p of [...S.pos]) {
+      const px = PX.map[p.symbol]; if (!(px > 0)) continue; const d = simDir(p);
+      if (p.sl > 0 && d * (px - p.sl) <= 0) { simClose(S, p, p.qty, d > 0 ? Math.min(px, p.sl) : Math.max(px, p.sl)); dirty = true; continue; }
+      if (p.tp > 0 && d * (px - p.tp) >= 0) { simClose(S, p, p.qty, p.tp); dirty = true; }
+    }
+    if (S.pos.length && simAcct(S).eq <= 0) { for (const p of [...S.pos]) simClose(S, p, p.qty, PX.map[p.symbol] || p.avgOpenPrice, true); dirty = true; }
+  }
+}, 2000);
 const bxEquity = X => { const A = X.BX.acct; return A ? A.avail + A.frozen + A.margin + A.cross + A.iso : 0; };
 const msT = v => (v > 0 && v < 1e12 ? v * 1000 : v);   // 交易所回傳的時間有時是秒、有時是毫秒，統一成毫秒
 const bxMapPos = data => (Array.isArray(data) ? data : []).map(p => ({
@@ -1043,6 +1124,7 @@ setInterval(bxPollAll, 10000); setTimeout(bxPollAll, 3000);
 const LTP = { pairs: new Map(), pairsAt: 0 };          // Bitunix 交易對清單：公開資料，大家共用
 const touchLT = X => { X.v++; dirty = true; };
 async function bxPost(path, body, cfg) {
+  if (cfg && cfg.sim) { const r = simApi(cfg, path, body); dirty = true; return r; }   // 🧪 模擬盤
   if (!cfg || !cfg.key) throw new Error('沒有指定 Bitunix 金鑰');
   const b = JSON.stringify(body), nonce = crypto.randomBytes(16).toString('hex'), ts = String(Date.now());
   const sign = sha(sha(nonce + ts + cfg.key + b) + cfg.secret);
@@ -1097,7 +1179,7 @@ function ecoDayTick() {                               // 這種日子一開始�
   dcAll(`📅 **今天（${day.slice(5).replace('-', '/')}）有美國重要數據：${mdEsc(ecoNames(L))}**\n自動交易今天整天不開新單、也不反手；已經開著的單照常管理（鎖利、失敗線、到期）。`, N => N.enabled);
 }
 setInterval(ecoDayTick, 60000); setTimeout(ecoDayTick, 90000);
-const toolOkUid = uid => uid === ownerUid() || ST.tool.grants.includes(uid);   // 🗡 有特級咒具權限
+const toolOkUid = uid => { uid = String(uid).replace(/~sim$/, ''); return uid === ownerUid() || ST.tool.grants.includes(uid); };   // 模擬盤跟本人一樣   // 🗡 有特級咒具權限
 async function ltOpen(X, c) {
   const C = X.A.lt, K = X.A.bx, LT = X.LT, BX = X.BX, sp = c.src === 'tool';
   const M = sp ? C.spMargin || C.margin : C.margin, LV = sp ? C.spLev || C.lev : C.lev, BUD = sp ? C.spBudget : C.budget, NM = sp ? '特級交易' : '自動交易';   // 🗡 特級交易用自己的設定（先替換再插入，避免這行也被換掉）   // sp：🗡 特級交易（特級咒具的訊號）
@@ -2218,7 +2300,8 @@ http.createServer(async (req, res) => {
     const me = who(req), admin = keyOk(req) || (me && me.role === 'admin'), owner = keyOk(req) || (me && me.uid === ownerUid());   // 擁有者 ⊃ 灰色管理員 ⊃ 一般
     if (u.pathname.startsWith('/api/') && !me && !keyOk(req)) return send(res, 401, { error: '請先登入', needLogin: true, needSetup: !ST.users.length });
     if (me && needBind(me) && u.pathname !== '/api/me' && u.pathname !== '/api/bind') return send(res, 403, { error: '請先綁定 Google 信箱和手機號碼', needBind: true });
-    const X = ctx(me ? me.uid : ownerUid());          // 這次請求的「自己」：每個帳號只看得到、改得到自己的 Bitunix／自動交易／Discord（用管理金鑰登入＝擁有者）
+    const meU = me || ST.users.find(x => x.uid === ownerUid()), simOn = !!(admin && meU && meU.sim);   // 🧪 管理員、擁有者切到模擬盤：整個網站看的、改的都是模擬帳號
+    const X = ctx((me ? me.uid : ownerUid()) + (simOn ? '~sim' : ''));   // 這次請求的「自己」：每個帳號只看得到、改得到自己的 Bitunix／自動交易／Discord（用管理金鑰登入＝擁有者）
     if (req.method === 'GET' && u.pathname === '/api/me') return send(res, 200, { uid: me ? me.uid : '管理金鑰', role: admin ? 'admin' : 'viewer', owner: !!owner, needBind: needBind(me), bind: bindOut(me), google: gClient() });
     if (req.method === 'GET' && u.pathname === '/api/users') {
       if (!admin) return send(res, 403, { error: '只有管理員可以看' });
@@ -2257,8 +2340,9 @@ http.createServer(async (req, res) => {
         bx: { set: hasKey(X), notify: X.A.bx.notify, liq: X.A.bx.liq, liqPct: X.A.bx.liqPct, at: X.BX.at, err: X.BX.err, acct: X.BX.acct,
           pos: X.BX.pos.map(p => ({ ...p, px: PX.map[p.sym] || null, tp: ((X.BX.tpsl && X.BX.tpsl.get(p.id)) || {}).tp || 0, sl: ((X.BX.tpsl && X.BX.tpsl.get(p.id)) || {}).sl || 0, sig: !!ST.cards.find(c => c.sym === p.sym && c.dir === p.dir && c.et && isLive(c)), bot: !!X.A.ltTrades.find(t => t.status === 'open' && t.positionId === p.id) })) },
         eco: { list: ECO.list.filter(e => e.t > Date.now() - 7 * 24 * HOUR), at: ECO.at, err: ECO.err, hasNext: !!ECO.hasNext, today: ecoToday().map(e => ({ t: e.t, zh: e.zh || e.title })) },
+        sim: admin && meU ? (() => { const L = ctx(meU.uid).A.lt, o = { on: simOn, liveOn: !!(L.on || L.sp) }; if (simOn) { const a = simAcct(X.A.bx); Object.assign(o, { bal: +X.A.bx.bal.toFixed(4), eq: +a.eq.toFixed(4), avail: +a.avail.toFixed(4), open: X.A.bx.pos.length }); } return o; })() : null,
         lt: { cfg: X.A.lt, spSkip: X.LT.spSkip || [], bud: ltBudEq(X), low: (() => { const C = X.A.lt, a = bxEquity(X), n = C.budget > 0 ? ltBotEq(X).eq : 0, p = C.spBudget > 0 && toolOkUid(X.uid) ? ltSpEq(X).eq : 0; return a > 0 && (C.budget > 0 || C.spBudget > 0) && n + p > a + 0.01 ? { acct: a, n, sp: p } : null; })(), pause: X.LT.pause || null, toolOk: toolOkUid(X.uid), spBot: ltSpEq(X), spDay: X.LT.spDayPnl || 0, msg: X.LT.msg, dayPnl: X.LT.dayPnl || 0, v: X.v, bot: ltBotEq(X), acctEq: bxEquity(X) },
-        aws: !(X.uid === ownerUid()) ? null : { on: ST.aws.on, created: ST.aws.created, auto: ST.aws.auto, price: ST.aws.price, detected: awsDetect(), ...awsNext() }
+        aws: !(X.base === ownerUid()) ? null : { on: ST.aws.on, created: ST.aws.created, auto: ST.aws.auto, price: ST.aws.price, detected: awsDetect(), ...awsNext() }
       };
       if (+u.searchParams.get('cv') !== CV) out.cards = ST.cards;
       if (+u.searchParams.get('bv') !== BV * 2 + (X.A.lt.btcF ? 1 : 0)) out.trades = ST.bt.trades.filter(t => (X.A.lt.btcF ? t.c1 : t.c0) !== false);   // 自己開著 BTC 過濾就看有過濾的那條
@@ -2269,11 +2353,31 @@ http.createServer(async (req, res) => {
     if (req.method === 'POST' && u.pathname.startsWith('/api/')) {
       // 個人設定：每個帳號都能改「自己的」；其他（掃描條件、浮盈規則、回測、帳號管理、AWS）只有管理員能改
       // 個人（每個帳號）：自己的 API、Discord、交易設定、平倉；管理員（灰色）：帳號管理；其他全站設定只有擁有者能改
-      const PERSONAL = ['/api/bind', '/api/bitunix', '/api/lt/config', '/api/lt/testOpen', '/api/lt/close', '/api/lt/closeAll', '/api/lt/adopt', '/api/notify', '/api/notify/test', '/api/me/password', '/api/tool', '/api/lt/withdraw'];
+      const PERSONAL = ['/api/bind', '/api/bitunix', '/api/lt/config', '/api/lt/testOpen', '/api/lt/close', '/api/lt/closeAll', '/api/lt/adopt', '/api/notify', '/api/notify/test', '/api/me/password', '/api/tool', '/api/lt/withdraw', '/api/sim'];
       const ADMIN = ['/api/users', '/api/users/delete', '/api/users/kick', '/api/check'];
       if (ADMIN.includes(u.pathname) && !admin) return send(res, 403, { error: '這個功能只有管理員可以用' });
       if (!PERSONAL.includes(u.pathname) && !ADMIN.includes(u.pathname) && !owner) return send(res, 403, { error: '這個設定只有擁有者可以改' });
       const b = await readBody(req);
+      if (u.pathname === '/api/sim') {                    // 🧪 模擬盤：切換、存入／提出模擬資金、重置
+        if (!admin || !meU) return send(res, 403, { error: '只有管理員和擁有者可以用模擬盤' });
+        const op = String(b.op || '');
+        if (op === 'mode') { meU.sim = !!b.sim; dirty = true; if (meU.sim) ctx(meU.uid + '~sim'); log('切換模擬盤', meU.uid, meU.sim ? '模擬盤' : '實盤'); return send(res, 200, { ok: true, sim: meU.sim }); }
+        if (!simOn) return send(res, 400, { error: '要先切到模擬盤' });
+        const S = X.A.bx, a = simAcct(S);
+        if (op === 'fund') {
+          const amt = Math.round(+b.amount * 100) / 100;
+          if (!Number.isFinite(amt) || !amt) return send(res, 400, { error: '請輸入金額' });
+          if (amt > 0 && S.bal + amt > 1e7) return send(res, 400, { error: '模擬資金最多 1000 萬 U' });
+          if (amt < 0 && -amt > Math.max(0, a.avail) + 1e-9) return send(res, 400, { error: `最多只能提出可用的 ${Math.max(0, a.avail).toFixed(2)}U（持倉用掉的保證金不能提）` });
+          S.bal += amt; dirty = true; touchLT(X); return send(res, 200, { ok: true, bal: S.bal });
+        }
+        if (op === 'reset') {
+          if (ltOpenTrades(X).length || S.pos.length) return send(res, 400, { error: '模擬盤還有持倉，請先平倉再重置' });
+          const L = X.A.lt; Object.assign(S, { bal: 0, pos: [], hist: [], ord: [] }); X.A.ltTrades = []; Object.assign(L, { on: false, sp: false, budget: 0, spBudget: 0, startCap: 0, startAt: 0, wd: 0, spWd: 0, spStartAt: 0, dayHit: '', spDayHit: '' });
+          X.LT.pause = null; dirty = true; touchLT(X); return send(res, 200, { ok: true });
+        }
+        return send(res, 400, { error: '不認得的操作' });
+      }
       if (u.pathname === '/api/users') {               // 後台：新增帳號／改密碼／改權限
         if (!validUid(b.uid)) return send(res, 400, { error: 'UID 應該是 4～20 位數字' });
         let usr = ST.users.find(x => x.uid === String(b.uid));
@@ -2388,7 +2492,7 @@ http.createServer(async (req, res) => {
         const UA = ST.accts[usr.uid], nOpen = UA ? UA.ltTrades.filter(t => t.status === 'open').length : 0;
         if (nOpen) return send(res, 400, { error: `這個帳號還有 ${nOpen} 筆自動單持倉，刪掉的話就沒有人管理了。請對方先平倉，或先讓他按「暫停交易」並等持倉結束` });
         ST.users = ST.users.filter(x => x !== usr); ST.sessions = ST.sessions.filter(s => s.uid !== usr.uid);
-        delete ST.accts[usr.uid]; RT.delete(usr.uid); dirty = true;            // 他的金鑰、紀錄、Webhook 一起刪掉
+        delete ST.accts[usr.uid]; RT.delete(usr.uid); delete ST.accts[usr.uid + '~sim']; RT.delete(usr.uid + '~sim'); dirty = true;            // 他的金鑰、紀錄、Webhook 一起刪掉
         return send(res, 200, { ok: true });
       }
       if (u.pathname === '/api/users/kick') {
@@ -2417,6 +2521,7 @@ http.createServer(async (req, res) => {
       if (u.pathname === '/api/check') return send(res, 200, { ok: true });
       if (u.pathname === '/api/bitunix') {
         const C = X.A.bx, BX = X.BX;
+        if (X.sim && (b.clear || b.key || b.secret)) return send(res, 400, { error: '模擬盤不用 Bitunix API。要設定 API 請先切回實盤' });
         if (b.clear) {
           if (ltOpenTrades(X).length) return send(res, 400, { error: `還有 ${ltOpenTrades(X).length} 筆自動單持倉，刪掉金鑰就沒辦法管理了，請先平倉` });
           Object.assign(C, DEF_BX); X.A.lt.on = false; X.A.lt.sp = false; X.LT.pause = { t: Date.now(), why: '刪除了 Bitunix API' }; BX.pos = []; BX.acct = null; BX.seeded = false; touchLT(X); return send(res, 200, { ok: true });
@@ -2425,7 +2530,7 @@ http.createServer(async (req, res) => {
           const cfg = { ...C, key: b.key.trim(), secret: b.secret.trim() };
           try { await bxGet('/api/v1/futures/position/get_pending_positions', {}, cfg); }        // 先試一次，金鑰對了才存
           catch (e) { return send(res, 400, { error: e.message + '。請確認金鑰、密鑰沒有複製錯，而且 API 有綁定這台伺服器的 IP' }); }
-          const other = Object.entries(ST.accts).find(([id, A]) => id !== X.uid && A.bx.key === cfg.key);
+          const other = Object.entries(ST.accts).find(([id, A]) => id !== X.uid && !A.bx.sim && A.bx.key === cfg.key);
           if (other) return send(res, 400, { error: '這組 API 已經有別的帳號在用了。同一個 Bitunix 帳戶只能給一個人自動交易，不然會互相下單、互相平倉' });
           const changed = C.key !== cfg.key;
           if (changed && ltOpenTrades(X).length) return send(res, 400, { error: `還有 ${ltOpenTrades(X).length} 筆自動單持倉，換金鑰就沒辦法管理了，請先平倉` });
