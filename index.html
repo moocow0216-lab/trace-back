@@ -1013,7 +1013,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-29e</div>
+      <div class="qver" id="qVer">網站版本 2026-10-29f</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -1086,7 +1086,7 @@ header{align-items:center}
           </div>
           <div class="qbt" style="margin:8px 0 0"><button class="btn primary qspbtn" id="sp_save">儲存</button><span class="qltmsg" id="sp_msg"></span></div>
           <div class="qwd"><b>💸 收回資金</b><input id="wd_sp" type="number" min="0" step="1" placeholder="金額（U），留空＝全部"><button class="btn qspbtn" id="wd_spGo">收回</button><span class="qltmsg" id="wd_spMsg"></span></div>
-          <div class="qcfgnote">止損＝15M／5M FVG 低點（做空＝高點）・止盈 1:1・同幣反向訊號會反手。</div>
+          <div class="qcfgnote">止損＝4H／1H FVG／OB 低點（做空＝高點）・止盈 1:1・同幣反向訊號會反手。</div>
         </div>
         <div class="qtg" id="qScanBox" hidden>
           <b>🔍 掃描條件</b><span>（全站共用，只有擁有者看得到、能改）</span>
@@ -3462,7 +3462,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-29e・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-29f・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -3889,7 +3889,7 @@ function tlRender() {
       <div class="tlrow tltools"><button class="btn" id="tlHistBtn">📜 特級咒具歷史</button><button class="btn" id="tlSetBtn">⚙ 設定</button></div></div>
       <div class="fvwait" id="tlWait"></div>
       <div class="fvrow" id="tlCards" tabindex="0" aria-label="進行中的卡片，可以左右滑動"></div>
-      <p class="tlsub">步驟：① 4H／1H 出現 FVG／OB（數值在設定的範圍內）→ ② 價格回踩，這時卡片出現 → ③ 15M／5M 出現同方向 CHoCH 或 BOS → ④ 回踩 15M／5M FVG 進場，止損＝那個 FVG 的低點（做空＝高點），止盈 1:1。回踩後 4H／1H 收盤收破整個 FVG／OB 範圍、FVG／OB 被指標刪掉、或回踩後 40 根 4H／1H 還沒進場，卡片就失效，移到「📜 特級咒具歷史」。</p>
+      <p class="tlsub">步驟：① 4H／1H 出現 FVG／OB（數值在設定的範圍內）→ ② 價格回踩，這時卡片出現 → ③ 15M／5M 出現同方向 CHoCH 或 BOS → ④ 回踩 15M／5M FVG 進場，止損＝4H／1H FVG／OB 範圍的低點（做空＝高點），止盈 1:1。回踩後 4H／1H 收盤收破整個 FVG／OB 範圍、FVG／OB 被指標刪掉、或回踩後 40 根 4H／1H 還沒進場，卡片就失效，移到「📜 特級咒具歷史」。</p>
       <dialog id="tlDlg" class="tldlg" aria-labelledby="tlDlgT"><div class="tldlgh"><h3 id="tlDlgT">⚙ 特級咒具設定</h3><button class="btn" id="tlDlgX">關閉</button></div><div id="tlDlgB"></div></dialog>`;
     $('tlSetBtn').onclick = () => { tlSettings(); $('tlDlg').showModal(); };
     $('tlDlgX').onclick = () => $('tlDlg').close();
@@ -4005,7 +4005,7 @@ function tbRender(d) {
       <label class="tzsel tbn">幣數（成交額前幾名）<input id="tbN" type="number" min="5" max="50" value="${(R && R.coins) || Math.max(5, d.set.n)}"></label>
       <button class="btn primary" id="tbRun"${run.run ? ' disabled' : ''}>${run.run ? '回測中…' : '開始回測'}</button>` : ''}
       <span class="tlmut">${run.run ? `進度 ${run.done}／${run.total}・${esc(run.msg || '')}` : run.msg && /失敗/.test(run.msg) ? `<span class="qr">${esc(run.msg)}</span>` : R ? `上次回測 ${fmtT(R.at)}・${fmtT(R.start)}～${fmtT(R.end)}・${R.coins} 個幣・${R.pairs.map(p => NM[p]).join('、')}` : (d.owner ? '還沒回測過。30 天、10 個幣大約 1～2 分鐘，可以關網頁。' : '擁有者還沒回測過。')}</span></div>
-    ${R ? `<p class="tlsub">規則：照特級咒具的四個步驟進場（數值 ${R.rule.vmin > 0 ? `${R.rule.vmin}%～` : '≤ '}${R.rule.vmax}%），止損＝15M／5M FVG 的低點（做空＝高點）、止盈 1:1、持有 ${Math.round(R.rule.hold / 24 * 10) / 10} 天到期；${R.rule.lev}x、每筆保證金 ${R.rule.m}U、初始資金 ${R.rule.cap0}U、手續費每邊 ${R.rule.fee}%（開倉、平倉都扣）。同一個幣還開著時新訊號跳過，可用資金不夠也跳過。</p>
+    ${R ? `<p class="tlsub">規則：照特級咒具的四個步驟進場（數值 ${R.rule.vmin > 0 ? `${R.rule.vmin}%～` : '≤ '}${R.rule.vmax}%），止損＝4H／1H FVG／OB 的低點（做空＝高點）、止盈 1:1、持有 ${Math.round(R.rule.hold / 24 * 10) / 10} 天到期；${R.rule.lev}x、每筆保證金 ${R.rule.m}U、初始資金 ${R.rule.cap0}U、手續費每邊 ${R.rule.fee}%（開倉、平倉都扣）。同一個幣還開著時新訊號跳過，可用資金不夠也跳過。</p>
     <div class="tbsum"><div><span>期末資金</span><b class="${R.endCap >= R.rule.cap0 ? 'qg' : 'qr'}">${R.endCap}U</b><em>${pct(+((R.endCap / R.rule.cap0 - 1) * 100).toFixed(2))}</em></div>
       <div><span>總損益</span><b class="${R.all.sum >= 0 ? 'qg' : 'qr'}">${u(R.all.sum)}</b><em>共 ${R.all.n} 筆</em></div>
       <div><span>成功率</span><b>${f(R.all.rate)}${R.all.rate != null ? '%' : ''}</b><em>已結單 ${R.all.done} 筆</em></div>
@@ -4015,7 +4015,7 @@ function tbRender(d) {
       ${row('all', R.all)}${R.pairs.map(p => row(p, R.byPair[p])).join('')}${row('long', R.byDir.long)}${row('short', R.byDir.short)}</tbody></table></div>
     <div class="tbrule"><h4>🪜 每一步走到哪裡</h4>
       <p class="tlsub">回測期間價格回踩了 <b>${F.cards}</b> 個 FVG／OB（② 卡片出現），其中 <b>${F.brk}</b> 個出現 CHoCH／BOS（③），<b>${F.entry}</b> 個回踩 FVG 進場（④）。沒進場的：${R.pairs.map(p => NM[p].slice(0, 2)).join('／')} 收盤收破範圍 ${F.close} 個、被指標刪掉 ${F.bb} 個、回踩後太久沒進場 ${F.time} 個${F.live ? `、到最後還在等的 ${F.live} 個` : ''}。</p>
-      ${R.sl ? `<p class="tlsub">止損距離換算成 ${R.rule.lev}x 的報酬率：平均 −${R.sl.avg}%、中間值 −${R.sl.med}%、最近 −${R.sl.min}%、最遠 −${R.sl.max}%。止盈是 1:1，所以止盈的報酬率跟止損一樣大。距離很近的單，手續費（一來一回約 ${(2 * R.rule.fee * R.rule.lev).toFixed(0)}%）會吃掉很大一部分。</p>` : ''}</div>
+      ${R.sl ? `<p class="tlsub">止損距離換算成 ${R.rule.lev}x 的報酬率：平均 −${R.sl.avg}%、中間值 −${R.sl.med}%、最近 −${R.sl.min}%、最遠 −${R.sl.max}%。止盈是 1:1，所以止盈的報酬率跟止損一樣大。距離近的單，手續費（一來一回約 ${(2 * R.rule.fee * R.rule.lev).toFixed(0)}%）會吃掉很大一部分。</p>` : ''}</div>
     <p class="tlsub">找到 ${R.found} 筆進場，實際模擬 ${R.all.n} 筆；跳過 ${R.skipCoin + R.skipCash} 筆（同一個幣還開著 ${R.skipCoin}、資金不夠 ${R.skipCash}）。成功＝扣完手續費還賺錢。K 棒內的走法：收漲的 K 棒當作「開→低→高→收」、收跌的當作「開→高→低→收」。回測沒有考慮滑價和資金費率，結果只供參考。</p>
     <details class="tbdet"><summary>每一筆的明細（最近 ${R.trades.length} 筆）</summary><div class="tablewrap"><table><thead><tr><th>進場時間</th><th>幣種</th><th>方向</th><th>週期</th><th>進場價</th><th>止損／止盈</th><th>出場</th><th>報酬率</th><th>損益</th></tr></thead><tbody>
       ${R.trades.map(t => `<tr><td>${fmtT(t.et)}</td><td>${esc(t.sym.replace(/USDT$/, ''))}</td><td class="${t.dir > 0 ? 'qg' : 'qr'}">${t.dir > 0 ? '做多' : '做空'}</td><td>${NM[t.pair]}</td><td>${tlPr(t.entry)}</td><td class="tlmut">${tlPr(t.sl)}／${tlPr(t.tp)}</td><td>${HOW[t.how]}${t.how !== 'open' ? `<span class="tlmut">・${fmtT(t.xt).slice(-11)}</span>` : ''}</td><td class="${t.net >= 0 ? 'qg' : 'qr'}">${pct(t.net)}</td><td class="${t.pnl >= 0 ? 'qg' : 'qr'}">${u(t.pnl)}</td></tr>`).join('')}</tbody></table></div></details>` : ''}</div>`;
@@ -4126,6 +4126,10 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-10-29f', title: '2026/10/29 更新（特級止損）', items: [
+    { ic: '🎯', sp: true, t: '特級交易的止損改到 4H／1H FVG／OB 範圍的低點（做空＝高點），止盈照這個距離 1:1。' },
+    { ic: '⚡', sp: true, t: '已進場的卡片改成用即時價格判斷止盈止損，碰到就馬上移到歷史，卡片上的現價也是即時的。' }
+  ] },
   { id: '2026-10-29e', title: '2026/10/29 更新（數據日、設定頁）', items: [
     { ic: '📅', t: '美國重要數據不再整天停單：只有公布前 4 小時到公布後 4 小時不開新單，其他時間照常進場；停單、恢復時 Discord 都會通知。' },
     { ic: '⚜', t: '「設定」頁改成黑金配色，欄位名稱和說明精簡了。' }
@@ -4196,7 +4200,7 @@ function gdPage2(p) {
     <h2>🗡 特級咒具與特級交易</h2>
     ${gdPt('<path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"></path>', '<b>「☰ 選單 → 特級咒具」</b>：4H／1H 的 FVG／OB 被價格回踩時出現卡片，卡片上一步一步寫出走到哪裡、下一步在等什麼。沒達成的移到「📜 特級咒具歷史」。右上「⚙ 設定」可以設定自己的 Discord 通知。')}
     ${gdPt('<path d="M8 5v14l11-7z"></path>', '持倉區「<b>🗡 開始特級交易</b>」：用這些訊號自動下單，跟一般交易分開開關。同一個幣出現反方向的特級訊號會反手。')}
-    ${gdPt('<circle cx="12" cy="12" r="3"></circle><path d="M12 2v3"></path><path d="M12 19v3"></path><path d="M2 12h3"></path><path d="M19 12h3"></path>', '<b>「☰ 選單 → 設定 → 🗡 特級交易設定」</b>：自己的投入資金、每筆保證金、槓桿、持有天數、單日虧損上限，還有收回資金。止損、止盈由策略決定（15M／5M FVG 低點、1:1）。')}
+    ${gdPt('<circle cx="12" cy="12" r="3"></circle><path d="M12 2v3"></path><path d="M12 19v3"></path><path d="M2 12h3"></path><path d="M19 12h3"></path>', '<b>「☰ 選單 → 設定 → 🗡 特級交易設定」</b>：自己的投入資金、每筆保證金、槓桿、持有天數、單日虧損上限，還有收回資金。止損、止盈由策略決定（4H／1H FVG／OB 低點、1:1）。')}
     ${gdPt('<path d="M3 17l6-6 4 4 8-8"></path>', '主畫面的紅框「特級持倉」「特級交易」是特級自己的成績；資金曲線三條線：<b style="color:#60a5fa">一般藍</b>、<b style="color:#f87171">特級紅</b>、<b style="color:#c084fc">綜合紫</b>（都用報酬率）。')}
     ${gdTip('Bitunix 是「雙向持倉」時，一般單和特級單可以多空雙開；單向持倉會自動跳過。「☰ 選單 → 回測數據」可以做特級咒具的回測。')}`;
   if (p === 'done') return gdPage('done').replace('<p class="gdsub">之後想再看說明', '<button class="gdbtn" id="gd_news2" style="align-self:center">📰 看更新紀錄</button><p class="gdsub">之後想再看說明');
@@ -6020,7 +6024,7 @@ $('sp_save').onclick = async () => {
 $('qSpToggle').onclick = () => {
   const C = SRVLT.cfg || {};
   if (C.sp) { if (!confirm('確定要暫停 🗡 特級交易嗎？\n\n暫停後不會開新的特級單，已經開著的單照常管理到平倉。')) return; return ltCall('/api/lt/config', { sp: false }, '已暫停特級交易，已經開著的單照常管理。'); }
-  if (!confirm(`確定要開始「🗡 特級交易」嗎？\n\n特級咒具的 FVG／OB 回踩進場，會用你的 Bitunix 帳戶「真實下單」，照「🗡 特級交易設定」：\n・每筆 ${C.spMargin}U、${C.spLev}x 全倉\n・止損＝15M／5M FVG 的低點（做空＝高點），止盈 1:1\n・持有 ${Math.round(C.spHold / 24 * 10) / 10} 天到期\n${C.spBudget > 0 ? `・投入資金 ${C.spBudget}U\n` : ''}${C.spDayLoss > 0 ? `・單日虧損上限 ${C.spDayLoss}U\n` : ''}\n同一個幣出現反方向訊號會反手（只動特級交易自己的單）。全倉的虧損可能超過單筆保證金，請確認你能承擔。`)) return;
+  if (!confirm(`確定要開始「🗡 特級交易」嗎？\n\n特級咒具的 FVG／OB 回踩進場，會用你的 Bitunix 帳戶「真實下單」，照「🗡 特級交易設定」：\n・每筆 ${C.spMargin}U、${C.spLev}x 全倉\n・止損＝4H／1H FVG／OB 的低點（做空＝高點），止盈 1:1\n・持有 ${Math.round(C.spHold / 24 * 10) / 10} 天到期\n${C.spBudget > 0 ? `・投入資金 ${C.spBudget}U\n` : ''}${C.spDayLoss > 0 ? `・單日虧損上限 ${C.spDayLoss}U\n` : ''}\n同一個幣出現反方向訊號會反手（只動特級交易自己的單）。全倉的虧損可能超過單筆保證金，請確認你能承擔。`)) return;
   ltCall('/api/lt/config', { sp: true }, '🗡 特級交易已開始。');
 };
 $('qLtCfgBtn').onclick = () => {                     // 打開「👤 我的設定」並捲到交易設定
