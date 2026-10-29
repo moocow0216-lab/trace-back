@@ -59,6 +59,8 @@ try {
     if (A.lt.budget > 0 && A.lt.startCap !== A.lt.budget) A.lt.startCap = A.lt.budget;   // 投入資金＝起始本金（盈虧紀錄保留：100U 虧到 98U，改成 50U 就是 48U）
     A.lt.spStartAt = 0;                                // 🗡 特級交易一樣：盈虧從第一筆特級單開始算，改投入資金不歸零
     if (A.lt.startCap === 100 && !A.ltTrades.length) { A.lt.startCap = 0; A.lt.startAt = 0; }   // 舊版預設把起始本金寫死成 100U
+    { const sp = new Set((A.ltTrades || []).filter(t => t.src === 'tool' && t.positionId).map(t => t.positionId));   // 🔧 清掉被重複「自動接回」的紀錄（同一筆倉位已經有特級交易的紀錄）
+      const n0 = (A.ltTrades || []).length; A.ltTrades = (A.ltTrades || []).filter(t => !(t.found && t.src !== 'tool' && sp.has(t.positionId))); if (A.ltTrades.length !== n0) log('清掉重複接回的紀錄', n0 - A.ltTrades.length); }
   }
   log(`讀入存檔：${ST.cards.length} 張卡片、${ST.bt.trades.length} 筆回測`);
 } catch (e) { log('沒有存檔，從頭開始'); }
@@ -926,7 +928,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-29f';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-29h';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1209,7 +1211,7 @@ async function ltOpen(X, c) {
   if (LT.busy.has(c.sym)) return skip('同一個幣正在下單中（另一個訊號剛好同時出現），這次略過');
   if (!sp && C.btcF && c.btcPass === false) return skip(`${c.sym} 沒過 BTC 方向過濾（${c.abN} 項，需要 ${c.btcNeed} 項），不下單`);
   { const B = ecoBlockInfo(); if (B) return skip(`美國重要數據（${ecoNames(B.list)}）前後 4 小時不開新單，${tw(B.until).slice(-11)} 恢復`, 'eco'); }
-  LT.busy.add(c.sym);
+  LT.busy.add(c.sym); (LT.opening = LT.opening || {})[c.sym] = Date.now();   // 下單中：對帳時不要把這筆當成「沒被記到的單」接回去
   try {
     if (C.maxOpen && ltOpenTrades(X).length >= C.maxOpen) return skip(`已達最多同時持倉 ${C.maxOpen} 筆，${c.sym} 這次不下單`);
     if (BX.pos.some(p => p.sym === c.sym && p.dir === c.dir) || ltOpenTrades(X).some(t => t.sym === c.sym && t.dir === c.dir)) { const own = ltOpenTrades(X).find(t => t.sym === c.sym && t.dir === c.dir); return skip(`這個幣已經有${c.dir > 0 ? '多單' : '空單'}（${own ? (own.src === 'tool' ? '特級交易的單' : '一般自動單') : '手動單'}），同方向不加碼`); }   // 這個幣已經有同方向的倉位：不加碼（雙向持倉下會被交易所合成一個倉位，分不清是誰的）
@@ -1256,6 +1258,7 @@ async function ltOpen(X, c) {
       entry: p ? num(p.avgOpenPrice) : px, qty: p ? num(p.qty) : qty, qty0: p ? num(p.qty) : qty, margin: p ? num(p.margin) : M, m0: p ? num(p.margin) || M : M,
       positionId: p ? String(p.positionId) : '', orderId: o && o.orderId, status: 'open', ruleLev: LV, src: sp ? 'tool' : '', ttype: c.ttype || '', tpair: c.tpair || '', ...(pSL ? { pSl: c.sl, pTp: (p ? num(p.avgOpenPrice) : px) + ((p ? num(p.avgOpenPrice) : px) - c.sl) } : {}), realized: 0, fee: p ? num(p.fee) : 0, funding: 0, closes: [], locked: false, fav: 0, adv: 0, exSL, prec: +pr.basePrecision || 0, minQty: +pr.minTradeVolume || 0
     };
+    if (t.positionId) X.A.ltTrades = X.A.ltTrades.filter(o => !(o.status === 'open' && o.found && o.positionId === t.positionId));   // 同一筆倉位如果已經被「自動接回」，以這筆開倉紀錄為準，不要變成兩筆
     X.A.ltTrades.unshift(t); X.A.ltTrades = X.A.ltTrades.slice(0, 2000); touchLT(X);
     log('自動開倉', X.uid, c.sym, c.dir > 0 ? '做多' : '做空', qty, '@', t.entry);
     if (pSL) { const rl = (v) => (c.dir * (v / t.entry - 1) * lev * 100).toFixed(0); dcX(X, `🗡 **特級交易開倉**（🧱 FVG／OB 回踩・${c.tpair === 'h4' ? '4H→15 分' : '1H→5 分'}） ${c.dir > 0 ? '🟢 做多' : '🔴 做空'} **${mdEsc(c.sym)}**\n成交價 ${fpx(t.entry)}・${lev}x 全倉・數量 ${t.qty}・保證金約 ${t.margin.toFixed(2)}U\n止損 ${fpx(t.pSl)}（${rl(t.pSl)}%，${c.tpair === 'h4' ? '4H' : '1H'} FVG／OB ${c.dir > 0 ? '低點' : '高點'}）${exSL ? '・已掛在交易所' : '・⚠️ 交易所止損沒設成功，改由伺服器監控'}\n止盈 ${fpx(t.pTp)}（+${rl(t.pTp)}%，盈虧比 1:1，伺服器監控）`); return; }
@@ -1426,7 +1429,7 @@ async function ltReconcile(X, pos) {
     const prevPart = t.closes.reduce((a, c) => a + c.pnl, 0);
     t.closes.push({ t: Date.now(), qty: t.qty, pnl: (t.realized || 0) - prevPart, by: reason });
     Object.assign(t, { status: 'closed', exitAt: Date.now(), reason, qty: 0, upnl: 0 }); ch = true;
-    const net = ltNet(t), nm = (t.src === 'tool' ? '🗡 **特級交易平倉**｜' : '🤖 **實盤平倉**｜') + ({ win: t.pSl > 0 ? '🎯 止盈出場（1:1）' : '✅ 達標出場', lock: `🔒 鎖利出場（鎖利線 +${pctK(t.lockLv || TRule(X, t).tp, rk(t, t.ruleLev || t.lev))}%）`, fail: t.pSl > 0 ? '❌ 止損出場（FVG）' : '❌ 失敗線出場', timeout: '⏱ 持有到期出場', manual: '🖐 手動平倉', all: '🛑 一鍵平倉（自動單）', flip: '🔄 反手平倉', liq: '💥 強平', exchange: '📤 交易所平倉（止損或在 App 平倉）' }[reason] || reason);
+    const net = ltNet(t), nm = (t.src === 'tool' ? '🗡 **特級交易平倉**｜' : X.sim ? '🤖 **自動單平倉**｜' : '🤖 **實盤平倉**｜') + ({ win: t.pSl > 0 ? '🎯 止盈出場（1:1）' : '✅ 達標出場', lock: `🔒 鎖利出場（鎖利線 +${pctK(t.lockLv || TRule(X, t).tp, rk(t, t.ruleLev || t.lev))}%）`, fail: t.pSl > 0 ? '❌ 止損出場（FVG）' : '❌ 失敗線出場', timeout: '⏱ 持有到期出場', manual: '🖐 手動平倉', all: '🛑 一鍵平倉（自動單）', flip: '🔄 反手平倉', liq: '💥 強平', exchange: '📤 交易所平倉（止損或在 App 平倉）' }[reason] || reason);
     dcX(X, `${nm} **${mdEsc(t.sym)}** ${t.dir > 0 ? '做多' : '做空'}\n淨損益 **${net >= 0 ? '+' : '−'}${Math.abs(net).toFixed(2)}U**（${(net / (t.m0 || X.A.lt.margin) * 100).toFixed(0)}%）・持有 ${durTxt(Date.now() - t.et)}${t.closePx ? `・平倉均價 ${fpx(t.closePx)}` : ''}`);
   }
   // 🔍 第二層判斷：沒被管理的倉位，如果其實是伺服器開的，就自動接回管理（每筆倉位每 5 分鐘檢查一次）
@@ -1435,6 +1438,7 @@ async function ltReconcile(X, pos) {
   const OC = X.LT.orphan || (X.LT.orphan = {});
   for (const p of pos) {
     if (TR.some(t => t.status === 'open' && (t.positionId === p.id || t.sym === p.sym))) continue;
+    if (X.LT.busy.has(p.sym) || Date.now() - ((X.LT.opening || {})[p.sym] || 0) < 120000) continue;   // 伺服器正在開這個幣（或 2 分鐘內剛開）：開倉的紀錄等一下就會寫進來，不要重複接管
     if (!(p.ctime > 0) || Date.now() - (OC[p.id] || 0) < 5 * 60000) continue;
     OC[p.id] = Date.now();
     let why = '';
