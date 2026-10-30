@@ -1019,7 +1019,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-30j</div>
+      <div class="qver" id="qVer">網站版本 2026-10-30k</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3470,7 +3470,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-30j・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-30k・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -4163,7 +4163,7 @@ const CHANGELOG = [
   { id: '2026-10-30f', title: '2026/10/30 更新（資金分配）', items: [
     { ic: '💰', t: '新增「合約總資金」：一般、特級的投入資金加起來不能超過它（空白＝整個帳戶），設定頁會顯示已經分配多少、還能分配多少。' },
     { ic: '🔄', t: '投入資金改成「填多少就從多少開始」：設定後目前資金＝你填的金額，之前的盈虧不再扣著（統計、資金曲線照常）。打一樣的數字也會重新開始。這一版更新時，兩邊都會從目前設定的投入資金重新開始。' },
-    { ic: '🖐', t: '手動單平倉後，伺服器會到交易所查實際盈虧；虧的錢一般、特級各扣一半（只有一邊有設投入資金就全部扣那一邊），Discord 也會通知。' }
+    { ic: '🖐', t: '手動單平倉後，伺服器會到交易所查實際盈虧；虧的錢一般、特級各扣一半（只有一邊有設投入資金就全部扣那一邊）。手動單不發 Discord 通知。' }
   ] },
   { id: '2026-10-30d', title: '2026/10/30 更新（特級交易可以重新起算）', items: [
     { ic: '🔧', sp: true, t: '修正：特級交易設定按儲存後跳出「null is not an object」錯誤（設定其實有存進去）。' },
