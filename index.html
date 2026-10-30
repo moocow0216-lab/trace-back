@@ -1017,7 +1017,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-30f</div>
+      <div class="qver" id="qVer">網站版本 2026-10-30g</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3467,7 +3467,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-30f・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-30g・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -4147,6 +4147,10 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-10-30g', title: '2026/10/30 更新（分配超過就擋住）', items: [
+    { ic: '⛔', t: '資金分配超過時（一般＋特級的投入資金超過合約總資金，或兩邊目前的資金加起來超過帳戶）不能按開始，也不會開新單，已開的單照常管理。' },
+    { ic: '💰', sp: true, t: '特級交易的投入資金也改成輸入完就存（離開欄位或按 Enter），跟一般交易一樣，不用再按儲存。' }
+  ] },
   { id: '2026-10-30f', title: '2026/10/30 更新（資金分配）', items: [
     { ic: '💰', t: '新增「合約總資金」：一般、特級的投入資金加起來不能超過它（空白＝整個帳戶），設定頁會顯示已經分配多少、還能分配多少。' },
     { ic: '🔄', t: '投入資金改成「填多少就從多少開始」：設定後目前資金＝你填的金額，之前的盈虧不再扣著（統計、資金曲線照常）。打一樣的數字也會重新開始。這一版更新時，兩邊都會從目前設定的投入資金重新開始。' },
@@ -6005,7 +6009,7 @@ function renderLt() {
   { const L = SRVLT.low, noB = MINE() && !(C.budget > 0), noS = MINE() && SRVLT.toolOk && !(C.spBudget > 0);   // ⚠️ 還沒填投入資金
     $('qLtLow').hidden = !(L && MINE()) && !noB && !noS;
     if (!(L && MINE()) && (noB || noS)) $('qLtLow').textContent = `⚠️ 還沒填${[noB ? '一般交易' : '', noS ? '🗡 特級交易' : ''].filter(Boolean).join('和')}的投入資金：請到「☰ 選單 → 設定」填一個大於 0 的數字${noB && C.on || noS && C.sp ? '（現在照常交易，但沒有資金上限）' : '，填好才能開始交易'}`;   // ⚠️ 資金不足：一般＋特級的「目前」比帳戶的錢多
-    else if (L && MINE()) $('qLtLow').textContent = `⚠️ 資金不足：合約帳戶只有 ${L.acct.toFixed(2)}U，但一般交易目前 ${L.n.toFixed(2)}U${L.sp ? `＋特級交易目前 ${L.sp.toFixed(2)}U` : ''}＝${(L.n + L.sp).toFixed(2)}U。實際能用的只有帳戶裡的錢，請調低投入資金或收回資金。`; }
+    else if (L && MINE()) $('qLtLow').textContent = `⛔ 資金分配超過：${L.why}。現在不會開新單（已開的單照常管理），請到「☰ 選單 → 設定」調低投入資金。`; }
   { const P = SRVLT.pause, isSp = !!(P && /特級/.test(P.why)), show = !!(P && MINE() && (isSp ? SRVLT.toolOk && !C.sp : !C.on || (/重新啟動|擁有者一鍵|平倉異常|API/.test(P.why) && SRVLT.toolOk && !C.sp)));   // ⏸ 上次暫停的原因：一般、特級的原因各自只在那一邊暫停時顯示
     $('qLtWhy').hidden = !show; if (show) $('qLtWhy').textContent = `⏸ 上次暫停：${fmtT(P.t).slice(-11)}・${P.why}`; }
   { const ok = !!(SRVLT.toolOk && MINE()), SB = SRVLT.spBot;   // 🗡 特級交易設定：只有特級咒具權限的人看得到
@@ -6064,6 +6068,15 @@ async function wdGo(kind) {                           // 💸 收回資金
 $('wd_nGo').onclick = () => wdGo('n');
 $('wd_spGo').onclick = () => wdGo('sp');
 for (const k of ['budget', 'margin', 'dayLoss', 'lev', 'tp', 'step', 'sl', 'hold']) $('sp_' + k).oninput = e => { e.target.dataset.dirty = '1'; };   // 改到一半不要被每 3 秒的更新蓋掉
+$('sp_budget').onkeydown = e => { if (e.key === 'Enter') $('sp_budget').blur(); };
+$('sp_budget').onblur = async () => {                // 💰 特級投入資金跟一般一樣：輸入完（離開欄位或按 Enter）就存，特級交易從這個金額重新開始
+  if (!$('sp_budget').dataset.dirty) return;
+  const v = +$('sp_budget').value, m = $('sp_msg');
+  if (!(v > 0)) { m.textContent = '❌ 投入資金要填大於 0 的數字'; m.style.color = '#ff9aa2'; return; }
+  m.textContent = '儲存中…'; m.style.color = '';
+  try { await srvFetch('/api/lt/config', { sp_set: { budget: v } }); delete $('sp_budget').dataset.dirty; m.textContent = `✅ 特級交易從 ${v}U 開始`; SV.lv = 0; srvPull(); }
+  catch (e) { delete $('sp_budget').dataset.dirty; m.textContent = '❌ ' + e.message; m.style.color = '#ff9aa2'; $('sp_budget').value = (SRVLT.cfg || {}).spBudget || ''; }
+};
 $('sp_save').onclick = async () => {
   if (!(+$('sp_budget').value > 0)) { $('sp_msg').textContent = '❌ 投入資金要填大於 0 的數字'; $('sp_msg').style.color = '#ff9aa2'; return; }
   const bd = !!$('sp_budget').dataset.dirty;   // 改過投入資金才送：特級交易從這個金額重新開始
