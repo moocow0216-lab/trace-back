@@ -928,7 +928,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-29h';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-30b';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1266,6 +1266,17 @@ async function ltOpen(X, c) {
   } catch (e) { LT.msg = `${c.sym} 自動下單失敗：${e.message}`; log(X.uid, LT.msg); dcX(X, `❗ **自動下單失敗** ${mdEsc(c.sym)}：${mdEsc(e.message)}`); }
   finally { LT.busy.delete(c.sym); }
 }
+// 🛡 把交易所上這筆單的止損改到指定價格（特級交易套保用）；改失敗沒關係，伺服器還是會照這個價格平倉
+async function ltSlPx(X, t, slPx) {
+  const K = X.A.bx, pr = await ltPair(t.sym).catch(() => null), sp = pxStr(slPx, pr ? +pr.quotePrecision || 4 : 6);
+  const body = { symbol: t.sym, positionId: t.positionId, slPrice: sp, slStopType: 'MARK_PRICE' };
+  let oid = null;
+  try { oid = (await bxPost('/api/v1/futures/tpsl/position/modify_order', body, K) || {}).orderId; }
+  catch (e1) { oid = (await bxPost('/api/v1/futures/tpsl/position/place_order', body, K) || {}).orderId; }
+  try { const L = await bxGet('/api/v1/futures/tpsl/get_pending_orders', { symbol: t.sym, positionId: t.positionId, limit: 20 }, K);
+    for (const o of Array.isArray(L) ? L : []) if (o.slPrice && String(o.id) !== String(oid) && Math.abs(+o.slPrice / slPx - 1) > 1e-6) await bxPost('/api/v1/futures/tpsl/cancel_order', { symbol: t.sym, orderId: String(o.id) }, K).catch(() => {}); } catch (e) {}
+  t.slPx = slPx; t.exSL = true; touchLT(X);
+}
 // 🛡 把交易所上的止損改成目前設定的浮虧 %：先改「持倉止損」，沒有的話就新掛一張；舊的止損單取消掉
 async function ltSyncSL(X, kind) {                     // kind：'n'＝只同步一般、'sp'＝只同步特級、不給＝全部（每筆照自己的規則）
   const K = X.A.bx, T = kind === 'sp' ? TS(X) : TT(X), ok = [], bad = [], skip = [];
@@ -1370,7 +1381,14 @@ async function ltManageX(X) {
     const roe = t.dir * (px / t.entry - 1) * rl * 100;
     t.cur = px; t.roe = roe; t.fav = Math.max(t.fav || 0, roe); t.adv = Math.min(t.adv || 0, roe);
     let why = '';
-    if (t.pSl > 0) { if (t.dir * (px - t.pSl) <= 0) why = 'fail'; else if (t.dir * (px - t.pTp) >= 0) why = 'win'; }   // 🗡 FVG／OB 策略：照價格止損、止盈 1:1
+    if (t.pSl > 0) {                                    // 🗡 FVG／OB 策略：照價格止損、止盈 1:1；🛡 價格每往有利方向走 1%（100x＝+100%）就套保一次
+      const k = Math.floor(t.dir * (px / t.entry - 1) * 100 + 1e-9);
+      if (k >= 1) { const lv = t.entry * (1 + t.dir * (k - 1) / 100);
+        if (!t.pLk || t.dir * (lv - t.pLk) > 0) { const first = !t.pLk; t.pLk = lv; t.lockLv = +((k - 1) * t.lev).toFixed(0); touchLT(X); ltSlPx(X, t, lv).catch(() => {});
+          dcX(X, `🛡 **特級交易套保**｜${mdEsc(t.sym)} ${t.dir > 0 ? '做多' : '做空'}：浮盈 +${(k * t.lev).toFixed(0)}%，止損移到 ${fpx(lv)}（${first ? '進場價，保本' : `鎖住 +${t.lockLv}%`}）`); } }
+      const stop = t.pLk && t.dir * (t.pLk - t.pSl) > 0 ? t.pLk : t.pSl;
+      if (t.dir * (px - stop) <= 0) why = stop === t.pSl ? 'fail' : 'lock'; else if (t.dir * (px - t.pTp) >= 0) why = 'win';
+    }
     else if (roe <= -T.sl) why = 'fail';
     else if (T.exit === 'fixed') { if (roe >= T.tp) why = 'win'; }
     else if (t.fav >= T.tp) {                            // 鎖利：最高浮盈每多 step%，鎖利線就往上調一格，只升不降
@@ -1429,7 +1447,7 @@ async function ltReconcile(X, pos) {
     const prevPart = t.closes.reduce((a, c) => a + c.pnl, 0);
     t.closes.push({ t: Date.now(), qty: t.qty, pnl: (t.realized || 0) - prevPart, by: reason });
     Object.assign(t, { status: 'closed', exitAt: Date.now(), reason, qty: 0, upnl: 0 }); ch = true;
-    const net = ltNet(t), nm = (t.src === 'tool' ? '🗡 **特級交易平倉**｜' : X.sim ? '🤖 **自動單平倉**｜' : '🤖 **實盤平倉**｜') + ({ win: t.pSl > 0 ? '🎯 止盈出場（1:1）' : '✅ 達標出場', lock: `🔒 鎖利出場（鎖利線 +${pctK(t.lockLv || TRule(X, t).tp, rk(t, t.ruleLev || t.lev))}%）`, fail: t.pSl > 0 ? '❌ 止損出場（FVG）' : '❌ 失敗線出場', timeout: '⏱ 持有到期出場', manual: '🖐 手動平倉', all: '🛑 一鍵平倉（自動單）', flip: '🔄 反手平倉', liq: '💥 強平', exchange: '📤 交易所平倉（止損或在 App 平倉）' }[reason] || reason);
+    const net = ltNet(t), nm = (t.src === 'tool' ? '🗡 **特級交易平倉**｜' : X.sim ? '🤖 **自動單平倉**｜' : '🤖 **實盤平倉**｜') + ({ win: t.pSl > 0 ? '🎯 止盈出場（1:1）' : '✅ 達標出場', lock: t.pSl > 0 ? `🛡 套保出場（${t.lockLv > 0 ? `鎖住 +${t.lockLv}%` : '保本'}）` : `🔒 鎖利出場（鎖利線 +${pctK(t.lockLv || TRule(X, t).tp, rk(t, t.ruleLev || t.lev))}%）`, fail: t.pSl > 0 ? '❌ 止損出場（FVG／OB）' : '❌ 失敗線出場', timeout: '⏱ 持有到期出場', manual: '🖐 手動平倉', all: '🛑 一鍵平倉（自動單）', flip: '🔄 反手平倉', liq: '💥 強平', exchange: '📤 交易所平倉（止損或在 App 平倉）' }[reason] || reason);
     dcX(X, `${nm} **${mdEsc(t.sym)}** ${t.dir > 0 ? '做多' : '做空'}\n淨損益 **${net >= 0 ? '+' : '−'}${Math.abs(net).toFixed(2)}U**（${(net / (t.m0 || X.A.lt.margin) * 100).toFixed(0)}%）・持有 ${durTxt(Date.now() - t.et)}${t.closePx ? `・平倉均價 ${fpx(t.closePx)}` : ''}`);
   }
   // 🔍 第二層判斷：沒被管理的倉位，如果其實是伺服器開的，就自動接回管理（每筆倉位每 5 分鐘檢查一次）
@@ -1489,7 +1507,7 @@ if (!ST.tool.v2) {                                     // 🗡 特級咒具 v2�
   delete ST.tool.sigs; delete ST.tool.seen; ST.tool.cards = {}; ST.tool.hist = []; ST.tool.wait = {}; ST.tool.v2 = true; dirty = true;
 }
 let TOOLV = 1;
-const TOOL_P = { h4: { ltf: '15m', lms: 15 * 60000, htf: '4h', hms: 4 * HOUR, name: '4H→15 分', hn: '4H', ln: '15 分' }, h1: { ltf: '5m', lms: 5 * 60000, htf: '1h', hms: HOUR, name: '1H→5 分', hn: '1H', ln: '5 分' } };
+const TOOL_P = { h4: { ltf: '15m', lms: 15 * 60000, htf: '4h', hms: 4 * HOUR, name: '4H→15 分', hn: '4H', ln: '15M' }, h1: { ltf: '5m', lms: 5 * 60000, htf: '1h', hms: HOUR, name: '1H→5 分', hn: '1H', ln: '5M' } };
 const toolUsers = () => [ownerUid(), ...ST.tool.grants.filter(u => ST.users.some(x => x.uid === u))];
 const toolOk = (me, owner) => owner || !!(me && ST.tool.grants.includes(me.uid));
 async function toolKl(sym, iv, limit, ms) {           // 只要已經收盤的 K 棒
@@ -1534,6 +1552,16 @@ function toolLux(B) {
   for (let i = 0; i < n; i++) { pivots(S, i); pivots(I, i); disp(I, i, true); disp(S, i, false); }
   return { bull, bear };
 }
+// 🛡 進場後每個價格的判斷（卡片、回測、即時都用這個）：先看止損／套保線，再看止盈 1:1，最後更新最高浮盈
+// 套保：價格每往有利方向走 1%（100x＝+100%、75x＝+75%），止損往有利方向移一格——第 1 格移到進場價（保本），之後每多 1% 再移 1%
+function toolStep(z, p, t) {
+  const stop = z.lk && z.dir * (z.lk - z.sl) > 0 ? z.lk : z.sl;
+  if (z.dir * (p - stop) <= 0) { Object.assign(z, { st: 'done', how: stop === z.sl ? 'sl' : 'lock', xt: t, xp: z.dir > 0 ? Math.min(p, stop) : Math.max(p, stop), endAt: t }); return true; }
+  if (z.dir * (p - z.tp) >= 0) { Object.assign(z, { st: 'done', how: 'tp', xt: t, xp: z.tp, endAt: t }); return true; }
+  const k = Math.floor(z.dir * (p / z.entry - 1) * 100 + 1e-9);
+  if (k >= 1) { const lv = z.entry * (1 + z.dir * (k - 1) / 100); if (!z.lk || z.dir * (lv - z.lk) > 0) z.lk = lv; }
+  return false;
+}
 // 整套策略跑一遍：H＝4H／1H K 線、L＝15 分／5 分 K 線（都只有已收盤的）。回傳每個「價格有回踩」的 FVG／OB 走到哪一步
 // o：vmin／vmax（數值範圍 %）、warm（小週期前面幾根只用來暖機）、maxWait（回踩後最多等多久進場，毫秒）、hold（進場後最多持有多久，毫秒）
 function toolStrat(H, L, P, o) {
@@ -1541,13 +1569,25 @@ function toolStrat(H, L, P, o) {
   let trk = [];                                        // 還在追蹤的（等回踩、等結構、等進場、持倉中）
   let bz = [], sz = [], k = -1;
   const end = (z, st, t, why, wc) => { z.st = st; z.endAt = t; z.why = why; z.wc = wc; };
-  const rm = (arr, z, why, t) => { const x = arr.indexOf(z); if (x >= 0) arr.splice(x, 1); if (z.st === 'touch' || z.st === 'brk') end(z, 'fail', t, why, 'bb'); else if (z.st === 'wait') z.st = 'gone'; };
+  const live = z => z.st === 'touch0' || z.st === 'touch' || z.st === 'brk';   // 回踩後、還沒進場
+  const rm = (arr, z, why, t) => { const x = arr.indexOf(z); if (x >= 0) arr.splice(x, 1); if (live(z)) end(z, 'fail', t, why, 'bb'); else if (z.st === 'wait') z.st = 'gone'; };
   const htf = j => {                                   // 一根 4H／1H 收盤
     const h = H[j], t = h.t + P.hms;
     for (const arr of [b1, b2]) for (const z of arr) {
       if (z.st === 'wait' && h.t + P.hms <= L0 && j > z.j && (z.dir > 0 ? h.l <= z.hi : h.h >= z.lo)) z.st = 'old';   // 小週期資料開始之前就回踩過了：不追蹤
-      if ((z.st === 'wait' || z.st === 'touch' || z.st === 'brk') && j > z.j && (z.dir > 0 ? h.c < z.lo : h.c > z.hi)) {   // 收盤收破整個 FVG／OB 範圍
-        if (z.st === 'wait') z.st = 'gone'; else end(z, 'fail', t, `${P.hn} 收盤${z.dir > 0 ? '跌破' : '漲破'} FVG／OB 範圍`, 'close');
+      if (z.st === 'touch0' && t >= z.touchAt) {       // ② 回踩那根 4H／1H 收盤：看實體 K 收在哪裡（做多為例，做空反過來）
+        const c = z.dir * h.c, ex = z.dir > 0 ? h.l : -h.h, fL = z.dir > 0 ? z.fvgLo : -z.fvgHi, oL = z.dir > 0 ? z.obLo : -z.obHi;
+        if (c < oL) { end(z, 'fail', t, `${P.hn} 實體 K 收破 FVG 和 OB`, 'body'); continue; }   // 情況四：FVG、OB 都被實體突破 → 第二步擋掉
+        z.rt = c < fL ? 'ob' : ex < fL ? 'both' : 'fvg'; z.st = 'touch'; z.cfAt = t;   // 情況二：實體突破 FVG、回踩到 OB／情況三：插針碰到 FVG 和 OB 又收上來／情況一：只回踩 FVG
+        continue;
+      }
+      if ((z.st === 'wait' || z.st === 'touch' || z.st === 'brk') && j > z.j && (z.dir > 0 ? h.c < z.lo : h.c > z.hi)) {   // 之後的 4H／1H 實體收破整個 FVG／OB 範圍
+        if (z.st === 'wait') z.st = 'gone'; else end(z, 'fail', t, `${P.hn} 實體 K 收破 FVG 和 OB`, 'body');
+        continue;
+      }
+      if ((z.st === 'touch' || z.st === 'brk') && z.rt !== 'ob') {   // 之後的 K 棒回踩得更深：標示跟著更新
+        const c = z.dir * h.c, ex = z.dir > 0 ? h.l : -h.h, fL = z.dir > 0 ? z.fvgLo : -z.fvgHi;
+        if (c < fL) z.rt = 'ob'; else if (ex < fL) z.rt = 'both';
       }
     }
     if (j >= 2 && !isNaN(atrH[j])) {                   // BigBeluga：新的缺口（數值＝缺口 %）
@@ -1560,7 +1600,7 @@ function toolStrat(H, L, P, o) {
       for (const z of [...arr]) if (arr.some(z1 => z1 !== z && z1.obHi < z.obHi && z1.obHi > z.obLo)) rm(arr, z, '跟新的 FVG／OB 重疊，指標把它刪掉了', t);
       if (arr.length >= 6) rm(arr, arr[0], '同方向的 FVG／OB 超過 6 個，最舊的被指標刪掉', t);
     }
-    trk = trk.filter(z => z.st === 'wait' || z.st === 'touch' || z.st === 'brk' || z.st === 'entry');
+    trk = trk.filter(z => z.st === 'wait' || live(z) || z.st === 'entry');
   };
   for (let i = 0; i < L.length; i++) {
     const b = L[i], ct = b.t + P.lms;
@@ -1578,13 +1618,13 @@ function toolStrat(H, L, P, o) {
     for (const z of trk) {
       if (z.st === 'wait' && b.t >= z.t + P.hms && (z.dir > 0 ? b.l <= z.hi : b.h >= z.lo)) {   // ② 價格回到 FVG／OB
         if (i < o.warm) { z.st = 'old'; continue; }
-        z.st = 'touch'; z.touchAt = ct; z.tI = i;
+        z.st = 'touch0'; z.touchAt = ct; z.tI = i;       // 碰到了：等這根 4H／1H 收盤確認是哪一種回踩
       }
-      if (z.st === 'touch' || z.st === 'brk') {
-        if (ct - z.touchAt > o.maxWait) { end(z, 'fail', ct, `回踩後超過 ${Math.round(o.maxWait / P.hms)} 根 ${P.hn} 還沒進場`, 'time'); continue; }
+      if (live(z) && ct - z.touchAt > o.maxWait) { end(z, 'fail', ct, `回踩後超過 ${Math.round(o.maxWait / P.hms)} 根 ${P.hn} 還沒進場`, 'time'); continue; }
+      if ((z.st === 'touch' || z.st === 'brk') && b.t >= z.cfAt) {   // ③④ 小時區流程：大週期那根收盤確認之後才開始看
         const up = z.dir > 0 ? lux.bull[i] : lux.bear[i], dn = z.dir > 0 ? lux.bear[i] : lux.bull[i];
+        if (dn) { end(z, 'fail', ct, `${P.ln} 出現反方向 ${dn}`, 'opp'); continue; }   // 小時區先出現反方向 CHoCH／BOS → 擋掉
         if (up) { z.st = 'brk'; z.brkAt = ct; z.tag = up; z.bI = i; }   // ③ 同方向 CHoCH／BOS
-        if (dn && z.st === 'brk') { z.st = 'touch'; z.resets = (z.resets || 0) + 1; z.brkAt = 0; z.tag = ''; }   // 反方向結構：回到等 CHoCH／BOS
         const f = z.dir > 0 ? hB : hS;
         if (z.st === 'brk' && i > z.bI && f) {          // ④ 回踩小週期 FVG → 進場
           const e = b.c, sl = z.dir > 0 ? z.lo : z.hi, rk = z.dir * (e - sl);   // 止損＝4H／1H 的 FVG／OB 整個範圍的外緣（做多＝最低、做空＝最高）
@@ -1593,16 +1633,13 @@ function toolStrat(H, L, P, o) {
       }
       if (z.st === 'entry' && i > z.eI) {               // 進場後：K 棒內走法——收漲當作「開→低→高→收」、收跌當作「開→高→低→收」
         const path = b.c >= b.o ? [b.o, b.l, b.h, b.c] : [b.o, b.h, b.l, b.c];
-        for (const p of path) {
-          if (z.dir > 0 ? p <= z.sl : p >= z.sl) { Object.assign(z, { st: 'done', how: 'sl', xt: ct, xp: z.dir > 0 ? Math.min(p, z.sl) : Math.max(p, z.sl), endAt: ct }); break; }
-          if (z.dir > 0 ? p >= z.tp : p <= z.tp) { Object.assign(z, { st: 'done', how: 'tp', xt: ct, xp: z.tp, endAt: ct }); break; }
-        }
+        for (const p of path) { if (toolStep(z, p, ct)) break; }
         if (z.st === 'entry' && ct - z.entryAt >= o.hold) Object.assign(z, { st: 'done', how: 'hold', xt: ct, xp: b.c, endAt: ct });
       }
     }
   }
   while (k + 1 < H.length && L.length && H[k + 1].t + P.hms <= L[L.length - 1].t + P.lms) htf(++k);
-  const last = L[L.length - 1], keep = ['t', 'dir', 'val', 'lo', 'hi', 'fvgLo', 'fvgHi', 'obLo', 'obHi', 'touchAt', 'brkAt', 'tag', 'resets', 'entryAt', 'entry', 'sl', 'tp', 'fvgL', 'fvgH', 'how', 'xt', 'xp', 'st', 'endAt', 'why', 'wc'];
+  const last = L[L.length - 1], keep = ['t', 'dir', 'val', 'lo', 'hi', 'fvgLo', 'fvgHi', 'obLo', 'obHi', 'touchAt', 'cfAt', 'rt', 'brkAt', 'tag', 'resets', 'entryAt', 'entry', 'sl', 'tp', 'lk', 'fvgL', 'fvgH', 'how', 'xt', 'xp', 'st', 'endAt', 'why', 'wc'];
   const pick = z => { const r = {}; for (const x of keep) if (z[x] !== undefined) r[x] = z[x]; if (r.st === 'entry' && last) { r.xp = last.c; r.xt = last.t + P.lms; } return r; };
   return { setups: all.filter(z => z.touchAt).map(pick), wait: [...b1, ...b2].filter(z => z.st === 'wait').map(z => ({ t: z.t, dir: z.dir, val: +z.val.toFixed(3), lo: z.lo, hi: z.hi })) };
 }
@@ -1618,7 +1655,7 @@ async function toolUniverse(n) {                       // 成交額前 N 個 USD
 }
 function toolNotify(s) {                               // 進場通知（Discord）
   const P = TOOL_P[s.pair];
-  const msg = `🗡 **特級咒具**｜${s.dir > 0 ? '🟢 **做多**' : '🔴 **做空**'} **${mdEsc(s.sym)}**・🧱 FVG／OB 回踩（${P.name}）\n① ${P.hn} FVG／OB 數值 ${s.val.toFixed(2)}%・② 回踩 ${tw(s.touchAt)}・③ ${P.ln} ${s.tag || 'CHoCH／BOS'}\n④ 進場 ${tw(s.entryAt)}（台北）・價格 ${fpx(s.entry)}\n止損 ${fpx(s.sl)}（${P.hn} FVG／OB ${s.dir > 0 ? '低點' : '高點'}）・止盈 ${fpx(s.tp)}（1:1）`;
+  const msg = `🗡 **特級咒具**｜${s.dir > 0 ? '🟢 **做多**' : '🔴 **做空**'} **${mdEsc(s.sym)}**・🧱 FVG／OB 回踩（${P.name}）\n① ${P.hn} FVG／OB 數值 ${s.val.toFixed(2)}%・② ${({ fvg: '回踩 FVG', ob: '回踩 OB（實體突破 FVG）', both: '回踩 FVG、OB（插針收回）' })[s.rt] || '回踩'} ${tw(s.touchAt)}・③ ${P.ln} ${s.tag || 'CHoCH／BOS'}\n④ 進場 ${tw(s.entryAt)}（台北）・價格 ${fpx(s.entry)}\n止損 ${fpx(s.sl)}（${P.hn} FVG／OB ${s.dir > 0 ? '低點' : '高點'}）・止盈 ${fpx(s.tp)}（1:1）\n🛡 價格每往有利方向走 1% 就套保一次（第 1 次保本）`;
   const seen = new Set();
   for (const uid of toolUsers()) { let h = ''; try { h = dec(ST.tool.hooks[uid] || ''); } catch (e) {} if (!h || seen.has(h)) continue; seen.add(h); dcSend(msg, { webhook: h }); }
 }
@@ -1678,7 +1715,7 @@ async function toolBacktest(X, cfg) {
     return { trades, eq, endCap: cash + open.reduce((a, t) => a + t.pnl, 0), realCap: cash, mdd, maxOpen, skipCoin, skipCash };
   };
   const grp = L => { const done = L.filter(t => t.how !== 'open'), win = done.filter(t => t.pnl > 0).length, cnt = h => done.filter(t => t.how === h).length;
-    return { n: L.length, done: done.length, win, rate: done.length ? +(win / done.length * 100).toFixed(1) : null, avg: done.length ? +(done.reduce((a, t) => a + t.net, 0) / done.length).toFixed(1) : null, sum: +L.reduce((a, t) => a + t.pnl, 0).toFixed(3), tp: cnt('tp'), sl: cnt('sl'), hold: cnt('hold') }; };
+    return { n: L.length, done: done.length, win, rate: done.length ? +(win / done.length * 100).toFixed(1) : null, avg: done.length ? +(done.reduce((a, t) => a + t.net, 0) / done.length).toFixed(1) : null, sum: +L.reduce((a, t) => a + t.pnl, 0).toFixed(3), tp: cnt('tp'), sl: cnt('sl'), lock: cnt('lock'), hold: cnt('hold') }; };
   const R = sim(cand), trades = R.trades, sl = cand.map(c => c.slRoe).sort((a, b) => a - b);
   ST.tool.bt = {
     v: 2, at: Date.now(), start, end: Date.now(), days, coins: syms.length, pairs,
@@ -1686,7 +1723,8 @@ async function toolBacktest(X, cfg) {
     all: grp(trades), byPair: { h4: grp(trades.filter(t => t.pair === 'h4')), h1: grp(trades.filter(t => t.pair === 'h1')) }, byDir: { long: grp(trades.filter(t => t.dir > 0)), short: grp(trades.filter(t => t.dir < 0)) },
     endCap: +R.endCap.toFixed(3), realCap: +R.realCap.toFixed(3), mdd: +R.mdd.toFixed(1), maxOpen: R.maxOpen, skipCoin: R.skipCoin, skipCash: R.skipCash, found: cand.length,
     funnel: { cards: cards.length, brk: cards.filter(c => c.brkAt || c.entryAt).length, entry: cards.filter(c => c.entryAt).length,
-      close: cards.filter(c => c.wc === 'close').length, bb: cards.filter(c => c.wc === 'bb').length, time: cards.filter(c => c.wc === 'time').length, live: cards.filter(c => c.st === 'touch' || c.st === 'brk').length },
+      body: cards.filter(c => c.wc === 'body' || c.wc === 'close').length, opp: cards.filter(c => c.wc === 'opp').length, bb: cards.filter(c => c.wc === 'bb').length, time: cards.filter(c => c.wc === 'time').length, live: cards.filter(c => ['touch0', 'touch', 'brk'].includes(c.st)).length,
+      rt: { fvg: cards.filter(c => c.rt === 'fvg').length, both: cards.filter(c => c.rt === 'both').length, ob: cards.filter(c => c.rt === 'ob').length } },
     sl: sl.length ? { avg: +(sl.reduce((a, v) => a + v, 0) / sl.length).toFixed(1), med: +sl[Math.floor(sl.length / 2)].toFixed(1), max: +sl[sl.length - 1].toFixed(1), min: +sl[0].toFixed(1) } : null,
     eq: R.eq.length > 400 ? R.eq.filter((_, i) => i % Math.ceil(R.eq.length / 400) === 0 || i === R.eq.length - 1) : R.eq,
     trades: trades.slice(-300).reverse().map(t => ({ sym: t.sym, pair: t.pair, dir: t.dir, et: t.et, entry: t.entry, sl: t.sl, tp: t.tp, xt: t.xt, how: t.how, net: +t.net.toFixed(1), pnl: +t.pnl.toFixed(4) }))
@@ -1704,9 +1742,8 @@ setInterval(() => {                                    // 已進場的卡片：�
   const T = ST.tool; let ch = false;
   for (const c of Object.values(T.cards)) {
     if (c.st !== 'entry') continue; const px = PX.map[c.sym]; if (!(px > 0)) continue;
-    const now = Date.now(); c.xp = px;
-    if (c.dir * (px - c.sl) <= 0) { Object.assign(c, { st: 'done', how: 'sl', xt: now, xp: c.dir > 0 ? Math.min(px, c.sl) : Math.max(px, c.sl), endAt: now }); toolArchive(c); ch = true; }
-    else if (c.dir * (px - c.tp) >= 0) { Object.assign(c, { st: 'done', how: 'tp', xt: now, xp: c.tp, endAt: now }); toolArchive(c); ch = true; }
+    const now = Date.now(), lk0 = c.lk; c.xp = px;
+    if (toolStep(c, px, now)) { toolArchive(c); ch = true; } else if (c.lk !== lk0) ch = true;
   }
   if (ch) { dirty = true; TOOLV++; }
 }, 3000);
@@ -1726,6 +1763,7 @@ async function toolScan(pair) {
         const id = `${sym}|${pair}|${s.t}|${s.dir}`, old = T.cards[id]; seen.add(id);
         if (inHist.has(id) || (!old && !isTop)) continue;   // 已經在歷史裡；不在前 N 名的幣只追蹤原本的卡片
         const c = { ...(old || {}), id, sym, pair, ...s }; ch = ch || !old || old.st !== c.st;
+        if (old && old.lk && c.st === 'entry' && (!c.lk || c.dir * (old.lk - c.lk) > 0)) c.lk = old.lk;   // 即時價格已經套保過的，不要被 K 棒重算蓋掉
         if (c.st === 'fail' || c.st === 'done') { if (!old && T.cleared && c.endAt < T.cleared) continue; toolArchive(c); inHist.add(id); continue; }   // 清除歷史之前就結束的不再放回去
         T.cards[id] = c;
         if (c.st === 'entry' && (!old || old.st !== 'entry') && now - c.entryAt < 3 * P.lms) {   // 剛進場的才通知、才下單（往回補的舊卡片不下單）
@@ -1739,10 +1777,7 @@ async function toolScan(pair) {
         for (const b of L) {
           if (b.t + P.lms <= (c.chk || c.entryAt)) continue;
           const path = b.c >= b.o ? [b.o, b.l, b.h, b.c] : [b.o, b.h, b.l, b.c], ct = b.t + P.lms;
-          for (const p of path) {
-            if (c.dir > 0 ? p <= c.sl : p >= c.sl) { Object.assign(c, { st: 'done', how: 'sl', xt: ct, xp: c.sl, endAt: ct }); break; }
-            if (c.dir > 0 ? p >= c.tp : p <= c.tp) { Object.assign(c, { st: 'done', how: 'tp', xt: ct, xp: c.tp, endAt: ct }); break; }
-          }
+          for (const p of path) { if (toolStep(c, p, ct)) break; }
           if (c.st === 'entry' && ct - c.entryAt >= o.hold) Object.assign(c, { st: 'done', how: 'hold', xt: ct, xp: b.c, endAt: ct });
           if (c.st !== 'entry') break; c.chk = ct; c.xp = b.c; c.xt = ct;
         }
