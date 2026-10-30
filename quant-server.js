@@ -58,13 +58,23 @@ try {
     for (const [k, f] of [['spLev', 'lev'], ['spMargin', 'margin'], ['spDayLoss', 'dayLoss'], ['spTp', 'tp'], ['spStep', 'step'], ['spSl', 'sl'], ['spHold', 'hold']]) if (A.lt[k] == null) A.lt[k] = A.lt[f];   // 🗡 特級交易設定：第一次照抄一般交易   // 舊帳號沒有個人參數：沿用原本的共用設定 A.notify = { ...DEF_NOTIFY, ...(A.notify || {}) }; A.ltTrades = A.ltTrades || [];
     if (A.lt.budget > 0 && A.lt.startCap !== A.lt.budget) A.lt.startCap = A.lt.budget;   // 投入資金＝起始本金（盈虧紀錄保留：100U 虧到 98U，改成 50U 就是 48U）
     A.lt.spStartAt = +A.lt.spStartAt || 0;             // 🗡 特級交易的盈虧從第一筆特級單開始算；按過「重新起算」就從那個時間開始
-    if (!A.lt.v3) {                                   // 💰 新的資金分配：設定投入資金＝那一邊從這個金額重新開始（之前的盈虧不再扣著）；更新這一版時兩邊都從現在開始
-      if (A.lt.budget > 0) A.lt.budAt = Date.now(); if (A.lt.spBudget > 0) A.lt.spBudAt = Date.now(); A.lt.v3 = true;
-    }
+    if (!A.lt.v3) { A.lt.v3 = true; A.lt.v4 = true; }   // 新帳號（或沒經過 2026-10-30f 的）：不用動，沒設定過投入資金的時間就照統計起點算
     if (A.lt.startCap === 100 && !A.ltTrades.length) { A.lt.startCap = 0; A.lt.startAt = 0; }   // 舊版預設把起始本金寫死成 100U
     { const sp = new Set((A.ltTrades || []).filter(t => t.src === 'tool' && t.positionId).map(t => t.positionId));   // 🔧 清掉被重複「自動接回」的紀錄（同一筆倉位已經有特級交易的紀錄）
       const n0 = (A.ltTrades || []).length; A.ltTrades = (A.ltTrades || []).filter(t => !(t.found && t.src !== 'tool' && sp.has(t.positionId))); if (A.ltTrades.length !== n0) log('清掉重複接回的紀錄', n0 - A.ltTrades.length); }
   }
+  { // 🔧 2026-10-30f 更新時把每個帳號的一般、特級「目前資金」都重設成投入資金（之前賺賠的不見了），這裡還原：
+    //    那次是同一瞬間一起設的，找出那個時間；那之後沒有重新存過投入資金的那一邊，改回照原本的起點算（之後的盈虧照算）
+    const F = []; for (const A of Object.values(ST.accts)) if (!A.lt.v4) { if (A.lt.budAt > 0) F.push(A.lt.budAt); if (A.lt.spBudAt > 0) F.push(A.lt.spBudAt); }
+    let T0 = 0, best = 0; for (const v of F) { const n = F.filter(x => Math.abs(x - v) < 3000).length; if (n > best) { best = n; T0 = v; } }
+    for (const A of Object.values(ST.accts)) {
+      if (A.lt.v4) continue; A.lt.v4 = true;   // （這裡還不能用 dirty：下一次存檔就會一起存）
+      if (!T0) continue;
+      if (Math.abs((A.lt.budAt || 0) - T0) < 3000) A.lt.budAt = A.lt.startAt || 0;
+      if (Math.abs((A.lt.spBudAt || 0) - T0) < 3000) A.lt.spBudAt = A.lt.spStartAt || 0;
+    }
+  }
+
   log(`讀入存檔：${ST.cards.length} 張卡片、${ST.bt.trades.length} 筆回測`);
 } catch (e) { log('沒有存檔，從頭開始'); }
 let CV = Date.now(), BV = Date.now();                  // 卡片、回測各自的版本號，沒變就不用重傳
@@ -931,7 +941,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-30h';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-30j';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
