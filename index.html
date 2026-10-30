@@ -835,7 +835,7 @@ header{align-items:center}
 .mnpage[data-p="set"] .qpoolbar{height:8px;border-radius:99px;background:#1d1a12;overflow:hidden;align-self:center}.qpoolfill{height:100%;background:linear-gradient(90deg,#b8902c,#f1d77a);transition:width .3s}.qpoolfill.over{background:#ef4444}
 .mnpage[data-p="set"] .qpoolst{grid-column:1/-1;font-size:12.5px;color:var(--gmu)}.mnpage[data-p="set"] .qpoolst b{color:var(--gtx)}
 @media (max-width:560px){.mnpage[data-p="set"] .qpool{grid-template-columns:1fr}}
-.mnpage[data-p="set"] .qsaverow{display:flex;align-items:center;gap:12px;margin-top:10px}
+.qsaverow{display:flex;align-items:center;gap:12px;margin-top:10px}.qsaverow>.btn{width:auto!important;flex:none!important;align-self:auto}
 .mnpage[data-p="set"] input.dirty,.mnpage[data-p="set"] select.dirty{border-color:#d4af37;box-shadow:0 0 0 2px rgba(212,175,55,.18)}
 </style>
 </head>
@@ -1019,7 +1019,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-30h</div>
+      <div class="qver" id="qVer">網站版本 2026-10-30i</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3470,7 +3470,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-30h・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-30i・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
