@@ -36,7 +36,7 @@ const DEF_NOTIFY = { webhook: '', name: '', enabled: true, entry: true, exit: tr
 const DEF_EQ = { mode: 'fixed', amt: 0.3, fee: 0.05, max: 0 };
 const DEF_BX = { key: '', secret: '', notify: true, liq: true, liqPct: 3 };
 const RESUME = [];                                       // 🔄 重開前在跑的帳號
-const DEF_LT = { on: false, sp: false, budgetAt: 0, wd: 0, spWd: 0, spLev: null, spMargin: null, spBudget: 0, spStartAt: 0, spDayLoss: null, spTp: null, spStep: null, spSl: null, spHold: null, margin: 0.3, lev: 100, mode: 'CROSS', maxOpen: 0, dayLoss: 20, startCap: 0, startAt: 0, budget: 0, tp: 250, sl: 250, step: 50, hold: 168, btcF: 1 };   // tp：浮盈達到幾 % 開始鎖利（每個帳號自己設）   // btcF：自己要不要用 BTC 方向過濾（預設開）   // sl：浮虧多少 % 平倉；step：鎖利線每多幾 % 上調；hold：最長持有（小時）——每個帳號自己設定   // budget：投入資金（0＝整個合約帳戶）   // startCap＝0 代表等偵測到帳戶資金再開始算   // 自動下單（預設暫停）   // Bitunix 唯讀 API 金鑰（只存在這台伺服器）            // 資金模擬：每筆保證金、手續費、最多同時持倉
+const DEF_LT = { on: false, sp: false, budgetAt: 0, pool: 0, budAt: 0, spBudAt: 0, wd: 0, spWd: 0, spLev: null, spMargin: null, spBudget: 0, spStartAt: 0, spDayLoss: null, spTp: null, spStep: null, spSl: null, spHold: null, margin: 0.3, lev: 100, mode: 'CROSS', maxOpen: 0, dayLoss: 20, startCap: 0, startAt: 0, budget: 0, tp: 250, sl: 250, step: 50, hold: 168, btcF: 1 };   // tp：浮盈達到幾 % 開始鎖利（每個帳號自己設）   // btcF：自己要不要用 BTC 方向過濾（預設開）   // sl：浮虧多少 % 平倉；step：鎖利線每多幾 % 上調；hold：最長持有（小時）——每個帳號自己設定   // budget：投入資金（0＝整個合約帳戶）   // startCap＝0 代表等偵測到帳戶資金再開始算   // 自動下單（預設暫停）   // Bitunix 唯讀 API 金鑰（只存在這台伺服器）            // 資金模擬：每筆保證金、手續費、最多同時持倉
 const DEF_REP = { cap: 100, btN: 50, days: 14, next: 0 };                   // 雙週結算：每期本金、回測幣數、幾天一期、下次結算時間
 let ST = { cards: [], bt: { at: 0, coins: 0, trades: [] }, set: { ...DEF_SET }, trade: { ...DEF_TRADE }, google: { clientId: '' }, eq: { ...DEF_EQ }, rep: { ...DEF_REP }, reports: [], users: [], sessions: [], accts: {}, owner: '' };
 try {
@@ -58,6 +58,9 @@ try {
     for (const [k, f] of [['spLev', 'lev'], ['spMargin', 'margin'], ['spDayLoss', 'dayLoss'], ['spTp', 'tp'], ['spStep', 'step'], ['spSl', 'sl'], ['spHold', 'hold']]) if (A.lt[k] == null) A.lt[k] = A.lt[f];   // 🗡 特級交易設定：第一次照抄一般交易   // 舊帳號沒有個人參數：沿用原本的共用設定 A.notify = { ...DEF_NOTIFY, ...(A.notify || {}) }; A.ltTrades = A.ltTrades || [];
     if (A.lt.budget > 0 && A.lt.startCap !== A.lt.budget) A.lt.startCap = A.lt.budget;   // 投入資金＝起始本金（盈虧紀錄保留：100U 虧到 98U，改成 50U 就是 48U）
     A.lt.spStartAt = +A.lt.spStartAt || 0;             // 🗡 特級交易的盈虧從第一筆特級單開始算；按過「重新起算」就從那個時間開始
+    if (!A.lt.v3) {                                   // 💰 新的資金分配：設定投入資金＝那一邊從這個金額重新開始（之前的盈虧不再扣著）；更新這一版時兩邊都從現在開始
+      if (A.lt.budget > 0) A.lt.budAt = Date.now(); if (A.lt.spBudget > 0) A.lt.spBudAt = Date.now(); A.lt.v3 = true;
+    }
     if (A.lt.startCap === 100 && !A.ltTrades.length) { A.lt.startCap = 0; A.lt.startAt = 0; }   // 舊版預設把起始本金寫死成 100U
     { const sp = new Set((A.ltTrades || []).filter(t => t.src === 'tool' && t.positionId).map(t => t.positionId));   // 🔧 清掉被重複「自動接回」的紀錄（同一筆倉位已經有特級交易的紀錄）
       const n0 = (A.ltTrades || []).length; A.ltTrades = (A.ltTrades || []).filter(t => !(t.found && t.src !== 'tool' && sp.has(t.positionId))); if (A.ltTrades.length !== n0) log('清掉重複接回的紀錄', n0 - A.ltTrades.length); }
@@ -928,7 +931,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-30d';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-30f';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1090,6 +1093,7 @@ async function bxPoll(X) {
       }
     }
     BX.pos = pos; BX.at = Date.now(); BX.err = ''; BX.seeded = true;
+    manTrack(X, pos).catch(e => log('手動單紀錄失敗', X.uid, e.message));
     if (Date.now() - (BX.tpslAt || 0) > 30000) {       // 手動單在交易所設的止盈止損（只讀，給網站的部位工具用），每 30 秒讀一次
       BX.tpslAt = Date.now(); const m = new Map();
       const syms = [...new Set(pos.filter(p => !X.A.ltTrades.some(t => t.status === 'open' && t.positionId === p.id)).map(p => p.sym))];
@@ -1149,28 +1153,46 @@ const ltOpenTrades = X => X.A.ltTrades.filter(t => t.status === 'open');
 const inStat = (t, startAt) => t.et >= (startAt || 0) || t.status === 'open' || (t.exitAt || 0) >= (startAt || 0);
 function ltNet(t) { return (t.realized || 0) - Math.abs(t.fee || 0) + (t.funding || 0); }   // 已實現損益－手續費＋資金費
 // 這組自動交易目前「自己的」資金：起始投入＋從起算時間開始所有單的淨損益（持有中的含未實現）
-function ltBudCheck(X, sp, bud, reset) {             // 💰 投入資金能不能設成 bud：改完後「這邊的目前資金（新投入＋已經有的盈虧）＋另一邊的目前資金」不能超過帳戶
-  const C = X.A.lt, a = bxEquity(X), N = ltBotEq(X), S = ltSpEq(X);
+// 💰 資金分配：合約總資金（沒填＝整個帳戶）分給一般、特級兩邊，兩邊的投入資金加起來不能超過它
+function ltAllocCheck(X, nB, sB) {
+  const C = X.A.lt, a = bxEquity(X), cap = C.pool > 0 ? C.pool : a, sp = toolOkUid(X.uid) ? sB : 0, tot = nB + sp;
   if (!(a > 0)) return X.sim ? '模擬帳戶目前沒有資金，請先到「☰ 選單 → 設定 → 交易模式」存入模擬資金' : '還沒讀到合約帳戶的資金，請等 10 秒再試';
-  const pnl = reset ? ltOpenTrades(X).filter(t => (t.src === 'tool') === !!sp).reduce((v, t) => v + ltNet(t) + (t.upnl || 0), 0)   // 從現在重新起算：只剩還開著的單的盈虧
-    : sp ? S.eq - ((C.spBudget || 0) - (C.spWd || 0)) : N.eq - ((C.startCap || 0) - (C.wd || 0));   // 這邊到目前為止的盈虧（改投入資金後照算）
-  const other = sp ? (C.budget > 0 ? Math.max(0, N.eq) : 0) : (C.spBudget > 0 && toolOkUid(X.uid) ? Math.max(0, S.eq) : 0);
-  const max = Math.floor((a - other - pnl) * 100) / 100;
-  if (bud > max + 0.009) return `資金不足：${X.sim ? '模擬帳戶' : '合約帳戶'} ${a.toFixed(2)}U${other > 0 ? `，${sp ? '一般交易' : '🗡 特級交易'}目前用了 ${other.toFixed(2)}U` : ''}${Math.abs(pnl) >= 0.01 ? `，這邊之前的盈虧 ${pnl >= 0 ? '+' : '−'}${Math.abs(pnl).toFixed(2)}U 會照算` : ''}，${sp ? '特級交易' : '一般交易'}的投入資金最多只能設 ${Math.max(0, max).toFixed(2)}U`;
+  if (tot > cap + 0.009) { const nCh = nB !== (C.budget || 0); return `資金不足：一般 ${nB}U＋特級 ${sp}U＝${+tot.toFixed(2)}U，超過${C.pool > 0 ? '合約總資金' : '合約帳戶'} ${cap.toFixed(2)}U，${nCh ? '一般' : '特級'}交易最多只能設 ${Math.max(0, cap - (nCh ? sp : nB)).toFixed(2)}U`; }
   return '';
 }
-function ltBudEq(X) {                                 // 一般交易的投入資金：起始本金就是投入資金，盈虧從開始統計那時候一直算（跟統計、資金曲線同一套）
-  return { ...ltBotEq(X), at: X.A.lt.startAt || 0 };
+// 🖐 手動單的虧損：一般、特級各扣一半（只有一邊有設投入資金就全部扣那一邊）；只算那一邊設定投入資金之後平倉的
+function ltManShare(X, sp) {
+  const C = X.A.lt, M = X.A.man, n = C.budget > 0, s = C.spBudget > 0 && toolOkUid(X.uid);
+  if (!M || !M.list || !(sp ? s : n)) return 0;
+  const since = sp ? C.spBudAt || C.spStartAt || 0 : C.budAt || C.startAt || 0;
+  return (n && s ? 0.5 : 1) * M.list.filter(m => m.pnl < 0 && m.at >= since).reduce((v, m) => v + m.pnl, 0);
 }
-function ltSpEq(X) {                                  // 🗡 特級交易的資金：投入資金（起始本金）＋特級的盈虧 − 收回的
-  const C = X.A.lt; let e = (C.spBudget || 0) - (C.spWd || 0), used = 0;
-  for (const t of X.A.ltTrades) { if (t.src !== 'tool' || !inStat(t, C.spStartAt)) continue; e += ltNet(t) + (t.status === 'open' ? (t.upnl || 0) : 0); if (t.status === 'open') used += t.margin || t.m0 || 0; }
-  return { eq: e, used, free: e - used };
+function ltBudEq(X) {                                 // 一般交易的投入資金
+  return { ...ltBotEq(X), at: X.A.lt.budAt || X.A.lt.startAt || 0 };
 }
-function ltBotEq(X) {                                 // 一般自動交易的資金（不含 🗡 特級交易）：起始本金＋盈虧 − 收回的
-  const C = X.A.lt; let e = (C.startCap || 0) - (C.wd || 0), used = 0;
-  for (const t of X.A.ltTrades) { if (t.src === 'tool' || !inStat(t, C.startAt)) continue; e += ltNet(t) + (t.status === 'open' ? (t.upnl || 0) : 0); if (t.status === 'open') used += t.margin || t.m0 || 0; }
-  return { eq: e, used, free: e - used };
+function ltSpEq(X) {                                  // 🗡 特級交易的資金：投入資金＋設定之後特級單的盈虧 − 收回的 − 手動單虧損分攤
+  const C = X.A.lt, since = C.spBudAt || C.spStartAt || 0, man = ltManShare(X, true); let e = (C.spBudget || 0) - (C.spWd || 0) + man, used = 0;
+  for (const t of X.A.ltTrades) { if (t.src !== 'tool' || !inStat(t, since)) continue; e += ltNet(t) + (t.status === 'open' ? (t.upnl || 0) : 0); if (t.status === 'open') used += t.margin || t.m0 || 0; }
+  return { eq: e, used, free: e - used, man };
+}
+function ltBotEq(X) {                                 // 一般自動交易的資金（不含 🗡 特級交易）：投入資金＋設定之後一般單的盈虧 − 收回的 − 手動單虧損分攤
+  const C = X.A.lt, b = C.budget > 0, since = b ? C.budAt || C.startAt || 0 : C.startAt || 0, man = ltManShare(X, false);
+  let e = (b ? C.budget : C.startCap || 0) - (C.wd || 0) + man, used = 0;
+  for (const t of X.A.ltTrades) { if (t.src === 'tool' || !inStat(t, since)) continue; e += ltNet(t) + (t.status === 'open' ? (t.upnl || 0) : 0); if (t.status === 'open') used += t.margin || t.m0 || 0; }
+  return { eq: e, used, free: e - used, man };
+}
+async function manTrack(X, pos) {                     // 🖐 手動單：記下開著的手動倉位；平倉後到交易所查實際盈虧（扣手續費、加減資金費），虧的錢分攤到一般、特級
+  const M = X.A.man = X.A.man || { open: {}, list: [] }, own = id => X.A.ltTrades.some(t => t.positionId === id);
+  for (const p of pos) if (!own(p.id) && !M.open[p.id] && !X.LT.busy.has(p.sym) && Date.now() - ((X.LT.opening || {})[p.sym] || 0) > 120000) { M.open[p.id] = { sym: p.sym, dir: p.dir, at: Date.now() }; dirty = true; }
+  for (const [id, o] of Object.entries(M.open)) {
+    if (pos.some(p => p.id === id)) continue;
+    if (own(id)) { delete M.open[id]; dirty = true; continue; }   // 其實是自動單（或改成自動單了）
+    let h = null; try { const r = await bxGet('/api/v1/futures/position/get_history_positions', { positionId: id }, X.A.bx); h = (r && r.positionList || []).find(x => String(x.positionId) === id) || null; } catch (e) {}
+    if (!h) { o.miss = (o.miss || 0) + 1; if (o.miss > 30) { delete M.open[id]; dirty = true; } continue; }   // 查不到就過一陣子再查，查 30 次（約 5 分鐘）還是沒有就放棄
+    const pnl = num(h.realizedPNL) - Math.abs(num(h.fee)) + num(h.funding);
+    M.list.unshift({ id, sym: o.sym, dir: o.dir, pnl, at: Date.now() }); if (M.list.length > 300) M.list.length = 300; delete M.open[id]; dirty = true; touchLT(X);
+    if (pnl < 0) { const C = X.A.lt, n = C.budget > 0, s = C.spBudget > 0 && toolOkUid(X.uid); if (n || s) dcX(X, `🖐 **手動單虧損 ${Math.abs(pnl).toFixed(2)}U**（${mdEsc(o.sym)}）：${n && s ? `一般、特級各扣 ${(Math.abs(pnl) / 2).toFixed(2)}U` : n ? '從一般交易扣' : '從特級交易扣'}`); }
+  }
 }
 // 📅 美國高影響數據：公布前 4 小時到公布後 4 小時不開新單、不反手（幾個數據的時段重疊就接在一起）；已開的單照常管理
 const twDay = t => new Date(t + TZ).toISOString().slice(0, 10);
@@ -2406,7 +2428,7 @@ http.createServer(async (req, res) => {
           pos: X.BX.pos.map(p => ({ ...p, px: PX.map[p.sym] || null, tp: ((X.BX.tpsl && X.BX.tpsl.get(p.id)) || {}).tp || 0, sl: ((X.BX.tpsl && X.BX.tpsl.get(p.id)) || {}).sl || 0, sig: !!ST.cards.find(c => c.sym === p.sym && c.dir === p.dir && c.et && isLive(c)), bot: !!X.A.ltTrades.find(t => t.status === 'open' && t.positionId === p.id) })) },
         eco: { list: ECO.list.filter(e => e.t > Date.now() - 7 * 24 * HOUR), at: ECO.at, err: ECO.err, hasNext: !!ECO.hasNext, today: ecoToday().map(e => ({ t: e.t, zh: e.zh || e.title })), block: (() => { const B = ecoNext(); return B ? { on: B.from <= Date.now(), from: B.from, until: B.until, list: B.list.map(e => ({ t: e.t, zh: e.zh || e.title })) } : null; })() },
         sim: admin && meU ? (() => { const L = ctx(meU.uid).A.lt, o = { on: simOn, liveOn: !!(L.on || L.sp) }; if (simOn) { const a = simAcct(X.A.bx); Object.assign(o, { bal: +X.A.bx.bal.toFixed(4), eq: +a.eq.toFixed(4), avail: +a.avail.toFixed(4), open: X.A.bx.pos.length }); } return o; })() : null,
-        lt: { cfg: X.A.lt, spSkip: X.LT.spSkip || [], bud: ltBudEq(X), low: (() => { const C = X.A.lt, a = bxEquity(X), n = C.budget > 0 ? ltBotEq(X).eq : 0, p = C.spBudget > 0 && toolOkUid(X.uid) ? ltSpEq(X).eq : 0; return a > 0 && (C.budget > 0 || C.spBudget > 0) && n + p > a + 0.01 ? { acct: a, n, sp: p } : null; })(), pause: X.LT.pause || null, toolOk: toolOkUid(X.uid), spBot: ltSpEq(X), spDay: X.LT.spDayPnl || 0, msg: X.LT.msg, dayPnl: X.LT.dayPnl || 0, v: X.v, bot: ltBotEq(X), acctEq: bxEquity(X) },
+        lt: { cfg: X.A.lt, spSkip: X.LT.spSkip || [], bud: ltBudEq(X), man: (X.A.man && X.A.man.list || []).slice(0, 20), low: (() => { const C = X.A.lt, a = bxEquity(X), n = C.budget > 0 ? ltBotEq(X).eq : 0, p = C.spBudget > 0 && toolOkUid(X.uid) ? ltSpEq(X).eq : 0; return a > 0 && (C.budget > 0 || C.spBudget > 0) && n + p > a + 0.01 ? { acct: a, n, sp: p } : null; })(), pause: X.LT.pause || null, toolOk: toolOkUid(X.uid), spBot: ltSpEq(X), spDay: X.LT.spDayPnl || 0, msg: X.LT.msg, dayPnl: X.LT.dayPnl || 0, v: X.v, bot: ltBotEq(X), acctEq: bxEquity(X) },
         aws: !(X.base === ownerUid()) ? null : { on: ST.aws.on, created: ST.aws.created, auto: ST.aws.auto, price: ST.aws.price, detected: awsDetect(), ...awsNext() }
       };
       if (+u.searchParams.get('cv') !== CV) out.cards = ST.cards;
@@ -2612,14 +2634,14 @@ http.createServer(async (req, res) => {
         if (typeof b.on === 'boolean') {
           if (b.on && !hasKey(X)) return send(res, 400, { error: '請先設定你自己的 Bitunix API 金鑰（要開交易權限）' });
           if (b.on && !(C.budget > 0)) return send(res, 400, { error: '請先到「☰ 選單 → 設定 → 我的交易設定」填「合約投入資金」，再開始交易' });
-          if (b.on && C.budget > 0) { const B = ltBudEq(X); if (B.eq <= 0) { const pnl = B.eq - (C.startCap - (C.wd || 0)); return send(res, 400, { error: `一般交易的目前資金是 ${B.eq.toFixed(2)}U（投入 ${C.budget}U${C.wd > 0 ? `、收回 ${(+C.wd).toFixed(2)}U` : ''}、之前的盈虧 ${pnl >= 0 ? '+' : '−'}${Math.abs(pnl).toFixed(2)}U），開始了也會馬上暫停。\n到「☰ 選單 → 設定」重新輸入投入資金，跳出確認時按「取消」＝從現在重新起算；或把投入資金調高到 ${Math.ceil(C.budget - B.eq + 1)}U 以上` }); } }
+          if (b.on && C.budget > 0) { const B = ltBudEq(X); if (B.eq <= 0) { const pnl = B.eq - (C.startCap - (C.wd || 0)); return send(res, 400, { error: `一般交易的目前資金是 ${B.eq.toFixed(2)}U（投入 ${C.budget}U 之後虧掉了），開始了也會馬上暫停。請到「☰ 選單 → 設定」重新輸入投入資金，一般交易就會從那個金額重新開始` }); } }
           C.on = b.on; C.allOff = false; C.rsOn = false; if (!b.on) X.LT.pause = { t: Date.now(), why: '你按了暫停' }; else if (X.LT.pause && !/特級/.test(X.LT.pause.why)) X.LT.pause = null;   // 自己按開始：一般交易的暫停原因清掉 dcX(X, b.on ? '▶️ **自動交易已開始**' : '⏸ **自動交易已暫停**（已開的單照常管理）');
         }
         if (typeof b.sp === 'boolean') {                 // 🗡 特級交易：只有特級咒具權限的人能開
           if (b.sp && !toolOkUid(X.uid)) return send(res, 403, { error: '特級交易要先解鎖特級咒具' });
           if (b.sp && !hasKey(X)) return send(res, 400, { error: '請先設定你自己的 Bitunix API 金鑰（要開交易權限）' });
           if (b.sp && !(C.spBudget > 0)) return send(res, 400, { error: '請先到「☰ 選單 → 設定 → 🗡 特級交易設定」填「特級交易投入資金」，再開始特級交易' });
-          if (b.sp && C.spBudget > 0) { const B = ltSpEq(X); if (B.eq <= 0) { const pnl = B.eq - (C.spBudget - (C.spWd || 0)); return send(res, 400, { error: `特級交易的目前資金是 ${B.eq.toFixed(2)}U（投入 ${C.spBudget}U${C.spWd > 0 ? `、收回 ${(+C.spWd).toFixed(2)}U` : ''}、之前的特級單盈虧 ${pnl >= 0 ? '+' : '−'}${Math.abs(pnl).toFixed(2)}U），開始了也會馬上暫停。\n到「☰ 選單 → 設定 → 🗡 特級交易設定」重新輸入投入資金，跳出確認時按「取消」＝從現在重新起算（之前的盈虧不算）；或把投入資金調高到 ${Math.ceil(C.spBudget - B.eq + 1)}U 以上` }); } }
+          if (b.sp && C.spBudget > 0) { const B = ltSpEq(X); if (B.eq <= 0) { const pnl = B.eq - (C.spBudget - (C.spWd || 0)); return send(res, 400, { error: `特級交易的目前資金是 ${B.eq.toFixed(2)}U（投入 ${C.spBudget}U 之後虧掉了），開始了也會馬上暫停。請到「☰ 選單 → 設定 → 🗡 特級交易設定」重新輸入投入資金，特級交易就會從那個金額重新開始` }); } }
           C.spAllOff = false; C.rsSp = false;
           if (C.sp !== b.sp) { C.sp = b.sp; if (!b.sp) X.LT.pause = { t: Date.now(), why: '你按了暫停特級交易' }; else if (X.LT.pause && /特級/.test(X.LT.pause.why)) X.LT.pause = null; dcX(X, b.sp ? `🗡 **特級交易已開始**：特級咒具的 🧱 FVG／OB 回踩進場會${X.sim ? '用模擬資金下單' : '用你的 Bitunix 帳戶真實下單'}\n每筆 ${C.spMargin}U・${C.spLev}x・止損＝4H／1H FVG／OB 的低點（做空＝高點）・止盈 1:1・持有 ${Math.round(C.spHold / 24 * 10) / 10} 天${C.spBudget > 0 ? `・投入 ${C.spBudget}U` : ''}${C.spDayLoss > 0 ? `・單日虧損上限 ${C.spDayLoss}U` : ''}` : '⏸ **特級交易已暫停**（已開的單照常管理）'); }
         }
@@ -2628,10 +2650,18 @@ http.createServer(async (req, res) => {
         if (+b.maxOpen >= 0) C.maxOpen = Math.round(+b.maxOpen);
         if (+b.dayLoss >= 0) C.dayLoss = +b.dayLoss;
         if (b.budget !== undefined && !(+b.budget > 0)) return send(res, 400, { error: '投入資金要填大於 0 的數字' });
-        if (b.budget !== undefined && (+b.budget !== C.budget || b.reset || C.wd > 0)) {   // 金額一樣、也沒有收回過就不用動（避免存其他設定時把收回的紀錄洗掉）
+        if (b.pool !== undefined) {                      // 💰 合約總資金：一般、特級分配的上限（0＝整個帳戶）
+          const v = +b.pool || 0, a = bxEquity(X), used = (C.budget || 0) + (toolOkUid(X.uid) ? C.spBudget || 0 : 0);
+          if (v < 0) return send(res, 400, { error: '合約總資金不能是負的' });
+          if (v > 0 && !(a > 0)) return send(res, 400, { error: X.sim ? '模擬帳戶目前沒有資金，請先存入模擬資金' : '還沒讀到合約帳戶的資金，請等 10 秒再試' });
+          if (v > a + 0.009) return send(res, 400, { error: `合約總資金不能超過${X.sim ? '模擬帳戶' : '合約帳戶'}目前的 ${a.toFixed(2)}U` });
+          if (v > 0 && used > v + 0.009) return send(res, 400, { error: `一般＋特級已經分配了 ${+used.toFixed(2)}U，合約總資金不能比這個少（請先調低投入資金）` });
+          C.pool = Math.round(v * 100) / 100;
+        }
+        if (b.budget !== undefined && (+b.budget !== C.budget || C.wd > 0 || b.restart)) {   // 金額一樣、也沒有收回過就不用動（避免存其他設定時把收回的紀錄洗掉）
           if (!hasKey(X)) return send(res, 400, { error: '請先設定 Bitunix API，才知道合約帳戶有多少資金' });
-          const err = ltBudCheck(X, false, +b.budget, !!b.reset); if (err) return send(res, 400, { error: err });
-          C.budget = +b.budget; C.startCap = C.budget; C.startAt = C.startAt || Date.now(); C.wd = 0;   // 投入資金＝起始本金；過去的盈虧照算（100U 虧到 98U，改成 50U 就是 48U）；重新投入：收回的紀錄清掉
+          const err = ltAllocCheck(X, +b.budget, C.spBudget || 0); if (err) return send(res, 400, { error: err });
+          C.budget = +b.budget; C.startCap = C.budget; C.startAt = C.startAt || Date.now(); C.budAt = Date.now(); C.wd = 0;   // 一般交易從這個金額重新開始（之前的盈虧不再扣著，統計和資金曲線照常）
         }
         if (b.sp_set) {                                 // 🗡 特級交易自己的設定（只有有權限的人能改）
           if (!toolOkUid(X.uid)) return send(res, 403, { error: '特級交易要先解鎖特級咒具' });
@@ -2645,10 +2675,9 @@ http.createServer(async (req, res) => {
           if (sl !== undefined && !(sl >= 10 && sl <= 1000)) return send(res, 400, { error: '特級交易的停損要在 10～1000 % 之間' });
           if (hd !== undefined && !(hd >= 1 && hd <= 720)) return send(res, 400, { error: '特級交易的持有時間要在 1 小時～30 天之間' });
           if (bud !== undefined && !(bud > 0)) return send(res, 400, { error: '特級交易的投入資金要填大於 0 的數字' });
-          if (bud !== undefined && (bud !== C.spBudget || C.spWd > 0 || v.reset)) {   // 網頁只在你改過投入資金時才送；金額一樣但收回過＝重新投入
-            const err = ltBudCheck(X, true, bud, !!v.reset); if (err) return send(res, 400, { error: err });
-            C.spBudget = bud; C.spWd = 0;               // 🗡 投入資金＝特級的起始本金，過去的盈虧照算；重新投入時收回的紀錄清掉
-            if (v.reset) { C.spStartAt = Date.now(); dcX(X, `🔄 **🗡 特級交易從現在重新起算**：投入資金 ${bud}U，之前的特級盈虧不再算進來（紀錄還在）`); }   // 重新起算：之前的特級單不算
+          if (bud !== undefined) {                        // 網頁只在你改過投入資金時才送
+            const err = ltAllocCheck(X, C.budget || 0, bud); if (err) return send(res, 400, { error: err });
+            C.spBudget = bud; C.spWd = 0; C.spBudAt = Date.now();   // 🗡 特級交易從這個金額重新開始（之前的特級盈虧不再扣著）
           }
           const slChanged = sl !== undefined && sl !== C.spSl;
           if (lev !== undefined) C.spLev = Math.round(lev); if (m !== undefined) C.spMargin = m; if (dl !== undefined) C.spDayLoss = dl;
@@ -2670,11 +2699,7 @@ http.createServer(async (req, res) => {
           Object.assign(ST.trade, { tp: C.tp || ST.trade.tp, sl: C.sl, step: C.step, hold: C.hold, lev: C.lev });
           CACHE.clear(); markSettledNotified(); touchCards();
         }
-        if (b.reset) {                                   // 從現在重新起算：投入資金就是新的起點（收回的紀錄一起清掉）；沒設投入資金就用目前帳戶權益
-          const e = bxEquity(X);
-          if (C.budget > 0 && b.budget === undefined) { const err = ltBudCheck(X, false, C.budget, true); if (err) return send(res, 400, { error: err }); }
-          C.startAt = Date.now(); C.startCap = C.budget > 0 ? C.budget : e > 0 ? Math.round(e * 100) / 100 : 0; C.wd = 0;
-        }
+        if (b.reset) { const e = bxEquity(X); C.startAt = Date.now(); C.startCap = C.budget > 0 ? C.budget : e > 0 ? Math.round(e * 100) / 100 : 0; }   // 統計從現在重新累積（投入資金、目前資金不受影響）
         touchLT(X); return send(res, 200, { ok: true, cfg: C });
       }
       if (u.pathname === '/api/lt/testOpen' && process.env.LT_TEST === '1') { await ltFlipOpen(X, { id: 'test', sym: b.sym, dir: b.dir || 1, abN: b.abN || 2, last: 1, btcPass: b.btcPass, btcNeed: 4, src: b.src, ttype: b.ttype, tpair: b.tpair }); return send(res, 200, { ok: true, msg: X.LT.msg }); }
