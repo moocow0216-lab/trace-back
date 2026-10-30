@@ -1013,7 +1013,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-30b</div>
+      <div class="qver" id="qVer">網站版本 2026-10-30d</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3462,7 +3462,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-30b・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-30d・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -3844,7 +3844,7 @@ async function gdNext() {
       const m = +$('gd_margin').value, lev = +$('gd_lev').value, bud = $('gd_budget').value === '' ? 0 : +$('gd_budget').value;
       if (!(m > 0)) { $('gdMsg').className = 'gdmsg bad'; $('gdMsg').textContent = '每筆保證金要大於 0。'; return; }
       if (!(lev >= 1 && lev <= 125)) { $('gdMsg').className = 'gdmsg bad'; $('gdMsg').textContent = '槓桿要在 1～125 倍之間。'; return; }
-      const data = { margin: m, lev }; if (gdHasApi()) data.budget = bud;
+      const data = { margin: m, lev }; if (gdHasApi() && bud > 0 && bud !== +((SRVLT.cfg || {}).budget || 0)) data.budget = bud;   // 只有真的改了投入資金才送（沒填、沒改都不動）
       if (!(await gdSave({ path: '/api/lt/config', data }, '已儲存。'))) return;
     }
     if (p === 'tp') {
@@ -4142,6 +4142,13 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-10-30d', title: '2026/10/30 更新（特級交易可以重新起算）', items: [
+    { ic: '🔄', sp: true, t: '特級交易改投入資金時會問：「確定」＝只改金額、之前的特級盈虧照算；「取消」＝從現在重新起算，目前資金就是你填的金額。以前特級交易沒有重新起算，舊策略虧掉的錢會一直扣著，填了投入資金還是顯示用完。' }
+  ] },
+  { id: '2026-10-30c', title: '2026/10/30 更新（投入資金修正）', items: [
+    { ic: '💰', t: '投入資金的檢查改成：「新的投入資金＋之前的盈虧」加上另一邊（一般／特級）目前的資金，不能超過帳戶。虧損後想用同樣的投入資金繼續（例如 50U 虧到 43U、帳戶只剩 43U）現在可以設；賺錢後也不會再設出超過帳戶的金額。' },
+    { ic: '🔧', t: '修正：存其他交易設定、或重跑設定精靈時，會把「收回資金」的紀錄清掉，收回的錢又被算回來；設定精靈沒填投入資金會存不了；帳戶虧到比投入資金少時，特級交易設定改槓桿也存不了；「從現在重新開始計算」沒有清掉收回紀錄。' }
+  ] },
   { id: '2026-10-30b', title: '2026/10/30 更新（回踩分類、反方向過濾）', items: [
     { ic: '🧱', sp: true, t: '卡片第 1 步把 FVG 和 OB 的價格分開寫。第 2 步等回踩那根 4H／1H 收盤後分類：實體收在 FVG 裡＝回踩 FVG；實體突破 FVG＝回踩 OB；插針碰到 OB 又收回＝回踩 FVG、OB；連 OB 都被實體收破＝第二步直接失效。' },
     { ic: '🚫', sp: true, t: '小時區新增過濾：回踩確認後，15M／5M 如果先出現反方向 CHoCH 或 BOS，卡片直接失效，不再等同方向的訊號。' }
@@ -6042,8 +6049,12 @@ $('wd_nGo').onclick = () => wdGo('n');
 $('wd_spGo').onclick = () => wdGo('sp');
 for (const k of ['budget', 'margin', 'dayLoss', 'lev', 'tp', 'step', 'sl', 'hold']) $('sp_' + k).oninput = e => { e.target.dataset.dirty = '1'; };   // 改到一半不要被每 3 秒的更新蓋掉
 $('sp_save').onclick = async () => {
-  if (!(+$('sp_budget').value > 0)) { $('sp_msg').textContent = '❌ 特級交易投入資金要填大於 0 的數字'; $('sp_msg').style.color = '#ff9aa2'; return; }
-  const g = k => $('sp_' + k).value, set = { budget: g('budget'), margin: g('margin'), dayLoss: g('dayLoss') || 0, lev: g('lev'), tp: g('tp'), step: g('step'), sl: g('sl'), hold: g('hold') ? Math.round(+g('hold') * 24) : undefined };
+  if (!(+$('sp_budget').value > 0)) { $('sp_msg').textContent = '❌ 投入資金要填大於 0 的數字'; $('sp_msg').style.color = '#ff9aa2'; return; }
+  const C0 = SRVLT.cfg || {}, SB0 = SRVLT.spBot, bd = !!$('sp_budget').dataset.dirty, bv = +$('sp_budget').value;
+  let rs = false;                                     // 改投入資金時問一次：只改金額（之前的特級盈虧照算）還是從現在重新起算
+  if (bd) { const pnl = SB0 && C0.spBudget > 0 ? SB0.eq - (C0.spBudget - (C0.spWd || 0)) : 0;
+    rs = !confirm(`特級交易投入資金設成 ${bv}U。\n\n按「確定」＝只改金額，之前的特級盈虧照算${Math.abs(pnl) >= 0.01 ? `（目前累積 ${pnl >= 0 ? '+' : '−'}${Math.abs(pnl).toFixed(2)}U，改完目前資金＝${(bv + pnl).toFixed(2)}U）` : ''}\n按「取消」＝從現在重新起算，目前資金就是 ${bv}U（之前的特級紀錄還在，只是不算進來）`); }
+  const g = k => $('sp_' + k).value, set = { budget: bd ? g('budget') : undefined, reset: rs || undefined, margin: g('margin'), dayLoss: g('dayLoss') || 0, lev: g('lev'), tp: g('tp'), step: g('step'), sl: g('sl'), hold: g('hold') ? Math.round(+g('hold') * 24) : undefined };
   const m = $('sp_msg'); m.textContent = '儲存中…'; m.style.color = '';
   try { await srvFetch('/api/lt/config', { sp_set: set }); for (const k of Object.keys(set)) delete $('sp_' + k).dataset.dirty; m.textContent = '✅ 已儲存，下一筆特級交易開始套用（已開的單停損、鎖利、到期也照新的設定）'; SV.lv = 0; srvPull(); }
   catch (e) { m.textContent = '❌ ' + e.message; m.style.color = '#ff9aa2'; }
@@ -6076,7 +6087,7 @@ $('lt_budget').onchange = () => {
   if (!(v > 0)) { alert('投入資金要填大於 0 的數字'); $('lt_budget').value = SRVLT.cfg.budget || ''; return; }
   const AE = SRVLT.acctEq || 0;
   if (v > 0 && !(SRVBX && SRVBX.set)) { alert('請先設定 Bitunix API，才知道合約帳戶有多少資金。'); $('lt_budget').value = SRVLT.cfg.budget || 0; return; }
-  if (v > 0 && AE > 0 && v > AE) { alert(`合約投入資金不能大於合約帳戶目前的資金 ${AE.toFixed(2)}U`); $('lt_budget').value = SRVLT.cfg.budget || 0; return; }
+  // 能不能設這個金額交給伺服器算（要把之前的盈虧、特級交易用掉的一起算進去）
   // 「確定」＝只改金額（安全的預設）；要歸零重算才按「取消」，避免順手按確定就把統計清掉
   const keep = confirm(`投入資金改成 ${v}U。\n\n按「確定」＝只改金額，資金曲線和統計照常累積（建議）\n按「取消」＝從現在開始用 ${v}U 重新起算，之前的統計歸零`);
   ltCall('/api/lt/config', Object.assign({ budget: v }, keep ? {} : { reset: true }));
