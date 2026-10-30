@@ -941,7 +941,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-30j';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-30k';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1209,7 +1209,7 @@ async function manTrack(X, pos) {                     // 🖐 手動單：記下
     if (!h) { o.miss = (o.miss || 0) + 1; if (o.miss > 30) { delete M.open[id]; dirty = true; } continue; }   // 查不到就過一陣子再查，查 30 次（約 5 分鐘）還是沒有就放棄
     const pnl = num(h.realizedPNL) - Math.abs(num(h.fee)) + num(h.funding);
     M.list.unshift({ id, sym: o.sym, dir: o.dir, pnl, at: Date.now() }); if (M.list.length > 300) M.list.length = 300; delete M.open[id]; dirty = true; touchLT(X);
-    if (pnl < 0) { const C = X.A.lt, n = C.budget > 0, s = C.spBudget > 0 && toolOkUid(X.uid); if (n || s) dcX(X, `🖐 **手動單虧損 ${Math.abs(pnl).toFixed(2)}U**（${mdEsc(o.sym)}）：${n && s ? `一般、特級各扣 ${(Math.abs(pnl) / 2).toFixed(2)}U` : n ? '從一般交易扣' : '從特級交易扣'}`); }
+    // 手動單不發 Discord（使用者要求）；虧損一樣照規則分攤到一般、特級，設定頁會顯示
   }
 }
 // 📅 美國高影響數據：公布前 4 小時到公布後 4 小時不開新單、不反手（幾個數據的時段重疊就接在一起）；已開的單照常管理
