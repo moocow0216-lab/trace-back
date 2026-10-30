@@ -653,7 +653,7 @@ body.mode-pat #qPanel,body.mode-news #qPanel,body.mode-pat #newsPanel,body.mode-
 .simbadge{margin:0 6px;padding:2px 10px;border-radius:999px;border:1px solid #f59e0b;background:rgba(245,158,11,.15);color:#fbbf24;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
 body.simmode::before{content:"";position:fixed;inset:0 0 auto;height:3px;background:repeating-linear-gradient(90deg,#f59e0b 0 14px,transparent 14px 24px);z-index:200;pointer-events:none}
 .fvgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}.fvgrid .fvcard{flex:none}
-.fvcard.hist{border-top-color:var(--rc)}.fvcard.r-tp{--rc:#22c55e}.fvcard.r-sl{--rc:#ef4444}.fvcard.r-hold{--rc:#60a5fa}.fvcard.r-fail{--rc:#6b7280}
+.fvcard.hist{border-top-color:var(--rc)}.fvcard.r-tp{--rc:#22c55e}.fvcard.r-sl{--rc:#ef4444}.fvcard.r-hold{--rc:#60a5fa}.fvcard.r-lock{--rc:#d4af37}.fvcard.r-fail{--rc:#6b7280}
 .fvres{align-self:flex-start;padding:3px 10px;border-radius:999px;font-size:12.5px;font-weight:700;border:1px solid var(--rc);color:var(--rc);white-space:nowrap}.fvcard.r-fail .fvres{color:#cbd5e1}
 .fvst.fail .fvdot{border-color:#ef4444;color:#ef4444}.fvst.fail b{color:#fca5a5}
 .fvcard.r-fail .fvnext{border-color:#3a4455;background:rgba(148,163,184,.06)}.fvcard.r-fail .fvnext span{color:#cbd5e1}
@@ -1013,7 +1013,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-29h</div>
+      <div class="qver" id="qVer">網站版本 2026-10-30b</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -1086,7 +1086,7 @@ header{align-items:center}
           </div>
           <div class="qbt" style="margin:8px 0 0"><button class="btn primary qspbtn" id="sp_save">儲存</button><span class="qltmsg" id="sp_msg"></span></div>
           <div class="qwd"><b>💸 收回資金</b><input id="wd_sp" type="number" min="0" step="1" placeholder="金額（U），留空＝全部"><button class="btn qspbtn" id="wd_spGo">收回</button><span class="qltmsg" id="wd_spMsg"></span></div>
-          <div class="qcfgnote">止損＝4H／1H FVG／OB 低點（做空＝高點）・止盈 1:1・同幣反向訊號會反手。</div>
+          <div class="qcfgnote">止損＝4H／1H FVG／OB 低點（做空＝高點）・止盈 1:1・每 +1% 價格套保一次（100x＝+100%）・同幣反向訊號會反手。</div>
         </div>
         <div class="qtg" id="qScanBox" hidden>
           <b>🔍 掃描條件</b><span>（全站共用，只有擁有者看得到、能改）</span>
@@ -3462,7 +3462,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-29h・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-30b・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -3867,7 +3867,7 @@ const MN_ITEMS = [
   ['news', '📰', '加密新聞', 'newsPanel', '#f472b6'], ['bt', '📊', '回測數據', 'qBtHost', '#34d399'], ['hist', '📋', '歷史紀錄', 'qTabPanel', '#fbbf24'], ['whale', '🐋', '幣安鯨魚大單', 'whalePanel', '#38bdf8'], ['guide', '📖', '使用說明', '', '#94a3b8'], ['tool', '🗡', '特級咒具', 'mnpTool', '#ef4444'], ['toolh', '📜', '特級咒具歷史', 'mnpToolH', '#f97316']];   // 最後一欄是選單框的顏色
 /* ---------- 🗡 特級咒具：上鎖（擁有者或輸入密碼的人才能用）；一個幣一張卡片；設定收在「⚙ 設定」裡 ---------- */
 const TL = { d: null, timer: null, hf: 'all', hn: 60 };
-const TL_PN = { h4: { hn: '4H', ln: '15M', nm: '4H→15M' }, h1: { hn: '1H', ln: '5M', nm: '1H→5M' } };
+const TL_PN = { h4: { hn: '4H', ln: '15M', nm: '4H→15M', hms: 4 * 3600000 }, h1: { hn: '1H', ln: '5M', nm: '1H→5M', hms: 3600000 } };
 async function tlLoad(page) {
   const host = page === 'toolh' ? 'mnpToolH' : 'mnpTool';
   try { TL.d = await srvFetch('/api/tool', { op: 'get' }); if (page === 'toolh') tlHist(); else tlRender(); }
@@ -3882,14 +3882,14 @@ function tlLocked(host, page) {
 }
 const tlPr = p => !(p > 0) ? '—' : p >= 1000 ? p.toFixed(1) : p >= 1 ? p.toFixed(4) : p.toPrecision(4);
 const tlAgo = t => { const m = Math.max(0, Math.round((Date.now() - t) / 60000)); return m < 60 ? `${m} 分鐘前` : m < 1440 ? `${Math.floor(m / 60)} 小時 ${m % 60} 分前` : `${Math.floor(m / 1440)} 天前`; };
-const tlT = t => t ? fmtT(t).slice(5) : '—';           // MM/DD HH:mm
+const tlT = t => t ? fmtT(t).slice(-11) : '—';          // MM/DD HH:mm（一定要有日期）
 function tlRender() {
   if (!$('tlCards')) {                                // 第一次：畫外框（之後每 20 秒只更新內容，打開中的設定視窗不會被洗掉）
     $('mnpTool').innerHTML = `<div class="tlhead"><div><b>🗡 特級咒具・FVG／OB 回踩</b><span class="tlsub" id="tlStat"></span></div>
       <div class="tlrow tltools"><button class="btn" id="tlHistBtn">📜 特級咒具歷史</button><button class="btn" id="tlSetBtn">⚙ 設定</button></div></div>
       <div class="fvwait" id="tlWait"></div>
       <div class="fvrow" id="tlCards" tabindex="0" aria-label="進行中的卡片，可以左右滑動"></div>
-      <p class="tlsub">步驟：① 4H／1H 出現 FVG／OB（數值在設定的範圍內）→ ② 價格回踩，這時卡片出現 → ③ 15M／5M 出現同方向 CHoCH 或 BOS → ④ 回踩 15M／5M FVG 進場，止損＝4H／1H FVG／OB 範圍的低點（做空＝高點），止盈 1:1。回踩後 4H／1H 收盤收破整個 FVG／OB 範圍、FVG／OB 被指標刪掉、或回踩後 40 根 4H／1H 還沒進場，卡片就失效，移到「📜 特級咒具歷史」。</p>
+      <p class="tlsub">步驟：① 4H／1H 出現 FVG＋OB（數值在設定的範圍內）→ ② 價格回踩，這時卡片出現；那根 4H／1H 收盤時看實體 K：收在 FVG 裡＝回踩 FVG、收破 FVG＝回踩 OB、插針碰到 OB 又收回 FVG＝回踩 FVG、OB、連 OB 都收破＝失效 → ③ 15M／5M 出現同方向 CHoCH 或 BOS（先出現反方向就失效）→ ④ 回踩 15M／5M FVG 進場，止損＝4H／1H FVG／OB 範圍的低點（做空＝高點），止盈 1:1；價格每往有利方向走 1% 套保一次（第 1 次保本）。回踩後 4H／1H 收盤收破整個 FVG／OB 範圍、FVG／OB 被指標刪掉、或回踩後 40 根 4H／1H 還沒進場，卡片就失效，移到「📜 特級咒具歷史」。</p>
       <dialog id="tlDlg" class="tldlg" aria-labelledby="tlDlgT"><div class="tldlgh"><h3 id="tlDlgT">⚙ 特級咒具設定</h3><button class="btn" id="tlDlgX">關閉</button></div><div id="tlDlgB"></div></dialog>`;
     $('tlSetBtn').onclick = () => { tlSettings(); $('tlDlg').showModal(); };
     $('tlDlgX').onclick = () => $('tlDlg').close();
@@ -3902,49 +3902,65 @@ function tlRender() {
   const C = d.cards || [];
   $('tlCards').innerHTML = C.length ? C.map(tlCard).join('') : `<p class="tlsub fvempty">目前沒有進行中的卡片。上面的 FVG／OB 被價格回踩時，卡片就會出現在這裡。</p>`;
 }
+const TL_RT = { fvg: '回踩 FVG', ob: '回踩 OB（實體突破 FVG）', both: '回踩 FVG、OB（插針收回）' };
+function tlZone(c, N) {                               // 第 1 步：FVG、OB 分開寫（做多：OB 在 FVG 下面；做空：OB 在 FVG 上面）
+  const has = c.fvgLo > 0 && c.obLo > 0;
+  return has ? `FVG ${tlPr(c.fvgLo)}～${tlPr(c.fvgHi)}<br>OB ${tlPr(c.obLo)}～${tlPr(c.obHi)}<br>缺口在 ${tlT(c.t - N.hms)} 那根` : `範圍 ${tlPr(c.lo)}～${tlPr(c.hi)}・缺口在 ${tlT(c.t - N.hms)} 那根`;
+}
+function tlStep2(c, N) {                              // 第 2 步：回踩哪裡（大週期那根收盤後才確定）
+  const up = c.dir > 0, edge = up ? c.fvgHi || c.hi : c.fvgLo || c.lo;
+  const title = c.rt ? TL_RT[c.rt] : c.st === 'touch0' ? `回踩中（等這根 ${N.hn} 收盤確認）` : '回踩價格任務達成';
+  return [title, c.touchAt ? `${tlT(c.touchAt)} 碰到 FVG ${up ? '上緣' : '下緣'} ${tlPr(edge)}${c.cfAt ? `・${tlT(c.cfAt)} ${N.hn} 收盤確認` : ''}` : ''];
+}
+const tlObEdge = c => c.dir > 0 ? (c.obLo || c.lo) : (c.obHi || c.hi);
 function tlCard(c) {
-  const N = TL_PN[c.pair], px = (TL.d.px || {})[c.sym] || {}, up = c.dir > 0, ord = { touch: 2, brk: 3, entry: 4 }[c.st] || 2;
-  const step = (k, title, det) => { const s = k < ord || (k === 4 && c.st === 'entry') ? 'done' : k === ord ? 'cur' : 'todo';
+  const N = TL_PN[c.pair], px = (TL.d.px || {})[c.sym] || {}, up = c.dir > 0, ord = { touch0: 2, touch: 3, brk: 4, entry: 5 }[c.st] || 2;   // ord＝正在做第幾步
+  const step = (k, title, det) => { const s = k < ord ? 'done' : k === ord ? 'cur' : 'todo';
     return `<li class="fvst ${s}"><span class="fvdot" aria-hidden="true">${s === 'done' ? '✓' : k}</span><div><b>${title}</b>${det ? `<span>${det}</span>` : ''}</div><span class="sr">${s === 'done' ? '已完成' : s === 'cur' ? '進行中' : '還沒到'}</span></li>`; };
   const pnl = c.st === 'entry' && px.c > 0 ? c.dir * (px.c / c.entry - 1) / Math.abs(c.entry / c.sl - 1) : null;   // 現在走到幾倍風險（−1＝止損、+1＝止盈）
-  const next = c.st === 'touch' ? `等待 ${N.ln} 出現 CHoCH 或 BOS${c.resets ? `（被反向結構重置過 ${c.resets} 次）` : ''}` : c.st === 'brk' ? `等待回踩 ${N.ln} FVG，碰到就進場` : `已進場：等待止盈 ${tlPr(c.tp)} 或止損 ${tlPr(c.sl)}${pnl != null ? `・目前 <b class="${pnl >= 0 ? 'qg' : 'qr'}">${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}R</b>` : ''}`;
+  const [s2t, s2d] = tlStep2(c, N);
+  const next = c.st === 'touch0' ? `等這根 ${N.hn} 收盤：實體 K 收在 FVG 裡＝回踩 FVG；收破 FVG＝回踩 OB；連 OB 都收破就失效`
+    : c.st === 'touch' ? `等待 ${N.ln} 出現同方向 CHoCH 或 BOS（先出現反方向就失效）`
+    : c.st === 'brk' ? `等待回踩 ${N.ln} FVG，碰到就進場（出現反方向 CHoCH／BOS 就失效）`
+    : `已進場：等待止盈 ${tlPr(c.tp)} 或${c.lk ? `套保線 <b>${tlPr(c.lk)}</b>（🛡 已套保）` : `止損 ${tlPr(c.sl)}`}${pnl != null ? `・目前 <b class="${pnl >= 0 ? 'qg' : 'qr'}">${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}R</b>` : ''}`;
   return `<article class="fvcard ${up ? 'up' : 'dn'}" aria-label="${esc(c.sym)} ${up ? '做多' : '做空'} ${N.nm}">
     <header class="fvch"><div><b class="tlsym">${esc(c.sym.replace(/USDT$/, ''))}</b><span class="fvdir">${up ? '做多' : '做空'}・${N.nm}</span></div>
       <div class="fvpx"><b>${tlPr(px.c)}</b>${px.chg != null ? `<span class="${px.chg >= 0 ? 'qg' : 'qr'}">${px.chg >= 0 ? '+' : ''}${px.chg.toFixed(2)}%</span>` : ''}</div></header>
     <ol class="fvsteps">
-      ${step(1, `出現 ${N.hn} FVG／OB　數值：${c.val.toFixed(2)}%`, `範圍 ${tlPr(c.lo)}～${tlPr(c.hi)}・${tlT(c.t)} 那根`)}
-      ${step(2, '回踩價格任務達成', c.touchAt ? `${tlT(c.touchAt)} 碰到 ${tlPr(up ? c.hi : c.lo)}` : '')}
+      ${step(1, `出現 ${N.hn} FVG＋OB　數值：${c.val.toFixed(2)}%`, tlZone(c, N))}
+      ${step(2, s2t, s2d)}
       ${step(3, `${N.ln} 出現 CHoCH 或 BOS`, c.brkAt ? `${tlT(c.brkAt)}・${esc(c.tag || '')}` : ord === 3 ? '偵測中…' : '')}
-      ${step(4, '目標達成正在進場', c.entryAt ? `${tlT(c.entryAt)} 進場 ${tlPr(c.entry)}<br>止損 <span class="qr">${tlPr(c.sl)}</span>・止盈 <span class="qg">${tlPr(c.tp)}</span>` : ord === 4 ? '偵測中…' : '')}
+      ${step(4, '目標達成正在進場', c.entryAt ? `${tlT(c.entryAt)} 進場 ${tlPr(c.entry)}<br>止損 <span class="qr">${tlPr(c.sl)}</span>（OB ${up ? '下緣' : '上緣'}）・止盈 <span class="qg">${tlPr(c.tp)}</span>` : ord === 4 ? '偵測中…' : '')}
     </ol>
     <div class="fvnext"><span>下一步</span>${next}</div>
-    <footer class="fvcf"><span class="tlmut">${c.st === 'entry' ? `持倉中・${tlAgo(c.entryAt)}進場` : `⚠ ${N.hn} 收盤${up ? '跌破' : '漲破'} ${tlPr(up ? c.lo : c.hi)} 就失效・${tlAgo(c.touchAt)}回踩`}</span>
+    <footer class="fvcf"><span class="tlmut">${c.st === 'entry' ? `持倉中・${tlAgo(c.entryAt)}進場` : `⚠ ${N.hn} 實體收破 OB ${up ? '下緣' : '上緣'} ${tlPr(tlObEdge(c))} 就失效・${tlAgo(c.touchAt)}回踩`}</span>
       <a class="btn tltv" href="https://www.tradingview.com/chart/?symbol=BINANCE:${encodeURIComponent(c.sym)}.P" target="_blank" rel="noopener">TradingView</a></footer></article>`;
 }
 function tlHCard(c) {                                 // 📜 歷史卡片：走到哪一步、卡在哪一步、結果
-  const N = TL_PN[c.pair], up = c.dir > 0, ok = c.st === 'done', reach = c.entryAt ? 4 : c.brkAt ? 3 : 2;
-  const rc = ok ? (c.how === 'tp' ? 'tp' : c.how === 'sl' ? 'sl' : 'hold') : 'fail';
+  const N = TL_PN[c.pair], up = c.dir > 0, ok = c.st === 'done', reach = c.entryAt ? 4 : c.brkAt ? 3 : c.wc === 'body' && !c.cfAt ? 1 : 2;
+  const rc = ok ? (c.how === 'tp' ? 'tp' : c.how === 'sl' ? 'sl' : c.how === 'lock' ? 'lock' : 'hold') : 'fail';
   const step = (k, title, det) => { const s = k <= reach ? 'done' : !ok && k === reach + 1 ? 'fail' : 'todo';
     return `<li class="fvst ${s}"><span class="fvdot" aria-hidden="true">${s === 'done' ? '✓' : s === 'fail' ? '✕' : k}</span><div><b>${title}</b>${det ? `<span>${det}</span>` : ''}</div><span class="sr">${s === 'done' ? '已完成' : s === 'fail' ? '沒達成' : '沒走到'}</span></li>`; };
   const R = ok && c.xp ? c.dir * (c.xp / c.entry - 1) / Math.abs(c.entry / c.sl - 1) : null;
-  const res = ok ? ({ tp: '🎯 止盈', sl: '❌ 止損', hold: '⏱ 持有到期' }[c.how] || c.how) : '✕ 失效';
+  const res = ok ? ({ tp: '🎯 止盈', sl: '❌ 止損', lock: '🛡 套保出場', hold: '⏱ 持有到期' }[c.how] || c.how) : '✕ 失效';
   const box = ok ? `${res}：進場 ${tlPr(c.entry)} → 出場 ${tlPr(c.xp)}${R != null ? `（<b class="${R >= 0 ? 'qg' : 'qr'}">${R >= 0 ? '+' : ''}${R.toFixed(2)}R</b>）` : ''}` : `${esc(c.why || '沒達成')}`;
+  const [s2t, s2d] = tlStep2(c, N);
   return `<article class="fvcard hist r-${rc} ${up ? 'up' : 'dn'}" aria-label="${esc(c.sym)} ${up ? '做多' : '做空'} ${N.nm} ${res}">
     <header class="fvch"><div><b class="tlsym">${esc(c.sym.replace(/USDT$/, ''))}</b><span class="fvdir">${up ? '做多' : '做空'}・${N.nm}</span></div><span class="fvres">${res}</span></header>
     <ol class="fvsteps">
-      ${step(1, `出現 ${N.hn} FVG／OB　數值：${c.val.toFixed(2)}%`, `範圍 ${tlPr(c.lo)}～${tlPr(c.hi)}・${tlT(c.t)} 那根`)}
-      ${step(2, '回踩價格任務達成', c.touchAt ? `${tlT(c.touchAt)} 碰到 ${tlPr(up ? c.hi : c.lo)}` : '')}
+      ${step(1, `出現 ${N.hn} FVG＋OB　數值：${c.val.toFixed(2)}%`, tlZone(c, N))}
+      ${step(2, reach >= 2 ? s2t : '回踩（實體 K 收破 FVG 和 OB）', s2d)}
       ${step(3, `${N.ln} 出現 CHoCH 或 BOS`, c.brkAt ? `${tlT(c.brkAt)}・${esc(c.tag || '')}` : '')}
-      ${step(4, '目標達成正在進場', c.entryAt ? `${tlT(c.entryAt)} 進場 ${tlPr(c.entry)}<br>止損 <span class="qr">${tlPr(c.sl)}</span>・止盈 <span class="qg">${tlPr(c.tp)}</span>` : '')}
+      ${step(4, '目標達成正在進場', c.entryAt ? `${tlT(c.entryAt)} 進場 ${tlPr(c.entry)}<br>止損 <span class="qr">${tlPr(c.sl)}</span>・止盈 <span class="qg">${tlPr(c.tp)}</span>${c.lk ? `<br>🛡 套保到 ${tlPr(c.lk)}` : ''}` : '')}
     </ol>
     <div class="fvnext"><span>${ok ? '結果' : '失效原因'}</span>${box}</div>
     <footer class="fvcf"><span class="tlmut">結束 ${tlT(c.endAt)}</span><a class="btn tltv" href="https://www.tradingview.com/chart/?symbol=BINANCE:${encodeURIComponent(c.sym)}.P" target="_blank" rel="noopener">TradingView</a></footer></article>`;
 }
 function tlHist() {                                    // 📜 特級咒具歷史：沒達成的、進場後已經出場的（卡片）
-  const d = TL.d, all = d.hist || [], H = all.filter(c => TL.hf === 'all' || (TL.hf === 'fail' ? c.st === 'fail' : TL.hf === 'tp' ? c.how === 'tp' : TL.hf === 'sl' ? c.how === 'sl' : c.st === 'done'));
+  const d = TL.d, all = d.hist || [], H = all.filter(c => TL.hf === 'all' || (TL.hf === 'fail' ? c.st === 'fail' : TL.hf === 'tp' ? c.how === 'tp' : TL.hf === 'sl' ? c.how === 'sl' : TL.hf === 'lock' ? c.how === 'lock' : c.st === 'done'));
   const ok = all.filter(c => c.st === 'done'), w = ok.filter(c => c.how === 'tp').length, l = ok.filter(c => c.how === 'sl').length, show = TL.hn || 60;
-  $('mnpToolH').innerHTML = `<div class="tlhead"><div><b>📜 特級咒具歷史</b><span class="tlsub">卡片沒達成（失效）或進場後已經出場，就會移到這裡。共 ${all.length} 筆；有進場的 ${ok.length} 筆：止盈 ${w}、止損 ${l}${w + l ? `（勝率 ${(w / (w + l) * 100).toFixed(1)}%）` : ''}。這是訊號本身的結果，實際下單請看「歷史紀錄」。</span></div>
-    <div class="tlrow tltools"><label class="tzsel">顯示 <select id="tlHf"><option value="all">全部</option><option value="fail">沒達成（失效）</option><option value="done">有進場</option><option value="tp">止盈</option><option value="sl">止損</option></select></label>${d.owner ? '<button class="btn" id="tlHClr">清除歷史</button>' : ''}<button class="btn" id="tlHBack">🗡 回到卡片</button></div></div>
+  $('mnpToolH').innerHTML = `<div class="tlhead"><div><b>📜 特級咒具歷史</b><span class="tlsub">卡片沒達成（失效）或進場後已經出場，就會移到這裡。共 ${all.length} 筆；有進場的 ${ok.length} 筆：止盈 ${w}、止損 ${l}、套保出場 ${ok.filter(c => c.how === 'lock').length}${w + l ? `（勝率 ${(w / (w + l) * 100).toFixed(1)}%）` : ''}。這是訊號本身的結果，實際下單請看「歷史紀錄」。</span></div>
+    <div class="tlrow tltools"><label class="tzsel">顯示 <select id="tlHf"><option value="all">全部</option><option value="fail">沒達成（失效）</option><option value="done">有進場</option><option value="tp">止盈</option><option value="sl">止損</option><option value="lock">套保出場</option></select></label>${d.owner ? '<button class="btn" id="tlHClr">清除歷史</button>' : ''}<button class="btn" id="tlHBack">🗡 回到卡片</button></div></div>
     ${H.length ? `<div class="fvgrid">${H.slice(0, show).map(tlHCard).join('')}</div>${H.length > show ? `<button class="btn" id="tlHMore" style="align-self:center">再顯示 ${Math.min(60, H.length - show)} 張（還有 ${H.length - show} 張）</button>` : ''}` : '<p class="tlsub">還沒有紀錄。</p>'}`;
   $('tlHf').value = TL.hf; $('tlHf').onchange = () => { TL.hf = $('tlHf').value; TL.hn = 60; tlHist(); };
   if ($('tlHMore')) $('tlHMore').onclick = () => { TL.hn = show + 60; tlHist(); };
@@ -3991,8 +4007,8 @@ async function tbLoad() {
 function tbRender(d) {
   const R = d.bt && d.bt.v === 2 ? d.bt : null, run = d.btRun || {}, NM = { all: '全部', h4: '4H→15M', h1: '1H→5M', long: '做多', short: '做空' };
   const f = v => v == null ? '—' : v, pct = v => v == null ? '—' : `${v >= 0 ? '+' : ''}${v}%`, u = v => `${v >= 0 ? '+' : ''}${(+v).toFixed(2)}U`;
-  const row = (k, g) => `<tr><td>${NM[k]}</td><td>${g.n}${g.n !== g.done ? `（持有中 ${g.n - g.done}）` : ''}</td><td>${f(g.rate)}${g.rate != null ? '%' : ''}</td><td class="${g.avg >= 0 ? 'qg' : 'qr'}">${pct(g.avg)}</td><td class="${g.sum >= 0 ? 'qg' : 'qr'}">${u(g.sum)}</td><td class="tlmut">止盈 ${g.tp}・止損 ${g.sl}・到期 ${g.hold}</td></tr>`;
-  const HOW = { tp: '🎯 止盈', sl: '❌ 止損', hold: '⏱ 到期', open: '持有中' };
+  const row = (k, g) => `<tr><td>${NM[k]}</td><td>${g.n}${g.n !== g.done ? `（持有中 ${g.n - g.done}）` : ''}</td><td>${f(g.rate)}${g.rate != null ? '%' : ''}</td><td class="${g.avg >= 0 ? 'qg' : 'qr'}">${pct(g.avg)}</td><td class="${g.sum >= 0 ? 'qg' : 'qr'}">${u(g.sum)}</td><td class="tlmut">止盈 ${g.tp}・止損 ${g.sl}・套保 ${g.lock || 0}・到期 ${g.hold}</td></tr>`;
+  const HOW = { tp: '🎯 止盈', sl: '❌ 止損', lock: '🛡 套保', hold: '⏱ 到期', open: '持有中' };
   let eqSvg = '';
   if (R && R.eq && R.eq.length > 1) {                 // 資金曲線
     const xs = R.eq.map(p => p[0]), ys = R.eq.map(p => p[1]), x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys, R.rule.cap0), y1 = Math.max(...ys, R.rule.cap0), W = 600, H = 120;
@@ -4005,7 +4021,7 @@ function tbRender(d) {
       <label class="tzsel tbn">幣數（成交額前幾名）<input id="tbN" type="number" min="5" max="50" value="${(R && R.coins) || Math.max(5, d.set.n)}"></label>
       <button class="btn primary" id="tbRun"${run.run ? ' disabled' : ''}>${run.run ? '回測中…' : '開始回測'}</button>` : ''}
       <span class="tlmut">${run.run ? `進度 ${run.done}／${run.total}・${esc(run.msg || '')}` : run.msg && /失敗/.test(run.msg) ? `<span class="qr">${esc(run.msg)}</span>` : R ? `上次回測 ${fmtT(R.at)}・${fmtT(R.start)}～${fmtT(R.end)}・${R.coins} 個幣・${R.pairs.map(p => NM[p]).join('、')}` : (d.owner ? '還沒回測過。30 天、10 個幣大約 1～2 分鐘，可以關網頁。' : '擁有者還沒回測過。')}</span></div>
-    ${R ? `<p class="tlsub">規則：照特級咒具的四個步驟進場（數值 ${R.rule.vmin > 0 ? `${R.rule.vmin}%～` : '≤ '}${R.rule.vmax}%），止損＝4H／1H FVG／OB 的低點（做空＝高點）、止盈 1:1、持有 ${Math.round(R.rule.hold / 24 * 10) / 10} 天到期；${R.rule.lev}x、每筆保證金 ${R.rule.m}U、初始資金 ${R.rule.cap0}U、手續費每邊 ${R.rule.fee}%（開倉、平倉都扣）。同一個幣還開著時新訊號跳過，可用資金不夠也跳過。</p>
+    ${R ? `<p class="tlsub">規則：照特級咒具的四個步驟進場（數值 ${R.rule.vmin > 0 ? `${R.rule.vmin}%～` : '≤ '}${R.rule.vmax}%），止損＝4H／1H FVG／OB 的低點（做空＝高點）、止盈 1:1、價格每往有利方向走 1% 套保一次（第 1 次保本）、持有 ${Math.round(R.rule.hold / 24 * 10) / 10} 天到期；${R.rule.lev}x、每筆保證金 ${R.rule.m}U、初始資金 ${R.rule.cap0}U、手續費每邊 ${R.rule.fee}%（開倉、平倉都扣）。同一個幣還開著時新訊號跳過，可用資金不夠也跳過。</p>
     <div class="tbsum"><div><span>期末資金</span><b class="${R.endCap >= R.rule.cap0 ? 'qg' : 'qr'}">${R.endCap}U</b><em>${pct(+((R.endCap / R.rule.cap0 - 1) * 100).toFixed(2))}</em></div>
       <div><span>總損益</span><b class="${R.all.sum >= 0 ? 'qg' : 'qr'}">${u(R.all.sum)}</b><em>共 ${R.all.n} 筆</em></div>
       <div><span>成功率</span><b>${f(R.all.rate)}${R.all.rate != null ? '%' : ''}</b><em>已結單 ${R.all.done} 筆</em></div>
@@ -4014,7 +4030,7 @@ function tbRender(d) {
     <div class="tablewrap"><table><thead><tr><th>分類</th><th>筆數</th><th>成功率</th><th>平均報酬率（扣手續費）</th><th>總損益</th><th>出場</th></tr></thead><tbody>
       ${row('all', R.all)}${R.pairs.map(p => row(p, R.byPair[p])).join('')}${row('long', R.byDir.long)}${row('short', R.byDir.short)}</tbody></table></div>
     <div class="tbrule"><h4>🪜 每一步走到哪裡</h4>
-      <p class="tlsub">回測期間價格回踩了 <b>${F.cards}</b> 個 FVG／OB（② 卡片出現），其中 <b>${F.brk}</b> 個出現 CHoCH／BOS（③），<b>${F.entry}</b> 個回踩 FVG 進場（④）。沒進場的：${R.pairs.map(p => NM[p].slice(0, 2)).join('／')} 收盤收破範圍 ${F.close} 個、被指標刪掉 ${F.bb} 個、回踩後太久沒進場 ${F.time} 個${F.live ? `、到最後還在等的 ${F.live} 個` : ''}。</p>
+      <p class="tlsub">回測期間價格回踩了 <b>${F.cards}</b> 個 FVG／OB（② 卡片出現），其中 <b>${F.brk}</b> 個出現 CHoCH／BOS（③），<b>${F.entry}</b> 個回踩 FVG 進場（④）。回踩種類：回踩 FVG ${F.rt ? F.rt.fvg : 0}、回踩 FVG＋OB（插針）${F.rt ? F.rt.both : 0}、回踩 OB（實體突破 FVG）${F.rt ? F.rt.ob : 0}。沒進場的：實體 K 收破 FVG 和 OB ${F.body ?? F.close ?? 0} 個、小時區先出現反方向 CHoCH／BOS ${F.opp || 0} 個、被指標刪掉 ${F.bb} 個、回踩後太久沒進場 ${F.time} 個${F.live ? `、到最後還在等的 ${F.live} 個` : ''}。</p>
       ${R.sl ? `<p class="tlsub">止損距離換算成 ${R.rule.lev}x 的報酬率：平均 −${R.sl.avg}%、中間值 −${R.sl.med}%、最近 −${R.sl.min}%、最遠 −${R.sl.max}%。止盈是 1:1，所以止盈的報酬率跟止損一樣大。距離近的單，手續費（一來一回約 ${(2 * R.rule.fee * R.rule.lev).toFixed(0)}%）會吃掉很大一部分。</p>` : ''}</div>
     <p class="tlsub">找到 ${R.found} 筆進場，實際模擬 ${R.all.n} 筆；跳過 ${R.skipCoin + R.skipCash} 筆（同一個幣還開著 ${R.skipCoin}、資金不夠 ${R.skipCash}）。成功＝扣完手續費還賺錢。K 棒內的走法：收漲的 K 棒當作「開→低→高→收」、收跌的當作「開→高→低→收」。回測沒有考慮滑價和資金費率，結果只供參考。</p>
     <details class="tbdet"><summary>每一筆的明細（最近 ${R.trades.length} 筆）</summary><div class="tablewrap"><table><thead><tr><th>進場時間</th><th>幣種</th><th>方向</th><th>週期</th><th>進場價</th><th>止損／止盈</th><th>出場</th><th>報酬率</th><th>損益</th></tr></thead><tbody>
@@ -4126,6 +4142,14 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-10-30b', title: '2026/10/30 更新（回踩分類、反方向過濾）', items: [
+    { ic: '🧱', sp: true, t: '卡片第 1 步把 FVG 和 OB 的價格分開寫。第 2 步等回踩那根 4H／1H 收盤後分類：實體收在 FVG 裡＝回踩 FVG；實體突破 FVG＝回踩 OB；插針碰到 OB 又收回＝回踩 FVG、OB；連 OB 都被實體收破＝第二步直接失效。' },
+    { ic: '🚫', sp: true, t: '小時區新增過濾：回踩確認後，15M／5M 如果先出現反方向 CHoCH 或 BOS，卡片直接失效，不再等同方向的訊號。' }
+  ] },
+  { id: '2026-10-30a', title: '2026/10/30 更新（套保、時間修正）', items: [
+    { ic: '🛡', sp: true, t: '特級交易新增套保：價格每往有利方向走 1%（100x＝浮盈 +100%、75x＝+75%）就套保一次，第 1 次止損移到進場價（保本），之後每多 1% 再往上移 1%；交易所的止損會一起改。卡片、回測也照這個算。' },
+    { ic: '🔧', sp: true, t: '修正：特級咒具卡片上的時間沒有顯示日期，看起來像今天，其實可能是前幾天的 K 棒；現在都會寫出月／日。FVG／OB 的時間改成標「缺口那根」（TradingView 上方框開始的那根）。' }
+  ] },
   { id: '2026-10-29h', title: '2026/10/29 更新（修正重複平倉通知）', items: [
     { ic: '🔧', t: '修正：伺服器剛開倉時，對帳偶爾會把同一筆倉位再「自動接回」一次，變成一般單、特級單各一筆紀錄（其實只有一筆倉位），平倉時收到兩則通知。之前重複的紀錄也已經自動清掉。' }
   ] },
