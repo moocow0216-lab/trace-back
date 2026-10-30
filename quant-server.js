@@ -931,7 +931,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-30g';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-30h';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -2662,7 +2662,7 @@ http.createServer(async (req, res) => {
         if (+b.dayLoss >= 0) C.dayLoss = +b.dayLoss;
         if (b.budget !== undefined && !(+b.budget > 0)) return send(res, 400, { error: '投入資金要填大於 0 的數字' });
         if (b.pool !== undefined) {                      // 💰 合約總資金：一般、特級分配的上限（0＝整個帳戶）
-          const v = +b.pool || 0, a = bxEquity(X), used = (C.budget || 0) + (toolOkUid(X.uid) ? C.spBudget || 0 : 0);
+          const v = +b.pool || 0, a = bxEquity(X), used = (b.budget !== undefined ? +b.budget || 0 : C.budget || 0) + (toolOkUid(X.uid) ? C.spBudget || 0 : 0);   // 同一次一起改投入資金的話，用新的金額算
           if (v < 0) return send(res, 400, { error: '合約總資金不能是負的' });
           if (v > 0 && !(a > 0)) return send(res, 400, { error: X.sim ? '模擬帳戶目前沒有資金，請先存入模擬資金' : '還沒讀到合約帳戶的資金，請等 10 秒再試' });
           if (v > a + 0.009) return send(res, 400, { error: `合約總資金不能超過${X.sim ? '模擬帳戶' : '合約帳戶'}目前的 ${a.toFixed(2)}U` });
