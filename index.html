@@ -1013,7 +1013,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-30d</div>
+      <div class="qver" id="qVer">網站版本 2026-10-30e</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3462,7 +3462,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-30d・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-30e・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -4143,6 +4143,7 @@ mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
   { id: '2026-10-30d', title: '2026/10/30 更新（特級交易可以重新起算）', items: [
+    { ic: '🔧', sp: true, t: '修正：特級交易設定按儲存後跳出「null is not an object」錯誤（設定其實有存進去）。' },
     { ic: '🔄', sp: true, t: '特級交易改投入資金時會問：「確定」＝只改金額、之前的特級盈虧照算；「取消」＝從現在重新起算，目前資金就是你填的金額。以前特級交易沒有重新起算，舊策略虧掉的錢會一直扣著，填了投入資金還是顯示用完。' }
   ] },
   { id: '2026-10-30c', title: '2026/10/30 更新（投入資金修正）', items: [
@@ -6056,7 +6057,7 @@ $('sp_save').onclick = async () => {
     rs = !confirm(`特級交易投入資金設成 ${bv}U。\n\n按「確定」＝只改金額，之前的特級盈虧照算${Math.abs(pnl) >= 0.01 ? `（目前累積 ${pnl >= 0 ? '+' : '−'}${Math.abs(pnl).toFixed(2)}U，改完目前資金＝${(bv + pnl).toFixed(2)}U）` : ''}\n按「取消」＝從現在重新起算，目前資金就是 ${bv}U（之前的特級紀錄還在，只是不算進來）`); }
   const g = k => $('sp_' + k).value, set = { budget: bd ? g('budget') : undefined, reset: rs || undefined, margin: g('margin'), dayLoss: g('dayLoss') || 0, lev: g('lev'), tp: g('tp'), step: g('step'), sl: g('sl'), hold: g('hold') ? Math.round(+g('hold') * 24) : undefined };
   const m = $('sp_msg'); m.textContent = '儲存中…'; m.style.color = '';
-  try { await srvFetch('/api/lt/config', { sp_set: set }); for (const k of Object.keys(set)) delete $('sp_' + k).dataset.dirty; m.textContent = '✅ 已儲存，下一筆特級交易開始套用（已開的單停損、鎖利、到期也照新的設定）'; SV.lv = 0; srvPull(); }
+  try { await srvFetch('/api/lt/config', { sp_set: set }); for (const k of Object.keys(set)) if ($('sp_' + k)) delete $('sp_' + k).dataset.dirty; m.textContent = '✅ 已儲存，下一筆特級交易開始套用（已開的單停損、鎖利、到期也照新的設定）'; SV.lv = 0; srvPull(); }
   catch (e) { m.textContent = '❌ ' + e.message; m.style.color = '#ff9aa2'; }
 };
 $('qSpToggle').onclick = () => {
