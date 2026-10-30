@@ -835,6 +835,8 @@ header{align-items:center}
 .mnpage[data-p="set"] .qpoolbar{height:8px;border-radius:99px;background:#1d1a12;overflow:hidden;align-self:center}.qpoolfill{height:100%;background:linear-gradient(90deg,#b8902c,#f1d77a);transition:width .3s}.qpoolfill.over{background:#ef4444}
 .mnpage[data-p="set"] .qpoolst{grid-column:1/-1;font-size:12.5px;color:var(--gmu)}.mnpage[data-p="set"] .qpoolst b{color:var(--gtx)}
 @media (max-width:560px){.mnpage[data-p="set"] .qpool{grid-template-columns:1fr}}
+.mnpage[data-p="set"] .qsaverow{display:flex;align-items:center;gap:12px;margin-top:10px}
+.mnpage[data-p="set"] input.dirty,.mnpage[data-p="set"] select.dirty{border-color:#d4af37;box-shadow:0 0 0 2px rgba(212,175,55,.18)}
 </style>
 </head>
 <body class="quant-on mn">
@@ -1017,7 +1019,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-30g</div>
+      <div class="qver" id="qVer">網站版本 2026-10-30h</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -1075,6 +1077,7 @@ header{align-items:center}
             <input id="lt_maxOpen" type="hidden">
           </div>
           <div class="qcfgnote" id="qmt_note"></div>
+          <div class="qsaverow"><button class="btn primary" id="lt_save">儲存</button><span class="qltmsg" id="lt_msg" role="status"></span></div>
           <div class="qwd"><b>💸 收回資金</b><input id="wd_n" type="number" min="0" step="1" placeholder="金額（U），留空＝全部"><button class="btn" id="wd_nGo">收回</button><span class="qltmsg" id="wd_nMsg"></span></div>
         </div>
         <div class="qtg qspcfg" id="qSpCfg" hidden>
@@ -3467,7 +3470,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-30g・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-30h・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -4147,9 +4150,12 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-10-30h', title: '2026/10/30 更新（儲存按鈕）', items: [
+    { ic: '💾', t: '「我的交易設定」改成跟特級交易一樣，改完按「儲存」才送出（合約總資金也一起）。改了還沒存的欄位會亮金框，旁邊會寫「有幾項還沒儲存」；在欄位裡按 Enter 也會儲存。' }
+  ] },
   { id: '2026-10-30g', title: '2026/10/30 更新（分配超過就擋住）', items: [
     { ic: '⛔', t: '資金分配超過時（一般＋特級的投入資金超過合約總資金，或兩邊目前的資金加起來超過帳戶）不能按開始，也不會開新單，已開的單照常管理。' },
-    { ic: '💰', sp: true, t: '特級交易的投入資金也改成輸入完就存（離開欄位或按 Enter），跟一般交易一樣，不用再按儲存。' }
+    { ic: '💰', sp: true, t: '特級交易改了投入資金後，按「儲存」會顯示「特級交易從 XU 開始」，確認有存進去。' }
   ] },
   { id: '2026-10-30f', title: '2026/10/30 更新（資金分配）', items: [
     { ic: '💰', t: '新增「合約總資金」：一般、特級的投入資金加起來不能超過它（空白＝整個帳戶），設定頁會顯示已經分配多少、還能分配多少。' },
@@ -6027,10 +6033,11 @@ function renderLt() {
   $('qLtToggle').hidden = $('qLtAll').hidden = !MINE(); $('qLtCfgBtn').hidden = !MINE() || document.body.classList.contains('mn');   // 選單版面：設定在「☰ 選單 → 設定」，這裡不重複放
   const B = SRVLT.bud, AE = SRVLT.acctEq || 0;            // 投入資金還剩多少：從設定投入資金那一刻起算
   $('qLtMsg').textContent = `${C.budget > 0 ? `投入 ${C.budget}U（帳戶 ${AE.toFixed(2)}U）・目前 ${B ? B.eq.toFixed(2) : '—'}U${C.wd > 0 ? `（已收回 ${(+C.wd).toFixed(2)}U）` : ''}、可用 ${B ? Math.max(0, B.free).toFixed(2) : '—'}U・` : `用整個帳戶（${AE.toFixed(2)}U）・`}每筆 ${C.margin}U・${C.lev}x 全倉・最多 ${C.maxOpen || '不限'} 筆・今日 ${SRVLT.day >= 0 ? '+' : '−'}${Math.abs(SRVLT.day).toFixed(2)}U（上限 −${C.dayLoss}U）${SRVLT.msg ? '・' + SRVLT.msg : ''}`;
-  ['budget', 'margin', 'lev', 'maxOpen', 'dayLoss', 'sl', 'step'].forEach(k => { const el = $('lt_' + k); if (document.activeElement !== el) el.value = C[k] || 0; });
-  if (document.activeElement !== $('lt_tp')) $('lt_tp').value = C.tp || T.tp;
-  if (document.activeElement !== $('lt_hold')) $('lt_hold').value = +((C.hold || 168) / 24).toFixed(2);
-  if (document.activeElement !== $('lt_btcF')) $('lt_btcF').value = C.btcF ? '1' : '0';
+  const keepEl = el => document.activeElement === el || el.dataset.dirty;   // 正在改、或改了還沒按儲存的欄位不要蓋掉
+  ['budget', 'margin', 'lev', 'maxOpen', 'dayLoss', 'sl', 'step'].forEach(k => { const el = $('lt_' + k); if (!keepEl(el)) el.value = C[k] || 0; });
+  if (!keepEl($('lt_tp'))) $('lt_tp').value = C.tp || T.tp;
+  if (!keepEl($('lt_hold'))) $('lt_hold').value = +((C.hold || 168) / 24).toFixed(2);
+  if (!keepEl($('lt_btcF'))) $('lt_btcF').value = C.btcF ? '1' : '0';
   const AE2 = SRVLT.acctEq || 0;
   $('qmt_stat').textContent = SRVBX && SRVBX.set ? `合約帳戶目前 ${AE2.toFixed(2)}U` : '（先設定 Bitunix API）';
   { const cap = C.pool > 0 ? C.pool : AE2, n = C.budget || 0, sp = SRVLT.toolOk ? C.spBudget || 0 : 0, tot = n + sp, over = tot > cap + 0.009;   // 💰 資金分配
@@ -6067,22 +6074,13 @@ async function wdGo(kind) {                           // 💸 收回資金
 }
 $('wd_nGo').onclick = () => wdGo('n');
 $('wd_spGo').onclick = () => wdGo('sp');
-for (const k of ['budget', 'margin', 'dayLoss', 'lev', 'tp', 'step', 'sl', 'hold']) $('sp_' + k).oninput = e => { e.target.dataset.dirty = '1'; };   // 改到一半不要被每 3 秒的更新蓋掉
-$('sp_budget').onkeydown = e => { if (e.key === 'Enter') $('sp_budget').blur(); };
-$('sp_budget').onblur = async () => {                // 💰 特級投入資金跟一般一樣：輸入完（離開欄位或按 Enter）就存，特級交易從這個金額重新開始
-  if (!$('sp_budget').dataset.dirty) return;
-  const v = +$('sp_budget').value, m = $('sp_msg');
-  if (!(v > 0)) { m.textContent = '❌ 投入資金要填大於 0 的數字'; m.style.color = '#ff9aa2'; return; }
-  m.textContent = '儲存中…'; m.style.color = '';
-  try { await srvFetch('/api/lt/config', { sp_set: { budget: v } }); delete $('sp_budget').dataset.dirty; m.textContent = `✅ 特級交易從 ${v}U 開始`; SV.lv = 0; srvPull(); }
-  catch (e) { delete $('sp_budget').dataset.dirty; m.textContent = '❌ ' + e.message; m.style.color = '#ff9aa2'; $('sp_budget').value = (SRVLT.cfg || {}).spBudget || ''; }
-};
+for (const k of ['budget', 'margin', 'dayLoss', 'lev', 'tp', 'step', 'sl', 'hold']) { $('sp_' + k).oninput = e => { e.target.dataset.dirty = '1'; e.target.classList.add('dirty'); $('sp_msg').textContent = '● 有改動還沒儲存'; $('sp_msg').style.color = '#f1d77a'; }; $('sp_' + k).onkeydown = e => { if (e.key === 'Enter') $('sp_save').click(); }; }   // 改到一半不要被每 3 秒的更新蓋掉
 $('sp_save').onclick = async () => {
   if (!(+$('sp_budget').value > 0)) { $('sp_msg').textContent = '❌ 投入資金要填大於 0 的數字'; $('sp_msg').style.color = '#ff9aa2'; return; }
   const bd = !!$('sp_budget').dataset.dirty;   // 改過投入資金才送：特級交易從這個金額重新開始
   const g = k => $('sp_' + k).value, set = { budget: bd ? g('budget') : undefined, margin: g('margin'), dayLoss: g('dayLoss') || 0, lev: g('lev'), tp: g('tp'), step: g('step'), sl: g('sl'), hold: g('hold') ? Math.round(+g('hold') * 24) : undefined };
   const m = $('sp_msg'); m.textContent = '儲存中…'; m.style.color = '';
-  try { await srvFetch('/api/lt/config', { sp_set: set }); for (const k of Object.keys(set)) if ($('sp_' + k)) delete $('sp_' + k).dataset.dirty; m.textContent = '✅ 已儲存，下一筆特級交易開始套用（已開的單停損、鎖利、到期也照新的設定）'; SV.lv = 0; srvPull(); }
+  try { await srvFetch('/api/lt/config', { sp_set: set }); for (const k of ['budget', 'margin', 'dayLoss', 'lev', 'tp', 'step', 'sl', 'hold']) { delete $('sp_' + k).dataset.dirty; $('sp_' + k).classList.remove('dirty'); } m.textContent = `✅ 已儲存${set.budget ? `，特級交易從 ${set.budget}U 開始` : ''}`; SV.lv = 0; srvPull(); }
   catch (e) { m.textContent = '❌ ' + e.message; m.style.color = '#ff9aa2'; }
 };
 $('qSpToggle').onclick = () => {
@@ -6096,34 +6094,31 @@ $('qLtCfgBtn').onclick = () => {                     // 打開「👤 我的設�
   $('qSrv').hidden = false; $('qSrvBtn').setAttribute('aria-expanded', 'true');
   $('qMyTrade').scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
-['margin', 'lev', 'dayLoss', 'step', 'sl'].forEach(k => $('lt_' + k).onchange = () => ltCall('/api/lt/config', { [k]: +$('lt_' + k).value }));
-$('lt_tp').onchange = () => {                         // 浮盈達到幾 % 開始鎖利
-  const v = +$('lt_tp').value;
-  if (!(v >= 10 && v <= 1000)) { alert('開始鎖利要在 10～1000 % 之間'); renderLt(); return; }
-  ltCall('/api/lt/config', { tp: v });
-};
-$('lt_btcF').onchange = () => ltCall('/api/lt/config', { btcF: $('lt_btcF').value === '1' });
-$('lt_hold').onchange = () => {
-  const d = +$('lt_hold').value;
-  if (!(d >= 0.5 && d <= 30)) { alert('持有天數要在 0.5～30 天之間'); renderLt(); return; }
-  ltCall('/api/lt/config', { hold: Math.round(d * 24) });
-};
-$('lt_budget').oninput = () => { $('lt_budget').dataset.dirty = '1'; };
-$('lt_budget').onkeydown = e => { if (e.key === 'Enter') $('lt_budget').blur(); };
-$('lt_budget').onblur = () => {                      // 💰 輸入完（離開欄位或按 Enter）才送：一般交易從這個金額重新開始；打一樣的數字也算重新開始
-  if (!$('lt_budget').dataset.dirty) return; delete $('lt_budget').dataset.dirty;
-  const v = +$('lt_budget').value;
-  if (!(v > 0)) { alert('投入資金要填大於 0 的數字'); $('lt_budget').value = SRVLT.cfg.budget || ''; return; }
-  if (!(SRVBX && SRVBX.set)) { alert('請先設定 Bitunix API，才知道合約帳戶有多少資金。'); $('lt_budget').value = SRVLT.cfg.budget || ''; return; }
-  ltCall('/api/lt/config', { budget: v, restart: true }, `一般交易從 ${v}U 開始。`);
-};
-$('lt_pool').oninput = () => { $('lt_pool').dataset.dirty = '1'; };
-$('lt_pool').onkeydown = e => { if (e.key === 'Enter') $('lt_pool').blur(); };
-$('lt_pool').onblur = () => {                        // 💰 合約總資金：一般＋特級的投入資金加起來不能超過它（空白＝整個帳戶）
-  if (!$('lt_pool').dataset.dirty) return; delete $('lt_pool').dataset.dirty;
-  const v = $('lt_pool').value === '' ? 0 : +$('lt_pool').value;
-  if (!(v >= 0)) { alert('合約總資金不能是負的'); $('lt_pool').value = SRVLT.cfg.pool || ''; return; }
-  ltCall('/api/lt/config', { pool: v }, v > 0 ? `合約總資金設成 ${v}U。` : '合約總資金改成整個帳戶。');
+// 📈 我的交易設定：改了的欄位會標成「還沒儲存」，按「儲存」才一起送出（只送有改的）
+const LT_F = ['pool', 'budget', 'margin', 'dayLoss', 'lev', 'tp', 'step', 'hold', 'sl', 'btcF'];
+const ltDirtyN = () => LT_F.filter(k => $('lt_' + k).dataset.dirty).length;
+const ltDirtyMsg = () => { const n = ltDirtyN(); if (n) { $('lt_msg').textContent = `● 有 ${n} 項改了還沒儲存`; $('lt_msg').style.color = '#f1d77a'; } else if (/還沒儲存/.test($('lt_msg').textContent)) $('lt_msg').textContent = ''; };
+for (const k of LT_F) { const el = $('lt_' + k); el.oninput = el.onchange = () => { el.dataset.dirty = '1'; el.classList.add('dirty'); ltDirtyMsg(); }; el.onkeydown = e => { if (e.key === 'Enter') $('lt_save').click(); }; }
+$('lt_save').onclick = async () => {
+  const d = k => $('lt_' + k).dataset.dirty, v = k => $('lt_' + k).value, data = {}, m = $('lt_msg'), bad = t => { m.textContent = '❌ ' + t; m.style.color = '#ff9aa2'; };
+  if (!ltDirtyN()) { m.textContent = '沒有改動'; m.style.color = ''; return; }
+  if (d('pool')) { const x = v('pool') === '' ? 0 : +v('pool'); if (!(x >= 0)) return bad('合約總資金不能是負的'); data.pool = x; }
+  if (d('budget')) { const x = +v('budget'); if (!(x > 0)) return bad('投入資金要填大於 0 的數字'); if (!(SRVBX && SRVBX.set)) return bad('請先設定 Bitunix API，才知道合約帳戶有多少資金'); data.budget = x; data.restart = true; }
+  if (d('margin')) { const x = +v('margin'); if (!(x > 0)) return bad('每筆保證金要大於 0'); data.margin = x; }
+  if (d('dayLoss')) { const x = +v('dayLoss'); if (!(x >= 0)) return bad('單日虧損上限不能是負的'); data.dayLoss = x; }
+  if (d('lev')) { const x = +v('lev'); if (!(x >= 1 && x <= 125)) return bad('槓桿要在 1～125 倍之間'); data.lev = x; }
+  if (d('tp')) { const x = +v('tp'); if (!(x >= 10 && x <= 1000)) return bad('開始鎖利要在 10～1000 % 之間'); data.tp = x; }
+  if (d('step')) { const x = +v('step'); if (!(x >= 0 && x <= 1000)) return bad('鎖利上調要在 0～1000 % 之間'); data.step = x; }
+  if (d('hold')) { const x = +v('hold'); if (!(x >= 0.5 && x <= 30)) return bad('持有天數要在 0.5～30 天之間'); data.hold = Math.round(x * 24); }
+  if (d('sl')) { const x = +v('sl'); if (!(x >= 10 && x <= 1000)) return bad('停損要在 10～1000 % 之間'); data.sl = x; }
+  if (d('btcF')) data.btcF = v('btcF') === '1';
+  m.textContent = '儲存中…'; m.style.color = '';
+  try {
+    await srvFetch('/api/lt/config', data);
+    for (const k of LT_F) { delete $('lt_' + k).dataset.dirty; $('lt_' + k).classList.remove('dirty'); }
+    m.textContent = `✅ 已儲存${data.budget ? `，一般交易從 ${data.budget}U 開始` : ''}`; m.style.color = '';
+    SV.lv = 0; srvPull();
+  } catch (e) { bad(e.message); }
 };
 const bxTabClick = e => {
   const a = e.target.closest('button[data-adopt]');
