@@ -41,7 +41,7 @@ const DEF_REP = { cap: 100, btN: 50, days: 14, next: 0 };                   // �
 let ST = { cards: [], bt: { at: 0, coins: 0, trades: [] }, set: { ...DEF_SET }, trade: { ...DEF_TRADE }, google: { clientId: '' }, eq: { ...DEF_EQ }, rep: { ...DEF_REP }, reports: [], users: [], sessions: [], accts: {}, owner: '' };
 try {
   const j = JSON.parse(fs.readFileSync(FILE, 'utf8'));
-  ST = { cards: j.cards || [], bt: j.bt || ST.bt, set: { ...DEF_SET, ...(j.set || {}) }, trade: { ...DEF_TRADE, ...(j.trade || {}) }, google: { clientId: '', ...(j.google || {}) }, eq: { ...DEF_EQ, ...(j.eq || {}) }, rep: { ...DEF_REP, ...(j.rep || {}) }, reports: j.reports || [], users: j.users || [], sessions: j.sessions || [], aws: j.aws || {}, accts: j.accts || {}, owner: j.owner || '', bstat: j.bstat || null, hb: j.hb || '', ecoDay: j.ecoDay || '', ecoUntil: j.ecoUntil || 0, tool: j.tool || null, alive: j.alive || 0, boots: j.boots || [], exit: j.exit || null, hb2: j.hb2 || null, lastErr: j.lastErr || null };
+  ST = { cards: j.cards || [], bt: j.bt || ST.bt, set: { ...DEF_SET, ...(j.set || {}) }, trade: { ...DEF_TRADE, ...(j.trade || {}) }, google: { clientId: '', ...(j.google || {}) }, eq: { ...DEF_EQ, ...(j.eq || {}) }, rep: { ...DEF_REP, ...(j.rep || {}) }, reports: j.reports || [], users: j.users || [], sessions: j.sessions || [], aws: j.aws || {}, accts: j.accts || {}, owner: j.owner || '', bstat: j.bstat || null, hb: j.hb || '', ecoDay: j.ecoDay || '', ecoUntil: j.ecoUntil || 0, tool: j.tool || null, xent: j.xent || null, alive: j.alive || 0, boots: j.boots || [], exit: j.exit || null, hb2: j.hb2 || null, lastErr: j.lastErr || null };
   // 舊版（只有一個帳號）：原本的 Bitunix 金鑰、自動交易、實盤紀錄、Discord 搬到擁有者（第一個管理員）的帳號底下
   if (!j.accts && (j.bx || j.lt || j.ltTrades || j.notify)) {
     const a = ST.users.find(u => u.role === 'admin'), uid = a ? a.uid : '__owner';
@@ -441,7 +441,7 @@ async function dcRun() {
       try {
         const r = await fetch(m.cfg.webhook, {
           method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(8000),
-          body: JSON.stringify({ content: m.content.slice(0, 1900), username: '合約量化進場', allowed_mentions: { parse: [] } })
+          body: JSON.stringify({ content: m.content.slice(0, 1900), username: 'Quant X 合約作戰室', allowed_mentions: { parse: [] } })
         });
         if (r.status === 429) { const j = await r.json().catch(() => ({})); await sleep(Math.ceil((+j.retry_after || 2) * 1000) + 200); continue; }   // Discord 限速，等一下再送
         if (!r.ok) { const tx = (await r.text().catch(() => '')).slice(0, 200); log('Discord 傳送失敗', r.status, tx); m.err = dcErr(r.status, tx); break; }
@@ -941,7 +941,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-30k';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-10-31e';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1844,6 +1844,156 @@ setInterval(async () => {                              // 每根 5 分／15 分 
   }
 }, 15000);
 
+/* ======================== 🔔 額外進場：莊家淨額背離、H4/H1 CRT、獵殺（天神下凡）三種訊號——只發 Discord 通知，不下單 ========================
+   照擁有者的 TradingView 指標「莊家淨額 + CRT/SMC」和「無量空處」裡的天神下凡；每個人自己選要看哪些幣、哪幾種訊號、通知送到哪個頻道 */
+// CHoCH／BOS（照指標的 f_leg／f_structure）：每根 K 棒有沒有看漲、看跌結構突破
+function xStruct(B, len) {
+  const n = B.length, bull = new Array(n).fill(false), bear = new Array(n).fill(false), tagB = new Array(n).fill(''), tagS = new Array(n).fill('');
+  let leg = 0, prevLeg = 0, swH = NaN, swL = NaN, hX = false, lX = false, bias = 0, pH = NaN, pL = NaN;
+  for (let i = 0; i < n; i++) {
+    if (i >= len) {                                    // high[len] 跟最近 len 根（不含它）比
+      let mh = -Infinity, ml = Infinity; for (let k = i - len + 1; k <= i; k++) { if (B[k].h > mh) mh = B[k].h; if (B[k].l < ml) ml = B[k].l; }
+      if (B[i - len].h > mh) leg = 0; else if (B[i - len].l < ml) leg = 1;
+    }
+    if (i > 0 && leg !== prevLeg) { if (leg === 1) { swL = B[i - len].l; lX = false; } else { swH = B[i - len].h; hX = false; } }
+    prevLeg = leg;
+    const c = B[i].c, cp = i ? B[i - 1].c : NaN;
+    const up = !isNaN(swH) && !isNaN(pH) && c > swH && cp <= pH, dn = !isNaN(swL) && !isNaN(pL) && c < swL && cp >= pL;   // ta.crossover／crossunder
+    if (up && !hX) { bull[i] = true; hX = true; tagB[i] = bias === -1 ? 'CHoCH' : 'BOS'; bias = 1; }
+    if (dn && !lX) { bear[i] = true; lX = true; tagS[i] = bias === 1 ? 'CHoCH' : 'BOS'; bias = -1; }
+    pH = swH; pL = swL;
+  }
+  return { bull, bear, tagB, tagS };
+}
+// 🎯 獵殺進場（天神下凡）：同一天（UTC）連續兩根 4H／1H：前跌後漲且後低破前低＝看漲窗口；前漲後跌且後高破前高＝看跌窗口 → 窗口內出現同方向 CHoCH/BOS，下一根標示進場
+function xHunt(L, P, sb, ib) {
+  const out = []; let day = [], curDay = null, acc = null, win = { dir: 0, trig: false }, pend = null;
+  for (let i = 0; i < L.length; i++) {
+    const b = L[i], slot = Math.floor(new Date(b.t).getUTCHours() / P.slotH) + 1, dayId = Math.floor(b.t / 86400000);
+    if (!acc || slot !== acc.slot || dayId !== acc.day) {
+      if (acc && dayId !== acc.day && win.dir && !win.trig) win = { dir: 0, trig: false };   // 新的一天：還沒觸發的窗口取消
+      if (acc) {
+        if (acc.day !== curDay) { day = []; curDay = acc.day; }
+        day.push(acc);
+        const n = day.length;
+        if (n >= 2) {
+          const p = day[n - 2], q = day[n - 1];
+          if (q.slot === p.slot + 1 && q.slot <= P.maxSlot) {
+            const lp = p.c < p.o && q.c > q.o && q.l < p.l, sp = p.c > p.o && q.c < q.o && q.h > p.h;
+            if (lp || sp) win = { dir: lp ? 1 : -1, trig: false };
+          }
+        }
+      }
+      acc = { o: b.o, h: b.h, l: b.l, c: b.c, slot, day: dayId };
+    } else { acc.h = Math.max(acc.h, b.h); acc.l = Math.min(acc.l, b.l); acc.c = b.c; }
+    if (win.dir && !win.trig) {
+      const brk = win.dir === 1 ? (sb.bull[i] || ib.bull[i]) : (sb.bear[i] || ib.bear[i]);
+      if (brk) { win.trig = true; pend = { dir: win.dir, i, tag: win.dir === 1 ? (ib.tagB[i] || sb.tagB[i]) : (ib.tagS[i] || sb.tagS[i]) }; }
+    }
+    if (pend && i === pend.i + 1) { out.push({ i, dir: pend.dir, tag: pend.tag }); pend = null; }
+  }
+  return out;
+}
+// 💰 莊家進場：大週期 K 棒收跌但淨額為正＝吸貨背離、收漲但淨額為負＝出貨背離 → 小週期同方向 CHoCH/BOS（Internal）進場；反向結構出現就取消背離；每個背離只進場一次
+function xZh(L, P, ib) {
+  const out = []; let acc = null, setup = 0, used = false;
+  for (let i = 0; i < L.length; i++) {
+    const b = L[i], hs = Math.floor(b.t / P.hms) * P.hms; let bull = false, bear = false;
+    if (!acc || hs !== acc.t) {
+      if (acc && acc.full) { if (acc.c < acc.o && acc.net > 0) bull = true; if (acc.c > acc.o && acc.net < 0) bear = true; }
+      acc = { t: hs, o: b.o, c: b.c, net: 0, full: b.t === hs };   // 資料開頭不完整的那根大週期不判斷
+    }
+    acc.net += 2 * b.tb - b.qv; acc.c = b.c;
+    if (bull) { setup = 1; used = false; acc.div = 1; }
+    if (bear) { setup = -1; used = false; }
+    const bB = ib.bull[i], bS = ib.bear[i];
+    if (setup === 1 && !used && bB) { out.push({ i, dir: 1, tag: ib.tagB[i] }); used = true; }
+    if (setup === -1 && !used && bS) { out.push({ i, dir: -1, tag: ib.tagS[i] }); used = true; }
+    if ((setup === 1 && bS) || (setup === -1 && bB)) { setup = 0; used = false; }
+  }
+  return out;
+}
+// 🕯 H4/H1 CRT 進場：大週期掃前一根高低點再收回（嚴格：前一根顏色相反）→ 之後第 1～2 根大週期內，小週期結構轉向（武裝）後回踩 FVG，風險距離 ≥ 0.3 ATR → 進場；止盈＝盈虧比 1:1
+function xCrt(L, H, P, sb, ib, atr) {
+  const st = []; let dir = 0, ci = -1, top = NaN, bot = NaN;
+  for (let j = 0; j < H.length; j++) {
+    if (j >= 1) {
+      const a = H[j - 1], b = H[j];
+      if (b.l < a.l && b.c > a.l && b.c > b.o && a.c < a.o) { dir = 1; ci = j; top = Math.max(a.h, b.h); bot = a.l; }
+      if (b.h > a.h && b.c < a.h && b.c < b.o && a.c > a.o) { dir = -1; ci = j; top = a.h; bot = Math.min(a.l, b.l); }
+    }
+    st.push({ dir, ci, top, bot });
+  }
+  const out = []; let bias = 0, la = false, sa = false, bz = [], sz = [], k = -1;
+  for (let i = 0; i < L.length; i++) {
+    const b = L[i], ct = b.t + P.lms;
+    while (k + 1 < H.length && H[k + 1].t + P.hms <= ct) k++;   // 這根小 K 收盤時，已經收盤的最後一根大週期（等同 lookahead_off）
+    const S = k >= 0 ? st[k] : null, since = S && S.ci >= 0 ? k - S.ci : NaN, act = !!(S && S.dir && since >= 1 && since <= 2), cdir = act ? S.dir : 0;
+    const anyB = sb.bull[i] || ib.bull[i], anyS = sb.bear[i] || ib.bear[i];
+    if (anyB) { bias = 1; la = true; sa = false; }
+    if (anyS) { bias = -1; sa = true; la = false; }
+    if (anyB) bz = []; if (anyS) sz = [];
+    if (i >= 2) {
+      const p1 = L[i - 1], p2 = L[i - 2], d = (p1.c - p1.o) / (p1.o * 100);
+      if (b.l > p2.h && p1.c > p2.h && d > 0) { bz.unshift({ top: b.l, bot: p2.h, i }); if (bz.length > 5) bz.pop(); }
+      if (b.h < p2.l && p1.c < p2.l && -d > 0) { sz.unshift({ top: p2.l, bot: b.h, i }); if (sz.length > 5) sz.pop(); }
+    }
+    bz = bz.filter(z => !(b.c < z.bot)); sz = sz.filter(z => !(b.c > z.top));
+    const bh = Math.max(b.o, b.c), bl = Math.min(b.o, b.c), hit = Z => Z.some(z => z.i !== i && b.h >= z.bot && b.l <= z.top && !(bl <= z.bot && bh >= z.top));
+    const lh = hit(bz), sh = hit(sz), A = atr[i];
+    if (la && bias === 1 && lh && cdir === 1 && b.c - S.bot >= 0.3 * A) { out.push({ i, dir: 1, sl: S.bot, tp: b.c + (b.c - S.bot) }); la = false; }
+    if (sa && bias === -1 && sh && cdir === -1 && S.top - b.c >= 0.3 * A) { out.push({ i, dir: -1, sl: S.top, tp: b.c - (S.top - b.c) }); sa = false; }
+  }
+  return out;
+}
+
+
+const XP = { h4: { ...TOOL_P.h4, slotH: 4, maxSlot: 5 }, h1: { ...TOOL_P.h1, slotH: 1, maxSlot: 23 } };
+const XN = { zh: { ic: '🌊', nm: '暗流', d: '淨額背離' }, crt: { ic: '🔁', nm: '折返', d: 'CRT 掃流動性收回' }, hunt: { ic: '🏹', nm: '伏擊', d: '掃流動性窗口' } };
+const DEF_XENT = { cfg: {}, sigs: [], seen: {}, scan: { at: 0, n: 0, err: '' } };
+ST.xent = { ...DEF_XENT, ...(ST.xent || {}) };
+const xCfg = uid => ST.xent.cfg[uid] || (ST.xent.cfg[uid] = { syms: [], zh: true, crt: true, hunt: true, h4: true, h1: true, hook: '' });
+const XR = { h4: 0, h1: 0, busy: false };
+async function xScan(pair) {                           // 每根 15 分／5 分 K 收盤後：掃所有人關注的幣
+  const P = XP[pair], X = ST.xent, now = Date.now(), want = {};
+  for (const [uid, c] of Object.entries(X.cfg)) { if (!c[pair] || !ST.users.some(u => u.uid === uid)) continue; for (const s of c.syms || []) { want[s] = want[s] || new Set(); for (const k of ['zh', 'crt', 'hunt']) if (c[k]) want[s].add(k); } }
+  const syms = Object.keys(want).slice(0, 60); let n = 0;
+  for (const sym of syms) {
+    try {
+      const L = await toolKl(sym, P.ltf, 600, P.lms); if (L.length < 120) continue;
+      const H = want[sym].has('crt') ? await toolKl(sym, P.htf, 60, P.hms) : [];
+      const sb = xStruct(L, 50), ib = xStruct(L, 5), atr = toolAtr(L, 14), found = [];
+      if (want[sym].has('zh')) for (const x of xZh(L, P, ib)) found.push({ ...x, type: 'zh' });
+      if (want[sym].has('crt') && H.length > 3) for (const x of xCrt(L, H, P, sb, ib, atr)) found.push({ ...x, type: 'crt' });
+      if (want[sym].has('hunt')) for (const x of xHunt(L, P, sb, ib)) found.push({ ...x, type: 'hunt' });
+      n++;
+      for (const x of found) {
+        if (x.i < L.length - 2) continue;              // 只要剛收盤的（最多晚一根）
+        const b = L[x.i], id = `${sym}|${pair}|${x.type}|${b.t}|${x.dir}`; if (X.seen[id]) continue;
+        X.seen[id] = now; const s = { id, sym, pair, type: x.type, dir: x.dir, t: b.t + P.lms, px: b.c, sl: x.sl || 0, tp: x.tp || 0, tag: x.tag || '' };
+        X.sigs.unshift(s); if (X.sigs.length > 300) X.sigs.length = 300; xNotify(s); dirty = true;
+      }
+    } catch (e) { X.scan.err = `${sym}：${e.message}`; }
+  }
+  for (const [k, t] of Object.entries(X.seen)) if (now - t > 4 * 24 * HOUR) delete X.seen[k];
+  X.scan = { ...X.scan, at: now, n }; dirty = true;
+}
+function xNotify(s) {                                  // 通知有關注這個幣、這種訊號、這個週期的人（送到他自己設定的頻道）
+  const P = XP[s.pair], N = XN[s.type], seen = new Set();
+  const msg = `🔔 **額外進場**｜${N.ic} ${N.nm}（${N.d}）${s.dir > 0 ? '🟢 **做多**' : '🔴 **做空**'} **${mdEsc(s.sym)}**・${P.name}\n${tw(s.t)}（台北）收盤價 ${fpx(s.px)}${s.tag ? `・${P.ln} ${s.tag}` : ''}${s.sl ? `\n參考止損 ${fpx(s.sl)}・止盈 ${fpx(s.tp)}（1:1）` : ''}\n⚠️ 只是提醒，不會自動下單`;
+  for (const [uid, c] of Object.entries(ST.xent.cfg)) {
+    if (!c[s.pair] || !c[s.type] || !(c.syms || []).includes(s.sym) || !c.hook) continue;
+    let h = ''; try { h = dec(c.hook); } catch (e) {} if (!h || seen.has(h)) continue; seen.add(h); dcSend(msg, { webhook: h });
+  }
+}
+setInterval(async () => {
+  if (XR.busy) return; const t = Date.now() - 25000;
+  for (const pair of ['h1', 'h4']) {
+    const slot = Math.floor(t / XP[pair].lms); if (slot <= XR[pair]) continue;
+    XR[pair] = slot; XR.busy = true;
+    try { ST.xent.scan.err = ''; await xScan(pair); } catch (e) { ST.xent.scan.err = e.message; } finally { XR.busy = false; }
+  }
+}, 15000);
 /* ---------------- 📅 數據公布（經濟數據行事曆，來源：Forex Factory 公開 JSON） ----------------
    只看美國（USD）的高影響數據；公布前 30 分鐘、公布時各發一次 Discord，之後讀到實際值再補一次 */
 const ECO = { list: [], at: 0, err: '', sent: {} };
@@ -2244,7 +2394,7 @@ function readBody(req, max = 30e6) {
 /* ---------------- 📧 寄信（Gmail SMTP，用「應用程式密碼」）：忘記密碼、擁有者登入驗證碼、轉讓擁有者驗證碼 ----------------
    設定放在 /opt/quant/.env：SMTP_USER=寄件的 Gmail、SMTP_PASS=16 碼應用程式密碼（不用另外裝套件） */
 const tlsM = require('tls'), netM = require('net');
-const MAIL = { host: process.env.SMTP_HOST || 'smtp.gmail.com', port: +process.env.SMTP_PORT || 465, user: process.env.SMTP_USER || '', pass: String(process.env.SMTP_PASS || '').replace(/\s+/g, ''), secure: process.env.SMTP_SECURE !== '0', name: process.env.MAIL_NAME || '無量空處' };
+const MAIL = { host: process.env.SMTP_HOST || 'smtp.gmail.com', port: +process.env.SMTP_PORT || 465, user: process.env.SMTP_USER || '', pass: String(process.env.SMTP_PASS || '').replace(/\s+/g, ''), secure: process.env.SMTP_SECURE !== '0', name: process.env.MAIL_NAME || 'Quant X 合約作戰室' };
 const mailOn = () => !!(MAIL.user && MAIL.pass);
 const SITE = (process.env.SITE_URL || 'https://moocow0216-lab.github.io/trace-back/').replace(/\/?$/, '/');
 const b64 = x => Buffer.from(String(x), 'utf8').toString('base64');
@@ -2297,7 +2447,7 @@ async function mailCode(usr, kind, extra = {}) {      // 寄 6 位數驗證碼�
   for (const [k, v] of CODES) if (v.exp < Date.now()) CODES.delete(k);
   CODES.set(pre, { uid: usr.uid, kind, h: sha(code), exp: Date.now() + 10 * 60000, tries: 0, ...extra });
   const what = kind === 'login' ? '擁有者登入' : `把擁有者轉讓給 ${extra.to}`;
-  await sendMail(usr.bind.email, `無量空處：${what}的驗證碼 ${code}`, `你的驗證碼是：${code}\n\n用途：帳號 ${usr.uid} ${what}\n10 分鐘內有效，只能用一次。\n\n如果不是你本人在操作，代表你的密碼可能外洩了，請盡快改密碼。`);
+  await sendMail(usr.bind.email, `Quant X：${what}的驗證碼 ${code}`, `你的驗證碼是：${code}\n\n用途：帳號 ${usr.uid} ${what}\n10 分鐘內有效，只能用一次。\n\n如果不是你本人在操作，代表你的密碼可能外洩了，請盡快改密碼。`);
   return pre;
 }
 
@@ -2358,7 +2508,7 @@ http.createServer(async (req, res) => {
         const tok = crypto.randomBytes(24).toString('hex');
         for (const [k, v] of RESETS) if (v.exp < Date.now() || v.uid === usr.uid) RESETS.delete(k);   // 同一個帳號只留最新的連結
         RESETS.set(sha(tok), { uid: usr.uid, exp: Date.now() + 30 * 60000 });
-        sendMail(email, '無量空處：重設密碼', `你好，\n\n有人（希望是你）要求重設帳號 ${usr.uid} 的密碼。請在 30 分鐘內打開下面的連結設定新密碼：\n\n${SITE}?reset=${tok}\n\n連結只能用一次。重設後，這個帳號在所有裝置的登入都會被登出。\n\n如果不是你本人要求的，忽略這封信就好，你的密碼不會被改。`)
+        sendMail(email, 'Quant X：重設密碼', `你好，\n\n有人（希望是你）要求重設帳號 ${usr.uid} 的密碼。請在 30 分鐘內打開下面的連結設定新密碼：\n\n${SITE}?reset=${tok}\n\n連結只能用一次。重設後，這個帳號在所有裝置的登入都會被登出。\n\n如果不是你本人要求的，忽略這封信就好，你的密碼不會被改。`)
           .then(() => log('寄出重設密碼信', usr.uid, maskMail(email)))
           .catch(e => { log('重設密碼信寄不出去', usr.uid, e.message); dcX(ctx(ownerUid()), `📧 **寄信失敗**（${usr.uid} 的重設密碼信）：${mdEsc(e.message)}\n請檢查 /opt/quant/.env 的 SMTP_USER、SMTP_PASS`); });
         return send(res, 200, OK);
@@ -2459,11 +2609,25 @@ http.createServer(async (req, res) => {
     if (req.method === 'POST' && u.pathname.startsWith('/api/')) {
       // 個人設定：每個帳號都能改「自己的」；其他（掃描條件、浮盈規則、回測、帳號管理、AWS）只有管理員能改
       // 個人（每個帳號）：自己的 API、Discord、交易設定、平倉；管理員（灰色）：帳號管理；其他全站設定只有擁有者能改
-      const PERSONAL = ['/api/bind', '/api/bitunix', '/api/lt/config', '/api/lt/testOpen', '/api/lt/close', '/api/lt/closeAll', '/api/lt/adopt', '/api/notify', '/api/notify/test', '/api/me/password', '/api/tool', '/api/lt/withdraw', '/api/sim'];
+      const PERSONAL = ['/api/bind', '/api/bitunix', '/api/lt/config', '/api/lt/testOpen', '/api/lt/close', '/api/lt/closeAll', '/api/lt/adopt', '/api/notify', '/api/notify/test', '/api/me/password', '/api/tool', '/api/lt/withdraw', '/api/sim', '/api/xent'];
       const ADMIN = ['/api/users', '/api/users/delete', '/api/users/kick', '/api/check'];
       if (ADMIN.includes(u.pathname) && !admin) return send(res, 403, { error: '這個功能只有管理員可以用' });
       if (!PERSONAL.includes(u.pathname) && !ADMIN.includes(u.pathname) && !owner) return send(res, 403, { error: '這個設定只有擁有者可以改' });
       const b = await readBody(req);
+      if (u.pathname === '/api/xent') {                  // 🔔 額外進場：自己的關注清單、通知頻道
+        const uid = meU ? meU.uid : ownerUid(), c = xCfg(uid), op = String(b.op || 'get');
+        if (op === 'get') { const mine = new Set(c.syms || []); return send(res, 200, { cfg: { syms: c.syms, zh: c.zh, crt: c.crt, hunt: c.hunt, h4: c.h4, h1: c.h1 }, hook: !!c.hook, hookLast: (() => { try { return c.hook ? dcStat(dec(c.hook)) : null; } catch (e) { return null; } })(),
+          sigs: ST.xent.sigs.filter(x => mine.has(x.sym)).slice(0, 100), all: ST.xent.sigs.slice(0, 30), scan: ST.xent.scan, uni: TOOLU.list.slice(0, 80), names: XN }); }
+        if (op === 'set') {
+          const syms = [...new Set((Array.isArray(b.syms) ? b.syms : []).map(x => String(x).toUpperCase().replace(/[^A-Z0-9]/g, '')).filter(Boolean).map(x => /USDT$/.test(x) ? x : x + 'USDT'))];
+          if (syms.length > 30) return send(res, 400, { error: '最多關注 30 個幣' });
+          if (syms.some(x => !/^[A-Z0-9]{2,20}USDT$/.test(x))) return send(res, 400, { error: '幣種格式不對' });
+          Object.assign(c, { syms, zh: !!b.zh, crt: !!b.crt, hunt: !!b.hunt, h4: b.h4 !== false, h1: b.h1 !== false }); dirty = true; return send(res, 200, { ok: true });
+        }
+        if (op === 'hook') { const w = String(b.webhook || '').trim(); if (w && !/^https:\/\/(discord|discordapp)\.com\/api\/webhooks\//.test(w)) return send(res, 400, { error: '這不是 Discord Webhook 網址' }); c.hook = w ? enc(w) : ''; dirty = true; return send(res, 200, { ok: true }); }
+        if (op === 'test') { if (!c.hook) return send(res, 400, { error: '還沒設定 Webhook' }); const r = await dcSend('🔔 **額外進場** 測試訊息：之後關注的幣出現訊號，會傳到這個頻道', { webhook: dec(c.hook) }, true); return r === false ? send(res, 400, { error: '傳送失敗，請確認網址' }) : send(res, 200, { ok: true }); }
+        return send(res, 400, { error: '不認得的操作' });
+      }
       if (u.pathname === '/api/sim') {                    // 🧪 模擬盤：切換、存入／提出模擬資金、重置
         if (!admin || !meU) return send(res, 403, { error: '只有管理員和擁有者可以用模擬盤' });
         const op = String(b.op || '');
