@@ -884,7 +884,7 @@ header{align-items:center}
 .wxc q{font:600 11px ui-monospace,Menlo,monospace;color:#cbd5e1;quotes:"“" "”";white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .wxbtns{display:flex;gap:6px}.wxbtns .btn{padding:3px 9px;font-size:12px}
 .wxscene{position:relative;border:1px solid #232a3d;border-radius:8px;overflow:hidden;background:#070b16}
-.wxscene canvas{display:block;width:100%;aspect-ratio:16/7}
+.wxscene canvas{display:block;width:100%;aspect-ratio:16/8}
 .wxtick{position:absolute;top:6px;left:50%;transform:translateX(-50%);z-index:1;font:600 11px ui-monospace,Menlo,monospace;color:#7dd3fc;background:rgba(5,8,16,.75);border:1px solid #1f2a44;border-radius:4px;padding:2px 10px;white-space:nowrap;max-width:94%;overflow:hidden;text-overflow:ellipsis}
 .wxbal,.wxpanel{background:#0f1320;border:1px solid #232a3d;border-radius:8px;padding:8px 10px;min-width:0}
 .wxph{display:flex;justify-content:space-between;gap:8px;font:700 11.5px ui-monospace,Menlo,monospace;color:#cbd5e1;margin-bottom:6px;letter-spacing:.04em}.wxph span{color:#f472b6;font-weight:600}
@@ -900,6 +900,25 @@ header{align-items:center}
 .wx .btn{background:#141a2a;border:1px solid #2c3449;color:#e2e8f0}.wx .btn:hover{border-color:var(--pk);color:#fff}
 @media (max-width:1100px){.wxcards{grid-template-columns:repeat(2,minmax(0,1fr))}.wxlow{grid-template-columns:1fr}}
 @media (max-width:620px){.wxscene canvas{aspect-ratio:4/3}.wxan{grid-template-columns:1fr}.wxprog{margin-left:0}.wxbar{width:110px}.wxbalb{flex-direction:column}.wxbalv{min-width:0}}
+
+/* ===== 🔔 額外進場 ===== */
+.xe{display:flex;flex-direction:column;gap:12px}.xehead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}.xehead>div>b{font-size:18px}.xehead span b{color:var(--ink,inherit)}
+.xeadd>.btn{flex:none!important;width:auto!important}#xeDlg,#xeDlg h3{color:#e2e8f0}.xehead span{display:block;color:var(--muted);font-size:13px;margin-top:4px}
+.xebox{border:1px solid var(--line,#2a3140);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}.xebox h4{margin:0;font-size:14.5px}
+.xeadd{display:flex;gap:8px}.xeadd input{flex:1;min-width:0}
+.xechips{display:flex;flex-wrap:wrap;gap:6px}.xechip{display:inline-flex;align-items:center;gap:6px;padding:4px 6px 4px 12px;border-radius:999px;border:1px solid #6d5bd0;background:rgba(167,139,250,.12);font-weight:700;font-size:13px}
+.xechip button{border:0;background:rgba(255,255,255,.08);color:inherit;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:11px}
+.xequick{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.xequick .btn{padding:3px 10px;font-size:12.5px}
+.xetypes{display:grid;gap:8px}.xetype{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line,#2a3140);border-radius:10px;padding:10px 12px;cursor:pointer}
+.xetype input{margin-top:3px;width:18px;height:18px;accent-color:#a78bfa}.xetype b{display:block;font-size:14.5px}.xetype b small{font-size:11px;color:var(--muted);letter-spacing:.06em}.xetype em{display:block;font-style:normal;font-size:12.5px;color:var(--muted);line-height:1.5;margin-top:2px}
+.xepairs{display:flex;gap:16px}
+
+.wxx{display:grid;grid-template-columns:auto repeat(3,minmax(0,1fr));gap:8px;align-items:stretch}
+.wxxh{display:flex;flex-direction:column;justify-content:center;gap:2px;padding:6px 10px;border:1px dashed #6d5bd0;border-radius:8px;font:12px ui-monospace,Menlo,monospace;color:#a5b4fc}.wxxh b{color:#c4b5fd;font-size:13px}.wxxh .btn{padding:2px 8px;font-size:11.5px;margin-top:4px}
+.wxxc{display:flex;flex-direction:column;gap:2px;padding:7px 10px;border:1px dashed color-mix(in srgb,var(--xc) 55%,transparent);border-radius:8px;background:rgba(255,255,255,.02);font:12px ui-monospace,Menlo,monospace;color:#94a3b8;min-width:0}
+.wxxc b{color:var(--xc);font-size:14px}.wxxc small{color:#6b7489}.wxxc span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.wxxc em{font-style:normal;color:#fff;font-weight:700}
+.wxxc.hot{border-style:solid;box-shadow:0 0 12px color-mix(in srgb,var(--xc) 40%,transparent)}
+@media (max-width:620px){.wxx{grid-template-columns:repeat(3,minmax(0,1fr))}.wxxh{grid-column:1/-1;flex-direction:row;align-items:center;flex-wrap:wrap}}
 </style>
 </head>
 <body class="quant-on mn">
@@ -1082,7 +1101,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-31d</div>
+      <div class="qver" id="qVer">網站版本 2026-10-31e</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -1411,6 +1430,7 @@ header{align-items:center}
 </div>
 <div id="mnpTool" class="tlwrap" hidden></div>
 <div id="mnpStats" class="mnstats"></div>
+<div id="mnpXent" class="mnxent"></div>
 <div id="mnpEq" class="mneq"></div>
 <div id="mnpToolH" class="tlwrap" hidden></div>
 <div id="mnpSet" class="mnacctwrap">
@@ -3537,7 +3557,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-31d・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-31e・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -3939,7 +3959,7 @@ $('qGuideBtn').onclick = () => gdOpen(0);
 /* ---------- ☰ 選單：右上角打開，每一項是一個全螢幕頁面；內容是從主畫面「搬」進來的，主畫面不再重複顯示 ---------- */
 var MN_PAGE = '';
 const MN_ITEMS = [                                    // [代號, 圖示, 名稱, 頁面元素, 顏色, 分類]
-  ['pos', '💼', '持倉', 'qBx', '#d4af37', '交易'], ['tool', '🗡', '特級咒具', 'mnpTool', '#ef4444', '交易'], ['cards', '📡', '訊號卡片', 'qSidePanel', '#22d3ee', '交易'],
+  ['pos', '💼', '持倉', 'qBx', '#d4af37', '交易'], ['tool', '🗡', '特級咒具', 'mnpTool', '#ef4444', '交易'], ['xent', '🔔', '額外進場', 'mnpXent', '#a78bfa', '交易'], ['cards', '📡', '訊號卡片', 'qSidePanel', '#22d3ee', '交易'],
   ['stats', '🎯', '成功率', 'mnpStats', '#34d399', '數據'], ['eq', '📈', '資金曲線', 'mnpEq', '#60a5fa', '數據'], ['hist', '📋', '歷史紀錄', 'qTabPanel', '#fbbf24', '數據'], ['bt', '📊', '回測數據', 'qBtHost', '#2dd4bf', '數據'],
   ['heat', '🔥', '熱力圖', 'qHeatHost', '#fb923c', '市場'], ['pat', '📉', '歷史走勢', '', '#a78bfa', '市場'], ['news', '📰', '加密新聞', 'newsPanel', '#f472b6', '市場'], ['whale', '🐋', '幣安鯨魚大單', 'whalePanel', '#38bdf8', '市場'],
   ['set', '👤', '設定', 'mnpSet', '#7aa2ff', '其他'], ['guide', '📖', '使用說明', '', '#94a3b8', '其他']];
@@ -4073,6 +4093,54 @@ function tlSettings() {                                // ⚙ 設定視窗：Dis
     };
   }
 }
+/* ---------- 🔔 額外進場：選幣、選訊號（暗流／折返／伏擊）、另外的 Discord 頻道；只通知不下單 ---------- */
+const XE = { d: null, timer: null, syms: [], dirty: false };
+const XE_T = [['zh', '🌊', '暗流', 'FLOW', '莊家淨額背離：4H／1H 收跌但淨額為正（吸貨）或收漲但淨額為負（出貨），之後 15M／5M 出現同方向 CHoCH／BOS'],
+  ['crt', '🔁', '折返', 'PIVOT', 'CRT：4H／1H 掃過前一根的高低點又收回來，之後 2 根內 15M／5M 結構轉向並回踩 FVG（附參考止損、1:1 止盈）'],
+  ['hunt', '🏹', '伏擊', 'AMBUSH', '掃流動性窗口：同一天連續兩根 4H／1H 前跌後漲且破前低（或相反），窗口內 15M／5M 出現同方向 CHoCH／BOS']];
+async function xeLoad() { try { XE.d = await srvFetch('/api/xent', { op: 'get' }); if (!XE.dirty) XE.syms = [...(XE.d.cfg.syms || [])]; xeRender(); } catch (e) { $('mnpXent').innerHTML = `<p class="mnmsg bad">${esc(e.message)}</p>`; } }
+function xeRender() {
+  const d = XE.d, c = d.cfg, host = $('mnpXent');
+  if (!$('xeSyms')) {
+    host.innerHTML = `<div class="xe"><div class="xehead"><div><b>🔔 額外進場</b><span>選好幣種和訊號，出現時傳 Discord 通知。<b>只提醒、不會自動下單。</b></span></div><button class="btn" id="xeDcBtn">💬 DC 設定</button></div>
+      <section class="xebox"><h4>1. 要看哪些幣（最多 30 個）</h4><div class="xeadd"><input id="xeIn" placeholder="輸入幣種，例如 BTC、ETH SOL（可一次打好幾個）" autocomplete="off" aria-label="新增幣種"><button class="btn primary" id="xeAdd">加入</button></div>
+        <div class="xechips" id="xeSyms"></div><div class="xequick" id="xeQuick"></div></section>
+      <section class="xebox"><h4>2. 出現哪些訊號要通知（可複選）</h4><div class="xetypes" id="xeTypes"></div>
+        <div class="xepairs"><label class="lvck"><input type="checkbox" id="xeH4"> 4H→15M</label><label class="lvck"><input type="checkbox" id="xeH1"> 1H→5M</label></div></section>
+      <div class="qsaverow"><button class="btn primary" id="xeSave">儲存</button><span class="qltmsg" id="xeMsg" role="status"></span></div>
+      <section class="xebox"><h4>最近的訊號（你關注的幣）</h4><div id="xeList"></div></section>
+      <dialog id="xeDlg" class="tldlg" aria-labelledby="xeDlgT"><div class="tldlgh"><h3 id="xeDlgT">💬 額外進場的 Discord 頻道</h3><button class="btn" id="xeDlgX">關閉</button></div>
+        <p class="tlsub">可以跟一般通知、特級咒具用不同的頻道。頻道設定 → 整合 → Webhook → 新增 → 複製網址。</p><p class="tlsub" id="xeHookSt"></p>
+        <div class="tlrow"><input id="xeHook" placeholder="https://discord.com/api/webhooks/…" autocomplete="off" spellcheck="false" aria-label="Discord Webhook 網址"><button class="btn primary" id="xeHookSave">儲存</button><button class="btn" id="xeHookTest">測試</button><button class="btn" id="xeHookDel">清除</button></div><p class="mnmsg" id="xeHookMsg" role="status"></p></dialog></div>`;
+    const msg = (id, ok, t) => { $(id).className = 'mnmsg ' + (ok ? 'ok' : 'bad'); $(id).textContent = t; };
+    const mark = () => { XE.dirty = true; $('xeMsg').textContent = '● 有改動還沒儲存'; $('xeMsg').style.color = '#f1d77a'; };
+    const add = txt => { const L = String(txt).toUpperCase().split(/[\s,，、]+/).map(x => x.replace(/[^A-Z0-9]/g, '')).filter(Boolean).map(x => /USDT$/.test(x) ? x : x + 'USDT');
+      for (const x of L) if (!XE.syms.includes(x) && XE.syms.length < 30) XE.syms.push(x); mark(); xeRender(); };
+    $('xeAdd').onclick = () => { add($('xeIn').value); $('xeIn').value = ''; }; $('xeIn').onkeydown = e => { if (e.key === 'Enter') $('xeAdd').click(); };
+    $('xeSyms').onclick = e => { const b = e.target.closest('[data-rm]'); if (!b) return; XE.syms = XE.syms.filter(x => x !== b.dataset.rm); mark(); xeRender(); };
+    $('xeQuick').onclick = e => { const b = e.target.closest('[data-q]'); if (b) add(b.dataset.q); };
+    $('xeTypes').onchange = mark; $('xeH4').onchange = mark; $('xeH1').onchange = mark;
+    $('xeSave').onclick = async () => {
+      const body = { op: 'set', syms: XE.syms, h4: $('xeH4').checked, h1: $('xeH1').checked }; for (const [k] of XE_T) body[k] = $('xeT_' + k).checked;
+      try { await srvFetch('/api/xent', body); XE.dirty = false; $('xeMsg').textContent = `✅ 已儲存：${XE.syms.length} 個幣・${XE_T.filter(([k]) => body[k]).map(x => x[2]).join('、') || '沒有選訊號'}`; $('xeMsg').style.color = ''; xeLoad(); }
+      catch (e) { $('xeMsg').textContent = '❌ ' + e.message; $('xeMsg').style.color = '#ff9aa2'; }
+    };
+    $('xeDcBtn').onclick = () => $('xeDlg').showModal(); $('xeDlgX').onclick = () => $('xeDlg').close();
+    $('xeHookSave').onclick = async () => { try { await srvFetch('/api/xent', { op: 'hook', webhook: $('xeHook').value }); $('xeHook').value = ''; msg('xeHookMsg', 1, '已儲存，按「測試」試試看'); xeLoad(); } catch (e) { msg('xeHookMsg', 0, e.message); } };
+    $('xeHookTest').onclick = async () => { msg('xeHookMsg', 1, '傳送中…'); try { await srvFetch('/api/xent', { op: 'test' }); msg('xeHookMsg', 1, '✅ 傳送成功，看看頻道有沒有收到'); } catch (e) { msg('xeHookMsg', 0, '❌ ' + e.message); } };
+    $('xeHookDel').onclick = async () => { if (!confirm('要清除額外進場的 Discord 網址嗎？清除後就不會收到通知。')) return; await srvFetch('/api/xent', { op: 'hook', webhook: '' }); xeLoad(); };
+  }
+  $('xeSyms').innerHTML = XE.syms.length ? XE.syms.map(s => `<span class="xechip">${esc(s.replace(/USDT$/, ''))}<button data-rm="${esc(s)}" aria-label="移除 ${esc(s)}">✕</button></span>`).join('') : '<span class="tlmut">還沒有關注任何幣</span>';
+  $('xeQuick').innerHTML = '<span class="tlmut">快速加入：</span>' + ['BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'DOGE'].concat((d.uni || []).slice(0, 8).map(s => s.replace(/USDT$/, ''))).filter((v, i, a) => a.indexOf(v) === i).slice(0, 12).map(s => `<button class="btn" data-q="${esc(s)}">${esc(s)}</button>`).join('');
+  if (!XE.dirty) {
+    $('xeTypes').innerHTML = XE_T.map(([k, ic, nm, en, desc]) => `<label class="xetype"><input type="checkbox" id="xeT_${k}"${c[k] ? ' checked' : ''}><span><b>${ic} ${nm} <small>${en}</small></b><em>${desc}</em></span></label>`).join('');
+    $('xeH4').checked = c.h4 !== false; $('xeH1').checked = c.h1 !== false;
+  }
+  $('xeDcBtn').textContent = d.hook ? '💬 DC 設定（已設定）' : '💬 DC 設定（還沒設定）';
+  $('xeHookSt').innerHTML = d.hook ? `<span class="qg">已設定</span>${d.hookLast ? (d.hookLast.ok ? `・✅ 上次傳送成功 ${fmtT(d.hookLast.at).slice(-11)}` : `・<span class="qr">❌ 上次傳送失敗：${esc(d.hookLast.err)}</span>`) : ''}` : '<span class="qr">還沒設定，訊號出現時不會通知</span>';
+  const L = d.sigs || [], N = Object.fromEntries(XE_T.map(x => [x[0], x]));
+  $('xeList').innerHTML = L.length ? `<div class="tablewrap"><table class="tltab"><thead><tr><th>時間</th><th>幣種</th><th>訊號</th><th>方向</th><th>週期</th><th>收盤價</th><th>參考止損／止盈</th></tr></thead><tbody>${L.map(s => `<tr><td>${fmtT(s.t).slice(-11)}</td><td>${esc(s.sym.replace(/USDT$/, ''))}</td><td>${N[s.type][1]} ${N[s.type][2]}</td><td class="${s.dir > 0 ? 'qg' : 'qr'}">${s.dir > 0 ? '做多' : '做空'}</td><td>${s.pair === 'h4' ? '4H→15M' : '1H→5M'}</td><td>${fpx(s.px)}</td><td class="tlmut">${s.sl ? `${fpx(s.sl)}／${fpx(s.tp)}` : '—'}</td></tr>`).join('')}</tbody></table></div>` : `<p class="tlsub">還沒有訊號。${d.scan && d.scan.at ? `上次掃描 ${fmtT(d.scan.at).slice(-5)}，${d.scan.n} 個幣。` : '每根 5M／15M K 線收盤後掃描一次。'}</p>`;
+}
 /* ---------- ⚔ 作戰室（主畫面）：參考「AI 交易室」版面——上面 8 張角色卡、中間交易室動畫、資金曲線、分析圖＋條件表 ---------- */
 const WAR = { tool: null, toolAt: 0, btc: null, kl: {}, focus: null, ev: [], evAt: 0, raf: 0, ro: null };
 async function warTool() {                             // 🗡 特級咒具的卡片（有權限才讀，20 秒一次）
@@ -4127,6 +4195,7 @@ function warRender() {
     box.innerHTML = `<div class="wx">
       <div class="wxtop"><b class="wxlogo">Quant <i>X</i></b><span class="wxtag">合約作戰室・訊號偵測 × 自動下單</span><span class="wxprog"><span id="wxProgT"></span><span class="wxbar"><i id="wxProg"></i></span><b id="wxProgP"></b></span><span class="wxclock" id="wxClock"></span></div>
       <div class="wxcards" id="wxCards"></div>
+      <div class="wxx" id="wxX"></div>
       <div class="wxscene"><div class="wxtick" id="wxTick"></div><canvas id="wxScene" aria-label="交易室動畫：8 個角色在各自的位置工作"></canvas></div>
       <div class="wxbal"><div class="wxph"><b>BALANCE ・ 資金曲線</b><span id="wxBalSub"></span></div><div class="wxbalb"><canvas id="wxBal"></canvas><div class="wxbalv"><small>目前權益</small><b id="wxBalV"></b><span id="wxBalD"></span></div></div></div>
       <div class="wxlow"><div class="wxpanel"><div class="wxph"><b id="wxAnT">ANALYSIS</b><span id="wxAnS"></span></div><div class="wxan"><canvas id="wxK"></canvas><ul class="wxchk" id="wxChk"></ul></div></div>
@@ -4141,6 +4210,7 @@ function warRender() {
   $('wxCards').innerHTML = ROLE.map(([k, en, zh, sub, col]) => { const [st, lab, val, pr, q] = K[k];
     return `<article class="wxc ${st}" style="--rc:${col}"><div class="wxch"><span class="wxdot"></span><b>${en}</b><small>${zh}・${sub}</small><em>${ST[st]}</em></div>
       <div class="wxcm"><span>${lab}</span><b>${val}</b></div><div class="wxcb"><i style="width:${Math.round(Math.max(0, Math.min(1, pr)) * 100)}%"></i></div><q>${q}</q>${k === 'chief' ? `<div class="wxbtns"><button class="btn" data-war="lt">${D.C.on ? '⏸ 一般' : '▶ 一般'}</button>${D.T ? `<button class="btn" data-war="sp">${D.C.sp ? '⏸ 特級' : '🗡 特級'}</button>` : ''}</div>` : ''}</article>`; }).join('');
+  warXCards();
   // 跑馬燈
   $('wxTick').textContent = `持倉 ${D.open.length}・掃描 ${Q.total || 0} 幣・${D.T ? `特級卡片 ${D.tc.length}・等回踩 ${D.TD ? (D.TD.wait || []).length : 0}・` : ''}今日 ${wU(D.day + (D.T ? D.spDay : 0))}・${D.sim ? '模擬盤' : '實盤'}・${D.blk ? '數據避險中' : '正常交易'}`;
   WAR.d = D; WAR.k = K;
@@ -4255,6 +4325,80 @@ function stick(g, X, Y, s, col, p, now, ph, alpha) {   // 畫火柴人：Y 是�
   g.fillStyle = '#0b1020'; g.beginPath(); g.arc(hx + s * 0.12 * (p.dir || 1), hy - s * 0.04, s * 0.065, 0, 7); g.fill();   // 眼睛朝前進的方向
   g.restore(); return hand;
 }
+/* ---- 🔔 額外進場的 3 個火柴人（休息區）：暗流 FLOW、折返 PIVOT、伏擊 AMBUSH；沒事就喝茶、看書、睡覺，有訊號就衝去報告總指揮 ---- */
+const XL = [['zh', 'FLOW', '暗流', '#22d3ee', 'tea', '喝茶中…'], ['crt', 'PIVOT', '折返', '#c084fc', 'book', '看書中…'], ['hunt', 'AMBUSH', '伏擊', '#fb7185', 'sleep', '睡覺中…']];
+const XHOME = { zh: [0.34, 0.93], crt: [0.51, 0.93], hunt: [0.68, 0.93] };
+async function warXent() {                             // 每 20 秒讀一次額外進場的訊號；新的訊號 → 那個火柴人衝去報告
+  if (Date.now() - (WAR.xAt || 0) < 20000) return; WAR.xAt = Date.now();
+  try {
+    const d = await srvFetch('/api/xent', { op: 'get' }), ids = (d.sigs || []).map(x => x.id);
+    if (!WAR.xSeen) WAR.xSeen = new Set(ids);
+    else for (const sg of (d.sigs || []).slice().reverse()) if (!WAR.xSeen.has(sg.id)) { WAR.xSeen.add(sg.id); if (Date.now() - sg.t < 30 * 60000) (WAR.xq = WAR.xq || []).push(sg); }
+    WAR.xent = d; warXCards();
+  } catch (e) {}
+}
+const xRecent = k => { const L = WAR.xent && WAR.xent.sigs || []; return L.find(x => x.type === k && Date.now() - x.t < 30 * 60000) || null; };
+function warXCards() {
+  const el = $('wxX'); if (!el) return; const d = WAR.xent, n = d ? (d.cfg.syms || []).length : 0;
+  el.innerHTML = `<div class="wxxh"><b>🔔 額外進場</b><span>${d ? `關注 ${n} 個幣${d.hook ? '' : '・DC 還沒設定'}` : '讀取中…'}</span><button class="btn" data-war="xent">設定</button></div>` + XL.map(([k, en, zh, col, , idle]) => {
+    const r = xRecent(k), on = d && d.cfg[k];
+    return `<div class="wxxc${r ? ' hot' : ''}" style="--xc:${col}"><b>${en}</b><small>${zh}</small><span>${!on ? '沒有開這個訊號' : r ? `<em>${esc(r.sym.replace(/USDT$/, ''))} ${r.dir > 0 ? '做多' : '做空'}</em>・${wAgo(r.t)}` : idle}</span></div>`; }).join('');
+}
+function xPose(g, X, Y, s, col, mode, now, ph) {      // 休息中的樣子：喝茶（坐著舉杯）、看書（坐著翻頁）、睡覺（躺著冒 Z）
+  g.save(); g.strokeStyle = col; g.fillStyle = col; g.lineWidth = Math.max(2, s * 0.16); g.lineCap = g.lineJoin = 'round'; g.shadowColor = col; g.shadowBlur = 10;
+  const L = (x1, y1, x2, y2) => { g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke(); };
+  if (mode === 'sleep') {                              // 躺在墊子上
+    g.shadowBlur = 0; g.fillStyle = 'rgba(251,113,133,.18)'; g.fillRect(X - s * 1.5, Y - s * 0.2, s * 3, s * 0.35); g.shadowBlur = 10; g.fillStyle = col;
+    const by = Y - s * 0.35 + Math.sin(now / 900 + ph) * s * 0.04; g.beginPath(); g.arc(X - s * 1.05, by - s * 0.05, s * 0.3, 0, 7); g.fill();
+    L(X - s * 0.75, by, X + s * 0.3, by); L(X + s * 0.3, by, X + s * 1.2, by + s * 0.05); L(X - s * 0.4, by, X + s * 0.1, by + s * 0.12);
+    g.shadowBlur = 0; g.font = `bold ${s * 0.6}px monospace`; for (let i = 0; i < 3; i++) { const t = ((now / 1000 + i * 0.7 + ph) % 2.1) / 2.1; g.globalAlpha = 1 - t; g.fillText('z', X - s * 0.9 + t * s * 1.2 + i * s * 0.1, by - s * 0.6 - t * s * 1.6); } g.globalAlpha = 1;
+  } else {                                            // 坐著
+    const hipY = Y - s * 0.45, nkY = hipY - s * 0.85, hx = X, hy = nkY - s * 0.32;
+    g.shadowBlur = 0; g.fillStyle = 'rgba(255,255,255,.08)'; g.beginPath(); g.ellipse(X, Y - s * 0.3, s * 0.7, s * 0.2, 0, 0, 7); g.fill(); g.shadowBlur = 10; g.fillStyle = col;   // 坐墊
+    L(X, hipY, X, nkY); L(X, hipY, X + s * 0.5, hipY + s * 0.05); L(X + s * 0.5, hipY + s * 0.05, X + s * 0.55, Y); L(X, hipY, X + s * 0.45, hipY - s * 0.02); L(X + s * 0.45, hipY - s * 0.02, X + s * 0.42, Y);
+    g.beginPath(); g.arc(hx, hy, s * 0.3, 0, 7); g.fill();
+    g.fillStyle = col; g.beginPath(); g.moveTo(hx - s * 0.34, hy - s * 0.12); g.lineTo(hx + s * 0.34, hy - s * 0.12); g.lineTo(hx, hy - s * 0.62); g.closePath(); g.fill();   // 帽子：跟其他火柴人不一樣
+    if (mode === 'tea') {
+      const lift = (Math.sin(now / 700 + ph) + 1) / 2, cx = X + s * 0.45, cy = nkY + s * 0.55 - lift * s * 0.55;
+      L(X, nkY + s * 0.15, cx - s * 0.05, cy + s * 0.1); L(X, nkY + s * 0.15, X - s * 0.3, nkY + s * 0.6);
+      g.shadowBlur = 0; g.fillStyle = '#f5f5f4'; g.fillRect(cx - s * 0.12, cy - s * 0.1, s * 0.24, s * 0.22);
+      g.strokeStyle = 'rgba(255,255,255,.45)'; g.lineWidth = 1.5; for (let i = 0; i < 2; i++) { g.beginPath(); for (let k = 0; k < 8; k++) { const yy = cy - s * 0.15 - k * s * 0.08, xx = cx - s * 0.04 + i * s * 0.1 + Math.sin(now / 300 + k + i) * s * 0.05; k ? g.lineTo(xx, yy) : g.moveTo(xx, yy); } g.stroke(); }
+    } else {                                          // 看書
+      const bx = X + s * 0.45, by = nkY + s * 0.35; L(X, nkY + s * 0.15, bx - s * 0.1, by + s * 0.1); L(X, nkY + s * 0.15, bx + s * 0.05, by + s * 0.15);
+      g.shadowBlur = 0; g.fillStyle = '#e9d5ff'; g.beginPath(); g.moveTo(bx - s * 0.25, by - s * 0.2); g.lineTo(bx, by - s * 0.1); g.lineTo(bx + s * 0.25, by - s * 0.2); g.lineTo(bx + s * 0.25, by + s * 0.18); g.lineTo(bx, by + s * 0.25); g.lineTo(bx - s * 0.25, by + s * 0.18); g.closePath(); g.fill();
+      const fl = ((now / 1000 + ph) % 3) / 3; if (fl < 0.2) { g.strokeStyle = '#c084fc'; g.lineWidth = 1.5; L(bx, by - s * 0.1, bx + s * 0.25 * Math.cos(fl * 15), by - s * 0.2); }
+    }
+  }
+  g.restore();
+}
+function xDraw(g, w, h, now, reduce) {                // 休息區＋3 個額外進場的火柴人
+  const sz = Math.max(9, w * 0.017);
+  g.fillStyle = 'rgba(167,139,250,.06)'; g.strokeStyle = 'rgba(167,139,250,.25)'; g.setLineDash([5, 5]); g.beginPath(); g.roundRect ? g.roundRect(w * 0.25, h * 0.84, w * 0.52, h * 0.15, 10) : g.rect(w * 0.25, h * 0.84, w * 0.52, h * 0.15); g.fill(); g.stroke(); g.setLineDash([]);
+  g.fillStyle = '#8b7bd8'; g.font = `bold ${Math.max(9, w * 0.0085)}px monospace`; g.fillText('LOUNGE・額外進場', w * 0.26, h * 0.865);
+  if (!WAR.xev && WAR.xq && WAR.xq.length) { const sg = WAR.xq.shift(); WAR.xev = { k: sg.type, at: now, text: `${sg.sym.replace(/USDT$/, '')} ${sg.dir > 0 ? '做多' : '做空'}（${sg.pair === 'h4' ? '4H→15M' : '1H→5M'}）` }; }
+  for (const [k, en, zh, col, mode] of XL) {
+    const home = XHOME[k], E = WAR.xev && WAR.xev.k === k ? WAR.xev : null, X0 = home[0] * w, Y0 = home[1] * h, on = WAR.xent && WAR.xent.cfg[k];
+    let X = X0, Y = Y0, pose = null;
+    if (E && !reduce) {                                // 有新訊號：衝去報告總指揮再衝回來
+      const t = (now - E.at) / 1000, to = HOME('chief'), tx = (to[0] - 0.04) * w, ty = to[1] * h, e = x => 1 - Math.pow(1 - Math.min(1, Math.max(0, x)), 3);
+      if (t < 0.6) { X = X0 + (tx - X0) * e(t / 0.6); Y = Y0 + (ty - Y0) * e(t / 0.6); pose = { pose: 'run', dir: Math.sign(tx - X0) || 1, carry: true }; }
+      else if (t < 2.6) { X = tx; Y = ty; pose = { pose: 'give', dir: 1, carry: true, give: Math.min(1, (t - 0.6) / 0.3) };
+        g.font = `bold ${Math.max(10, w * 0.0105)}px sans-serif`; const txt = `${XL.find(x => x[0] === k)[2]}：${E.text}`, tw = g.measureText(txt).width + 14, bx0 = Math.min(Math.max(4, X - tw / 2), w - tw - 4);
+        g.fillStyle = 'rgba(10,14,26,.92)'; g.strokeStyle = col; g.beginPath(); g.roundRect ? g.roundRect(bx0, Y - sz * 3.6, tw, 22, 6) : g.rect(bx0, Y - sz * 3.6, tw, 22); g.fill(); g.stroke(); g.fillStyle = '#fff'; g.fillText(txt, bx0 + 7, Y - sz * 3.6 + 15); }
+      else if (t < 3.2) { X = tx + (X0 - tx) * e((t - 2.6) / 0.6); Y = ty + (Y0 - ty) * e((t - 2.6) / 0.6); pose = { pose: 'run', dir: Math.sign(X0 - tx) || -1 }; }
+      else WAR.xev = null;
+    }
+    if (pose) {
+      const b = (WAR.xtr = WAR.xtr || {})[k] || (WAR.xtr[k] = []); b.push([X, Y, pose.dir]); if (b.length > 7) b.shift();
+      if (pose.pose === 'run') b.slice(0, -1).forEach(([tx, ty, td], i) => stick(g, tx, ty, sz, col, { pose: 'run', dir: td }, now, 0, 0.08 + i * 0.05));
+      g.save(); g.shadowColor = col; g.shadowBlur = 12; stick(g, X, Y, sz, col, pose, now, 0, 1); g.restore();
+    } else if (on && xRecent(k)) {                    // 30 分鐘內有訊號：站起來警戒
+      g.save(); g.shadowColor = col; g.shadowBlur = 12; stick(g, X, Y, sz, col, { pose: 'catch', dir: 1 }, now, 0, 1); g.restore();
+      g.fillStyle = col; g.font = `900 ${sz * 1.1}px sans-serif`; g.textAlign = 'center'; g.fillText('!', X, Y - sz * 2.7 + Math.sin(now / 200) * 2); g.textAlign = 'left';
+    } else xPose(g, X, Y, sz, on ? col : '#4b5468', mode, reduce ? 0 : now, k.length);
+    g.fillStyle = on ? col : '#4b5468'; g.font = `bold ${Math.max(9, w * 0.0085)}px monospace`; g.textAlign = 'center'; g.fillText(en, X0, Y0 + sz * 0.95); g.textAlign = 'left';
+  }
+}
 function warAnim() {
   cancelAnimationFrame(WAR.raf); clearInterval(WAR.evT); WAR.evT = setInterval(warEvent, 5000); setTimeout(warEvent, 600);
   const cv = $('wxScene'), reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -4302,6 +4446,7 @@ function warAnim() {
       const st = WAR.k && WAR.k[k] ? WAR.k[k][0] : 'ok'; if (st === 'bad') { g.fillStyle = '#ef4444'; g.beginPath(); g.arc(X + sz * 0.5, Y - sz * 2.35, sz * 0.18, 0, 7); g.fill(); }
       g.fillStyle = '#c7d2fe'; g.font = `bold ${Math.max(9, w * 0.0085)}px monospace`; g.textAlign = 'center'; g.fillText(en, X, Y + sz * 0.95); g.textAlign = 'left';
     }
+    xDraw(g, w, h, now, reduce);   // 🔔 額外進場的休息區
     // 最後一棒拿到資料後冒出台詞
     if (E && E.path && E.text) { const tEnd = (E.path.length - 1) * HOP; if (et > tEnd && et < tEnd + 2.6) { const hm = HOME(E.say), tx = hm[0] * w, ty = hm[1] * h - sz * 3.2, txt = E.text.replace(/<[^>]+>/g, '');
       g.font = `bold ${Math.max(10, w * 0.0105)}px sans-serif`; const tw = g.measureText(txt).width + 14, bx0 = Math.min(Math.max(4, tx - tw / 2), w - tw - 4);
@@ -4316,7 +4461,7 @@ $('qWar').onclick = e => {
   const b = e.target.closest('[data-war]'); if (!b) return; const k = b.dataset.war;
   if (k === 'lt') $('qLtToggle').click(); else if (k === 'sp') $('qSpToggle').click(); else mnOpen(k);
 };
-setInterval(() => { if (SRV.on && !document.hidden) warTool(); }, 5000);
+setInterval(() => { if (SRV.on && !document.hidden) { warTool(); warXent(); } }, 5000);
 /* ---------- 🗡 特級咒具回測：放在「📊 回測數據」頁；有特級咒具權限的人看得到，擁有者才能按回測 ---------- */
 const TB = { timer: null };
 async function tbLoad() {
@@ -4446,6 +4591,7 @@ function mnOpen(k) {
   if (k === 'bt') tbLoad();                            // 🗡 特級咒具回測（有權限才顯示）
   clearInterval(TL.timer);
   if (k === 'tool') { $('mnpTool').innerHTML = '<p class="tlsub">載入中…</p>'; tlLoad('tool'); TL.timer = setInterval(() => { if (MN_PAGE === 'tool' && TL.d && !($('tlDlg') && $('tlDlg').open)) tlLoad('tool'); }, 20000); }   // 設定視窗打開時不更新
+  if (k === 'xent') { XE.dirty = false; $('mnpXent').innerHTML = '<p class="tlsub">載入中…</p>'; xeLoad(); TL.timer = setInterval(() => { if (MN_PAGE === 'xent' && !XE.dirty && !($('xeDlg') && $('xeDlg').open)) xeLoad(); }, 30000); }
   try { if (k === 'cards') { $('qSidePanel').hidden = false; renderCards(); } if (k === 'hist') { $('qTabPanel').hidden = false; hSeg(HSEG.tab); } if (k === 'stats' || k === 'eq') { EQC = null; renderHist(); } } catch (e) { console.error(e); }   // 重畫出錯也要照樣打開頁面
   $('mnSheet').hidden = false; document.body.classList.add('mn-sheet'); $('mnSheet').scrollTop = 0; $('mnSheetBody').scrollTop = 0;
   setTimeout(() => window.dispatchEvent(new Event('resize')), 60);   // 星圖、圖表重新計算大小
@@ -4482,6 +4628,11 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-10-31e', title: '2026/10/31 更新（額外進場）', items: [
+    { ic: '🔔', t: '選單新增「額外進場」：加回莊家淨額背離、CRT、獵殺三種訊號，自己選要看哪些幣（一次可以好幾個）、哪幾種訊號、4H→15M 還是 1H→5M，出現時傳 Discord。只提醒、不會自動下單。' },
+    { ic: '💬', t: '額外進場有自己的「DC 設定」，可以把通知傳到另一個頻道。' },
+    { ic: '🫖', t: '作戰室新增休息區和 3 個戴帽子的發光火柴人：暗流 FLOW、折返 PIVOT、伏擊 AMBUSH。沒事時喝茶、看書、睡覺；有新訊號會衝去跟總指揮報告。' }
+  ] },
   { id: '2026-10-31d', title: '2026/10/31 更新（火柴人）', items: [
     { ic: '🏃', t: '作戰室的角色改成火柴人：平常在桌前打字；傳資料時會帶著發光的資料包「瞬移衝刺」到下一個人旁邊交出去（有殘影和速度線），再衝回自己的位置，最後一棒拿到資料會冒出台詞。' }
   ] },
