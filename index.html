@@ -837,6 +837,31 @@ header{align-items:center}
 @media (max-width:560px){.mnpage[data-p="set"] .qpool{grid-template-columns:1fr}}
 .qsaverow{display:flex;align-items:center;gap:12px;margin-top:10px}.qsaverow>.btn{width:auto!important;flex:none!important;align-self:auto}
 .mnpage[data-p="set"] input.dirty,.mnpage[data-p="set"] select.dirty{border-color:#d4af37;box-shadow:0 0 0 2px rgba(212,175,55,.18)}
+
+/* ===== ⚔ 作戰室（主畫面） ===== */
+.war{--gd:#d4af37;--gd2:#f1d77a;--gdl:#3a3018;margin:12px 0 4px}
+.warhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}.warhead>b{font-size:19px;color:var(--gd2);letter-spacing:.04em}.warhead>span{color:var(--muted);font-size:12.5px}
+.warhead .btn{border-color:var(--gdl)}.warhead .btn:hover{border-color:var(--gd);color:var(--gd2)}
+.wargrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:1200px){.wargrid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media (max-width:620px){.wargrid{grid-template-columns:1fr}}
+.warc{--sc:#22c55e;position:relative;display:flex;flex-direction:column;gap:8px;padding:14px 14px 12px;border:1px solid var(--gdl);border-radius:16px;background:linear-gradient(180deg,#14120c,#0c0b08);overflow:hidden;min-height:250px}
+.warc::before{content:"";position:absolute;inset:0 0 auto;height:3px;background:var(--sc);opacity:.85}
+.warc.wait{--sc:#f5b642}.warc.bad{--sc:#ef4444}.warc.off{--sc:#6b7280}
+.warc>.warh{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;padding:0;margin:0;max-width:none}.warh>div{flex:1;min-width:0}.waric{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:21px;background:rgba(212,175,55,.1);border:1px solid var(--gdl);flex:none}
+.warh b{display:block;font-size:16px;color:#f4ecd6}.warh small{display:block;font-size:11.5px;color:#9c927a;letter-spacing:.05em}
+.warst{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--sc);white-space:nowrap}.warst i{width:8px;height:8px;border-radius:50%;background:var(--sc);box-shadow:0 0 0 3px color-mix(in srgb,var(--sc) 25%,transparent)}
+@media (prefers-reduced-motion:no-preference){.warc.ok .warst i{animation:warblink 1.6s ease-in-out infinite}}@keyframes warblink{50%{opacity:.35}}
+.warbig{font-size:24px;font-weight:800;color:#fff;font-variant-numeric:tabular-nums;line-height:1.2}.warbig small{font-size:13px;font-weight:600;color:#c9bd9c}
+.warsub{font-size:12px;color:#f5c46a}
+.warrows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}.warrows li{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;border-bottom:1px dashed rgba(212,175,55,.12);padding-bottom:4px}
+.warrows li span{color:#9c927a}.warrows li b{font-weight:600;color:#ece4cf;text-align:right;font-variant-numeric:tabular-nums}
+.wok{color:#4ade80}.wpend{color:#f5c46a}.wno{color:#7c7f88}
+.warbar{display:inline-block;vertical-align:middle;width:46px;height:6px;border-radius:9px;background:#2a2617;overflow:hidden;margin-left:4px}.warbar i{display:block;height:100%;background:#ef4444}
+.warbtns{display:flex;gap:6px;flex-wrap:wrap}.warbtns .btn{padding:5px 10px;font-size:12.5px}
+.warq{margin-top:auto;font-size:12.5px;color:#d9c98f;font-style:italic;border-left:2px solid var(--gd);padding:4px 0 0 8px;quotes:"「" "」"}
+.warwait{color:var(--muted);padding:20px}
+.mngrp{margin:14px 6px 4px;font-size:11.5px;font-weight:700;letter-spacing:.12em;color:#9c927a}
+.hseg{display:flex;gap:8px;margin:4px 0 10px;flex-wrap:wrap}.hseg>.btn{flex:none!important;width:auto!important}
 </style>
 </head>
 <body class="quant-on mn">
@@ -1019,7 +1044,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-30k</div>
+      <div class="qver" id="qVer">網站版本 2026-10-31a</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -1155,6 +1180,7 @@ header{align-items:center}
         </div>
         </div>
       </div>
+      <div class="war" id="qWar"></div>
       <div class="qbx" id="qBx" hidden>
         <div class="qbxh"><b>💼 我的 Bitunix 持倉</b><span id="qBxInfo"></span></div>
         <div class="qlt" id="qLt" hidden>
@@ -1268,6 +1294,7 @@ header{align-items:center}
   <section class="col right">
     <div class="panel qside" id="qTabPanel" hidden>
       <div class="qsideh"><h2>歷史紀錄</h2><span>點一行開啟圖表</span></div>
+      <div class="hseg" id="hSeg" role="tablist" aria-label="歷史紀錄種類"><button class="btn" role="tab" id="hSegTr" aria-selected="true">📋 交易紀錄</button><button class="btn" role="tab" id="hSegTl" aria-selected="false" hidden>📜 特級咒具歷史</button></div>
     </div>
     <div class="panel" id="statPanel">
       <h2>數據框（15 分鐘，全部歷史）</h2>
@@ -1345,6 +1372,8 @@ header{align-items:center}
   <div class="mnsheetbody" id="mnSheetBody"></div>
 </div>
 <div id="mnpTool" class="tlwrap" hidden></div>
+<div id="mnpStats" class="mnstats"></div>
+<div id="mnpEq" class="mneq"></div>
 <div id="mnpToolH" class="tlwrap" hidden></div>
 <div id="mnpSet" class="mnacctwrap">
   <div class="mnacct"><div><span class="mnlab">登入的 Bitunix UID</span><b id="mnUid"></b> <span id="mnRole"></span></div><button class="btn" id="mnLogout">登出</button></div>
@@ -3458,7 +3487,7 @@ async function srvPull() {
     const sc = j.scan;
     Object.assign(Q, { prov: BN, total: sc.total, flatN: sc.flatN, found: sc.found, last: sc.last, dur: sc.dur, err: sc.err ? '伺服器：' + sc.err : '' });
     $('qSrc').textContent = '資料：幣安・雲端伺服器';
-    renderBtc(sc.btc, sc.btcSkip); renderCmp(j.bt.cmp); renderBs(j.bstat);
+    renderBtc(sc.btc, sc.btcSkip); WAR.btc = sc.btc; renderCmp(j.bt.cmp); renderBs(j.bstat);
     const p = j.btp;
     btRun = p.run; $('qBtRun').disabled = p.run; $('qBtStop').hidden = !p.run || !OWN();
     $('qBtStat').textContent = p.run ? `伺服器回測中 ${p.done}／${p.total}，已找到 ${p.found} 筆訊號${p.skipped ? `，跳過 ${p.skipped} 個` : ''}…（可以關掉網頁，伺服器會繼續跑）`
@@ -3470,7 +3499,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-30k・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-10-31a・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -3484,6 +3513,7 @@ async function srvPull() {
     Q.err = '連不到雲端伺服器：' + e.message + '（確認網址、伺服器有在跑，或是 HTTPS 憑證還在申請中）';
   }
   Q.pullAt = Date.now(); schedule(); renderStat();
+  try { warRender(); warTool(); } catch (e) { console.error(e); }   // ⚔ 作戰室
 }
 async function scan() {
   if (SRV.on) return srvPull();
@@ -3691,13 +3721,13 @@ function setMode(m) {
   $('qHeatHost').hidden = m !== 'heat'; if (m === 'heat') htStart(); else htStop();   // 🔥 熱力圖：只有打開時才連幣安
   if (m === 'quant') {
     document.body.classList.remove('mode-pat', 'mode-news', 'mode-bt', 'mode-heat');
-    $('qBx').parentElement !== $('qPanel') && $('qPanel').querySelector('.tabs').before($('qBx'));   // 倉位搬回合約量化面板
+    if (!document.body.classList.contains('mn')) $('qBx').parentElement !== $('qPanel') && $('qPanel').querySelector('.tabs').before($('qBx'));   // 倉位搬回合約量化面板（選單版面：倉位固定在「💼 持倉」）
     $('qBxHost').hidden = true;
     openPanel(true);
   } else {
     if (!$('qPanel').hidden) openPanel(false);
     document.body.classList.toggle('mode-pat', m === 'pat'); document.body.classList.toggle('mode-news', m === 'news'); document.body.classList.toggle('mode-bt', m === 'bt'); document.body.classList.toggle('mode-heat', m === 'heat');
-    $('qBxHost').appendChild($('qBx')); $('qBxHost').hidden = false;   // 我的倉位放在最上面
+    if (!document.body.classList.contains('mn')) { $('qBxHost').appendChild($('qBx')); $('qBxHost').hidden = false; }   // 我的倉位放在最上面（選單版面不搬）
     window.scrollTo({ top: 0 });
     setTimeout(() => window.dispatchEvent(new Event('resize')), 60);   // 星圖重新計算大小
   }
@@ -3870,9 +3900,11 @@ $('gdDlg').addEventListener('close', () => { if (SRV.uid) LS.set('quantGuide:' +
 $('qGuideBtn').onclick = () => gdOpen(0);
 /* ---------- ☰ 選單：右上角打開，每一項是一個全螢幕頁面；內容是從主畫面「搬」進來的，主畫面不再重複顯示 ---------- */
 var MN_PAGE = '';
-const MN_ITEMS = [
-  ['set', '👤', '設定', 'mnpSet', '#7aa2ff'], ['heat', '🔥', '熱力圖', 'qHeatHost', '#fb923c'], ['cards', '📡', '訊號卡片', 'qSidePanel', '#22d3ee'], ['pat', '📈', '歷史走勢', '', '#a78bfa'],
-  ['news', '📰', '加密新聞', 'newsPanel', '#f472b6'], ['bt', '📊', '回測數據', 'qBtHost', '#34d399'], ['hist', '📋', '歷史紀錄', 'qTabPanel', '#fbbf24'], ['whale', '🐋', '幣安鯨魚大單', 'whalePanel', '#38bdf8'], ['guide', '📖', '使用說明', '', '#94a3b8'], ['tool', '🗡', '特級咒具', 'mnpTool', '#ef4444'], ['toolh', '📜', '特級咒具歷史', 'mnpToolH', '#f97316']];   // 最後一欄是選單框的顏色
+const MN_ITEMS = [                                    // [代號, 圖示, 名稱, 頁面元素, 顏色, 分類]
+  ['pos', '💼', '持倉', 'qBx', '#d4af37', '交易'], ['tool', '🗡', '特級咒具', 'mnpTool', '#ef4444', '交易'], ['cards', '📡', '訊號卡片', 'qSidePanel', '#22d3ee', '交易'],
+  ['stats', '🎯', '成功率', 'mnpStats', '#34d399', '數據'], ['eq', '📈', '資金曲線', 'mnpEq', '#60a5fa', '數據'], ['hist', '📋', '歷史紀錄', 'qTabPanel', '#fbbf24', '數據'], ['bt', '📊', '回測數據', 'qBtHost', '#2dd4bf', '數據'],
+  ['heat', '🔥', '熱力圖', 'qHeatHost', '#fb923c', '市場'], ['pat', '📉', '歷史走勢', '', '#a78bfa', '市場'], ['news', '📰', '加密新聞', 'newsPanel', '#f472b6', '市場'], ['whale', '🐋', '幣安鯨魚大單', 'whalePanel', '#38bdf8', '市場'],
+  ['set', '👤', '設定', 'mnpSet', '#7aa2ff', '其他'], ['guide', '📖', '使用說明', '', '#94a3b8', '其他']];
 /* ---------- 🗡 特級咒具：上鎖（擁有者或輸入密碼的人才能用）；一個幣一張卡片；設定收在「⚙ 設定」裡 ---------- */
 const TL = { d: null, timer: null, hf: 'all', hn: 60 };
 const TL_PN = { h4: { hn: '4H', ln: '15M', nm: '4H→15M', hms: 4 * 3600000 }, h1: { hn: '1H', ln: '5M', nm: '1H→5M', hms: 3600000 } };
@@ -4003,6 +4035,104 @@ function tlSettings() {                                // ⚙ 設定視窗：Dis
     };
   }
 }
+/* ---------- ⚔ 作戰室（主畫面）：系統的 8 個角色，各自正在做什麼一眼看完 ---------- */
+const WAR = { tool: null, toolAt: 0, btc: null };
+async function warTool() {                             // 🗡 特級咒具的卡片（有權限才讀，20 秒一次）
+  if (!SRVLT.toolOk || Date.now() - WAR.toolAt < 20000) return;
+  WAR.toolAt = Date.now(); try { WAR.tool = await srvFetch('/api/tool', { op: 'get' }); } catch (e) {} warRender();
+}
+const wU = v => `${v >= 0 ? '+' : '−'}${Math.abs(+v || 0).toFixed(2)}U`;
+const wAgo = t => { if (!t) return '—'; const m = Math.max(0, Math.round((Date.now() - t) / 60000)); return m < 1 ? '剛剛' : m < 60 ? `${m} 分鐘前` : m < 1440 ? `${Math.floor(m / 60)} 小時前` : `${Math.floor(m / 1440)} 天前`; };
+const wHm = t => t ? fmtT(t).slice(-5) : '—';
+const wDir = d => d > 0 ? '<b class="qg">做多</b>' : '<b class="qr">做空</b>';
+const wNet = t => (+t.realized || 0) - Math.abs(+t.fee || 0) + (+t.funding || 0);
+function warCard(o) {
+  const ST = { ok: '運作中', wait: '等待中', bad: '要注意', off: '暫停' };
+  return `<article class="warc ${o.st}" aria-label="${o.nm}：${ST[o.st]}">
+    <header class="warh"><span class="waric" aria-hidden="true">${o.ic}</span><div><b>${o.nm}</b><small>${o.en}・${o.role}</small></div><span class="warst"><i></i>${ST[o.st]}</span></header>
+    <div class="warbig">${o.big}</div>${o.sub ? `<div class="warsub">${o.sub}</div>` : ''}
+    ${o.rows && o.rows.length ? `<ul class="warrows">${o.rows.map(([k, v]) => `<li><span>${k}</span><b>${v}</b></li>`).join('')}</ul>` : ''}${o.extra || ''}
+    <q class="warq">${o.quote}</q></article>`;
+}
+function warRender() {
+  const box = $('qWar'); if (!box) return;
+  const C = SRVLT.cfg, T = SRVLT.toolOk, now = Date.now();
+  if (!C) { box.innerHTML = '<p class="warwait">正在連線到伺服器…</p>'; return; }
+  const sim = SRV.sim && SRV.sim.on, EB = SRVECO && SRVECO.block, blk = !!(EB && EB.on), TD = T ? WAR.tool : null;
+  const tc = TD ? TD.cards || [] : [], cnt = s => tc.filter(c => c.st === s).length, trades = (SRVLT.trades || []).slice().sort((a, b) => (b.exitAt || b.et || 0) - (a.exitAt || a.et || 0));
+  const cards = [];
+  // 1 總指揮
+  { const on = C.on, sp = T && C.sp, st = blk ? 'wait' : on || sp ? 'ok' : 'off';
+    cards.push(warCard({ ic: '👑', nm: '總指揮', en: 'CHIEF', role: '整體狀態', st, big: sim ? '🧪 模擬盤' : '💰 實盤', sub: SRVLT.pause && SRVLT.pause.why ? `暫停原因：${esc(SRVLT.pause.why)}` : '',
+      rows: [['一般交易', on ? '<b class="qg">運作中</b>' : '暫停'], ...(T ? [['特級交易', sp ? '<b class="qg">運作中</b>' : '暫停']] : []), ['數據避險', EB ? `${wHm(EB.from)}～${wHm(EB.until)}${blk ? '（暫停開單中）' : ''}` : '目前沒有']],
+      extra: `<div class="warbtns"><button class="btn" data-war="lt">${on ? '⏸ 暫停一般' : '▶ 開始一般'}</button>${T ? `<button class="btn" data-war="sp">${sp ? '⏸ 暫停特級' : '🗡 開始特級'}</button>` : ''}<button class="btn" data-war="pos">💼 持倉</button></div>`,
+      quote: blk ? `數據公布前後先不進場，${wHm(EB.until)} 恢復` : on && sp ? '兩條線都在跑，訊號一到就進場' : on ? '一般交易在跑，訊號一到就進場' : sp ? '特級交易在跑，等卡片走完四步' : '目前都暫停，按上面的按鈕開始' })); }
+  // 2 偵察
+  { const nc = (Q.cards || []).slice().sort((a, b) => (b.t || 0) - (a.t || 0))[0], fresh = nc && now - nc.t < 30 * 60000;
+    const abs = nc && nc.ind ? nc.ind.filter(i => i.ab).map(i => i.n) : [], live = tc.filter(c => c.st !== 'entry').length;
+    cards.push(warCard({ ic: '📡', nm: '偵察', en: 'SCAN', role: '找異動的幣', st: Q.err ? 'bad' : 'ok', big: `${Q.total || 0} <small>個幣掃描中</small>`,
+      rows: [['一般：最新異常', nc ? `${esc(nc.sym.replace(/USDT$/, ''))} ${wDir(nc.dir)} ${nc.abN}／5・${wAgo(nc.t)}` : '還沒有'], ...(T ? [['特級：等回踩', `${TD ? (TD.wait || []).length : '—'} 個區塊`], ['特級：進行中', `${live} 張卡片`]] : [])],
+      quote: fresh ? `${esc(nc.sym.replace(/USDT$/, ''))} ${abs.slice(0, 2).join('、')}異常，${nc.dir > 0 ? '偏多' : '偏空'}` : live ? `${live} 張特級卡片在走流程` : '持續掃描中，還沒有新的異常' })); }
+  // 3 鑑定
+  { const ord = { brk: 3, touch: 2, touch0: 1 }, cand = tc.filter(c => ord[c.st]).sort((a, b) => ord[b.st] - ord[a.st] || b.touchAt - a.touchAt)[0];
+    if (cand) {
+      const N = TL_PN[cand.pair], ok = (b, t) => `<span class="${b ? 'wok' : 'wpend'}">${b ? '✓' : '⏳'} ${t}</span>`, S = TD.set || {};
+      const rows = [[`FVG 數值 ${S.vmin > 0 ? S.vmin + '～' : '≤ '}${S.vmax}%`, ok(true, cand.val.toFixed(2) + '%')],
+        ['回踩', cand.st === 'touch0' ? ok(false, `等 ${N.hn} 收盤`) : ok(true, (TL_RT[cand.rt] || '回踩').replace('回踩 ', ''))],
+        ['實體沒收破 OB', ok(cand.st !== 'touch0', cand.st === 'touch0' ? '確認中' : '沒收破')],
+        [`${N.ln} 反方向結構`, ok(cand.st !== 'touch0', cand.st === 'touch0' ? '還沒開始看' : '沒出現')],
+        [`${N.ln} 同方向 CHoCH／BOS`, ok(cand.st === 'brk', cand.st === 'brk' ? esc(cand.tag || '出現了') : '等待')],
+        [`回踩 ${N.ln} FVG`, ok(false, '等待')]];
+      cards.push(warCard({ ic: '🔍', nm: '鑑定', en: 'VET', role: '條件逐條檢查', st: 'wait', big: `${esc(cand.sym.replace(/USDT$/, ''))} <small>${cand.dir > 0 ? '做多' : '做空'}・${N.nm}</small>`, rows,
+        quote: cand.st === 'brk' ? `結構轉向了，等回踩 ${N.ln} FVG 就進場` : cand.st === 'touch' ? `${TL_RT[cand.rt] || '回踩'}，等 ${N.ln} 轉向` : `碰到 FVG 了，等這根 ${N.hn} 收盤確認` }));
+    } else {
+      const nc = (Q.cards || []).slice().sort((a, b) => (b.t || 0) - (a.t || 0))[0];
+      cards.push(warCard({ ic: '🔍', nm: '鑑定', en: 'VET', role: '條件逐條檢查', st: nc ? 'ok' : 'wait', big: nc ? `${esc(nc.sym.replace(/USDT$/, ''))} <small>最新一般訊號</small>` : '<small>等下一個訊號</small>',
+        rows: nc && nc.ind ? nc.ind.map(i => [esc(i.n), `<span class="${i.ab ? 'wok' : 'wno'}">${i.ab ? '✓' : '✗'} z ${i.z != null ? Math.abs(i.z).toFixed(1) : '—'}</span>`]) : [],
+        quote: nc ? `${nc.abN} 項異常，${nc.btcPass === false ? '沒過 BTC 方向過濾' : '條件成立'}` : '有訊號時，這裡會逐條列出每項條件' }));
+    } }
+  // 4 情報
+  { const b = WAR.btc, nx = SRVECO && SRVECO.list ? SRVECO.list.filter(e => e.imp !== 'M' && e.t > now - 10 * 60000)[0] : null;
+    cards.push(warCard({ ic: '🛰', nm: '情報', en: 'INTEL', role: '市場大環境', st: blk ? 'wait' : 'ok', big: b && b.d ? `BTC <small class="${b.d > 0 ? 'qg' : 'qr'}">${b.d > 0 ? '偏多' : '偏空'}${b.chg != null ? ` ${b.chg > 0 ? '+' : ''}${b.chg}%` : ''}</small>` : 'BTC <small>讀取中</small>',
+      rows: [['下一個重要數據', nx ? `${esc(nx.zh)}・${fmtT(nx.t).slice(-11)}` : '這週沒有了'], ['停單時段', EB ? `${fmtT(EB.from).slice(-11)}～${wHm(EB.until)}` : '目前沒有']],
+      quote: blk ? '數據公布前後，先不進場' : b && b.d ? `BTC ${b.d > 0 ? '偏多，做多訊號比較好過' : '偏空，做空訊號比較好過'}` : '盯著 BTC 方向和經濟數據' })); }
+  // 5 軍需
+  { const B = SRVLT.bud || SRVLT.bot, SB = SRVLT.spBot, AE = SRVLT.acctEq || 0, cap = C.pool > 0 ? C.pool : AE, used = (C.budget || 0) + (T ? C.spBudget || 0 : 0), low = SRVLT.low;
+    cards.push(warCard({ ic: '💰', nm: '軍需', en: 'SIZE', role: '資金分配', st: low ? 'bad' : 'ok', big: `${cap.toFixed(2)}U <small>${C.pool > 0 ? '合約總資金' : '整個帳戶'}</small>`,
+      rows: [['一般 目前／可用', B ? `${B.eq.toFixed(2)}／${Math.max(0, B.free).toFixed(2)}U` : '—'], ...(T ? [['特級 目前／可用', SB ? `${SB.eq.toFixed(2)}／${Math.max(0, SB.free).toFixed(2)}U` : '—']] : []), ['還能分配', `${Math.max(0, cap - used).toFixed(2)}U`], ['下一筆', `${C.margin}U・${C.lev}x${T ? `／特級 ${C.spMargin || C.margin}U・${C.spLev || C.lev}x` : ''}`]],
+      quote: low ? '資金分配超過了，先調整才會開新單' : B ? `一般還有 ${Math.max(0, B.free).toFixed(1)}U 可以用` : '設定投入資金後開始分配' })); }
+  // 6 執行
+  { const open = trades.filter(t => t.status === 'open'), last = trades.slice(0, 3), sk = (SRVLT.spSkip || [])[0];
+    const line = t => `${esc(t.sym.replace(/USDT$/, ''))} ${t.dir > 0 ? '多' : '空'}${t.src === 'tool' ? '・特級' : ''}`;
+    const rows = last.map(t => [line(t), t.status === 'open' ? `持倉中・${fpx(t.entry)}` : `<b class="${wNet(t) >= 0 ? 'qg' : 'qr'}">${wU(wNet(t))}</b>・${wAgo(t.exitAt || t.et)}`]);
+    if (sk && now - sk.t < 6 * 3600000) rows.push(['最近沒下單', `${esc(sk.sym.replace(/USDT$/, ''))}：${esc(sk.why).slice(0, 26)}`]);
+    const lt = last[0];
+    cards.push(warCard({ ic: '⚡', nm: '執行', en: 'FILLS', role: '下單', st: open.length ? 'ok' : 'wait', big: `${open.length} <small>筆持倉中</small>`, rows,
+      quote: lt ? (lt.status === 'open' ? `${line(lt)} ${fpx(lt.entry)} 成交${lt.pSl ? `，止損 ${fpx(lt.pSl)}` : ''}` : `${line(lt)} 出場 ${wU(wNet(lt))}`) : '還沒有下過單' })); }
+  // 7 守護
+  { const day = SRVLT.day || 0, spDay = SRVLT.spDay || 0, bar = (v, lim) => lim > 0 ? `<span class="warbar"><i style="width:${Math.min(100, Math.max(0, -v) / lim * 100)}%"></i></span>` : '';
+    const pos = SRVBX && SRVBX.pos ? SRVBX.pos.filter(p => p.bot) : [], dist = p => { const mk = p.qty > 0 ? p.entry + p.upnl / (p.qty * p.dir) : p.entry; return p.liq > 0 && mk > 0 ? Math.abs(mk - p.liq) / mk * 100 : null; };
+    const near = pos.map(p => [p, dist(p)]).filter(x => x[1] != null).sort((a, b) => a[1] - b[1])[0], locked = trades.filter(t => t.status === 'open' && t.pLk).length;
+    const hit = (C.dayLoss > 0 && -day >= C.dayLoss) || (T && C.spDayLoss > 0 && -spDay >= C.spDayLoss);
+    cards.push(warCard({ ic: '🛡', nm: '守護', en: 'RISK', role: '風控', st: hit || (near && near[1] < 5) ? 'bad' : 'ok', big: `${wU(day + (T ? spDay : 0))} <small>今日</small>`,
+      rows: [['一般今日／上限', `${wU(day)}／−${C.dayLoss || 0}U ${bar(day, C.dayLoss)}`], ...(T ? [['特級今日／上限', `${wU(spDay)}／−${C.spDayLoss || 0}U ${bar(spDay, C.spDayLoss)}`]] : []),
+        ['離強平最近', near ? `${esc(near[0].sym.replace(/USDT$/, ''))} ${near[1].toFixed(1)}%` : '沒有持倉'], ['已套保', `${locked} 筆`]],
+      quote: hit ? '今天虧到上限了，先停下來' : locked ? `${locked} 筆已套保，最壞也是保本出場` : near ? `${esc(near[0].sym.replace(/USDT$/, ''))} 離強平還有 ${near[1].toFixed(1)}%` : '止損、套保、數據避險都在待命' })); }
+  // 8 資料
+  { const bxe = SRVBX && SRVBX.err, ts = TD && TD.scan ? TD.scan : null;
+    cards.push(warCard({ ic: '📥', nm: '資料', en: 'CRAWLER', role: '抓數據・連線', st: Q.err || bxe || (ts && ts.err) ? 'bad' : 'ok', big: `${wAgo(Q.last)} <small>上次掃描</small>`,
+      rows: [['幣安', Q.err ? '<b class="qr">連線異常</b>' : `<b class="qg">正常</b>・${Q.total || 0} 個幣${Q.dur ? `・${(Q.dur / 1000).toFixed(0)} 秒` : ''}`], ['Bitunix', sim ? '模擬盤（不用連線）' : !SRVBX || !SRVBX.set ? '還沒設定 API' : bxe ? '<b class="qr">讀取失敗</b>' : `<b class="qg">正常</b>・${wAgo(SRVBX.at)}`],
+        ...(T ? [['特級掃描', ts && ts.at ? `${wAgo(ts.at)}・${ts.coins || 0} 個幣` : '—']] : []), ['網頁同步', wAgo(Q.pullAt)]],
+      quote: Q.err ? esc(Q.err).slice(0, 40) : `${Q.total || 0} 個幣這一輪都掃完了，資料正常` })); }
+  box.innerHTML = `<div class="warhead"><b>⚔ 作戰室</b><span>8 個角色即時狀態・每 5 秒更新</span><span class="spacer"></span>
+      <button class="btn" data-war="stats">🎯 成功率</button><button class="btn" data-war="eq">📈 資金曲線</button><button class="btn" data-war="hist">📋 歷史紀錄</button></div>
+    <div class="wargrid">${cards.join('')}</div>`;
+}
+$('qWar').onclick = e => {
+  const b = e.target.closest('[data-war]'); if (!b) return; const k = b.dataset.war;
+  if (k === 'lt') $('qLtToggle').click(); else if (k === 'sp') $('qSpToggle').click(); else mnOpen(k);
+};
+setInterval(() => { if (SRV.on && !document.hidden) warTool(); }, 5000);
 /* ---------- 🗡 特級咒具回測：放在「📊 回測數據」頁；有特級咒具權限的人看得到，擁有者才能按回測 ---------- */
 const TB = { timer: null };
 async function tbLoad() {
@@ -4090,15 +4220,34 @@ function mnInit() {
     if (!id) continue;
     const pg = document.createElement('div'); pg.className = 'mnpage'; pg.dataset.p = k; pg.hidden = true; body.appendChild(pg);
     if (k === 'set') { pg.appendChild($('mnpSet')); pg.appendChild($('qSrv')); } else pg.appendChild($(id));
-    if (k === 'tool' || k === 'toolh') $(id).hidden = false;
+    if (k === 'tool') $(id).hidden = false;
   }
-  $('mnList').innerHTML = MN_ITEMS.map(([k, ic, t, , col], i) => `<button class="mnitem${k === 'tool' ? ' fire' : ''}" data-k="${k}" style="--mc:${col}"><span class="mnno">${i + 1}.</span><span class="mnic" aria-hidden="true">${ic}</span>${t}</button>`).join('');
+  // 主畫面原本的區塊搬進選單：成功率（資料來源、統計）、資金曲線、歷史紀錄（查幣種＋特級咒具歷史）
+  const H = $('qHist'), ST = $('mnpStats');
+  for (const el of [H.querySelector('.qdsrc'), $('qPnl'), $('qSpBox'), $('qRecon'), $('qKpi')]) if (el) ST.appendChild(el);
+  $('mnpEq').appendChild(H.querySelector('.qeq'));
+  const TP = $('qTabPanel'); $('hSeg').after($('qFind').parentElement); TP.appendChild($('mnpToolH'));
+  $('qTabCards').parentElement.hidden = true; H.hidden = false;   // 主畫面不再有分頁；統計照樣在背景計算
+  let n = 0, grp = '';
+  $('mnList').innerHTML = MN_ITEMS.map(([k, ic, t, , col, g]) => `${g !== grp ? `<div class="mngrp">${(grp = g)}</div>` : ''}<button class="mnitem${k === 'tool' ? ' fire' : ''}" data-k="${k}" style="--mc:${col}"><span class="mnno">${++n}.</span><span class="mnic" aria-hidden="true">${ic}</span>${t}</button>`).join('');
   for (const id of ['qModePat', 'qModeNews', 'qModeBt', 'qModeHeat', 'qGuideBtn', 'qSrvBtn', 'qLtCfgBtn', 'qLogout']) if ($(id)) $(id).hidden = true;   // 選單裡有的，主畫面不再放
   document.body.classList.add('mn');
 }
 function mnDrawer(open) { $('mnDrawer').hidden = !open; $('mnShade').hidden = !open; $('mnBtn').setAttribute('aria-expanded', String(open)); if (open) setTimeout(() => $('mnList').querySelector('button').focus(), 30); }
+const HSEG = { tab: 'tr' };
+function hSeg(t) {                                     // 歷史紀錄：交易紀錄／特級咒具歷史
+  HSEG.tab = t === 'tl' && SRVLT.toolOk ? 'tl' : 'tr'; const tl = HSEG.tab === 'tl';
+  $('hSegTl').hidden = !SRVLT.toolOk; $('hSegTr').setAttribute('aria-selected', String(!tl)); $('hSegTl').setAttribute('aria-selected', String(tl));
+  $('hSegTr').classList.toggle('primary', !tl); $('hSegTl').classList.toggle('primary', tl);
+  $('qTabWrap').hidden = tl; $('qFind').parentElement.hidden = tl; $('mnpToolH').hidden = !tl;
+  clearInterval(TL.timer);
+  if (tl) { $('mnpToolH').innerHTML = '<p class="tlsub">載入中…</p>'; tlLoad('toolh'); TL.timer = setInterval(() => { if (MN_PAGE === 'hist' && HSEG.tab === 'tl' && TL.d && document.activeElement !== $('tlHf')) tlLoad('toolh'); }, 30000); }
+  else renderHist();
+}
+$('hSegTr').onclick = () => hSeg('tr'); $('hSegTl').onclick = () => hSeg('tl');
 function mnOpen(k) {
   mnDrawer(false);
+  if (k === 'toolh') { HSEG.tab = 'tl'; k = 'hist'; }   // 舊的「特級咒具歷史」：併進歷史紀錄
   if (k === 'guide') { gdOpen(0); return; }
   if (k === 'pat') { if (!$('mnSheet').hidden) mnClose(); if (MODE !== 'pat') setMode('pat'); return; }   // 📈 歷史走勢是一整個版面：直接切過去（左上角「✕ 關閉」回到合約量化）
   if (MODE !== 'quant') setMode('quant');             // 在歷史走勢頁時先回到合約量化，訊號卡片、歷史紀錄才會在
@@ -4113,8 +4262,7 @@ function mnOpen(k) {
   if (k === 'bt') tbLoad();                            // 🗡 特級咒具回測（有權限才顯示）
   clearInterval(TL.timer);
   if (k === 'tool') { $('mnpTool').innerHTML = '<p class="tlsub">載入中…</p>'; tlLoad('tool'); TL.timer = setInterval(() => { if (MN_PAGE === 'tool' && TL.d && !($('tlDlg') && $('tlDlg').open)) tlLoad('tool'); }, 20000); }   // 設定視窗打開時不更新
-  if (k === 'toolh') { $('mnpToolH').innerHTML = '<p class="tlsub">載入中…</p>'; tlLoad('toolh'); TL.timer = setInterval(() => { if (MN_PAGE === 'toolh' && TL.d && document.activeElement !== $('tlHf')) tlLoad('toolh'); }, 30000); }
-  try { if (k === 'cards') { $('qSidePanel').hidden = false; renderCards(); } if (k === 'hist') { $('qTabPanel').hidden = false; renderHist(); } } catch (e) { console.error(e); }   // 重畫出錯也要照樣打開頁面
+  try { if (k === 'cards') { $('qSidePanel').hidden = false; renderCards(); } if (k === 'hist') { $('qTabPanel').hidden = false; hSeg(HSEG.tab); } if (k === 'stats' || k === 'eq') { EQC = null; renderHist(); } } catch (e) { console.error(e); }   // 重畫出錯也要照樣打開頁面
   $('mnSheet').hidden = false; document.body.classList.add('mn-sheet'); $('mnSheet').scrollTop = 0; $('mnSheetBody').scrollTop = 0;
   setTimeout(() => window.dispatchEvent(new Event('resize')), 60);   // 星圖、圖表重新計算大小
   $('mnBack').focus();
@@ -4150,6 +4298,11 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-10-31a', title: '2026/10/31 更新（作戰室）', items: [
+    { ic: '⚔', t: '主畫面改成「作戰室」：總指揮、偵察、鑑定、情報、軍需、執行、守護、資料 8 張角色卡，即時顯示系統每個部分正在做什麼；總指揮卡可以直接開始／暫停交易。' },
+    { ic: '🗂', t: '原本主畫面的內容搬進選單並分類：交易（持倉、特級咒具、訊號卡片）、數據（成功率、資金曲線、歷史紀錄、回測數據）、市場、其他。' },
+    { ic: '📜', sp: true, t: '「特級咒具歷史」併進「歷史紀錄」，上面切換「📋 交易紀錄／📜 特級咒具歷史」。' }
+  ] },
   { id: '2026-10-30j', title: '2026/10/30 更新（還原目前資金）', items: [
     { ic: '🔧', t: '修正：10/30 那次更新把一般、特級的「目前資金」都重設成投入資金，之前賺賠的錢沒有算進去。現在還原：沒有重新存過投入資金的那一邊，會把設定之後的盈虧算回來（例如投入 100U、賺了 1.26U，就是 101.26U）。' }
   ] },
@@ -6293,7 +6446,7 @@ $('qImpFile').onchange = async () => {
 if (LS.get('quantOpenAfter', false)) { LS.set('quantOpenAfter', false); setTimeout(() => { openPanel(true); tab(true); }, 300); }
 function tab(hist) {
   $('qTabCards').setAttribute('aria-selected', String(!hist)); $('qTabHist').setAttribute('aria-selected', String(hist));
-  $('qCards').hidden = hist && !document.body.classList.contains('quant-on'); $('qHist').hidden = !hist;
+  $('qCards').hidden = hist && !document.body.classList.contains('quant-on'); $('qHist').hidden = !hist && !document.body.classList.contains('mn');   // 選單版面：成功率、資金曲線在選單裡，一直在背景更新
   if (hist) { btStat(); renderHist(); }
 }
 $('qTabCards').onclick = () => tab(false);
