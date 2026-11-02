@@ -919,6 +919,14 @@ header{align-items:center}
 .wxxc b{color:var(--xc);font-size:14px}.wxxc small{color:#6b7489}.wxxc span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.wxxc em{font-style:normal;color:#fff;font-weight:700}
 .wxxc.hot{border-style:solid;box-shadow:0 0 12px color-mix(in srgb,var(--xc) 40%,transparent)}
 @media (max-width:620px){.wxx{grid-template-columns:repeat(3,minmax(0,1fr))}.wxxh{grid-column:1/-1;flex-direction:row;align-items:center;flex-wrap:wrap}}
+
+/* ===== 🧪 試用 ===== */
+.qgtrial{margin-top:6px;border:1px dashed #d4af37!important;color:#b8902c!important;background:transparent!important;font-weight:700}
+.qgbad{color:#dc2626}.qgok{color:#16a34a}
+.trialb{margin:0 6px;padding:2px 9px;border-radius:999px;border:1px solid #a78bfa;color:#7c3aed;font-size:12px;font-weight:700;white-space:nowrap}
+.trbox{border:1px solid #6d5bd0;border-radius:12px;padding:10px 12px;margin:10px 0;background:rgba(167,139,250,.06)}.trbox h3{margin:0 0 4px;font-size:15px}
+.trtabs{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.trtabs .btn,.trops .btn{flex:none!important;width:auto!important}.trtabs .btn{padding:3px 10px;font-size:12.5px}
+#trTab td{vertical-align:top;font-size:12.5px}.trdup{background:rgba(239,68,68,.07)}.trwarn{color:#dc2626;font-weight:800}.trops{white-space:nowrap}.trops .btn{padding:3px 10px;font-size:12px;margin:0 3px 3px 0}
 </style>
 </head>
 <body class="quant-on mn">
@@ -940,6 +948,20 @@ header{align-items:center}
       <div id="qgCodeBox" hidden><label>信箱收到的 6 位數驗證碼<input id="qg_code" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></label><button class="btn primary" id="qg_codeGo" type="button">確認登入</button></div></div>
     <p class="qgerr" id="qgErr" role="alert"></p>
     <button class="btn qglink" id="qg_forgot" type="button">忘記密碼？</button>
+    <button class="btn qgtrial" id="qg_trial" type="button">🧪 申請 7 天免費試用</button>
+  </form>
+  <form class="qgatebox" id="qTrialForm" onsubmit="return false" hidden>
+    <h1>Quant X 合約作戰室</h1>
+    <p class="qgsub">申請 7 天試用</p>
+    <p class="qgnote">送出後要等擁有者或管理員<b>開通</b>才能登入。開通後 7 天內可以使用一般用戶的所有功能，包含特級進場；到期會自動停止交易、平掉系統開的單，並刪除帳號和 API 金鑰。</p>
+    <label>Bitunix UID<input id="qt_uid" inputmode="numeric" autocomplete="username" autocapitalize="off" spellcheck="false"></label>
+    <label>密碼（至少 8 個字）<input id="qt_pw" type="password" autocomplete="new-password"></label>
+    <label>再輸入一次密碼<input id="qt_pw2" type="password" autocomplete="new-password"></label>
+    <label>Google 信箱（忘記密碼時會寄到這裡）<input id="qt_email" type="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="example@gmail.com"></label>
+    <label>手機號碼<input id="qt_phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="0912345678"></label>
+    <button class="btn primary" id="qt_go" type="submit">送出申請</button>
+    <p class="qgnote" id="qtMsg" role="status"></p>
+    <button class="btn qglink" id="qt_back" type="button">← 回到登入</button>
   </form>
   <form class="qgatebox" id="qForgotForm" onsubmit="return false" hidden>
     <h1>Quant X 合約作戰室</h1>
@@ -1101,7 +1123,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-10-31e</div>
+      <div class="qver" id="qVer">網站版本 2026-11-01a</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -1396,6 +1418,8 @@ header{align-items:center}
   <div class="qdh"><h2 id="qAdmTitle">🔐 帳號管理（後台）</h2><span class="spacer"></span><button class="btn" id="qAdmClose">關閉</button></div>
   <div class="qadm">
     <p class="qrepnote">每個帳號用 Bitunix UID 登入，第一次登入要綁定 Google 信箱和手機號碼。<span class="rbadge own">👑 擁有者</span> 只有一個人，所有功能都能用（掃描條件、回測、結算、改任何人的密碼、轉讓擁有者）。<span class="rbadge adm">管理員</span> 可以建立帳號、「查看」每個帳號、把別人改成管理員或一般、重設綁定、強制登出、刪除帳號，但不能動擁有者，也不能改別人的密碼。<span class="rbadge usr">一般</span> 只能設定自己的 API、Discord 和交易參數。<b>沒有任何人能動別人的倉位和資金。</b></p>
+    <div class="trbox"><h3>🧪 7 天試用申請</h3><p class="qrepnote">有人在登入頁按「申請 7 天試用」就會出現在這裡。<b>開通</b>後才能登入，可以用一般用戶的所有功能和特級進場；到期自動停止交易、平掉系統開的單、刪除帳號和 API。申請紀錄永遠保留。<b>重複</b>欄會比對每一筆申請的 UID、信箱、電話，跟之前所有試用申請和現有帳號比對。</p>
+      <div class="trtabs" id="trTabs"></div><div class="tablewrap"><table class="stat" id="trTab"></table></div></div>
     <div class="tablewrap"><table class="stat" id="qAdmTab"></table></div>
     <h3 style="font-size:14px;margin:14px 0 6px">新增帳號／修改密碼</h3>
     <div class="params">
@@ -3557,7 +3581,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-10-31e・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-01a・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -4628,6 +4652,10 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-01a', title: '2026/11/01 更新（7 天試用）', items: [
+    { ic: '🧪', t: '登入頁新增「申請 7 天免費試用」：填 UID、密碼、Google 信箱、手機號碼送出，擁有者或管理員開通後才能登入。試用期間可以用一般用戶的所有功能和特級進場，右上角會顯示剩幾天。' },
+    { ic: '🔍', t: '帳號管理新增「7 天試用申請」：開通、拒絕、延長、立即結束；每筆申請自動比對 UID、信箱、電話有沒有跟之前的試用申請或現有帳號重複。到期自動停止交易、一鍵平倉、刪除帳號和 API，申請紀錄永遠保留。' }
+  ] },
   { id: '2026-10-31e', title: '2026/10/31 更新（額外進場）', items: [
     { ic: '🔔', t: '選單新增「額外進場」：加回莊家淨額背離、CRT、獵殺三種訊號，自己選要看哪些幣（一次可以好幾個）、哪幾種訊號、4H→15M 還是 1H→5M，出現時傳 Discord。只提醒、不會自動下單。' },
     { ic: '💬', t: '額外進場有自己的「DC 設定」，可以把通知傳到另一個頻道。' },
@@ -6209,6 +6237,7 @@ function gateHide() {
   $('qUserBox').hidden = false; $('qUid').textContent = SRV.uid || '管理金鑰';
   if (!$('qRoleB')) $('qLogout').insertAdjacentHTML('beforebegin', '<span id="qRoleB"></span><span id="qSimB"></span>');
   $('qRoleB').innerHTML = roleBadge(SRV.role, SRV.owner);
+  if (SRV.trialEnd) { const d = Math.max(0, SRV.trialEnd - Date.now()), dd = Math.floor(d / 86400000), hh = Math.floor(d % 86400000 / 3600000); $('qRoleB').innerHTML += `<span class="trialb" title="試用到 ${fmtT(SRV.trialEnd)}，到期會自動停止交易、平倉、刪除帳號">🧪 試用剩 ${dd ? dd + ' 天 ' : ''}${hh} 小時</span>`; }
   $('qAdmBtn').hidden = !CANW();
   window.qWhaleFetch = (sym, a) => srvFetch(`/api/whale?sym=${encodeURIComponent(sym)}&a=${a || 0}`);   // 🐋 鯨魚大單改由伺服器收集
   window.dispatchEvent(new Event('whaleready'));
@@ -6266,9 +6295,28 @@ $('qg_go').onclick = async () => {
 };
 /* ---------- 🔑 忘記密碼：寄重設連結到綁定的信箱 ---------- */
 const gateUrl = () => (($('qg_url').value || SRV.url || DEFAULT_SRV).normalize('NFKC').trim()).replace(/\/+$/, '');
-const gateForm = id => { for (const f of ['qGateForm', 'qForgotForm', 'qResetForm', 'qBindForm', 'qGateWait']) $(f).hidden = f !== id; };
+const gateForm = id => { for (const f of ['qGateForm', 'qForgotForm', 'qResetForm', 'qBindForm', 'qGateWait', 'qTrialForm']) $(f).hidden = f !== id; };
 $('qg_forgot').onclick = () => { gateForm('qForgotForm'); $('qf_uid').value = $('qg_uid').value; $('qfMsg').textContent = ''; setTimeout(() => $($('qf_uid').value ? 'qf_email' : 'qf_uid').focus(), 50); };
 $('qf_back').onclick = () => { gateForm('qGateForm'); };
+/* ---------- 🧪 申請 7 天試用（不用登入）：送出後等擁有者或管理員開通 ---------- */
+$('qg_trial').onclick = () => { gateForm('qTrialForm'); $('qt_uid').value = $('qg_uid').value; $('qtMsg').textContent = ''; setTimeout(() => $('qt_uid').focus(), 50); };
+$('qt_back').onclick = () => { gateForm('qGateForm'); };
+$('qt_go').onclick = async () => {
+  const N = id => $(id).value.normalize('NFKC').trim(), uid = N('qt_uid').replace(/\s+/g, ''), pw = $('qt_pw').value, email = N('qt_email').toLowerCase(), phone = N('qt_phone'), m = $('qtMsg');
+  const bad = t => { m.className = 'qgnote qgbad'; m.textContent = t; };
+  if (!/^\d{4,20}$/.test(uid)) return bad('UID 應該是 4～20 位數字');
+  if (pw.length < 8) return bad('密碼至少 8 個字');
+  if (pw !== $('qt_pw2').value) return bad('兩次輸入的密碼不一樣');
+  if (!/^[a-z0-9.+_-]{1,64}@(gmail|googlemail)\.com$/.test(email)) return bad('請輸入 Google 信箱（@gmail.com）');
+  if (!/^(09\d{8}|\+?\d{8,15})$/.test(phone.replace(/[\s-]/g, ''))) return bad('手機號碼格式不對（台灣手機請填 09 開頭的 10 碼）');
+  $('qt_go').disabled = true; m.className = 'qgnote'; m.textContent = '送出中…';
+  try {
+    const r = await fetch(gateUrl() + '/api/trial/apply', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ uid, password: pw, email, phone }) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) { bad(j.error || 'HTTP ' + r.status); $('qt_go').disabled = false; return; }
+    m.className = 'qgnote qgok'; m.textContent = '✅ ' + j.msg; $('qt_pw').value = $('qt_pw2').value = '';
+  } catch (e) { bad('連不到伺服器'); $('qt_go').disabled = false; }
+};
 $('qf_go').onclick = async () => {
   const uid = $('qf_uid').value.normalize('NFKC').replace(/\s+/g, ''), email = $('qf_email').value.normalize('NFKC').trim();
   if (!/^\d{4,20}$/.test(uid)) { $('qfMsg').textContent = 'UID 應該是 4～20 位數字'; return; }
@@ -6308,7 +6356,7 @@ $('qLogout').onclick = async () => {
   try {
     const r = await fetch(SRV.url.replace(/\/+$/, '') + '/api/me', { cache: 'no-store', headers: { Authorization: 'Bearer ' + SRV.token } });
     if (!r.ok) return gateShow(r.status === 401 ? '登入已過期，請重新登入' : '');
-    const j = await r.json(); SRV.role = j.role; SRV.uid = j.uid; SRV.owner = !!j.owner; SRV.key = '';
+    const j = await r.json(); SRV.role = j.role; SRV.uid = j.uid; SRV.owner = !!j.owner; SRV.key = ''; SRV.trialEnd = j.trialEnd || 0;
     LS.set('quantSrv', SRV);
     if (j.needBind) return bindShow(j);
     gateHide();
@@ -6374,7 +6422,34 @@ $('qb_out').onclick = async () => {
 };
 /* ---------- 後台：帳號管理 ---------- */
 const ADM_NOTE = {};                                  // 帳號備註（給編輯視窗帶入原本的內容）
+const TRF = { f: 'pending' };
+async function trLoad() {                             // 🧪 試用申請：列表、比對重複
+  let j; try { j = await srvFetch('/api/trial', { op: 'list' }); } catch (e) { $('trTab').innerHTML = `<tr><td>${esc(e.message)}</td></tr>`; return; }
+  const L = j.list, cnt = s => L.filter(x => s === 'all' || x.status === s || (s === 'active' && x.status === 'closing')).length;
+  const TABS = [['pending', '等開通'], ['active', '試用中'], ['ended', '已結束'], ['rejected', '已拒絕'], ['all', '全部紀錄']];
+  $('trTabs').innerHTML = TABS.map(([k, n]) => `<button class="btn${TRF.f === k ? ' primary' : ''}" data-trf="${k}">${n}（${cnt(k)}）</button>`).join('');
+  const ST_ = { pending: '<b class="qy">等開通</b>', active: '<b class="qg">試用中</b>', closing: '<b class="qy">結束中（平倉）</b>', ended: '已結束', rejected: '<span class="qr">已拒絕</span>' };
+  const SN = { pending: '等開通', active: '試用中', closing: '結束中', ended: '已結束', rejected: '已拒絕', user: '一般帳號', 'trial-user': '試用帳號' };
+  const rows = L.filter(x => TRF.f === 'all' || x.status === TRF.f || (TRF.f === 'active' && x.status === 'closing'));
+  const left = x => { const d = x.expireAt - Date.now(); return d > 0 ? `剩 ${Math.floor(d / 86400000)} 天 ${Math.floor(d % 86400000 / 3600000)} 小時` : '到期'; };
+  $('trTab').innerHTML = rows.length ? `<tr><th>申請時間</th><th>UID</th><th>信箱</th><th>電話</th><th>狀態</th><th>試用期</th><th>重複比對</th><th>操作</th></tr>` + rows.map(x => `<tr class="${x.dups.length ? 'trdup' : ''}">
+      <td>${fmtT(x.at)}</td><td><b>${esc(x.uid)}</b></td><td>${esc(x.email)}</td><td>${esc(x.phone)}</td><td>${ST_[x.status] || x.status}${x.note ? `<br><small class="tlmut">${esc(x.note)}</small>` : ''}</td>
+      <td class="tlmut">${x.approvedAt ? `${fmtT(x.approvedAt).slice(-11)} 開通（${esc(x.approvedBy)}）<br>到 ${fmtT(x.expireAt).slice(-11)}${x.status === 'active' ? `・${left(x)}` : ''}${x.ext ? `・延長 ${x.ext} 天` : ''}` : '—'}${x.sum ? `<br>${x.sum.n} 筆・${x.sum.net >= 0 ? '+' : ''}${x.sum.net}U` : ''}</td>
+      <td>${x.dups.length ? `<span class="trwarn">⚠ ${x.dups.length} 筆重複</span>${x.dups.map(d => `<br><small><b>${d.f.join('、')}</b> 跟 ${esc(d.uid)}（${SN[d.status] || d.status}・${fmtT(d.at).slice(-11)}）</small>`).join('')}` : '<span class="qg">✓ 沒有重複</span>'}</td>
+      <td class="trops">${x.status === 'pending' ? `<button class="btn primary" data-tr="approve" data-id="${x.id}">開通</button><button class="btn" data-tr="reject" data-id="${x.id}">拒絕</button>` : x.status === 'active' ? `<button class="btn" data-tr="extend" data-id="${x.id}">延長 7 天</button><button class="btn" data-tr="end" data-id="${x.id}">立即結束</button>` : '—'}</td></tr>`).join('') : '<tr><td class="tlmut">沒有資料</td></tr>';
+}
+$('trTabs').onclick = e => { const b = e.target.closest('[data-trf]'); if (b) { TRF.f = b.dataset.trf; trLoad(); } };
+$('trTab').onclick = async e => {
+  const b = e.target.closest('[data-tr]'); if (!b) return; const op = b.dataset.tr, id = b.dataset.id, row = b.closest('tr'), uid = row ? row.children[1].textContent : '';
+  const dup = row && row.classList.contains('trdup');
+  if (op === 'approve' && !confirm(`開通 ${uid} 的 7 天試用？${dup ? '\n\n⚠️ 這筆申請有資料跟其他帳號重複，確定要開通嗎？' : ''}`)) return;
+  let note = ''; if (op === 'reject') { note = prompt(`拒絕 ${uid} 的試用申請？可以寫原因（只有管理員看得到）：`, dup ? '資料重複' : ''); if (note === null) return; }
+  if (op === 'extend' && !confirm(`幫 ${uid} 延長 7 天試用？`)) return;
+  if (op === 'end' && !confirm(`立即結束 ${uid} 的試用？\n\n會停止交易、平掉系統開的單，平完刪除帳號和 API（申請紀錄會保留）。`)) return;
+  try { const r = await srvFetch('/api/trial', { op, id, note, days: 7 }); if (r.msg) alert(r.msg); trLoad(); admLoad(); } catch (err) { alert(err.message); }
+};
 async function admLoad() {
+  trLoad();
   try {
     const j = await srvFetch('/api/users');
     $('qOwnBox').hidden = $('qAllBox').hidden = !OWN();
