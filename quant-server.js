@@ -41,7 +41,7 @@ const DEF_REP = { cap: 100, btN: 50, days: 14, next: 0 };                   // �
 let ST = { cards: [], bt: { at: 0, coins: 0, trades: [] }, set: { ...DEF_SET }, trade: { ...DEF_TRADE }, google: { clientId: '' }, eq: { ...DEF_EQ }, rep: { ...DEF_REP }, reports: [], users: [], sessions: [], accts: {}, owner: '' };
 try {
   const j = JSON.parse(fs.readFileSync(FILE, 'utf8'));
-  ST = { cards: j.cards || [], bt: j.bt || ST.bt, set: { ...DEF_SET, ...(j.set || {}) }, trade: { ...DEF_TRADE, ...(j.trade || {}) }, google: { clientId: '', ...(j.google || {}) }, eq: { ...DEF_EQ, ...(j.eq || {}) }, rep: { ...DEF_REP, ...(j.rep || {}) }, reports: j.reports || [], users: j.users || [], sessions: j.sessions || [], aws: j.aws || {}, accts: j.accts || {}, owner: j.owner || '', bstat: j.bstat || null, hb: j.hb || '', ecoDay: j.ecoDay || '', ecoUntil: j.ecoUntil || 0, tool: j.tool || null, xent: j.xent || null, alive: j.alive || 0, boots: j.boots || [], exit: j.exit || null, hb2: j.hb2 || null, lastErr: j.lastErr || null };
+  ST = { cards: j.cards || [], bt: j.bt || ST.bt, set: { ...DEF_SET, ...(j.set || {}) }, trade: { ...DEF_TRADE, ...(j.trade || {}) }, google: { clientId: '', ...(j.google || {}) }, eq: { ...DEF_EQ, ...(j.eq || {}) }, rep: { ...DEF_REP, ...(j.rep || {}) }, reports: j.reports || [], users: j.users || [], sessions: j.sessions || [], aws: j.aws || {}, accts: j.accts || {}, owner: j.owner || '', bstat: j.bstat || null, hb: j.hb || '', ecoDay: j.ecoDay || '', ecoUntil: j.ecoUntil || 0, tool: j.tool || null, xent: j.xent || null, trials: j.trials || [], alive: j.alive || 0, boots: j.boots || [], exit: j.exit || null, hb2: j.hb2 || null, lastErr: j.lastErr || null };
   // 舊版（只有一個帳號）：原本的 Bitunix 金鑰、自動交易、實盤紀錄、Discord 搬到擁有者（第一個管理員）的帳號底下
   if (!j.accts && (j.bx || j.lt || j.ltTrades || j.notify)) {
     const a = ST.users.find(u => u.role === 'admin'), uid = a ? a.uid : '__owner';
@@ -941,7 +941,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-10-31e';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-11-01a';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1844,6 +1844,52 @@ setInterval(async () => {                              // 每根 5 分／15 分 
   }
 }, 15000);
 
+/* ======================== 🧪 7 天試用：自己申請 → 擁有者或管理員開通才能登入 → 7 天到期自動停止交易、平倉、刪帳號（申請紀錄永遠保留） ======================== */
+const TRIAL_DAYS = 7;
+if (!Array.isArray(ST.trials)) ST.trials = [];
+const trialOut = r => ({ id: r.id, uid: r.uid, email: r.email, phone: r.phone, at: r.at, status: r.status, approvedAt: r.approvedAt || 0, approvedBy: r.approvedBy || '', expireAt: r.expireAt || 0, endedAt: r.endedAt || 0, note: r.note || '', sum: r.sum || null, ext: r.ext || 0 });
+function trialDups(r) {                                // 比對：UID、信箱、電話跟「之前每一筆試用申請」和「現有帳號」有沒有重複
+  const out = [];
+  for (const o of ST.trials) { if (o === r) continue; const f = []; if (o.uid === r.uid) f.push('UID'); if (o.email === r.email) f.push('信箱'); if (o.phone === r.phone) f.push('電話'); if (f.length) out.push({ src: 'trial', f, uid: o.uid, status: o.status, at: o.at }); }
+  for (const u of ST.users) { if (u.trialId === r.id) continue; const f = []; if (u.uid === r.uid) f.push('UID'); if (u.bind && u.bind.email === r.email) f.push('信箱'); if (u.bind && u.bind.phone === r.phone) f.push('電話'); if (f.length) out.push({ src: 'user', f, uid: u.uid, status: u.trialId ? 'trial-user' : 'user', at: u.created || 0 }); }
+  return out;
+}
+async function trialCloseAll(X) {                      // 跟「一鍵平倉（自動單）」一樣：只平系統開的單
+  let pos = X.BX.pos; try { pos = bxMapPos(await bxGet('/api/v1/futures/position/get_pending_positions', {}, X.A.bx)); } catch (e) {}
+  const open = ltOpenTrades(X), ids = new Set(open.map(t => t.positionId).filter(Boolean));
+  const mine = pos.filter(p => ids.has(p.id) || open.some(t => !t.positionId && t.sym === p.sym && t.dir === p.dir && Math.abs((p.ctime || 0) - t.et) < 5 * 60000));
+  for (const t of open) { t.pendReason = 'all'; t.pendAt = Date.now(); }
+  let ok = 0; for (const p of mine) { try { await fullClose(X, p, true); ok++; } catch (e) {} await sleep(300); }
+  setTimeout(() => bxPollOne(X), 1500); return ok;
+}
+function trialRemove(uid) {                            // 刪帳號：登入、API 金鑰、交易紀錄、Discord、模擬盤、特級權限、額外進場全部刪掉
+  ST.users = ST.users.filter(x => x.uid !== uid); ST.sessions = ST.sessions.filter(x => x.uid !== uid);
+  for (const k of [uid, uid + '~sim']) { delete ST.accts[k]; RT.delete(k); }
+  ST.tool.grants = ST.tool.grants.filter(x => x !== uid); delete ST.tool.hooks[uid]; if (ST.xent && ST.xent.cfg) delete ST.xent.cfg[uid]; dirty = true;
+}
+setInterval(async () => {                              // 每分鐘：到期的試用帳號 → 停止交易＋一鍵平倉 → 平完（或 15 分鐘後）刪帳號
+  const now = Date.now();
+  for (const r of ST.trials) {
+    try {
+      if (r.status === 'active' && r.expireAt <= now) {
+        r.status = 'closing'; r.closeAt = now; dirty = true;
+        if (ST.users.some(x => x.uid === r.uid) && ST.accts[r.uid]) {
+          const X = ctx(r.uid); X.A.lt.on = false; X.A.lt.sp = false; X.LT.pause = { t: now, why: '試用期結束' }; touchLT(X);
+          dcX(X, '⏰ **7 天試用期結束**：自動交易、特級交易已停止，系統開的單正在平倉，之後帳號（含 API 金鑰）會刪除。謝謝試用！');
+          if (hasKey(X)) trialCloseAll(X).then(n => log('試用到期平倉', r.uid, n)).catch(e => log('試用到期平倉失敗', r.uid, e.message));
+        }
+        log('試用到期', r.uid); dcX(ctx(ownerUid()), `🧪 **試用到期**：${r.uid}，已停止交易並平倉，平完會刪除帳號`);
+      }
+      if (r.status === 'closing') {
+        const has = ST.accts[r.uid], X = has ? ctx(r.uid) : null, open = X ? ltOpenTrades(X).length : 0;
+        if (!open || now - r.closeAt > 15 * 60000) {
+          if (X) { const T = X.A.ltTrades.filter(t => t.status === 'closed'); r.sum = { n: T.length, net: +T.reduce((a, t) => a + ltNet(t), 0).toFixed(4), api: hasKey(X), left: open }; }
+          trialRemove(r.uid); r.status = 'ended'; r.endedAt = now; dirty = true; log('試用帳號已刪除', r.uid);
+        }
+      }
+    } catch (e) { log('試用到期處理失敗', r.uid, e.message); }
+  }
+}, 60000);
 /* ======================== 🔔 額外進場：莊家淨額背離、H4/H1 CRT、獵殺（天神下凡）三種訊號——只發 Discord 通知，不下單 ========================
    照擁有者的 TradingView 指標「莊家淨額 + CRT/SMC」和「無量空處」裡的天神下凡；每個人自己選要看哪些幣、哪幾種訊號、通知送到哪個頻道 */
 // CHoCH／BOS（照指標的 f_leg／f_structure）：每根 K 棒有沒有看漲、看跌結構突破
@@ -2483,7 +2529,7 @@ http.createServer(async (req, res) => {
       return send(res, age < 10 * 60000 ? 200 : 503, { ok: age < 10 * 60000, scanAgeS: Math.round(age / 1000), up: Math.round((Date.now() - BOOT) / 1000) });
     }
     if (req.method === 'GET' && u.pathname === '/api/auth') return send(res, 200, { needSetup: !ST.users.length });
-    if (req.method === 'POST' && ['/api/login', '/api/setup', '/api/logout', '/api/login/google', '/api/login/code', '/api/forgot', '/api/reset'].includes(u.pathname)) {
+    if (req.method === 'POST' && ['/api/login', '/api/setup', '/api/logout', '/api/login/google', '/api/login/code', '/api/forgot', '/api/reset', '/api/trial/apply'].includes(u.pathname)) {
       const ip = ipOf(req), b = await readBody(req, 1e5);
       if (u.pathname === '/api/logout') { const m = String(req.headers.authorization || '').match(/^Bearer\s+(\w+)$/); if (m) { const h = tokHash(m[1]); ST.sessions = ST.sessions.filter(x => x.h !== h); dirty = true; } return send(res, 200, { ok: true }); }
       if (locked(ip)) return send(res, 429, { error: '輸錯太多次，請 15 分鐘後再試' });
@@ -2497,6 +2543,21 @@ http.createServer(async (req, res) => {
         if (ST.accts.__owner && !ST.accts[usr.uid]) { ST.accts[usr.uid] = ST.accts.__owner; delete ST.accts.__owner; RT.delete('__owner'); }   // 還沒建帳號前存的資料交給第一個管理員
         ST.owner = usr.uid; dirty = true;
         return send(res, 200, { token: newSession(usr), uid: usr.uid, role: usr.role });
+      }
+      if (u.pathname === '/api/trial/apply') {          // 🧪 申請 7 天試用（不用登入）：等擁有者或管理員開通
+        if (!mailAllow('trial:' + ip, 5)) return send(res, 429, { error: '這台裝置申請太多次了，請一小時後再試' });
+        const uid = String(b.uid || '').trim(), email = String(b.email || '').trim().toLowerCase(), phone = normPhone(b.phone);
+        if (!validUid(uid)) return send(res, 400, { error: 'UID 應該是 4～20 位數字' });
+        if (!validPw(b.password)) return send(res, 400, { error: '密碼至少 8 個字' });
+        if (!/^[a-z0-9.+_-]{1,64}@(gmail|googlemail)\.com$/.test(email)) return send(res, 400, { error: '請輸入 Google 信箱（@gmail.com），忘記密碼時會寄到這裡' });
+        if (!phone) return send(res, 400, { error: '手機號碼格式不對（台灣手機請填 09 開頭的 10 碼）' });
+        if (ST.users.some(x => x.uid === uid)) return send(res, 400, { error: '這個 UID 已經有帳號了，請直接登入' });
+        if (ST.trials.some(x => x.uid === uid && x.status === 'pending')) return send(res, 400, { error: '這個 UID 已經申請過了，請等擁有者或管理員開通' });
+        const r = { id: crypto.randomBytes(6).toString('hex'), uid, email, phone, ...hashPw(String(b.password)), at: Date.now(), ip, status: 'pending' };
+        ST.trials.unshift(r); if (ST.trials.length > 5000) ST.trials.length = 5000; dirty = true;
+        const d = trialDups(r); log('試用申請', uid, maskMail(email));
+        dcX(ctx(ownerUid()), `🧪 **新的試用申請**：UID ${uid}・${maskMail(email)}・${phone.slice(0, 6)}****${d.length ? `\n⚠️ 有 ${d.length} 筆資料重複：${mdEsc(d.map(x => `${x.f.join('、')}跟 ${x.uid}`).join('；'))}` : ''}\n請到「🔐 帳號管理」開通或拒絕`);
+        return send(res, 200, { ok: true, msg: '申請已送出！擁有者或管理員開通之後，就可以用這組 UID 和密碼登入，試用 7 天。' });
       }
       if (u.pathname === '/api/forgot') {               // 🔑 忘記密碼：UID＋綁定的信箱都對，才寄重設連結（不管對不對都回一樣的話，別人猜不出帳號）
         if (!mailOn()) return send(res, 400, { error: '伺服器還沒設定寄信功能，請聯絡擁有者幫你改密碼' });
@@ -2540,6 +2601,10 @@ http.createServer(async (req, res) => {
         return send(res, 200, { token: newSession(usr), uid: usr.uid, role: usr.role });
       }
       const usr = ST.users.find(x => x.uid === String(b.uid || ''));
+      if (!usr && validPw(b.password)) {                // 🧪 還沒開通的試用申請：密碼對的話告訴他目前的狀態
+        const tr = ST.trials.find(x => x.uid === String(b.uid || '') && ['pending', 'rejected', 'ended', 'closing'].includes(x.status));
+        if (tr && pwOk(tr, b.password)) return send(res, 403, { error: tr.status === 'pending' ? '試用申請審核中，擁有者或管理員開通後就可以登入' : tr.status === 'rejected' ? '試用申請沒有通過，有問題請聯絡擁有者' : '試用期已經結束，帳號已刪除' });
+      }
       if (!usr || !validPw(b.password) || !pwOk(usr, b.password)) { failed(ip); return send(res, 401, { error: 'UID 或密碼不對' }); }
       FAILS.delete(ip);
       if (usr.uid === ownerUid() && gClient() && usr.bind && usr.bind.email) {   // 👑 擁有者：密碼對了還要第二層 Google 驗證
@@ -2558,7 +2623,7 @@ http.createServer(async (req, res) => {
     if (me && needBind(me) && u.pathname !== '/api/me' && u.pathname !== '/api/bind') return send(res, 403, { error: '請先綁定 Google 信箱和手機號碼', needBind: true });
     const meU = me || ST.users.find(x => x.uid === ownerUid()), simOn = !!(admin && meU && meU.sim);   // 🧪 管理員、擁有者切到模擬盤：整個網站看的、改的都是模擬帳號
     const X = ctx((me ? me.uid : ownerUid()) + (simOn ? '~sim' : ''));   // 這次請求的「自己」：每個帳號只看得到、改得到自己的 Bitunix／自動交易／Discord（用管理金鑰登入＝擁有者）
-    if (req.method === 'GET' && u.pathname === '/api/me') return send(res, 200, { uid: me ? me.uid : '管理金鑰', role: admin ? 'admin' : 'viewer', owner: !!owner, needBind: needBind(me), bind: bindOut(me), google: gClient() });
+    if (req.method === 'GET' && u.pathname === '/api/me') return send(res, 200, { uid: me ? me.uid : '管理金鑰', role: admin ? 'admin' : 'viewer', owner: !!owner, needBind: needBind(me), bind: bindOut(me), google: gClient(), trialEnd: me && me.trialEnd || 0 });
     if (req.method === 'GET' && u.pathname === '/api/users') {
       if (!admin) return send(res, 403, { error: '只有管理員可以看' });
       return send(res, 200, { users: ST.users.map(x => { const A = ST.accts[x.uid]; return { uid: x.uid, role: x.role, created: x.created, last: x.last || 0, sessions: ST.sessions.filter(s => s.uid === x.uid && s.exp > Date.now()).length,
@@ -2610,7 +2675,7 @@ http.createServer(async (req, res) => {
       // 個人設定：每個帳號都能改「自己的」；其他（掃描條件、浮盈規則、回測、帳號管理、AWS）只有管理員能改
       // 個人（每個帳號）：自己的 API、Discord、交易設定、平倉；管理員（灰色）：帳號管理；其他全站設定只有擁有者能改
       const PERSONAL = ['/api/bind', '/api/bitunix', '/api/lt/config', '/api/lt/testOpen', '/api/lt/close', '/api/lt/closeAll', '/api/lt/adopt', '/api/notify', '/api/notify/test', '/api/me/password', '/api/tool', '/api/lt/withdraw', '/api/sim', '/api/xent'];
-      const ADMIN = ['/api/users', '/api/users/delete', '/api/users/kick', '/api/check'];
+      const ADMIN = ['/api/users', '/api/users/delete', '/api/users/kick', '/api/check', '/api/trial'];
       if (ADMIN.includes(u.pathname) && !admin) return send(res, 403, { error: '這個功能只有管理員可以用' });
       if (!PERSONAL.includes(u.pathname) && !ADMIN.includes(u.pathname) && !owner) return send(res, 403, { error: '這個設定只有擁有者可以改' });
       const b = await readBody(req);
@@ -2646,6 +2711,26 @@ http.createServer(async (req, res) => {
           const L = X.A.lt; Object.assign(S, { bal: 0, pos: [], hist: [], ord: [] }); X.A.ltTrades = []; Object.assign(L, { on: false, sp: false, budget: 0, spBudget: 0, startCap: 0, startAt: 0, wd: 0, spWd: 0, spStartAt: 0, dayHit: '', spDayHit: '' });
           X.LT.pause = null; dirty = true; touchLT(X); return send(res, 200, { ok: true });
         }
+        return send(res, 400, { error: '不認得的操作' });
+      }
+      if (u.pathname === '/api/trial') {                 // 🧪 後台：試用申請（擁有者、管理員）
+        const op = String(b.op || 'list'), r = ST.trials.find(x => x.id === String(b.id || '')), by = me ? me.uid : ownerUid();
+        if (op === 'list') return send(res, 200, { days: TRIAL_DAYS, list: ST.trials.map(x => ({ ...trialOut(x), dups: trialDups(x) })) });
+        if (!r) return send(res, 404, { error: '找不到這筆申請' });
+        if (op === 'approve') {
+          if (r.status !== 'pending') return send(res, 400, { error: '這筆申請不是「等開通」狀態' });
+          if (ST.users.some(x => x.uid === r.uid)) return send(res, 400, { error: `UID ${r.uid} 已經有帳號了` });
+          const c = ST.users.find(x => x.bind && (x.bind.email === r.email || x.bind.phone === r.phone));
+          if (c) return send(res, 400, { error: `${c.bind.email === r.email ? '信箱' : '電話'}已經綁定在 ${c.uid}，同一個信箱、電話只能綁一個帳號` });
+          const now = Date.now();
+          ST.users.push({ uid: r.uid, role: 'viewer', salt: r.salt, hash: r.hash, created: now, bind: { email: r.email, phone: r.phone, google: false, at: now }, trialId: r.id, trialEnd: now + TRIAL_DAYS * 24 * HOUR });
+          if (!ST.tool.grants.includes(r.uid)) ST.tool.grants.push(r.uid);   // 一般用戶的功能＋特級進場
+          Object.assign(r, { status: 'active', approvedAt: now, approvedBy: by, expireAt: now + TRIAL_DAYS * 24 * HOUR }); dirty = true; log('開通試用', r.uid, 'by', by);
+          return send(res, 200, { ok: true });
+        }
+        if (op === 'reject') { if (r.status !== 'pending') return send(res, 400, { error: '只能拒絕「等開通」的申請' }); Object.assign(r, { status: 'rejected', note: String(b.note || '').slice(0, 200), endedAt: Date.now(), approvedBy: by }); dirty = true; return send(res, 200, { ok: true }); }
+        if (op === 'extend') { if (r.status !== 'active') return send(res, 400, { error: '只能延長試用中的帳號' }); const d = Math.max(1, Math.min(30, Math.round(+b.days || 7))); r.expireAt += d * 24 * HOUR; r.ext = (r.ext || 0) + d; const usr = ST.users.find(x => x.uid === r.uid); if (usr) usr.trialEnd = r.expireAt; dirty = true; return send(res, 200, { ok: true }); }
+        if (op === 'end') { if (r.status !== 'active') return send(res, 400, { error: '只能結束試用中的帳號' }); r.expireAt = Date.now(); r.note = `提早結束（${by}）`; dirty = true; return send(res, 200, { ok: true, msg: '一分鐘內會停止交易、平倉，平完刪除帳號' }); }
         return send(res, 400, { error: '不認得的操作' });
       }
       if (u.pathname === '/api/users') {               // 後台：新增帳號／改密碼／改權限
