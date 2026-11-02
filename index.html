@@ -927,6 +927,27 @@ header{align-items:center}
 .trbox{border:1px solid #6d5bd0;border-radius:12px;padding:10px 12px;margin:10px 0;background:rgba(167,139,250,.06)}.trbox h3{margin:0 0 4px;font-size:15px}
 .trtabs{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.trtabs .btn,.trops .btn{flex:none!important;width:auto!important}.trtabs .btn{padding:3px 10px;font-size:12.5px}
 #trTab td{vertical-align:top;font-size:12.5px}.trdup{background:rgba(239,68,68,.07)}.trwarn{color:#dc2626;font-weight:800}.trops{white-space:nowrap}.trops .btn{padding:3px 10px;font-size:12px;margin:0 3px 3px 0}
+
+/* ===== 💳 方案與繳費 ===== */
+.bi{display:flex;flex-direction:column;gap:12px}.bistat{border-radius:12px;padding:12px 14px;border:1px solid #34d399;background:rgba(52,211,153,.08)}.bistat b{display:block;font-size:17px}.bistat span{font-size:13px;color:var(--muted)}
+.bistat.bad{border-color:#ef4444;background:rgba(239,68,68,.08)}.bistat.trial{border-color:#a78bfa;background:rgba(167,139,250,.08)}
+.bibox{border:1px solid var(--line,#2a3140);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}.bibox h4{margin:0;font-size:15px}.bibox h5{margin:10px 0 0;font-size:13.5px}
+.biplan{display:flex;gap:18px;align-items:center;flex-wrap:wrap}.biplan b{font-size:40px;font-weight:900;color:#10b981}.biplan small{display:block;color:var(--muted)}.biplan ul{margin:0;padding-left:18px;font-size:13.5px;line-height:1.7}
+.bicode{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}.bicode .btn{flex:none!important;width:auto!important}
+.biorder{border:2px dashed #10b981;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px}.biwarn{margin:0;font-size:13px;color:#b45309}
+.birow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.birow>span{min-width:64px;color:var(--muted);font-size:13px}.birow code{font-size:13px;word-break:break-all}.birow .btn{padding:3px 10px;font-size:12px;flex:none!important;width:auto!important}
+.biamt{font-size:28px;font-weight:900;color:#10b981;font-variant-numeric:tabular-nums}.biqr{width:168px;height:168px;background:#fff;padding:6px;border-radius:8px}.biqr:empty{display:none}
+.bikpi{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.bikpi div{border:1px solid var(--line,#2a3140);border-radius:10px;padding:8px 10px}.bikpi small{display:block;color:var(--muted);font-size:11.5px}.bikpi b{font-size:17px}
+.bicr{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:4px 0}.bicr .bc_code{width:130px}.bicr .bc_pct{width:70px}.bicr .bc_note{flex:1;min-width:120px}.bicr .btn{flex:none!important;width:auto!important;padding:3px 9px}
+.biadm .qbt .btn{flex:none!important;width:auto!important}
+button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef4444;color:#dc2626}
+@media (max-width:620px){.bikpi{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.biplans{display:flex;gap:8px;flex-wrap:wrap}.biplanopt{flex:1;min-width:120px;display:flex;flex-direction:column;gap:2px;border:1.5px solid var(--line,#2a3140);border-radius:12px;padding:10px 12px;cursor:pointer;position:relative}
+.biplanopt input{position:absolute;opacity:0}.biplanopt.on{border-color:#10b981;background:rgba(16,185,129,.08)}.biplanopt b{font-size:15px}.biplanopt span{font-size:18px;font-weight:800;color:#10b981}.biplanopt em{font-style:normal;font-size:12px;color:#f59e0b;font-weight:700}
+.biplanopt:focus-within{outline:2px solid #10b981;outline-offset:2px}
+.biterms pre{white-space:pre-wrap;font-size:12.5px;line-height:1.6;background:rgba(0,0,0,.04);padding:10px;border-radius:8px;max-height:220px;overflow:auto}.biagree{font-weight:700}
+.biclaim summary{cursor:pointer;font-weight:700;font-size:13.5px}.biclaim .xeadd{margin-top:6px}.biterm{width:100%;font-size:12.5px}
 </style>
 </head>
 <body class="quant-on mn">
@@ -1123,7 +1144,7 @@ header{align-items:center}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-01a</div>
+      <div class="qver" id="qVer">網站版本 2026-11-01d</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -1455,6 +1476,7 @@ header{align-items:center}
 <div id="mnpTool" class="tlwrap" hidden></div>
 <div id="mnpStats" class="mnstats"></div>
 <div id="mnpXent" class="mnxent"></div>
+<div id="mnpBill" class="mnbill"></div>
 <div id="mnpEq" class="mneq"></div>
 <div id="mnpToolH" class="tlwrap" hidden></div>
 <div id="mnpSet" class="mnacctwrap">
@@ -3581,7 +3603,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-01a・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-01d・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -3986,7 +4008,7 @@ const MN_ITEMS = [                                    // [代號, 圖示, 名稱
   ['pos', '💼', '持倉', 'qBx', '#d4af37', '交易'], ['tool', '🗡', '特級咒具', 'mnpTool', '#ef4444', '交易'], ['xent', '🔔', '額外進場', 'mnpXent', '#a78bfa', '交易'], ['cards', '📡', '訊號卡片', 'qSidePanel', '#22d3ee', '交易'],
   ['stats', '🎯', '成功率', 'mnpStats', '#34d399', '數據'], ['eq', '📈', '資金曲線', 'mnpEq', '#60a5fa', '數據'], ['hist', '📋', '歷史紀錄', 'qTabPanel', '#fbbf24', '數據'], ['bt', '📊', '回測數據', 'qBtHost', '#2dd4bf', '數據'],
   ['heat', '🔥', '熱力圖', 'qHeatHost', '#fb923c', '市場'], ['pat', '📉', '歷史走勢', '', '#a78bfa', '市場'], ['news', '📰', '加密新聞', 'newsPanel', '#f472b6', '市場'], ['whale', '🐋', '幣安鯨魚大單', 'whalePanel', '#38bdf8', '市場'],
-  ['set', '👤', '設定', 'mnpSet', '#7aa2ff', '其他'], ['guide', '📖', '使用說明', '', '#94a3b8', '其他']];
+  ['bill', '💳', '方案與繳費', 'mnpBill', '#34d399', '其他'], ['set', '👤', '設定', 'mnpSet', '#7aa2ff', '其他'], ['guide', '📖', '使用說明', '', '#94a3b8', '其他']];
 /* ---------- 🗡 特級咒具：上鎖（擁有者或輸入密碼的人才能用）；一個幣一張卡片；設定收在「⚙ 設定」裡 ---------- */
 const TL = { d: null, timer: null, hf: 'all', hn: 60 };
 const TL_PN = { h4: { hn: '4H', ln: '15M', nm: '4H→15M', hms: 4 * 3600000 }, h1: { hn: '1H', ln: '5M', nm: '1H→5M', hms: 3600000 } };
@@ -4117,6 +4139,114 @@ function tlSettings() {                                // ⚙ 設定視窗：Dis
     };
   }
 }
+/* ---------- 💳 方案與繳費：月費（USDT TRC20 自動確認）＋擁有者的繳費後台 ---------- */
+const BI = { d: null, a: null, code: '', timer: null, qr: null };
+const bDate = t => t ? fmtT(t).slice(0, 16) : '—';
+async function biLoad(poll) {
+  try { BI.d = await srvFetch('/api/bill', { op: poll ? 'poll' : 'me' }); if (BI.d.owner) BI.a = await srvFetch('/api/bill/admin', { op: 'get' }); biRender(); }
+  catch (e) { $('mnpBill').innerHTML = `<p class="mnmsg bad">${esc(e.message)}</p>`; }
+}
+function biQR(addr) {                                  // 收款地址的 QR code（cdnjs 的 qrcodejs；載不到就只顯示文字）
+  const el = $('biQR'); if (!el) return;
+  const draw = () => { el.innerHTML = ''; try { new QRCode(el, { text: addr, width: 168, height: 168, correctLevel: QRCode.CorrectLevel.M }); } catch (e) {} };
+  if (window.QRCode) return draw();
+  if (!BI.qr) { BI.qr = document.createElement('script'); BI.qr.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'; document.head.appendChild(BI.qr); }
+  BI.qr.addEventListener('load', draw, { once: true });
+}
+function biRender() {
+  const d = BI.d, s = d.state, now = Date.now(), host = $('mnpBill');
+  const ST = { free: ['🎁 免費帳號', '不用付費，所有功能都能用', 'ok'], trial: ['🧪 試用中', `試用到 ${bDate(s.until)}。現在付費會接在試用後面，<b>所有設定、紀錄都保留</b>。`, 'trial'],
+    paid: ['✅ 方案有效', `到期 ${bDate(s.until)}（還有 ${Math.max(0, Math.ceil((s.until - now) / 86400000))} 天）。提早續費會接著往後加。`, 'ok'], grace: ['⚠️ 方案已到期（寬限中）', `${bDate(s.graceEnd)} 前續費，交易都不會中斷；之後會停止開新單。`, 'trial'], locked: ['⛔ 方案已到期', '已停止開新單（已開的單照常管理到結束）。付款後馬上恢復，設定和紀錄都還在。', 'bad'] };
+  const [t1, t2, cls] = ST[s.st] || ST.free, pend = (d.orders || []).find(o => o.status === 'pending' && o.exp > now);
+  let html = `<div class="bi"><section class="bistat ${cls}"><b>${t1}</b><span>${t2}</span></section>`;
+  if (!d.on) html += `<section class="bibox"><p class="tlsub">目前網站沒有開放收費，所有功能都可以直接使用。</p></section>`;
+  else if (s.st !== 'free') {
+    BI.m = BI.m || 1;
+    html += `<section class="bibox"><h4>月費方案</h4><div class="biplan"><div><b>${d.price}</b><small>USDT／${d.days} 天</small></div><ul><li>一般交易（CVD 異常偵測、自動下單）</li><li>🗡 特級咒具＋特級交易</li><li>🔔 額外進場通知、作戰室、模擬盤</li></ul></div>
+      ${pend ? '' : `<div class="biplans" role="radiogroup" aria-label="方案長度">${d.plans.map(p => `<label class="biplanopt${BI.m === p.m ? ' on' : ''}"><input type="radio" name="biM" value="${p.m}"${BI.m === p.m ? ' checked' : ''}><b>${p.m} 個月</b><span>${p.price} USDT</span>${p.pct ? `<em>省 ${p.pct}%</em>` : ''}</label>`).join('')}</div>`}`;
+    if (pend) {
+      const left = Math.max(0, pend.exp - now), mm = Math.floor(left / 60000);
+      html += `<div class="biorder"><h4>付款單（${mm} 分鐘內有效）</h4>
+        <p class="biwarn">⚠️ 只能用 <b>TRON（TRC20）</b>網路轉 <b>USDT</b>，<b>實際到帳金額</b>要跟下面<b>完全一樣</b>（含小數）。從交易所提領的話，要把提領手續費加上去，讓「到帳金額」剛好等於這個數字。<b>金額不對會全額退回</b>，要重新付款。</p>
+        <div class="birow"><span>金額</span><b class="biamt" id="biAmt">${pend.amount}</b><button class="btn" data-copy="${pend.amount}">複製</button></div>
+        <div class="birow"><span>收款地址</span><code id="biAddr">${esc(pend.addr || d.addr)}</code><button class="btn" data-copy="${esc(pend.addr || d.addr)}">複製</button></div>
+        <div class="birow"><span>網路</span><b>TRON（TRC20）</b></div><div class="birow"><span>方案</span><b>${pend.m || 1} 個月</b></div>${pend.code ? `<div class="birow"><span>邀請碼</span><b>${esc(pend.code)}（−${pend.pct}%）</b></div>` : ''}
+        <div id="biQR" class="biqr" aria-label="收款地址 QR code"></div>
+        <p class="tlsub">轉帳後通常 1～3 分鐘內自動確認，這頁會自己更新。${d.scan.err ? `<span class="qr">${esc(d.scan.err)}</span>` : ''}</p>
+        <div class="qbt"><button class="btn" id="biCancel">取消這張付款單</button></div></div>`;
+    } else { const p0 = d.plans.find(p => p.m === BI.m) || d.plans[0];
+      html += `<div class="bicode"><label class="field">邀請碼（選填）<input id="biCode" value="${esc(BI.code)}" placeholder="有的話輸入可以打折" autocomplete="off"></label><button class="btn" id="biQuote">套用</button><span id="biQ" class="tlsub"></span></div>
+        <details class="biterms"><summary>服務條款</summary><pre>${esc(d.terms)}</pre></details>
+        <label class="lvck biagree"><input type="checkbox" id="biAgree"> 我已閱讀並同意服務條款</label>
+        <div class="qbt"><button class="btn primary" id="biGo">💳 產生付款單（${p0.price} USDT）</button></div>`; }
+    html += `<details class="biclaim"${BI.claimOpen ? ' open' : ''}><summary>🙋 我已經轉帳，但沒有自動確認</summary><p class="tlsub">貼上這筆轉帳的<b>交易編號</b>（或 Tronscan 連結），系統會到區塊鏈確認是不是轉給我們的 USDT。</p>
+        <div class="xeadd"><input id="biTx" placeholder="交易編號（64 個英數字）" autocomplete="off" spellcheck="false"><button class="btn primary" id="biClaim">查詢</button></div><p class="tlsub" id="biClaimMsg" role="status"></p></details>`;
+    html += `</section>`;
+  }
+  const my = (d.orders || []).filter(o => o.status === 'paid');
+  if (my.length) html += `<section class="bibox"><h4>付款紀錄</h4><div class="tablewrap"><table class="tltab"><tr><th>付款時間</th><th>金額</th><th>邀請碼</th><th>交易編號</th></tr>${my.map(o => `<tr><td>${bDate(o.paidAt)}</td><td>${o.amount} USDT</td><td>${o.code ? `${esc(o.code)} −${o.pct}%` : '—'}</td><td class="tlmut">${o.tx ? `<a href="https://tronscan.org/#/transaction/${esc(o.tx)}" target="_blank" rel="noopener">${esc(o.tx.slice(0, 10))}…</a>` : '手動確認'}</td></tr>`).join('')}</table></div></section>`;
+  const rf = d.refunds || [];
+  if (rf.length) html += `<section class="bibox"><h4>↩️ 退款</h4><div class="tablewrap"><table class="tltab"><tr><th>收到時間</th><th>金額</th><th>退回到</th><th>狀態</th></tr>${rf.map(r => `<tr><td>${bDate(r.at)}</td><td>${r.amount} USDT</td><td class="tlmut">${esc(r.from)}</td><td>${r.status === 'done' ? `<span class="qg">已退款</span>${r.outTx ? ` <a href="https://tronscan.org/#/transaction/${esc(r.outTx)}" target="_blank" rel="noopener">查看</a>` : ''}` : r.status === 'skip' ? '不退款' : '<b class="qy">退款處理中</b>'}<br><small class="tlmut">${esc(r.why || '')}</small></td></tr>`).join('')}</table></div></section>`;
+  if (BI.a) html += biAdmin(BI.a);
+  host.innerHTML = html + '</div>';
+  if (pend) biQR(pend.addr || d.addr);
+  if ($('biGo')) $('biGo').onclick = async () => { if (!$('biAgree').checked) return alert('請先閱讀並勾選同意服務條款'); try { await srvFetch('/api/bill', { op: 'order', code: $('biCode').value.trim(), m: BI.m, agree: true }); BI.code = $('biCode').value.trim(); biLoad(); } catch (e) { alert(e.message); } };
+  document.querySelectorAll('input[name="biM"]').forEach(r => r.onchange = () => { BI.m = +r.value; BI.code = $('biCode') ? $('biCode').value.trim() : BI.code; biRender(); });
+  if ($('biClaim')) $('biClaim').onclick = async () => { const m = $('biClaimMsg'); BI.claimOpen = true; m.textContent = '查詢中…（最多 30 秒）'; try { const r = await srvFetch('/api/bill', { op: 'claim', tx: $('biTx').value }); m.innerHTML = `<span class="qg">${esc(r.msg)}</span>`; setTimeout(() => biLoad(), 1500); } catch (e) { m.innerHTML = `<span class="qr">${esc(e.message)}</span>`; } };
+  if ($('biQuote')) $('biQuote').onclick = async () => { const c = $('biCode').value.trim(); try { const q = await srvFetch('/api/bill', { op: 'quote', code: c, m: BI.m }); BI.code = c; $('biQ').innerHTML = q.code ? `<span class="qg">✓ ${esc(q.code)} 折 ${q.pct}%：<b>${q.price} USDT</b></span>` : `原價 ${q.price} USDT`; $('biGo').textContent = `💳 產生付款單（${q.price} USDT）`; } catch (e) { $('biQ').innerHTML = `<span class="qr">${esc(e.message)}</span>`; } };
+  if ($('biCancel')) $('biCancel').onclick = async () => { if (!confirm('取消這張付款單？已經轉帳的話不要取消。')) return; await srvFetch('/api/bill', { op: 'cancel', id: pend.id }); biLoad(); };
+}
+function biAdmin(a) {                                  // 👑 繳費後台
+  const c = a.cfg, now = Date.now(), SN = { free: '<span class="qg">免費</span>', trial: '<b class="qy">試用</b>', paid: '<b class="qg">有效</b>', grace: '<b class="qy">寬限中</b>', locked: '<b class="qr">到期</b>' };
+  return `<section class="bibox biadm"><h4>👑 繳費後台</h4>
+    <div class="bikpi"><div><small>收費</small><b class="${c.on ? 'qg' : ''}">${c.on ? '開啟中' : '關閉'}</b></div><div><small>近 30 天收入</small><b>${a.income.m30} U</b></div><div><small>累計收入</small><b>${a.income.all} U</b></div><div><small>區塊鏈查詢</small><b class="${a.scan.err ? 'qr' : ''}">${a.scan.at ? fmtT(a.scan.at).slice(-5) : '—'}</b></div></div>
+    <h5>方案設定</h5><div class="params">
+      <label class="field">月費（USDT）<input id="ba_price" type="number" min="1" step="1" value="${c.price}"></label>
+      <label class="field">收款地址（TRON TRC20）<input id="ba_addr" value="${esc(c.addr)}" placeholder="T 開頭 34 個字" autocomplete="off" spellcheck="false"></label>
+      <label class="field">到期幾天後刪帳號（0＝不刪）<input id="ba_del" type="number" min="0" max="365" value="${c.delDays}"></label>
+      <label class="field">開始收費時的寬限天數<input id="ba_grace" type="number" min="0" max="365" value="${c.graceDays}"></label>
+      <label class="field">收費開關<select id="ba_on"><option value="0"${c.on ? '' : ' selected'}>關閉（大家免費用）</option><option value="1"${c.on ? ' selected' : ''}>開啟</option></select></label></div>
+    <h5>多月方案折扣</h5><div class="params">${[3, 6, 12].map(m => { const p = (c.plans || []).find(x => x.m === m); return `<label class="field">${m} 個月折扣 %（空白＝不提供）<input class="ba_plan" data-m="${m}" type="number" min="0" max="90" step="1" value="${p ? p.pct : ''}"></label>`; }).join('')}</div>
+    <h5>服務條款（用戶付款前要勾選同意）</h5><textarea id="ba_terms" rows="6" class="biterm">${esc(c.terms || '')}</textarea>
+    <p class="tlsub">${c.tgKey ? '✅ 已設定 TronGrid API 金鑰' : '⚠️ 還沒設定 TronGrid API 金鑰（人多時查詢可能被限制，設定方法見說明）'}・${c.mail ? '✅ 會寄 Email 提醒和收據' : '⚠️ 還沒設定寄信，只會用 Discord 提醒'}・💾 每日備份：${(c.baks || []).length ? esc(c.baks[0].replace('state-', '').replace('.json', '')) + ' 最新' : '還沒有'}</p>
+    <div class="qbt"><button class="btn primary" id="ba_save">儲存方案設定</button><button class="btn" id="ba_scan">立即查詢區塊鏈</button></div>
+    <h5>邀請碼（輸入就打折）</h5><div id="ba_codes">${(a.codes.length ? a.codes : []).map(x => biCodeRow(x)).join('')}</div>
+    <div class="qbt"><button class="btn" id="ba_addCode">＋ 新增邀請碼</button><button class="btn primary" id="ba_saveCodes">儲存邀請碼</button></div>
+    <h5>免費名單（這些 UID 不用付費；擁有者本來就免費）</h5><div class="xeadd"><input id="ba_freeIn" placeholder="輸入 UID，可以一次好幾個" inputmode="numeric"><button class="btn" id="ba_freeAdd">加入</button></div>
+    <div class="xechips" id="ba_free">${a.free.map(u => `<span class="xechip">${esc(u)}<button data-free-rm="${esc(u)}" aria-label="移除 ${esc(u)}">✕</button></span>`).join('') || '<span class="tlmut">沒有</span>'}</div>
+    <h5>帳號狀態</h5><div class="tablewrap"><table class="tltab"><tr><th>UID</th><th>狀態</th><th>到期</th><th>已付</th><th>操作</th></tr>${a.users.map(u => `<tr><td>${esc(u.uid)}${u.owner ? ' 👑' : ''}</td><td>${SN[u.st] || u.st}</td><td>${u.st === 'trial' ? `試用到 ${bDate(u.trialEnd)}` : u.paidUntil ? bDate(u.paidUntil) : '—'}</td><td>${u.n ? `${u.total} U（${u.n} 次）` : '—'}</td>
+      <td class="trops">${u.owner ? '' : `<button class="btn" data-days="${esc(u.uid)}">±天數</button><button class="btn" data-free-add="${esc(u.uid)}"${u.free ? ' disabled' : ''}>設成免費</button>`}</td></tr>`).join('')}</table></div>
+    ${(() => { const R = a.refunds || [], todo = R.filter(r => r.status === 'todo'), done = R.filter(r => r.status !== 'todo').slice(0, 20);
+      return `<h5 class="${todo.length ? 'qr' : ''}">↩️ 待退款（${todo.length}）</h5><p class="tlsub">付款金額不對的會列在這裡。請用<b>收款錢包</b>把「金額」轉回「退回地址」，金額要一樣；系統每分鐘查一次區塊鏈，轉出去後會自動標成已退款並通知對方。</p>
+      ${todo.length ? `<div class="tablewrap"><table class="tltab"><tr><th>收到時間</th><th>UID</th><th>金額</th><th>退回地址</th><th>原因</th><th>操作</th></tr>${todo.map(r => `<tr><td>${bDate(r.at)}</td><td>${esc(r.uid || '—')}</td><td><b>${r.amount}</b> <button class="btn" data-copy="${r.amount}">複製</button></td><td class="tlmut">${esc(r.from)} <button class="btn" data-copy="${esc(r.from)}">複製</button></td><td class="tlmut">${esc(r.why || '')}</td><td class="trops"><button class="btn primary" data-rdone="${r.id}">我已退款</button><button class="btn" data-rskip="${r.id}">不退</button></td></tr>`).join('')}</table></div>` : '<p class="tlmut">沒有待退款</p>'}
+      ${done.length ? `<details><summary class="tlsub">退款紀錄（${done.length}）</summary><div class="tablewrap"><table class="tltab"><tr><th>收到</th><th>UID</th><th>金額</th><th>退回地址</th><th>狀態</th></tr>${done.map(r => `<tr><td>${bDate(r.at)}</td><td>${esc(r.uid || '—')}</td><td>${r.amount}</td><td class="tlmut">${esc(r.from)}</td><td>${r.status === 'done' ? `已退款${r.how === 'manual' ? '（手動）' : ''}${r.outTx ? ` <a href="https://tronscan.org/#/transaction/${esc(r.outTx)}" target="_blank" rel="noopener">查看</a>` : ''}` : `不退${r.note ? '：' + esc(r.note) : ''}`}</td></tr>`).join('')}</table></div></details>` : ''}`; })()}
+    ${a.unmatched.length ? `<h5 class="qr">⚠ 對不上的轉帳（金額跟任何付款單都不同）</h5><div class="tablewrap"><table class="tltab"><tr><th>時間</th><th>金額</th><th>付款地址</th><th>操作</th></tr>${a.unmatched.map(m => `<tr><td>${bDate(m.at)}</td><td>${m.amount} USDT</td><td class="tlmut">${esc(m.from)}</td><td class="trops"><button class="btn" data-assign="${esc(m.tx)}">指定給 UID</button><button class="btn" data-refund="${esc(m.tx)}">退款</button><button class="btn" data-dismiss="${esc(m.tx)}">忽略</button></td></tr>`).join('')}</table></div>` : ''}
+    <h5>付款單</h5><div class="tablewrap"><table class="tltab"><tr><th>建立</th><th>UID</th><th>金額</th><th>方案／邀請碼</th><th>狀態</th><th>操作</th></tr>${a.orders.slice(0, 60).map(o => `<tr><td>${bDate(o.at)}</td><td>${esc(o.uid)}</td><td>${o.amount}</td><td>${o.m || 1} 個月${o.code ? `・${esc(o.code)} −${o.pct}%` : ''}</td><td>${{ pending: '<b class="qy">等付款</b>', paid: `<span class="qg">已付 ${o.how === 'manual' ? '（手動）' : ''}</span>`, expired: '過期', cancel: '取消' }[o.status] || o.status}</td>
+      <td class="trops">${o.status !== 'paid' ? `<button class="btn" data-pay="${o.id}">手動確認已付</button>` : o.tx ? `<a class="tlmut" href="https://tronscan.org/#/transaction/${esc(o.tx)}" target="_blank" rel="noopener">查看</a>` : ''}</td></tr>`).join('')}</table></div></section>`;
+}
+const biCodeRow = x => `<div class="bicr"><input class="bc_code" value="${esc(x.code || '')}" placeholder="邀請碼，例如 VIP" aria-label="邀請碼"><input class="bc_pct" type="number" min="0" max="100" step="1" value="${x.pct ?? 10}" aria-label="折扣 %"><span>% off</span><input class="bc_note" value="${esc(x.note || '')}" placeholder="備註（給誰用）" aria-label="備註"><label class="lvck"><input type="checkbox" class="bc_on"${x.on !== false ? ' checked' : ''}> 啟用</label><span class="tlmut">已用 ${x.n || 0} 次</span><button class="btn" data-code-rm aria-label="刪除這個邀請碼">✕</button></div>`;
+$('mnpBill').addEventListener('click', async e => {
+  const t = e.target, A = (op, body) => srvFetch('/api/bill/admin', { op, ...body });
+  try {
+    if (t.dataset.copy) { try { await navigator.clipboard.writeText(t.dataset.copy); t.textContent = '已複製'; setTimeout(() => t.textContent = '複製', 1500); } catch (err) { prompt('複製這段：', t.dataset.copy); } return; }
+    if (t.id === 'ba_save') { const plans = [{ m: 1, pct: 0 }, ...[...document.querySelectorAll('.ba_plan')].filter(i => i.value !== '').map(i => ({ m: +i.dataset.m, pct: +i.value }))]; await A('set', { cfg: { price: +$('ba_price').value, addr: $('ba_addr').value.trim(), delDays: +$('ba_del').value, graceDays: +$('ba_grace').value, on: $('ba_on').value === '1', plans, terms: $('ba_terms').value } }); alert('已儲存'); return biLoad(); }
+    if (t.id === 'ba_scan') { t.textContent = '查詢中…'; await A('scan'); return biLoad(); }
+    if (t.id === 'ba_addCode') { $('ba_codes').insertAdjacentHTML('beforeend', biCodeRow({})); return; }
+    if (t.dataset.codeRm !== undefined) { t.closest('.bicr').remove(); return; }
+    if (t.id === 'ba_saveCodes') { const codes = [...document.querySelectorAll('#ba_codes .bicr')].map(r => ({ code: r.querySelector('.bc_code').value, pct: +r.querySelector('.bc_pct').value, note: r.querySelector('.bc_note').value, on: r.querySelector('.bc_on').checked })); await A('codes', { codes }); alert('邀請碼已儲存'); return biLoad(); }
+    const free = BI.a ? [...BI.a.free] : [];
+    if (t.id === 'ba_freeAdd') { const L = $('ba_freeIn').value.split(/[\s,，、]+/).filter(Boolean); await A('free', { free: [...free, ...L] }); return biLoad(); }
+    if (t.dataset.freeRm) { if (!confirm(`把 ${t.dataset.freeRm} 移出免費名單？之後他要付費才能繼續用。`)) return; await A('free', { free: free.filter(x => x !== t.dataset.freeRm) }); return biLoad(); }
+    if (t.dataset.freeAdd) { if (!confirm(`把 ${t.dataset.freeAdd} 設成免費帳號？`)) return; await A('free', { free: [...free, t.dataset.freeAdd] }); return biLoad(); }
+    if (t.dataset.days) { const v = prompt(`幫 ${t.dataset.days} 調整方案天數（例如 30 或 -7）：`, '30'); if (v === null) return; await A('days', { uid: t.dataset.days, days: +v }); return biLoad(); }
+    if (t.dataset.pay) { const tx = prompt('手動確認已付款。可以貼上交易編號（選填）：', ''); if (tx === null) return; await A('pay', { id: t.dataset.pay, tx }); return biLoad(); }
+    if (t.dataset.assign) { const uid = prompt('這筆轉帳是誰付的？輸入 UID：'); if (!uid) return; const days = prompt('要加幾天？', '30'); if (days === null) return; await A('assign', { tx: t.dataset.assign, uid: uid.trim(), days: +days }); return biLoad(); }
+    if (t.dataset.dismiss) { if (!confirm('忽略這筆轉帳？')) return; await A('dismiss', { tx: t.dataset.dismiss }); return biLoad(); }
+    if (t.dataset.refund) { const uid = prompt('要全額退回這筆轉帳。知道是哪個 UID 的話可以填（會通知他），不知道就留空：', ''); if (uid === null) return; await A('refund', { tx: t.dataset.refund, uid: uid.trim() }); return biLoad(); }
+    if (t.dataset.rdone) { const tx = prompt('已經從收款錢包退回了嗎？可以貼上退款的交易編號（選填）。\n\n通常不用按這個：系統查到轉出紀錄會自動標成已退款。', ''); if (tx === null) return; await A('refundDone', { id: t.dataset.rdone, tx }); return biLoad(); }
+    if (t.dataset.rskip) { const n = prompt('這筆不退款？寫一下原因（選填）：', ''); if (n === null) return; await A('refundSkip', { id: t.dataset.rskip, note: n }); return biLoad(); }
+  } catch (err) { alert(err.message); }
+});
 /* ---------- 🔔 額外進場：選幣、選訊號（暗流／折返／伏擊）、另外的 Discord 頻道；只通知不下單 ---------- */
 const XE = { d: null, timer: null, syms: [], dirty: false };
 const XE_T = [['zh', '🌊', '暗流', 'FLOW', '莊家淨額背離：4H／1H 收跌但淨額為正（吸貨）或收漲但淨額為負（出貨），之後 15M／5M 出現同方向 CHoCH／BOS'],
@@ -4615,6 +4745,7 @@ function mnOpen(k) {
   if (k === 'bt') tbLoad();                            // 🗡 特級咒具回測（有權限才顯示）
   clearInterval(TL.timer);
   if (k === 'tool') { $('mnpTool').innerHTML = '<p class="tlsub">載入中…</p>'; tlLoad('tool'); TL.timer = setInterval(() => { if (MN_PAGE === 'tool' && TL.d && !($('tlDlg') && $('tlDlg').open)) tlLoad('tool'); }, 20000); }   // 設定視窗打開時不更新
+  if (k === 'bill') { $('mnpBill').innerHTML = '<p class="tlsub">載入中…</p>'; biLoad(); TL.timer = setInterval(() => { if (MN_PAGE === 'bill' && !document.activeElement.closest('#mnpBill input,#mnpBill select')) biLoad(BI.d && (BI.d.orders || []).some(o => o.status === 'pending')); }, 15000); }
   if (k === 'xent') { XE.dirty = false; $('mnpXent').innerHTML = '<p class="tlsub">載入中…</p>'; xeLoad(); TL.timer = setInterval(() => { if (MN_PAGE === 'xent' && !XE.dirty && !($('xeDlg') && $('xeDlg').open)) xeLoad(); }, 30000); }
   try { if (k === 'cards') { $('qSidePanel').hidden = false; renderCards(); } if (k === 'hist') { $('qTabPanel').hidden = false; hSeg(HSEG.tab); } if (k === 'stats' || k === 'eq') { EQC = null; renderHist(); } } catch (e) { console.error(e); }   // 重畫出錯也要照樣打開頁面
   $('mnSheet').hidden = false; document.body.classList.add('mn-sheet'); $('mnSheet').scrollTop = 0; $('mnSheetBody').scrollTop = 0;
@@ -4652,6 +4783,18 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-01d', title: '2026/11/01 更新（繳費改進）', items: [
+    { ic: '📦', t: '新增 3／12 個月方案（擁有者可以設定折扣），付款前要勾選同意服務條款。' },
+    { ic: '🙋', t: '「我已經轉帳，但沒有自動確認」：貼上交易編號，系統到區塊鏈確認後自動開通。付過一次款的錢包地址會被記住，之後金額不對也認得出是誰。' },
+    { ic: '⏰', t: '到期前 3 天、1 天、到期時都會用 Discord＋Email 提醒；到期後有 24 小時寬限，之後只停止開新單，已開的單照原本的止損、止盈管理到結束。付款成功會寄收據。' }
+  ] },
+  { id: '2026-11-01c', title: '2026/11/01 更新（金額不對全額退回）', items: [
+    { ic: '↩️', t: '付款金額跟付款單不一樣（例如交易所扣了手續費）時，會全額退回：系統認出是誰付的、通知對方重新付款；擁有者用收款錢包轉回去後，系統查到區塊鏈紀錄會自動標成已退款並通知對方。付款單尾數改成 2 位小數，交易所提領比較好填。' }
+  ] },
+  { id: '2026-11-01b', title: '2026/11/01 更新（月費）', items: [
+    { ic: '💳', t: '選單新增「方案與繳費」：月費用 USDT（TRON TRC20）付款，產生付款單後照上面的金額轉帳，1～3 分鐘內自動確認、自動延長 30 天。有邀請碼可以打折。試用中付費會接在試用後面，所有設定都保留。' },
+    { ic: '👑', t: '擁有者的繳費後台：月費、收款地址、邀請碼和折扣、免費名單、每個人的到期日、收入統計、對不上的轉帳可以手動指定。到期會停止交易並平掉系統開的單，超過設定天數沒續費才刪帳號。' }
+  ] },
   { id: '2026-11-01a', title: '2026/11/01 更新（7 天試用）', items: [
     { ic: '🧪', t: '登入頁新增「申請 7 天免費試用」：填 UID、密碼、Google 信箱、手機號碼送出，擁有者或管理員開通後才能登入。試用期間可以用一般用戶的所有功能和特級進場，右上角會顯示剩幾天。' },
     { ic: '🔍', t: '帳號管理新增「7 天試用申請」：開通、拒絕、延長、立即結束；每筆申請自動比對 UID、信箱、電話有沒有跟之前的試用申請或現有帳號重複。到期自動停止交易、一鍵平倉、刪除帳號和 API，申請紀錄永遠保留。' }
@@ -6237,7 +6380,12 @@ function gateHide() {
   $('qUserBox').hidden = false; $('qUid').textContent = SRV.uid || '管理金鑰';
   if (!$('qRoleB')) $('qLogout').insertAdjacentHTML('beforebegin', '<span id="qRoleB"></span><span id="qSimB"></span>');
   $('qRoleB').innerHTML = roleBadge(SRV.role, SRV.owner);
-  if (SRV.trialEnd) { const d = Math.max(0, SRV.trialEnd - Date.now()), dd = Math.floor(d / 86400000), hh = Math.floor(d % 86400000 / 3600000); $('qRoleB').innerHTML += `<span class="trialb" title="試用到 ${fmtT(SRV.trialEnd)}，到期會自動停止交易、平倉、刪除帳號">🧪 試用剩 ${dd ? dd + ' 天 ' : ''}${hh} 小時</span>`; }
+  { const B = SRV.bill, d = Math.max(0, (SRV.trialEnd || 0) - Date.now()), dd = Math.floor(d / 86400000), hh = Math.floor(d % 86400000 / 3600000);   // 🧪 試用／💳 方案狀態（點了打開「方案與繳費」）
+    if (B && B.st === 'locked') $('qRoleB').innerHTML += `<button class="trialb bad" data-bill>⛔ 方案到期・按這裡續費</button>`;
+    else if (B && B.st === 'trial' || (!B && SRV.trialEnd)) $('qRoleB').innerHTML += `<button class="trialb" data-bill title="試用到 ${fmtT(SRV.trialEnd)}">🧪 試用剩 ${dd ? dd + ' 天 ' : ''}${hh} 小時${B ? '・付費保留設定' : ''}</button>`;
+    else if (B && B.st === 'paid' && B.until - Date.now() < 5 * 86400000) $('qRoleB').innerHTML += `<button class="trialb" data-bill>💳 ${fmtT(B.until).slice(5, 10)} 到期・續費</button>`;
+    else if (B && B.st === 'grace') $('qRoleB').innerHTML += `<button class="trialb bad" data-bill>⚠️ 方案到期・寬限中・按這裡續費</button>`;
+    $('qRoleB').onclick = e => { if (e.target.closest('[data-bill]')) mnOpen('bill'); }; }
   $('qAdmBtn').hidden = !CANW();
   window.qWhaleFetch = (sym, a) => srvFetch(`/api/whale?sym=${encodeURIComponent(sym)}&a=${a || 0}`);   // 🐋 鯨魚大單改由伺服器收集
   window.dispatchEvent(new Event('whaleready'));
@@ -6356,7 +6504,7 @@ $('qLogout').onclick = async () => {
   try {
     const r = await fetch(SRV.url.replace(/\/+$/, '') + '/api/me', { cache: 'no-store', headers: { Authorization: 'Bearer ' + SRV.token } });
     if (!r.ok) return gateShow(r.status === 401 ? '登入已過期，請重新登入' : '');
-    const j = await r.json(); SRV.role = j.role; SRV.uid = j.uid; SRV.owner = !!j.owner; SRV.key = ''; SRV.trialEnd = j.trialEnd || 0;
+    const j = await r.json(); SRV.role = j.role; SRV.uid = j.uid; SRV.owner = !!j.owner; SRV.key = ''; SRV.trialEnd = j.trialEnd || 0; SRV.bill = j.bill || null;
     LS.set('quantSrv', SRV);
     if (j.needBind) return bindShow(j);
     gateHide();
