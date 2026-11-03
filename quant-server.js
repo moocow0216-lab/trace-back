@@ -941,7 +941,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-11-01d';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-11-01f';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1856,6 +1856,7 @@ ST.bill = { ...DEF_BILL, ...(ST.bill || {}) };
 for (const k of ['refunds', 'plans', 'codes', 'free', 'orders', 'unmatched']) if (!Array.isArray(ST.bill[k])) ST.bill[k] = DEF_BILL[k];
 for (const k of ['payers', 'seen', 'seenOut']) if (!ST.bill[k] || typeof ST.bill[k] !== 'object') ST.bill[k] = {};
 for (const o of ST.bill.orders) if (!o.addr) o.addr = ST.bill.addr;   // 舊的付款單補上收款地址
+const BUYC = new Map();   // 獨立繳費頁的信箱驗證碼（記在記憶體，10 分鐘）
 const BL = () => ST.bill, DAYMS = 24 * HOUR, tgHead = () => process.env.TRONGRID_KEY ? { 'TRON-PRO-API-KEY': process.env.TRONGRID_KEY } : {};
 const billFree = uid => uid === ownerUid() || BL().free.includes(uid);
 function billState(usr) {                              // free／trial／paid／grace（到期 24 小時內，照常使用）／locked
@@ -1882,16 +1883,25 @@ function billOrder(uid, code, months) {                // 開付款單：整數�
     for (let k = 1; k <= 99; k++) if (!used.has(base + k * 1e4) && (off > 0 || !cents.has(k))) free.push(k);
     if (free.length) micro = base + free[Math.floor(Math.random() * free.length)] * 1e4;
   }
-  const o = { id: crypto.randomBytes(6).toString('hex'), uid, addr: B.addr, m: q.m, base: q.base, planPct: q.planPct, pct: q.pct, code: q.code, micro, amount: (micro / 1e6).toFixed(2), at: now, exp: now + B.orderHours * HOUR, status: 'pending', days: B.days * q.m };
+  const o = { id: crypto.randomBytes(6).toString('hex'), uid, addr: B.addr, m: q.m, base: q.base, planPct: q.planPct, pct: q.pct, code: q.code, price: q.price, micro, amount: (micro / 1e6).toFixed(2), at: now, exp: now + B.orderHours * HOUR, status: 'pending', days: B.days * q.m };
   B.orders.unshift(o); if (B.orders.length > 3000) B.orders.length = 3000; dirty = true; return o;
 }
 function billMail(usr, subj, text) { if (mailOn() && usr && usr.bind && usr.bind.email) sendMail(usr.bind.email, 'Quant X：' + subj, text + `\n\n${SITE}`).catch(e => log('寄信失敗', usr.uid, e.message)); }
-function billApply(o, tx, how, from) {                 // 收到錢：延長天數（從目前到期日、試用到期日或今天，取最晚的往後加）；試用中付費＝轉成付費
-  const B = BL(), usr = ST.users.find(x => x.uid === o.uid), now = Date.now();
+function billApply(o, tx, how, from) {                 // 收到錢：延長天數（從目前到期日、試用到期日或今天，取最晚的往後加）；試用中付費＝轉成付費；直接購買＝建立帳號
+  const B = BL(), usr0 = ST.users.find(x => x.uid === o.uid), now = Date.now();
   o.status = 'paid'; o.paidAt = now; o.tx = tx || o.tx || ''; o.how = how; o.from = from || o.from || ''; dirty = true;
   if (o.from) B.payers[o.from] = o.uid;                // 記住付款錢包地址＝這個人
   if (o.code) { const c = B.codes.find(x => x.code === o.code); if (c) c.n = (c.n || 0) + 1; }
-  if (!usr) return;
+  let usr2 = usr0;
+  if (!usr2 && o.newAcct) {                            // 🆕 直接購買的新用戶：付款成功才建立帳號（密碼是他下單時自己設的）
+    const n = o.newAcct; usr2 = { uid: o.uid, role: 'viewer', salt: n.salt, hash: n.hash, created: now, bind: { email: n.email, phone: n.phone, google: false, at: now }, buyId: o.id };
+    if (!ST.tool.grants.includes(o.uid)) ST.tool.grants.push(o.uid); ST.users.push(usr2);
+    for (const r of ST.trials) if (r.uid === o.uid && r.status === 'pending') { r.status = 'converted'; r.convertedAt = now; r.note = '直接購買'; }
+    log('購買建立帳號', o.uid); dcX(ctx(ownerUid()), `🆕 **新用戶直接購買**：${o.uid}（${maskMail(n.email)}），帳號已自動建立`);
+    billMail(usr2, '帳號已建立', `付款成功，帳號已經建立！\n\nUID：${o.uid}\n密碼：你購買時設定的那組\n登入網址：${SITE}\n\n登入後請到「☰ 選單 → 設定」設定 Bitunix API，才能開始自動交易。`);
+  }
+  if (!usr2) return;
+  const usr = usr2;
   const from0 = Math.max(now, usr.paidUntil || 0, usr.trialEnd || 0); usr.paidUntil = from0 + (o.days || 30) * DAYMS; usr.billLock = false; usr.billRem = '';
   if (usr.trialId) { const r = ST.trials.find(x => x.id === usr.trialId); if (r && ['active', 'closing'].includes(r.status)) { r.status = 'converted'; r.convertedAt = now; } delete usr.trialId; usr.trialEnd = 0; }
   log('收到月費', o.uid, o.amount, how);
@@ -1904,7 +1914,7 @@ function billRefund(r) {                               // ↩️ 待退款（伺
   const B = BL(); if (B.refunds.some(x => x.tx === r.tx)) return;
   B.refunds.unshift({ id: crypto.randomBytes(6).toString('hex'), status: 'todo', addr: r.addr || B.addr, ...r }); if (B.refunds.length > 500) B.refunds.length = 500; dirty = true;
   dcX(ctx(ownerUid()), `↩️ **需要退款**：${r.amount} USDT → ${r.from}${r.uid ? `（${r.uid}）` : ''}\n原因：${mdEsc(r.why || '')}\n請用收款錢包轉回去（金額一樣），系統會自動確認。`);
-  const usr = r.uid && ST.users.find(x => x.uid === r.uid); if (usr) billMail(usr, '付款金額不對，將全額退回', `你轉入的 ${r.amount} USDT ${r.why ? `（${r.why}）` : ''}會全額退回到 ${r.from}。\n請重新產生付款單，並確認「實際到帳金額」跟付款單完全一樣。`);
+  const usr = r.uid && ST.users.find(x => x.uid === r.uid); if (usr) billMail(usr, '退款通知', `會退回 ${r.amount} USDT 到 ${r.from}。${r.why ? `\n原因：${r.why}` : ''}${/多轉/.test(r.why || '') ? '\n你的方案已經開通，不用重新付款。' : '\n請重新產生付款單，並確認「實際到帳金額」跟付款單完全一樣。'}\n退款完成後會再通知你。`);
 }
 function billRefundDone(r, outTx, how) {
   r.status = 'done'; r.outTx = outTx || ''; r.doneAt = Date.now(); r.how = how; dirty = true;
@@ -1921,15 +1931,30 @@ async function tgList(addr, dir, since) {               // TronGrid：某地址�
   return out;
 }
 const billUsed = tx => { const B = BL(); return B.orders.some(o => o.tx === tx) || B.refunds.some(r => r.tx === tx); };
+function billPay(o, t, how, addr) {                    // 開通；多轉 1 USDT 以上的話，把「多出來的部分」列進待退款（不到 1U 的不退，退款手續費比金額還貴）
+  const v = +t.value; billApply(o, t.transaction_id, how, t.from);
+  const extra = Math.floor((v - o.micro) / 1e4) / 100;
+  if (extra >= 1) {
+    billRefund({ tx: t.transaction_id, from: t.from, amount: extra.toFixed(2), uid: o.uid, orderId: o.id, addr: addr || o.addr, at: +t.block_timestamp || Date.now(), why: `多轉了：付款單 ${o.amount}，實際收到 ${(v / 1e6).toFixed(2)}，退回多出來的 ${extra.toFixed(2)}` });
+    if (ST.accts[o.uid]) dcX(ctx(o.uid), `↩️ 你多轉了 **${extra.toFixed(2)} USDT**（付款單 ${o.amount}，實際收到 ${(v / 1e6).toFixed(2)}）。方案已經開通，多出來的部分會退回到 ${t.from}，退款完成會再通知你。`);
+  }
+}
 function billIncoming(t, addr) {                       // 處理一筆轉入：金額對 → 開通；認得是誰但金額不對 → 全額退回；認不出來 → 對不上的轉帳
   const B = BL(), v = +t.value, ts = +t.block_timestamp || Date.now(), amt = (v / 1e6).toFixed(2);
   const win = x => (x.status === 'pending' || x.status === 'expired') && (x.addr || B.addr) === addr && ts >= x.at - 60000 && ts - x.at < 48 * HOUR;
   const o = B.orders.filter(x => win(x) && x.micro === v).sort((a, b2) => b2.at - a.at)[0];
   if (o) return billApply(o, t.transaction_id, 'auto', t.from);
+  // 沒有加尾數、剛好轉「方案原價」（例如 200 整）：只有一張單是這個價格（或付款錢包認得是誰）就直接算
+  const oPrice = x => Math.round((x.price != null ? x.price : Math.round((x.base || B.price) * (x.m || 1) * (100 - (x.planPct || 0)) * (100 - (x.pct || 0))) / 1e4) * 1e6);
+  const pm = B.orders.filter(x => win(x) && oPrice(x) === v), who = B.payers[t.from], pick = pm.length === 1 ? pm[0] : who ? pm.find(x => x.uid === who) : null;
+  if (pick) return billApply(pick, t.transaction_id, 'auto', t.from);
   if (v < 1e6) return;                                 // 不到 1 USDT（灰塵攻擊）不理它
-  const ct = Math.round(v / 1e4) % 100, near = B.orders.filter(x => win(x) && Math.round(x.micro / 1e4) % 100 === ct && v >= x.micro * 0.5 && v <= x.micro * 1.5);
+  const okAmt = (x, cap) => v >= Math.floor(x.micro / 1e6) * 1e6 && v <= x.micro * cap;   // 尾數只是用來認人：付「方案價格」（例如 200 整）以上都算數，多的退回
+  const ct = Math.round(v / 1e4) % 100, near = B.orders.filter(x => win(x) && Math.round(x.micro / 1e4) % 100 === ct && v >= x.micro * 0.5 && v <= x.micro * 5);
   let uid = near.length === 1 ? near[0].uid : '', ord = near.length === 1 ? near[0] : null;
   if (!uid && B.payers[t.from]) { uid = B.payers[t.from]; ord = B.orders.find(x => win(x) && x.uid === uid) || null; }   // 之前用這個錢包付過款的人
+  if (!uid) { const cand = B.orders.filter(x => win(x) && okAmt(x, 1.5)); if (cand.length === 1) { ord = cand[0]; uid = ord.uid; } }   // 只有一張單的價格對得上（例如只轉 200 整、同時間只有一個人在付）
+  if (ord && okAmt(ord, 5)) return billPay(ord, t, 'auto', addr);
   if (uid && !ord) {                                   // 認得是誰、沒開付款單：剛好是某個方案的原價就直接算，不然退回
     const pl = B.plans.find(p => Math.round(billPrice('', p.m).price * 1e6) === v);
     if (pl) { const o2 = { id: crypto.randomBytes(6).toString('hex'), uid, addr, m: pl.m, base: B.price, planPct: pl.pct, pct: 0, code: '', micro: v, amount: amt, at: ts, exp: ts, status: 'pending', days: B.days * pl.m }; B.orders.unshift(o2); return billApply(o2, t.transaction_id, 'auto', t.from); }
@@ -1976,7 +2001,7 @@ async function billClaim(usr, tx) {                    // 🙋 用戶自己認�
     if (!t) continue;
     B.unmatched = B.unmatched.filter(x => x.tx !== tx); B.seen[tx] = Date.now();
     const ord = B.orders.filter(o => o.uid === usr.uid && (o.status === 'pending' || o.status === 'expired') && (o.addr || B.addr) === addr).sort((a, b2) => b2.at - a.at)[0];
-    if (ord && ord.micro === +t.value) { billApply(ord, tx, 'claim', t.from); return { ok: true, msg: `✅ 找到了！${ord.amount} USDT，已經幫你開通` }; }
+    const v = +t.value; if (ord && v >= Math.floor(ord.micro / 1e6) * 1e6 && v <= ord.micro * 5) { billPay(ord, t, 'claim', addr); return { ok: true, msg: `✅ 找到了！${(v / 1e6).toFixed(2)} USDT，已經幫你開通${v - ord.micro >= 1e6 ? '，多轉的部分會退回給你' : ''}` }; }
     B.payers[t.from] = usr.uid; billIncoming(t, addr);   // 金額不對：照規則全額退回（已經知道是你）
     return { ok: true, msg: `找到這筆 ${(+t.value / 1e6).toFixed(2)} USDT，但跟付款單金額不同，會全額退回到 ${t.from}，請重新付款` };
   }
@@ -1991,7 +2016,7 @@ setInterval(async () => {                              // 每分鐘：到期提�
       const X = ST.accts[usr.uid] ? ctx(usr.uid) : null, say = (tag, dc, subj, mail) => { if (usr.billRem === tag + usr.paidUntil) return; usr.billRem = tag + usr.paidUntil; dirty = true; if (X) dcX(X, dc); billMail(usr, subj, mail); };
       if (st.st === 'paid') {
         const left = usr.paidUntil - now;
-        if (left < DAYMS) say('1', `⏰ **方案明天到期**（${tw(usr.paidUntil)}）。到「☰ 選單 → 💳 方案與繳費」續費，交易不會中斷。`, '方案明天到期', `你的方案會在 ${tw(usr.paidUntil)}（台北）到期，請到網站「💳 方案與繳費」續費。`);
+        if (left < DAYMS) say('1', `⏰ **方案明天到期**（${tw(usr.paidUntil)}）。到「☰ 選單 → 💳 方案與繳費」續費，交易不會中斷：${SITE}pay.html`, '方案明天到期', `你的方案會在 ${tw(usr.paidUntil)}（台北）到期，請到這裡續費：${SITE}pay.html`);
         else if (left < 3 * DAYMS) say('3', `⏰ **方案 3 天後到期**（${tw(usr.paidUntil)}）。到「☰ 選單 → 💳 方案與繳費」續費。`, '方案 3 天後到期', `你的方案會在 ${tw(usr.paidUntil)}（台北）到期，請到網站「💳 方案與繳費」續費。`);
         continue;
       }
@@ -2704,7 +2729,7 @@ http.createServer(async (req, res) => {
       return send(res, age < 10 * 60000 ? 200 : 503, { ok: age < 10 * 60000, scanAgeS: Math.round(age / 1000), up: Math.round((Date.now() - BOOT) / 1000) });
     }
     if (req.method === 'GET' && u.pathname === '/api/auth') return send(res, 200, { needSetup: !ST.users.length });
-    if (req.method === 'POST' && ['/api/login', '/api/setup', '/api/logout', '/api/login/google', '/api/login/code', '/api/forgot', '/api/reset', '/api/trial/apply'].includes(u.pathname)) {
+    if (req.method === 'POST' && ['/api/login', '/api/setup', '/api/logout', '/api/login/google', '/api/login/code', '/api/forgot', '/api/reset', '/api/trial/apply', '/api/buy'].includes(u.pathname)) {
       const ip = ipOf(req), b = await readBody(req, 1e5);
       if (u.pathname === '/api/logout') { const m = String(req.headers.authorization || '').match(/^Bearer\s+(\w+)$/); if (m) { const h = tokHash(m[1]); ST.sessions = ST.sessions.filter(x => x.h !== h); dirty = true; } return send(res, 200, { ok: true }); }
       if (locked(ip)) return send(res, 429, { error: '輸錯太多次，請 15 分鐘後再試' });
@@ -2718,6 +2743,53 @@ http.createServer(async (req, res) => {
         if (ST.accts.__owner && !ST.accts[usr.uid]) { ST.accts[usr.uid] = ST.accts.__owner; delete ST.accts.__owner; RT.delete('__owner'); }   // 還沒建帳號前存的資料交給第一個管理員
         ST.owner = usr.uid; dirty = true;
         return send(res, 200, { token: newSession(usr), uid: usr.uid, role: usr.role });
+      }
+      if (u.pathname === '/api/buy') {                   // 💳 獨立繳費頁（不用登入）：看方案、寄信箱驗證碼、下單、查付款、認領
+        const B = BL(), op = String(b.op || 'info');
+        if (op === 'info') return send(res, 200, { on: B.on && !!B.addr, price: B.price, days: B.days, plans: B.plans.map(p => ({ ...p, price: billPrice('', p.m).price })), terms: B.terms, orderHours: B.orderHours, mail: mailOn() });
+        if (op === 'quote') { const q = billPrice(b.code, b.m); if (b.code && !q.code) return send(res, 400, { error: '邀請碼不對' }); return send(res, 200, q); }
+        if (op === 'code') {                             // 📧 寄信箱驗證碼（10 分鐘內有效）
+          const email = String(b.email || '').trim().toLowerCase();
+          if (!mailOn()) return send(res, 400, { error: '伺服器還沒設定寄信，請聯絡擁有者' });
+          if (!/^[a-z0-9.+_-]{1,64}@(gmail|googlemail)\.com$/.test(email)) return send(res, 400, { error: '請輸入 Google 信箱（@gmail.com）' });
+          if (!mailAllow('buyip:' + ip, 8) || !mailAllow('buymail:' + email, 4)) return send(res, 429, { error: '寄太多次了，請一小時後再試' });
+          const code = String(crypto.randomInt(100000, 1000000)); BUYC.set(email, { h: sha(code), exp: Date.now() + 10 * 60000, n: 0 });
+          sendMail(email, 'Quant X：信箱驗證碼', `你的驗證碼是：${code}\n\n10 分鐘內有效。如果不是你本人操作，忽略這封信就好。`).catch(e => log('驗證碼寄不出去', maskMail(email), e.message));
+          return send(res, 200, { ok: true, msg: '驗證碼已寄出，請到信箱收信（也看一下垃圾郵件）' });
+        }
+        if (op === 'order') {                            // 🆕 新用戶下單：UID、密碼、信箱（驗證碼）、手機都對才開付款單；付款成功才建立帳號
+          if (!B.on || !B.addr) return send(res, 400, { error: '目前沒有開放購買' });
+          if (b.agree !== true) return send(res, 400, { error: '請先閱讀並勾選同意服務條款' });
+          const uid = String(b.uid || '').trim(), email = String(b.email || '').trim().toLowerCase(), phone = normPhone(b.phone);
+          if (!validUid(uid)) return send(res, 400, { error: 'UID 應該是 4～20 位數字（Bitunix 的 UID）' });
+          if (ST.users.some(x => x.uid === uid)) return send(res, 400, { error: '這個 UID 已經有帳號了，請先登入，再到「💳 方案與繳費」續費', needLogin: true });
+          if (!validPw(b.password)) return send(res, 400, { error: '密碼至少 8 個字' });
+          if (!phone) return send(res, 400, { error: '手機號碼格式不對（台灣手機請填 09 開頭的 10 碼）' });
+          const C = BUYC.get(email); if (!C || C.exp < Date.now() || C.n >= 5) return send(res, 400, { error: '請先寄驗證碼到信箱，再輸入信裡的 6 位數字' });
+          if (C.h !== sha(String(b.emailCode || '').trim())) { C.n++; return send(res, 400, { error: '信箱驗證碼不對' }); }
+          const c = ST.users.find(x => x.bind && (x.bind.email === email || x.bind.phone === phone));
+          if (c) return send(res, 400, { error: `這個${c.bind.email === email ? '信箱' : '手機號碼'}已經綁定其他帳號了，請直接登入那個帳號續費` });
+          if (b.code && !billPrice(b.code, b.m).code) return send(res, 400, { error: '邀請碼不對' });
+          const o = billOrder(uid, b.code, b.m), otok = crypto.randomBytes(16).toString('hex');
+          o.newAcct = { ...hashPw(String(b.password)), email, phone }; o.otok = sha(otok); o.agreeAt = Date.now(); o.ip = ip; BUYC.delete(email); dirty = true;
+          dcX(ctx(ownerUid()), `🛒 **有人要直接購買**：UID ${uid}・${maskMail(email)}・${o.amount} USDT（${o.m} 個月），等他付款`);
+          return send(res, 200, { order: { id: o.id, amount: o.amount, addr: o.addr, exp: o.exp, m: o.m, pct: o.pct, code: o.code, uid }, otok });
+        }
+        const o = B.orders.find(x => x.id === String(b.id || '') && x.otok && x.otok === sha(String(b.otok || '')));
+        if (!o) return send(res, 404, { error: '找不到這張付款單' });
+        if (op === 'status') {
+          if (o.status !== 'paid' && Date.now() - B.scan.at > 20000) await billScan(false).catch(() => {});
+          const usr = ST.users.find(x => x.uid === o.uid);
+          return send(res, 200, { status: o.status, amount: o.amount, addr: o.addr, exp: o.exp, uid: o.uid, until: o.status === 'paid' && usr ? usr.paidUntil : 0, refund: B.refunds.filter(r => r.orderId === o.id).map(r => ({ amount: r.amount, status: r.status, from: r.from })) });
+        }
+        if (op === 'cancel') { if (o.status === 'pending') { o.status = 'cancel'; dirty = true; } return send(res, 200, { ok: true }); }
+        if (op === 'claim') {
+          const tx = String(b.tx || '').trim().toLowerCase().replace(/^.*transaction\//, '').replace(/[^0-9a-f]/g, '');
+          if (!/^[0-9a-f]{64}$/.test(tx)) return send(res, 400, { error: '交易編號應該是 64 個英數字（可以直接貼 Tronscan 的連結）' });
+          if (!mailAllow('claim:' + o.id, 10)) return send(res, 429, { error: '查太多次了，請一小時後再試' });
+          try { const r = await billClaim({ uid: o.uid }, tx); return send(res, r.error ? 400 : 200, r); } catch (e) { return send(res, 502, { error: '查詢區塊鏈失敗，請稍後再試' }); }
+        }
+        return send(res, 400, { error: '不認得的操作' });
       }
       if (u.pathname === '/api/trial/apply') {          // 🧪 申請 7 天試用（不用登入）：等擁有者或管理員開通
         if (!mailAllow('trial:' + ip, 5)) return send(res, 429, { error: '這台裝置申請太多次了，請一小時後再試' });
@@ -2908,7 +2980,7 @@ http.createServer(async (req, res) => {
         if (op === 'poll' && Date.now() - B.scan.at > 20000) await billScan(false).catch(() => {});
         const st = billState(usr);
         return send(res, 200, { on: B.on, price: B.price, days: B.days, addr: B.addr, orderHours: B.orderHours, plans: B.plans.map(p => ({ ...p, price: billPrice('', p.m).price })), terms: B.terms, termsAt: usr.termsAt || 0,
-          state: { ...st, paidUntil: usr.paidUntil || 0, trialEnd: usr.trialEnd || 0 }, orders: B.orders.filter(o => o.uid === usr.uid).slice(0, 20), refunds: B.refunds.filter(r => r.uid === usr.uid).slice(0, 20),
+          state: { ...st, paidUntil: usr.paidUntil || 0, trialEnd: usr.trialEnd || 0 }, orders: B.orders.filter(o => o.uid === usr.uid).slice(0, 20).map(o => { const { newAcct, otok, ...r } = o; return r; }), refunds: B.refunds.filter(r => r.uid === usr.uid).slice(0, 20),
           scan: { at: B.scan.at, err: B.scan.err ? '查詢區塊鏈失敗，稍後會再試' : '' }, owner: !!owner });
       }
       if (u.pathname === '/api/bill/admin') {            // 💳 繳費後台（擁有者）
@@ -2946,7 +3018,7 @@ http.createServer(async (req, res) => {
         if (op === 'scan') { await billScan(true); }
         const users = ST.users.map(x => { const st = billState(x), paid = B.orders.filter(o => o.uid === x.uid && o.status === 'paid'); return { uid: x.uid, role: x.role, owner: x.uid === ownerUid(), free: billFree(x.uid), st: st.st, paidUntil: x.paidUntil || 0, trialEnd: x.trialEnd || 0, total: +paid.reduce((a, o) => a + +o.amount, 0).toFixed(4), n: paid.length }; });
         let baks = []; try { baks = fs.readdirSync(BAK_DIR).filter(f => f.startsWith('state-')).sort().reverse().slice(0, 5); } catch (e) {}
-        return send(res, 200, { cfg: { on: B.on, onAt: B.onAt, price: B.price, days: B.days, addr: B.addr, delDays: B.delDays, graceDays: B.graceDays, orderHours: B.orderHours, plans: B.plans, terms: B.terms, tgKey: !!process.env.TRONGRID_KEY, mail: mailOn(), baks }, codes: B.codes, free: B.free, users, orders: B.orders.slice(0, 200), unmatched: B.unmatched, refunds: B.refunds.slice(0, 200), gone: (B.gone || []).slice(0, 100), scan: B.scan,
+        return send(res, 200, { cfg: { on: B.on, onAt: B.onAt, price: B.price, days: B.days, addr: B.addr, delDays: B.delDays, graceDays: B.graceDays, orderHours: B.orderHours, plans: B.plans, terms: B.terms, tgKey: !!process.env.TRONGRID_KEY, mail: mailOn(), baks }, codes: B.codes, free: B.free, users, orders: B.orders.slice(0, 200).map(o => { const { newAcct, otok, ...r } = o; return { ...r, isNew: !!newAcct, email: newAcct ? maskMail(newAcct.email) : '' }; }), unmatched: B.unmatched, refunds: B.refunds.slice(0, 200), gone: (B.gone || []).slice(0, 100), scan: B.scan,
           income: { all: +B.orders.filter(o => o.status === 'paid').reduce((a, o) => a + +o.amount, 0).toFixed(2), m30: +B.orders.filter(o => o.status === 'paid' && now - o.paidAt < 30 * DAYMS).reduce((a, o) => a + +o.amount, 0).toFixed(2) } });
       }
       if (u.pathname === '/api/trial') {                 // 🧪 後台：試用申請（擁有者、管理員）
