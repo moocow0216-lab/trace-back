@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>購買方案｜Quant X 合約作戰室</title>
+<meta name="theme-color" content="#0a0d16">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root{--bg:#0a0d16;--card:#111624;--line:#252d42;--tx:#e8ecf5;--mu:#8b93a7;--pk:#e879c6;--gd:#f1d77a;--ok:#10b981;--bad:#f87171;--warn:#fbbf24;color-scheme:dark}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.6 system-ui,-apple-system,"Segoe UI","PingFang TC","Noto Sans TC",sans-serif}
+body{padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+.wrap{max-width:640px;margin:0 auto;padding:18px 16px 60px}
+header{display:flex;align-items:center;gap:10px;margin-bottom:14px}.logo{font-size:22px;font-weight:900}.logo i{font-style:normal;color:var(--pk)}.logo small{font-size:13px;color:var(--gd);margin-left:6px;font-weight:700}
+header a{margin-left:auto;color:var(--mu);font-size:13px}
+.steps{display:flex;gap:6px;margin:6px 0 16px}.steps span{flex:1;text-align:center;font-size:12px;padding:6px 4px;border-radius:999px;border:1px solid var(--line);color:var(--mu)}
+.steps span.on{border-color:var(--pk);color:#fff;background:rgba(232,121,198,.15)}.steps span.done{border-color:rgba(16,185,129,.5);color:var(--ok)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px}
+h2{font-size:17px;margin:0 0 10px}h3{font-size:14.5px;margin:14px 0 6px}
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.plan{position:relative;border:1.5px solid var(--line);border-radius:14px;padding:12px;cursor:pointer;display:flex;flex-direction:column;gap:2px}
+.plan input{position:absolute;opacity:0}.plan.on{border-color:var(--ok);background:rgba(16,185,129,.08)}.plan:focus-within{outline:2px solid var(--ok);outline-offset:2px}
+.plan b{font-size:15px}.plan .p{font-size:22px;font-weight:900;color:var(--ok)}.plan em{font-style:normal;font-size:12px;color:var(--warn);font-weight:700}.plan small{color:var(--mu);font-size:12px}
+ul.inc{margin:10px 0 0;padding-left:18px;color:var(--mu);font-size:13.5px}
+label.f{display:block;font-size:13px;color:var(--mu);margin:10px 0 4px}
+input[type=text],input[type=password],input[type=email],input[type=tel],input:not([type]){width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:#0c1120;color:var(--tx);font-size:16px}
+input:focus{outline:2px solid var(--pk);outline-offset:1px}
+.row{display:flex;gap:8px;align-items:stretch}.row input{flex:1;min-width:0}
+.btn{appearance:none;border:1px solid var(--line);background:#1a2134;color:var(--tx);border-radius:10px;padding:10px 14px;font-size:14.5px;font-weight:700;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--pk)}.btn:disabled{opacity:.5;cursor:default}.btn.pri{background:linear-gradient(135deg,#e879c6,#a855f7);border:0;color:#fff;width:100%;padding:14px;font-size:16px;margin-top:14px}
+.msg{font-size:13px;margin:6px 0 0;min-height:1em}.msg.bad{color:var(--bad)}.msg.ok{color:var(--ok)}
+details{margin-top:12px}summary{cursor:pointer;color:var(--mu);font-size:13.5px}details pre{white-space:pre-wrap;font:12.5px/1.7 inherit;background:#0c1120;border-radius:10px;padding:10px;max-height:220px;overflow:auto;color:var(--mu)}
+.agree{display:flex;gap:8px;align-items:center;margin-top:10px;font-weight:700;font-size:14px}.agree input{width:20px;height:20px;accent-color:var(--pk)}
+.amt{font-size:40px;font-weight:900;color:var(--ok);font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.kv{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px dashed var(--line);flex-wrap:wrap}.kv>span{width:70px;color:var(--mu);font-size:13px}.kv code{font-size:13.5px;word-break:break-all;flex:1;min-width:0}.kv .btn{padding:6px 10px;font-size:12.5px}
+.warn{background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.4);color:#fde68a;border-radius:12px;padding:10px 12px;font-size:13px;margin:10px 0}
+.qr{background:#fff;border-radius:12px;padding:8px;width:184px;height:184px;margin:12px auto 0}.qr:empty{display:none}
+.wait{display:flex;align-items:center;gap:10px;justify-content:center;margin-top:14px;color:var(--mu);font-size:13.5px}.dot{width:10px;height:10px;border-radius:50%;background:var(--pk);animation:p 1.2s infinite}@keyframes p{50%{opacity:.25}}
+.big{text-align:center;padding:20px 8px}.big .ic{font-size:56px}.big h2{font-size:22px;margin:8px 0}
+.mute{color:var(--mu);font-size:13px}.who{background:rgba(232,121,198,.1);border:1px solid rgba(232,121,198,.4);border-radius:12px;padding:10px 12px;font-size:14px}
+@media (prefers-reduced-motion:reduce){.dot{animation:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><div class="logo">Quant <i>X</i><small>合約作戰室</small></div><a href="./">← 回網站</a></header>
+  <div class="steps" id="steps" aria-label="購買步驟"><span>① 選方案</span><span>② 填資料</span><span>③ 付款</span><span>④ 完成</span></div>
+  <main id="app"><div class="card"><p class="mute">載入中…</p></div></main>
+</div>
+<script>
+(() => {
+'use strict';
+/* ---------- 💳 Quant X 獨立繳費頁：新用戶直接購買（付款成功自動建立帳號）、已登入的人續費 ---------- */
+const $ = id => document.getElementById(id), esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const LS = { get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }, del(k) { try { localStorage.removeItem(k); } catch (e) {} } };
+const SRVC = LS.get('quantSrv', {}), URL0 = (SRVC.url || 'https://3-107-254-240.sslip.io').replace(/\/+$/, '');
+const S = { mode: 'new', me: null, info: null, m: 1, code: '', q: null, order: null, timer: 0 };
+const fmt = t => { const d = new Date(t); return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+async function api(path, body, auth) {
+  const h = { 'Content-Type': 'application/json' }; if (auth && SRVC.token) h.Authorization = 'Bearer ' + SRVC.token;
+  const r = await fetch(URL0 + path, { method: 'POST', headers: h, body: JSON.stringify(body || {}) }); let j = {}; try { j = await r.json(); } catch (e) {}
+  if (!r.ok) { const e = new Error(j.error || 'HTTP ' + r.status); e.j = j; throw e; } return j;
+}
+const step = n => [...$('steps').children].forEach((el, i) => { el.className = i + 1 < n ? 'done' : i + 1 === n ? 'on' : ''; });
+const msg = (id, t, ok) => { const el = $(id); if (el) { el.className = 'msg ' + (ok ? 'ok' : 'bad'); el.textContent = t; } };
+async function boot() {
+  if (SRVC.token) { try { const r = await fetch(URL0 + '/api/me', { headers: { Authorization: 'Bearer ' + SRVC.token } }); if (r.ok) { S.me = await r.json(); S.mode = 'renew'; } } catch (e) {} }
+  try {
+    if (S.mode === 'renew') { const d = await api('/api/bill', { op: 'me' }, true); S.info = { on: d.on && !!d.addr, plans: d.plans, terms: d.terms, state: d.state, price: d.price, days: d.days };
+      if (d.state.st === 'free') return done0('🎁', '你是免費帳號', '不用付費，所有功能都可以直接使用。'); }
+    else S.info = await api('/api/buy', { op: 'info' });
+  } catch (e) { return $('app').innerHTML = `<div class="card"><p class="msg bad">連不到伺服器：${esc(e.message)}</p></div>`; }
+  if (!S.info.on) return done0('🔒', '目前沒有開放購買', '請稍後再來，或聯絡擁有者。');
+  const saved = LS.get('qxPay', null);                   // 重新整理也不會弄丟付款單
+  if (saved && saved.exp > Date.now() - 48 * 3600000 && saved.mode === S.mode) { S.order = saved; return payView(); }
+  formView();
+}
+function done0(ic, t, d) { step(4); $('app').innerHTML = `<div class="card big"><div class="ic">${ic}</div><h2>${t}</h2><p class="mute">${d}</p><a class="btn" href="./">回網站</a></div>`; }
+function formView() {
+  step(S.mode === 'renew' ? 2 : 1); const I = S.info, p0 = I.plans.find(p => p.m === S.m) || I.plans[0];
+  $('app').innerHTML = `
+  <div class="card"><h2>① 選方案</h2><div class="plans" role="radiogroup" aria-label="方案長度">${I.plans.map(p => `<label class="plan${p.m === S.m ? ' on' : ''}"><input type="radio" name="m" value="${p.m}"${p.m === S.m ? ' checked' : ''}><b>${p.m} 個月</b><span class="p">${p.price} U</span>${p.pct ? `<em>省 ${p.pct}%</em>` : `<small>${I.price} USDT／${I.days} 天</small>`}</label>`).join('')}</div>
+    <ul class="inc"><li>一般交易：CVD 異常偵測、自動下單</li><li>🗡 特級咒具＋特級交易</li><li>🔔 額外進場通知、⚔ 作戰室、🧪 模擬盤</li></ul></div>
+  <div class="card"><h2>② ${S.mode === 'renew' ? '確認帳號' : '建立帳號'}</h2>
+    ${S.mode === 'renew' ? `<div class="who">續費帳號：<b>${esc(S.me.uid)}</b>${S.info.state && S.info.state.until ? `　目前到期：${fmt(S.info.state.until)}` : ''}<br><small class="mute">付款後會從目前到期日（或今天）往後加。</small></div>` : `
+    <p class="mute">付款成功後會<b>自動建立帳號</b>，用這組 UID 和密碼登入。已經有帳號的話，請<a href="./">先登入</a>再續費。</p>
+    <label class="f" for="uid">Bitunix UID</label><input id="uid" inputmode="numeric" autocomplete="username" autocapitalize="off">
+    <label class="f" for="pw">設定密碼（至少 8 個字）</label><input id="pw" type="password" autocomplete="new-password">
+    <label class="f" for="pw2">再輸入一次密碼</label><input id="pw2" type="password" autocomplete="new-password">
+    <label class="f" for="em">Google 信箱（收驗證碼、收據、忘記密碼用）</label><div class="row"><input id="em" type="email" autocomplete="email" autocapitalize="off" placeholder="example@gmail.com"><button class="btn" id="sendCode" type="button">寄驗證碼</button></div>
+    <label class="f" for="ec">信箱驗證碼（6 位數字）</label><input id="ec" inputmode="numeric" autocomplete="one-time-code" maxlength="6"><p class="msg" id="codeMsg" role="status"></p>
+    <label class="f" for="ph">手機號碼</label><input id="ph" type="tel" inputmode="tel" autocomplete="tel" placeholder="0912345678">`}
+    <label class="f" for="code">邀請碼（選填）</label><div class="row"><input id="code" value="${esc(S.code)}" autocomplete="off" placeholder="有的話可以打折"><button class="btn" id="quote" type="button">套用</button></div><p class="msg" id="qMsg" role="status"></p>
+    <details><summary>服務條款</summary><pre>${esc(I.terms)}</pre></details>
+    <label class="agree"><input type="checkbox" id="agree"> 我已閱讀並同意服務條款</label>
+    <button class="btn pri" id="go" type="button">產生付款單（<span id="goAmt">${S.q && S.q.m === S.m ? S.q.price : p0.price}</span> USDT）</button><p class="msg" id="goMsg" role="alert"></p></div>`;
+  document.querySelectorAll('input[name=m]').forEach(r => r.onchange = () => { S.m = +r.value; S.code = $('code').value.trim(); keep(); formView(); restore(); });
+  $('quote').onclick = async () => { const c = $('code').value.trim(); try { const q = await api('/api/buy', { op: 'quote', code: c, m: S.m }); S.q = q; S.code = c; $('goAmt').textContent = q.price; msg('qMsg', q.code ? `✓ ${q.code} 折 ${q.pct}%：${q.price} USDT` : `原價 ${q.price} USDT`, true); } catch (e) { msg('qMsg', e.message); } };
+  if ($('sendCode')) $('sendCode').onclick = async () => { const b = $('sendCode'); b.disabled = true; try { const r = await api('/api/buy', { op: 'code', email: $('em').value.trim().toLowerCase() }); msg('codeMsg', r.msg, true); let n = 60; const t = setInterval(() => { b.textContent = `${--n} 秒後可重寄`; if (n <= 0) { clearInterval(t); b.disabled = false; b.textContent = '重寄驗證碼'; } }, 1000); } catch (e) { msg('codeMsg', e.message); b.disabled = false; } };
+  $('go').onclick = order;
+}
+let KEEP = {};                                           // 換方案時保留已經填的資料
+function keep() { for (const k of ['uid', 'pw', 'pw2', 'em', 'ec', 'ph']) if ($(k)) KEEP[k] = $(k).value; }
+function restore() { for (const [k, v] of Object.entries(KEEP)) if ($(k)) $(k).value = v; }
+async function order() {
+  if (!$('agree').checked) return msg('goMsg', '請先閱讀並勾選同意服務條款');
+  const b = $('go'); b.disabled = true; msg('goMsg', '建立付款單中…', true);
+  try {
+    let o;
+    if (S.mode === 'renew') { const r = await api('/api/bill', { op: 'order', code: $('code').value.trim(), m: S.m, agree: true }, true); o = { ...r.order, mode: 'renew' }; }
+    else {
+      const uid = $('uid').value.normalize('NFKC').replace(/\s+/g, ''), pw = $('pw').value;
+      if (!/^\d{4,20}$/.test(uid)) throw new Error('UID 應該是 4～20 位數字'); if (pw.length < 8) throw new Error('密碼至少 8 個字'); if (pw !== $('pw2').value) throw new Error('兩次輸入的密碼不一樣');
+      const r = await api('/api/buy', { op: 'order', uid, password: pw, email: $('em').value.trim().toLowerCase(), emailCode: $('ec').value.trim(), phone: $('ph').value.trim(), m: S.m, code: $('code').value.trim(), agree: true });
+      o = { ...r.order, otok: r.otok, mode: 'new' };
+    }
+    S.order = o; LS.set('qxPay', o); payView();
+  } catch (e) { msg('goMsg', e.message); b.disabled = false; if (e.j && e.j.needLogin) $('goMsg').innerHTML += ' <a href="./">前往登入</a>'; }
+}
+function payView() {
+  step(3); const o = S.order;
+  $('app').innerHTML = `<div class="card"><h2>③ 付款</h2>
+    <div class="warn">⚠️ 只能用 <b>TRON（TRC20）</b>網路轉 <b>USDT</b>。從交易所提領的話，請把提領手續費加上去，讓<b>「實際到帳」剛好等於下面的金額</b>。到帳不足會全額退回；多轉的話方案照常開通，多出來的部分會退回。</div>
+    <div class="kv"><span>金額</span><b class="amt" id="amt">${o.amount}</b><button class="btn" data-copy="${o.amount}">複製</button></div>
+    <div class="kv"><span>收款地址</span><code>${esc(o.addr)}</code><button class="btn" data-copy="${esc(o.addr)}">複製</button></div>
+    <div class="kv"><span>網路</span><b>TRON（TRC20）</b></div>
+    <div class="kv"><span>方案</span><b>${o.m || 1} 個月${o.code ? `・邀請碼 ${esc(o.code)} −${o.pct}%` : ''}</b></div>
+    <div class="kv"><span>帳號</span><b>${esc(o.uid || (S.me && S.me.uid) || '')}</b></div>
+    <div class="qr" id="qr" aria-label="收款地址 QR code"></div>
+    <div class="wait" id="wait"><i class="dot" aria-hidden="true"></i><span id="waitT">等待付款中…（剩 <b id="left">—</b>）</span></div>
+    <div id="refund"></div>
+    <details><summary>🙋 已經轉帳，但一直沒有確認？</summary><p class="mute">貼上這筆轉帳的交易編號（或 Tronscan 連結），系統會到區塊鏈確認。</p><div class="row"><input id="tx" placeholder="交易編號（64 個英數字）" autocomplete="off" spellcheck="false"><button class="btn" id="claim" type="button">查詢</button></div><p class="msg" id="cMsg" role="status"></p></details>
+    <p style="margin-top:14px"><button class="btn" id="cancel" type="button">取消這張付款單</button></p></div>`;
+  qr(o.addr);
+  document.querySelectorAll('[data-copy]').forEach(b => b.onclick = async () => { try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = '已複製'; setTimeout(() => b.textContent = '複製', 1500); } catch (e) { prompt('複製這段：', b.dataset.copy); } });
+  $('cancel').onclick = async () => { if (!confirm('取消這張付款單？已經轉帳的話請不要取消。')) return; try { if (o.mode === 'renew') await api('/api/bill', { op: 'cancel', id: o.id }, true); else await api('/api/buy', { op: 'cancel', id: o.id, otok: o.otok }); } catch (e) {} LS.del('qxPay'); S.order = null; clearInterval(S.timer); formView(); };
+  $('claim').onclick = async () => { msg('cMsg', '查詢中…（最多 30 秒）', true); try { const r = o.mode === 'renew' ? await api('/api/bill', { op: 'claim', tx: $('tx').value }, true) : await api('/api/buy', { op: 'claim', id: o.id, otok: o.otok, tx: $('tx').value }); msg('cMsg', r.msg, true); poll(); } catch (e) { msg('cMsg', e.message); } };
+  clearInterval(S.timer); S.timer = setInterval(poll, 10000); poll(); tick(); setInterval(tick, 1000);
+}
+function tick() { const o = S.order, el = $('left'); if (!o || !el) return; const s = Math.max(0, Math.floor((o.exp - Date.now()) / 1000)); el.textContent = s ? `${Math.floor(s / 60)} 分 ${s % 60} 秒` : '已過期（48 小時內轉帳仍會確認）'; }
+async function poll() {
+  const o = S.order; if (!o) return;
+  try {
+    let st, until = 0, refund = [];
+    if (o.mode === 'renew') { const d = await api('/api/bill', { op: 'poll' }, true), x = (d.orders || []).find(y => y.id === o.id); st = x ? x.status : 'cancel'; until = d.state.paidUntil; refund = (d.refunds || []).filter(r => r.orderId === o.id); }
+    else { const d = await api('/api/buy', { op: 'status', id: o.id, otok: o.otok }); st = d.status; until = d.until; refund = d.refund || []; }
+    if ($('refund')) $('refund').innerHTML = refund.length ? `<div class="warn">↩️ 收到 ${refund.map(r => `${r.amount} USDT`).join('、')}，金額不對，會全額退回到 ${esc(refund[0].from)}（${refund.every(r => r.status === 'done') ? '已退款' : '退款處理中'}）。請重新轉帳，實際到帳要剛好是 <b>${o.amount}</b>。</div>` : '';
+    if (st === 'paid') { clearInterval(S.timer); LS.del('qxPay'); success(until); }
+    else if (st === 'cancel') { clearInterval(S.timer); LS.del('qxPay'); S.order = null; formView(); }
+  } catch (e) { if (/找不到這張付款單/.test(e.message)) { clearInterval(S.timer); LS.del('qxPay'); S.order = null; return formView(); } if ($('waitT')) $('waitT').textContent = '連線不穩，稍後自動重試…'; }
+}
+function success(until) {
+  step(5); const o = S.order, isNew = o.mode === 'new';
+  $('app').innerHTML = `<div class="card big"><div class="ic">✅</div><h2>付款成功！</h2>
+    <p>${isNew ? `帳號 <b>${esc(o.uid)}</b> 已經建立，用你剛剛設定的密碼登入。` : '方案已經延長。'}</p>${until ? `<p class="mute">方案到期：${fmt(until)}</p>` : ''}
+    <p class="mute">收據已寄到你的信箱。${isNew ? '登入後請到「☰ 選單 → 設定」設定 Bitunix API，才能開始自動交易。' : ''}</p>
+    <a class="btn pri" href="./" style="display:block;text-decoration:none">${isNew ? '前往登入' : '回網站'}</a></div>`;
+}
+let QRS = null;
+function qr(text) { const el = $('qr'); if (!el) return; const draw = () => { el.innerHTML = ''; try { new QRCode(el, { text, width: 168, height: 168, correctLevel: QRCode.CorrectLevel.M }); } catch (e) {} };
+  if (window.QRCode) return draw(); if (!QRS) { QRS = document.createElement('script'); QRS.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'; document.head.appendChild(QRS); } QRS.addEventListener('load', draw, { once: true }); }
+boot();
+})();
+</script>
+</body>
+</html>
