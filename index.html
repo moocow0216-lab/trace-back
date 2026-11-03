@@ -831,7 +831,7 @@ header{align-items:center}
 .mnpage[data-p="set"] .mnacct,.mnpage[data-p="set"] .mnpw,.mnpage[data-p="set"] .mnsim{border:1px solid var(--gdl);background:var(--gbg);border-radius:14px;color:var(--gtx)}
 .mnpage[data-p="set"] .mnlab,.mnpage[data-p="set"] .mnpw small{color:var(--gmu)}
 .mnpage[data-p="set"] .qltmsg{color:var(--gmu)}
-.mnpage[data-p="set"] .qpool{display:grid;grid-template-columns:minmax(160px,220px) 1fr;gap:6px 14px;align-items:end;margin:10px 0 4px;padding:10px 12px;border:1px solid var(--gdl);border-radius:10px;background:rgba(212,175,55,.04)}
+.mnpage[data-p="set"] .qpool{display:grid;grid-template-columns:minmax(150px,200px) minmax(120px,160px) 1fr;gap:6px 14px;align-items:end;margin:10px 0 4px;padding:10px 12px;border:1px solid var(--gdl);border-radius:10px;background:rgba(212,175,55,.04)}
 .mnpage[data-p="set"] .qpoolbar{height:8px;border-radius:99px;background:#1d1a12;overflow:hidden;align-self:center}.qpoolfill{height:100%;background:linear-gradient(90deg,#b8902c,#f1d77a);transition:width .3s}.qpoolfill.over{background:#ef4444}
 .mnpage[data-p="set"] .qpoolst{grid-column:1/-1;font-size:12.5px;color:var(--gmu)}.mnpage[data-p="set"] .qpoolst b{color:var(--gtx)}
 @media (max-width:560px){.mnpage[data-p="set"] .qpool{grid-template-columns:1fr}}
@@ -949,6 +949,8 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
 .biterms pre{white-space:pre-wrap;font-size:12.5px;line-height:1.6;background:rgba(0,0,0,.04);padding:10px;border-radius:8px;max-height:220px;overflow:auto}.biagree{font-weight:700}
 .biclaim summary{cursor:pointer;font-weight:700;font-size:13.5px}.biclaim .xeadd{margin-top:6px}.biterm{width:100%;font-size:12.5px}
 .qgbuy{display:block;text-align:center;margin-top:6px;border:1px solid #10b981!important;color:#059669!important;background:transparent!important;font-weight:700;text-decoration:none}
+
+.bild td{vertical-align:top;font-size:12.5px}.bimono{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;word-break:break-all;max-width:220px}
 </style>
 </head>
 <body class="quant-on mn">
@@ -976,11 +978,13 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
   <form class="qgatebox" id="qTrialForm" onsubmit="return false" hidden>
     <h1>Quant X 合約作戰室</h1>
     <p class="qgsub">申請 7 天試用</p>
-    <p class="qgnote">送出後要等擁有者或管理員<b>開通</b>才能登入。開通後 7 天內可以使用一般用戶的所有功能，包含特級進場；到期會自動停止交易、平掉系統開的單，並刪除帳號和 API 金鑰。</p>
+    <p class="qgnote">第一次申請、信箱驗證通過就<b>馬上開通</b>。如果 UID、信箱或手機跟之前的帳號重複，要等擁有者或管理員審核。試用 7 天可以使用一般用戶的所有功能，包含特級進場；到期會自動停止交易、平掉系統開的單，並刪除帳號和 API 金鑰。</p>
     <label>Bitunix UID<input id="qt_uid" inputmode="numeric" autocomplete="username" autocapitalize="off" spellcheck="false"></label>
     <label>密碼（至少 8 個字）<input id="qt_pw" type="password" autocomplete="new-password"></label>
     <label>再輸入一次密碼<input id="qt_pw2" type="password" autocomplete="new-password"></label>
     <label>Google 信箱（忘記密碼時會寄到這裡）<input id="qt_email" type="email" autocomplete="email" autocapitalize="off" spellcheck="false" placeholder="example@gmail.com"></label>
+    <button class="btn" id="qt_send" type="button">📧 寄驗證碼到信箱</button>
+    <label>信箱驗證碼（6 位數字）<input id="qt_code" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></label>
     <label>手機號碼<input id="qt_phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="0912345678"></label>
     <button class="btn primary" id="qt_go" type="submit">送出申請</button>
     <p class="qgnote" id="qtMsg" role="status"></p>
@@ -1146,7 +1150,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-01f</div>
+      <div class="qver" id="qVer">網站版本 2026-11-02a</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -1190,7 +1194,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
         </div>
         <div class="qtg" id="qMyTrade">
           <b>📈 我的交易設定</b><span id="qmt_stat"></span>
-          <div class="qpool"><label class="field">💰 合約總資金（U）<input id="lt_pool" type="number" min="0" step="10" placeholder="空白＝整個帳戶"></label><div class="qpoolbar"><div id="qpool_bar" class="qpoolfill"></div></div><span id="qpool_stat" class="qpoolst"></span></div>
+          <div class="qpool"><label class="field">💰 合約總資金（U）<input id="lt_pool" type="number" min="0" step="10" placeholder="空白＝整個帳戶"></label><label class="field">容許差額（U）<input id="lt_allocTol" type="number" min="0" step="1" placeholder="10"></label><div class="qpoolbar"><div id="qpool_bar" class="qpoolfill"></div></div><span id="qpool_stat" class="qpoolst"></span></div>
           <div class="params">
             <label class="field">投入資金（U）<input id="lt_budget" type="number" min="1" step="10" placeholder="例如 50"></label>
             <label class="field">每筆保證金（U）<input id="lt_margin" type="number" min="0.01" step="0.1"></label>
@@ -3605,7 +3609,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-01f・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-02a・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -4223,16 +4227,44 @@ function biAdmin(a) {                                  // 👑 繳費後台
       ${todo.length ? `<div class="tablewrap"><table class="tltab"><tr><th>收到時間</th><th>UID</th><th>金額</th><th>退回地址</th><th>原因</th><th>操作</th></tr>${todo.map(r => `<tr><td>${bDate(r.at)}</td><td>${esc(r.uid || '—')}</td><td><b>${r.amount}</b> <button class="btn" data-copy="${r.amount}">複製</button></td><td class="tlmut">${esc(r.from)} <button class="btn" data-copy="${esc(r.from)}">複製</button></td><td class="tlmut">${esc(r.why || '')}</td><td class="trops"><button class="btn primary" data-rdone="${r.id}">我已退款</button><button class="btn" data-rskip="${r.id}">不退</button></td></tr>`).join('')}</table></div>` : '<p class="tlmut">沒有待退款</p>'}
       ${done.length ? `<details><summary class="tlsub">退款紀錄（${done.length}）</summary><div class="tablewrap"><table class="tltab"><tr><th>收到</th><th>UID</th><th>金額</th><th>退回地址</th><th>狀態</th></tr>${done.map(r => `<tr><td>${bDate(r.at)}</td><td>${esc(r.uid || '—')}</td><td>${r.amount}</td><td class="tlmut">${esc(r.from)}</td><td>${r.status === 'done' ? `已退款${r.how === 'manual' ? '（手動）' : ''}${r.outTx ? ` <a href="https://tronscan.org/#/transaction/${esc(r.outTx)}" target="_blank" rel="noopener">查看</a>` : ''}` : `不退${r.note ? '：' + esc(r.note) : ''}`}</td></tr>`).join('')}</table></div></details>` : ''}`; })()}
     ${a.unmatched.length ? `<h5 class="qr">⚠ 對不上的轉帳（金額跟任何付款單都不同）</h5><div class="tablewrap"><table class="tltab"><tr><th>時間</th><th>金額</th><th>付款地址</th><th>操作</th></tr>${a.unmatched.map(m => `<tr><td>${bDate(m.at)}</td><td>${m.amount} USDT</td><td class="tlmut">${esc(m.from)}</td><td class="trops"><button class="btn" data-assign="${esc(m.tx)}">指定給 UID</button><button class="btn" data-refund="${esc(m.tx)}">退款</button><button class="btn" data-dismiss="${esc(m.tx)}">忽略</button></td></tr>`).join('')}</table></div>` : ''}
+    <h5>📒 收款紀錄（每一筆收到的錢）</h5><div class="xeadd"><input id="ba_lq" placeholder="搜尋 UID、錢包地址、信箱、電話" value="${esc(BI.lq || '')}" autocomplete="off"><button class="btn" id="ba_csv">⬇ 匯出 CSV</button></div>
+    <div class="tablewrap" id="ba_ledger">${biLedger(a.ledger || [], BI.lq)}</div>
     <h5>付款單</h5><div class="tablewrap"><table class="tltab"><tr><th>建立</th><th>UID</th><th>金額</th><th>方案／邀請碼</th><th>狀態</th><th>操作</th></tr>${a.orders.slice(0, 60).map(o => `<tr><td>${bDate(o.at)}</td><td>${esc(o.uid)}${o.isNew ? ' <small class="qy">🆕 新購買</small>' : ''}</td><td>${o.amount}</td><td>${o.m || 1} 個月${o.code ? `・${esc(o.code)} −${o.pct}%` : ''}</td><td>${{ pending: '<b class="qy">等付款</b>', paid: `<span class="qg">已付 ${o.how === 'manual' ? '（手動）' : ''}</span>`, expired: '過期', cancel: '取消' }[o.status] || o.status}</td>
       <td class="trops">${o.status !== 'paid' ? `<button class="btn" data-pay="${o.id}">手動確認已付</button>` : o.tx ? `<a class="tlmut" href="https://tronscan.org/#/transaction/${esc(o.tx)}" target="_blank" rel="noopener">查看</a>` : ''}</td></tr>`).join('')}</table></div></section>`;
 }
+function biLedgerRows(L, q) {
+  q = String(q || '').trim().toLowerCase();
+  return q ? L.filter(r => [r.uid, r.from, r.email, r.phone, r.tx, ...(r.refunds || []).map(x => x.to)].some(v => String(v || '').toLowerCase().includes(q))) : L;
+}
+const RFS = { todo: '<b class="qy">待退款</b>', done: '<span class="qg">已退款</span>', skip: '不退' };
+function biLedger(L, q) {                              // 📒 收款紀錄表：UID、付款錢包、金額、方案、退款、退款錢包、信箱、電話
+  const R = biLedgerRows(L, q).slice(0, 300);
+  if (!R.length) return '<p class="tlmut">沒有紀錄</p>';
+  return `<table class="tltab bild"><tr><th>時間</th><th>UID</th><th>付款錢包（TRON）</th><th>金額</th><th>方案</th><th>退款</th><th>退款錢包</th><th>信箱</th><th>電話</th></tr>${R.map(r => `<tr>
+    <td>${bDate(r.at)}</td><td><b>${esc(r.uid || '—')}</b>${r.isNew ? '<br><small class="qy">🆕 新購買</small>' : ''}</td>
+    <td class="bimono">${r.from ? `<a href="https://tronscan.org/#/address/${esc(r.from)}" target="_blank" rel="noopener">${esc(r.from)}</a>` : r.how === 'manual' ? '手動確認' : '—'}</td>
+    <td>${r.amount} U${r.tx ? `<br><a class="tlmut" href="https://tronscan.org/#/transaction/${esc(r.tx)}" target="_blank" rel="noopener">交易</a>` : ''}</td>
+    <td>${r.type === 'paid' ? `${r.m} 個月${r.code ? `<br><small>${esc(r.code)} −${r.pct}%</small>` : ''}` : '<span class="qr">沒開通</span>'}</td>
+    <td>${(r.refunds || []).length ? r.refunds.map(x => `${x.amount} U ${RFS[x.status] || x.status}${x.outTx ? ` <a href="https://tronscan.org/#/transaction/${esc(x.outTx)}" target="_blank" rel="noopener">查看</a>` : ''}<br><small class="tlmut">${esc(x.why)}</small>`).join('<br>') : '—'}</td>
+    <td class="bimono">${(r.refunds || []).map(x => esc(x.to)).filter((v, i, a) => a.indexOf(v) === i).join('<br>') || '—'}</td>
+    <td>${esc(r.email || '—')}</td><td>${esc(r.phone || '—')}</td></tr>`).join('')}</table>${biLedgerRows(L, q).length > 300 ? '<p class="tlmut">只顯示最新 300 筆，用搜尋或匯出 CSV 看全部</p>' : ''}`;
+}
+function biCsv(L, q) {                                 // ⬇ 匯出 CSV（Excel 可以直接開，含中文）
+  const head = ['時間', 'UID', '新購買', '付款錢包', '金額(USDT)', '交易編號', '開通', '方案(月)', '邀請碼', '折扣%', '退款金額', '退款狀態', '退款錢包', '退款交易', '原因', '信箱', '電話'];
+  const q2 = v => `"${String(v ?? '').replace(/"/g, '""')}"`, rows = [head];
+  for (const r of biLedgerRows(L, q)) { const f = r.refunds && r.refunds[0] || {}; rows.push([bDate(r.at), r.uid, r.isNew ? '是' : '', r.from, r.amount, r.tx, r.type === 'paid' ? '是' : '否', r.m || '', r.code, r.pct || '', (r.refunds || []).map(x => x.amount).join(' / '), (r.refunds || []).map(x => ({ todo: '待退款', done: '已退款', skip: '不退' }[x.status] || x.status)).join(' / '), f.to || '', (r.refunds || []).map(x => x.outTx).join(' / '), (r.refunds || []).map(x => x.why).join(' / '), r.email, r.phone]); }
+  const blob = new Blob(['\ufeff' + rows.map(x => x.map(q2).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' }), a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = `QuantX-收款紀錄-${new Date().toISOString().slice(0, 10)}.csv`; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
 const biCodeRow = x => `<div class="bicr"><input class="bc_code" value="${esc(x.code || '')}" placeholder="邀請碼，例如 VIP" aria-label="邀請碼"><input class="bc_pct" type="number" min="0" max="100" step="1" value="${x.pct ?? 10}" aria-label="折扣 %"><span>% off</span><input class="bc_note" value="${esc(x.note || '')}" placeholder="備註（給誰用）" aria-label="備註"><label class="lvck"><input type="checkbox" class="bc_on"${x.on !== false ? ' checked' : ''}> 啟用</label><span class="tlmut">已用 ${x.n || 0} 次</span><button class="btn" data-code-rm aria-label="刪除這個邀請碼">✕</button></div>`;
+$('mnpBill').addEventListener('input', e => { if (e.target.id === 'ba_lq') { BI.lq = e.target.value; $('ba_ledger').innerHTML = biLedger(BI.a.ledger || [], BI.lq); } });
 $('mnpBill').addEventListener('click', async e => {
   const t = e.target, A = (op, body) => srvFetch('/api/bill/admin', { op, ...body });
   try {
     if (t.dataset.copy) { try { await navigator.clipboard.writeText(t.dataset.copy); t.textContent = '已複製'; setTimeout(() => t.textContent = '複製', 1500); } catch (err) { prompt('複製這段：', t.dataset.copy); } return; }
     if (t.id === 'ba_save') { const plans = [{ m: 1, pct: 0 }, ...[...document.querySelectorAll('.ba_plan')].filter(i => i.value !== '').map(i => ({ m: +i.dataset.m, pct: +i.value }))]; await A('set', { cfg: { price: +$('ba_price').value, addr: $('ba_addr').value.trim(), delDays: +$('ba_del').value, graceDays: +$('ba_grace').value, on: $('ba_on').value === '1', plans, terms: $('ba_terms').value } }); alert('已儲存'); return biLoad(); }
     if (t.id === 'ba_scan') { t.textContent = '查詢中…'; await A('scan'); return biLoad(); }
+    if (t.id === 'ba_csv') { biCsv(BI.a.ledger || [], BI.lq); return; }
     if (t.id === 'ba_addCode') { $('ba_codes').insertAdjacentHTML('beforeend', biCodeRow({})); return; }
     if (t.dataset.codeRm !== undefined) { t.closest('.bicr').remove(); return; }
     if (t.id === 'ba_saveCodes') { const codes = [...document.querySelectorAll('#ba_codes .bicr')].map(r => ({ code: r.querySelector('.bc_code').value, pct: +r.querySelector('.bc_pct').value, note: r.querySelector('.bc_note').value, on: r.querySelector('.bc_on').checked })); await A('codes', { codes }); alert('邀請碼已儲存'); return biLoad(); }
@@ -4785,6 +4817,11 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-02a', title: '2026/11/02 更新', items: [
+    { ic: '🧪', t: '7 天試用改成：第一次申請、信箱驗證碼通過就馬上開通；UID、信箱或手機跟之前的帳號重複的，才要擁有者或管理員審核（會通知後台）。' },
+    { ic: '💰', t: '新增「容許差額」（預設 10U）：帳戶因為虧損或手續費比一般＋特級的投入資金少一點點，在這個範圍內照常開單，不會再顯示資金分配超過。' },
+    { ic: '📒', t: '繳費後台新增「收款紀錄」：每一筆收到的錢都列出 UID、付款錢包、金額、方案、退款、退款錢包、信箱、電話，可以搜尋、匯出 CSV。' }
+  ] },
   { id: '2026-11-01f', title: '2026/11/01 更新（多轉退回差額）', items: [
     { ic: '↩️', t: '多轉的話方案照常開通，多出來的部分（1 USDT 以上）會列進待退款，擁有者轉回去後系統自動確認並通知。' }
   ] },
@@ -6461,6 +6498,13 @@ $('qf_back').onclick = () => { gateForm('qGateForm'); };
 /* ---------- 🧪 申請 7 天試用（不用登入）：送出後等擁有者或管理員開通 ---------- */
 $('qg_trial').onclick = () => { gateForm('qTrialForm'); $('qt_uid').value = $('qg_uid').value; $('qtMsg').textContent = ''; setTimeout(() => $('qt_uid').focus(), 50); };
 $('qt_back').onclick = () => { gateForm('qGateForm'); };
+$('qt_send').onclick = async () => {                  // 📧 試用申請的信箱驗證碼（跟繳費頁共用）
+  const b = $('qt_send'), m = $('qtMsg'), email = $('qt_email').value.normalize('NFKC').trim().toLowerCase(); b.disabled = true;
+  try { const r = await fetch(gateUrl() + '/api/buy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ op: 'code', email }) }); const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || 'HTTP ' + r.status); m.className = 'qgnote qgok'; m.textContent = j.msg;
+    let n = 60; const t = setInterval(() => { b.textContent = `${--n} 秒後可以重寄`; if (n <= 0) { clearInterval(t); b.disabled = false; b.textContent = '📧 重寄驗證碼'; } }, 1000);
+  } catch (e) { m.className = 'qgnote qgbad'; m.textContent = e.message; b.disabled = false; }
+};
 $('qt_go').onclick = async () => {
   const N = id => $(id).value.normalize('NFKC').trim(), uid = N('qt_uid').replace(/\s+/g, ''), pw = $('qt_pw').value, email = N('qt_email').toLowerCase(), phone = N('qt_phone'), m = $('qtMsg');
   const bad = t => { m.className = 'qgnote qgbad'; m.textContent = t; };
@@ -6471,10 +6515,11 @@ $('qt_go').onclick = async () => {
   if (!/^(09\d{8}|\+?\d{8,15})$/.test(phone.replace(/[\s-]/g, ''))) return bad('手機號碼格式不對（台灣手機請填 09 開頭的 10 碼）');
   $('qt_go').disabled = true; m.className = 'qgnote'; m.textContent = '送出中…';
   try {
-    const r = await fetch(gateUrl() + '/api/trial/apply', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ uid, password: pw, email, phone }) });
+    const r = await fetch(gateUrl() + '/api/trial/apply', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ uid, password: pw, email, phone, emailCode: $('qt_code').value.trim() }) });
     const j = await r.json().catch(() => ({}));
     if (!r.ok) { bad(j.error || 'HTTP ' + r.status); $('qt_go').disabled = false; return; }
-    m.className = 'qgnote qgok'; m.textContent = '✅ ' + j.msg; $('qt_pw').value = $('qt_pw2').value = '';
+    m.className = 'qgnote qgok'; m.textContent = j.msg.startsWith('✅') ? j.msg : '✅ ' + j.msg; $('qt_pw').value = $('qt_pw2').value = '';
+    if (j.active) setTimeout(() => { gateForm('qGateForm'); $('qg_uid').value = uid; $('qg_pw').focus(); }, 2200);   // 已開通：帶回登入畫面
   } catch (e) { bad('連不到伺服器'); $('qt_go').disabled = false; }
 };
 $('qf_go').onclick = async () => {
@@ -6777,8 +6822,9 @@ function renderLt() {
   $('qmt_stat').textContent = SRVBX && SRVBX.set ? `合約帳戶目前 ${AE2.toFixed(2)}U` : '（先設定 Bitunix API）';
   { const cap = C.pool > 0 ? C.pool : AE2, n = C.budget || 0, sp = SRVLT.toolOk ? C.spBudget || 0 : 0, tot = n + sp, over = tot > cap + 0.009;   // 💰 資金分配
     if (document.activeElement !== $('lt_pool') && !$('lt_pool').dataset.dirty) $('lt_pool').value = C.pool > 0 ? C.pool : '';
-    $('qpool_bar').style.width = cap > 0 ? Math.min(100, tot / cap * 100) + '%' : '0'; $('qpool_bar').classList.toggle('over', over);
-    $('qpool_stat').innerHTML = cap > 0 ? `已分配 一般 <b>${n}U</b>${SRVLT.toolOk ? `＋特級 <b>${sp}U</b>` : ''}＝<b class="${over ? 'qr' : ''}">${+tot.toFixed(2)}U</b>／${C.pool > 0 ? '總資金' : '整個帳戶'} ${cap.toFixed(2)}U${over ? `・<b class="qr">超過 ${(tot - cap).toFixed(2)}U，請調低投入資金</b>` : `・還能分配 ${(cap - tot).toFixed(2)}U`}${C.pool > 0 && AE2 > 0 && C.pool > AE2 + 0.009 ? `・<b class="qr">帳戶只剩 ${AE2.toFixed(2)}U，比總資金少</b>` : ''}` : '';
+    if (document.activeElement !== $('lt_allocTol') && !$('lt_allocTol').dataset.dirty) $('lt_allocTol').value = C.allocTol ?? 10;
+    $('qpool_bar').style.width = cap > 0 ? Math.min(100, tot / cap * 100) + '%' : '0'; $('qpool_bar').classList.toggle('over', over && tot - cap > (C.allocTol ?? 10) + 0.009);   // 在容許差額內就不顯示紅色
+    $('qpool_stat').innerHTML = cap > 0 ? `已分配 一般 <b>${n}U</b>${SRVLT.toolOk ? `＋特級 <b>${sp}U</b>` : ''}＝<b class="${over ? 'qr' : ''}">${+tot.toFixed(2)}U</b>／${C.pool > 0 ? '總資金' : '整個帳戶'} ${cap.toFixed(2)}U${over ? (tot - cap <= (C.allocTol ?? 10) + 0.009 ? `・<b class="qy">比帳戶多 ${(tot - cap).toFixed(2)}U，在容許差額 ${C.allocTol ?? 10}U 內，照常開單</b>` : `・<b class="qr">超過 ${(tot - cap).toFixed(2)}U（容許差額 ${C.allocTol ?? 10}U），請調低投入資金</b>`) : `・還能分配 ${(cap - tot).toFixed(2)}U`}${C.pool > 0 && AE2 > 0 && C.pool > AE2 + 0.009 ? `・<b class="qr">帳戶只剩 ${AE2.toFixed(2)}U，比總資金少</b>` : ''}` : '';
   }
   $('qmt_note').innerHTML = `出場：+${T.tp}% 開始鎖利${C.step > 0 ? `・每 +${C.step}% 上調` : ''}・−${C.sl}% 停損・${+((C.hold || 168) / 24).toFixed(1)} 天到期`;
 }
@@ -6830,7 +6876,7 @@ $('qLtCfgBtn').onclick = () => {                     // 打開「👤 我的設�
   $('qMyTrade').scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
 // 📈 我的交易設定：改了的欄位會標成「還沒儲存」，按「儲存」才一起送出（只送有改的）
-const LT_F = ['pool', 'budget', 'margin', 'dayLoss', 'lev', 'tp', 'step', 'hold', 'sl', 'btcF'];
+const LT_F = ['pool', 'allocTol', 'budget', 'margin', 'dayLoss', 'lev', 'tp', 'step', 'hold', 'sl', 'btcF'];
 const ltDirtyN = () => LT_F.filter(k => $('lt_' + k).dataset.dirty).length;
 const ltDirtyMsg = () => { const n = ltDirtyN(); if (n) { $('lt_msg').textContent = `● 有 ${n} 項改了還沒儲存`; $('lt_msg').style.color = '#f1d77a'; } else if (/還沒儲存/.test($('lt_msg').textContent)) $('lt_msg').textContent = ''; };
 for (const k of LT_F) { const el = $('lt_' + k); el.oninput = el.onchange = () => { el.dataset.dirty = '1'; el.classList.add('dirty'); ltDirtyMsg(); }; el.onkeydown = e => { if (e.key === 'Enter') $('lt_save').click(); }; }
@@ -6838,6 +6884,7 @@ $('lt_save').onclick = async () => {
   const d = k => $('lt_' + k).dataset.dirty, v = k => $('lt_' + k).value, data = {}, m = $('lt_msg'), bad = t => { m.textContent = '❌ ' + t; m.style.color = '#ff9aa2'; };
   if (!ltDirtyN()) { m.textContent = '沒有改動'; m.style.color = ''; return; }
   if (d('pool')) { const x = v('pool') === '' ? 0 : +v('pool'); if (!(x >= 0)) return bad('合約總資金不能是負的'); data.pool = x; }
+  if (d('allocTol')) { const x = v('allocTol') === '' ? 10 : +v('allocTol'); if (!(x >= 0)) return bad('容許差額不能是負的'); data.allocTol = x; }
   if (d('budget')) { const x = +v('budget'); if (!(x > 0)) return bad('投入資金要填大於 0 的數字'); if (!(SRVBX && SRVBX.set)) return bad('請先設定 Bitunix API，才知道合約帳戶有多少資金'); data.budget = x; data.restart = true; }
   if (d('margin')) { const x = +v('margin'); if (!(x > 0)) return bad('每筆保證金要大於 0'); data.margin = x; }
   if (d('dayLoss')) { const x = +v('dayLoss'); if (!(x >= 0)) return bad('單日虧損上限不能是負的'); data.dayLoss = x; }
