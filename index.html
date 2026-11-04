@@ -966,6 +966,8 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
 .swcanvas{width:100%;height:300px}.swll{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--muted)}.swll i{display:inline-block;width:14px;height:4px;border-radius:2px;margin-right:4px;vertical-align:middle}
 .sw3d{width:100%;height:440px}.swrbest td{background:rgba(99,102,241,.12)}.swrcur td{background:rgba(127,127,127,.12)}
 @media (max-width:620px){.swkpi{grid-template-columns:repeat(2,minmax(0,1fr))}.sw3d{height:360px}}
+
+.wxpg{background:#141a2a;border:1px solid #2c3449;color:#e2e8f0;border-radius:4px;padding:0 6px;font:inherit;font-size:11px;cursor:pointer;line-height:1.6}.wxpg:hover{border-color:var(--pk)}
 </style>
 </head>
 <body class="quant-on mn">
@@ -1165,7 +1167,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-02c</div>
+      <div class="qver" id="qVer">網站版本 2026-11-02d</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3624,7 +3626,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-02c・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-02d・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -4362,12 +4364,12 @@ function warData() {                                   // 把伺服器傳來的�
   const C = SRVLT.cfg || {}, T = !!SRVLT.toolOk, now = Date.now(), TD = T ? WAR.tool : null, tc = TD ? TD.cards || [] : [];
   const EB = SRVECO && SRVECO.block, blk = !!(EB && EB.on), trades = (SRVLT.trades || []).slice().sort((a, b) => (b.exitAt || b.et || 0) - (a.exitAt || a.et || 0));
   const nc = (Q.cards || []).slice().sort((a, b) => (b.t || 0) - (a.t || 0))[0];
-  const ord = { brk: 3, touch: 2, touch0: 1 }, cand = tc.filter(c => ord[c.st]).sort((a, b) => ord[b.st] - ord[a.st] || b.touchAt - a.touchAt)[0];
+  const ord = { brk: 3, touch: 2, touch0: 1 }, cands = tc.filter(c => ord[c.st]).sort((a, b) => ord[b.st] - ord[a.st] || b.touchAt - a.touchAt), cand = cands[0];   // 走到第 2 步以後的特級卡片（ANALYSIS 輪播用）
   const B = SRVLT.bud || SRVLT.bot, SB = T ? SRVLT.spBot : null, AE = SRVLT.acctEq || 0, cap = C.pool > 0 ? C.pool : AE, used = (C.budget || 0) + (T ? C.spBudget || 0 : 0);
   const eq = (B ? B.eq : 0) + (SB ? SB.eq : 0), open = trades.filter(t => t.status === 'open');
   const pos = SRVBX && SRVBX.pos ? SRVBX.pos.filter(p => p.bot) : [], dist = p => { const mk = p.qty > 0 ? p.entry + p.upnl / (p.qty * p.dir) : p.entry; return p.liq > 0 && mk > 0 ? Math.abs(mk - p.liq) / mk * 100 : null; };
   const near = pos.map(p => [p, dist(p)]).filter(x => x[1] != null).sort((a, b) => a[1] - b[1])[0];
-  return { C, T, now, TD, tc, EB, blk, trades, nc, cand, B, SB, AE, cap, used, eq, open, near, day: SRVLT.day || 0, spDay: SRVLT.spDay || 0, sim: !!(SRV.sim && SRV.sim.on) };
+  return { C, T, now, TD, tc, EB, blk, trades, nc, cand, cands, B, SB, AE, cap, used, eq, open, near, day: SRVLT.day || 0, spDay: SRVLT.spDay || 0, sim: !!(SRV.sim && SRV.sim.on) };
 }
 function warCards(D) {                                 // 8 張角色卡：[狀態, 左邊標籤, 右邊數字, 進度 0~1, 台詞]
   const { C, T, nc, cand, TD, tc, B, SB, cap, used, open, trades, near, blk, EB } = D, lt = trades[0], sk = (SRVLT.spSkip || [])[0];
@@ -4439,13 +4441,20 @@ function warBalance(D) {
   cl.forEach((t, i) => { const n = wNet(t), bh = Math.abs(n) / mx * 30; g.fillStyle = n >= 0 ? 'rgba(34,197,94,.75)' : 'rgba(239,68,68,.75)'; g.fillRect(X(i + 1) - bw / 2, h - 4 - bh, bw, bh); });
 }
 // ---------- 分析圖（K 線）＋ 檢查表、條件表 ----------
-async function warKl(sym, iv) {
+async function warKl(sym, iv) {                        // K 線（每個幣 1 分鐘快取；同一個幣正在抓的話等同一次，不重複抓）
   const key = sym + iv, c = WAR.kl[key]; if (c && Date.now() - c.at < 60000) return c.rows;
-  try { const r = await fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${sym}&interval=${iv}&limit=90`); const j = await r.json(); if (Array.isArray(j)) WAR.kl[key] = { at: Date.now(), rows: j.map(k => [+k[1], +k[2], +k[3], +k[4], +k[5]]) }; } catch (e) {}
-  return WAR.kl[key] ? WAR.kl[key].rows : null;
+  WAR.klp = WAR.klp || {}; if (WAR.klp[key]) return WAR.klp[key];
+  WAR.klp[key] = (async () => {
+    try { const r = await fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${sym}&interval=${iv}&limit=90`); const j = await r.json(); if (Array.isArray(j)) WAR.kl[key] = { at: Date.now(), rows: j.map(k => [+k[1], +k[2], +k[3], +k[4], +k[5]]) }; } catch (e) {}
+    delete WAR.klp[key]; return WAR.kl[key] ? WAR.kl[key].rows : (c ? c.rows : null);
+  })();
+  return WAR.klp[key];
 }
 function warAnalysis(D) {
-  const { cand, nc, C } = D, S0 = (D.TD && D.TD.set) || {}, ok = (b, t) => `<li><span>${t}</span><b class="${b === true ? 'wpass' : b === false ? 'wfail' : 'wwait'}">${b === true ? 'PASS' : b === false ? 'FAIL' : 'WAIT'}</b></li>`;
+  const L0 = D.cands || [], nRot = L0.length; if (nRot) WAR.ai = ((WAR.ai || 0) % nRot + nRot) % nRot;
+  const cand = nRot ? L0[WAR.ai] : null, { nc, C } = D;   // 輪播：每秒換一張走到第 2 步以後的特級卡片
+  WAR.aiKey = cand ? cand.sym + cand.pair + cand.t : '';
+  const S0 = (D.TD && D.TD.set) || {}, ok = (b, t) => `<li><span>${t}</span><b class="${b === true ? 'wpass' : b === false ? 'wfail' : 'wwait'}">${b === true ? 'PASS' : b === false ? 'FAIL' : 'WAIT'}</b></li>`;
   let sym = '', iv = '5m', title = 'ANALYSIS', sub = '', chk = '', code = '', stage = -1;
   if (cand) {
     const N = TL_PN[cand.pair], st = cand.st; sym = cand.sym; iv = cand.pair === 'h4' ? '15m' : '5m'; title = `${wSym(sym)} ・ ${cand.dir > 0 ? '做多' : '做空'} ${N.nm}`; sub = '特級咒具';
@@ -4463,10 +4472,12 @@ function warAnalysis(D) {
       + `}\nRULE {\n` + L('abnormal_min', '≥ ' + (S.minN || 2), String(nc.abN), nc.abN >= (S.minN || 2)) + L('btc_filter', C.btcF ? 'on' : 'off', nc.btcPass === false ? 'fail' : 'pass', nc.btcPass !== false) + '}';
     stage = 4;
   } else { chk = '<li><span>等下一個訊號</span><b class="wwait">WAIT</b></li>'; code = '<i># 有訊號時，這裡會列出每個條件的門檻和實際數值</i>'; }
-  $('wxAnT').innerHTML = `ANALYSIS ・ ${title}`; $('wxAnS').textContent = sub; $('wxChk').innerHTML = chk; $('wxCode').innerHTML = code;
+  $('wxAnT').innerHTML = `ANALYSIS ・ ${title}`;
+  $('wxAnS').innerHTML = cand && nRot > 1 ? `${sub}・<button class="wxpg" data-wa="prev" aria-label="上一個">◀</button> <b>${WAR.ai + 1}／${nRot}</b> <button class="wxpg" data-wa="next" aria-label="下一個">▶</button> <button class="wxpg" data-wa="pause" aria-label="${WAR.paused ? '繼續輪播' : '暫停輪播'}">${WAR.paused ? '▶ 輪播' : '⏸'}</button>` : sub; $('wxChk').innerHTML = chk; $('wxCode').innerHTML = code;
   const PIPE = ['回踩', '收盤確認', '結構轉向', '回踩 FVG', '進場'];
   $('wxPipe').innerHTML = cand ? PIPE.map((p, i) => `<span class="${i < stage ? 'done' : i === stage ? 'cur' : ''}">${p}</span>`).join('<i>→</i>') : nc ? ['掃描', 'z 值異常', 'BTC 過濾', '下單'].map((p, i) => `<span class="${i < 3 ? 'done' : 'cur'}">${p}</span>`).join('<i>→</i>') : '';
-  if (sym) warKl(sym, iv).then(rows => warCandles(rows, cand));
+  if (sym) { const key = WAR.aiKey; warKl(sym, iv).then(rows => { if (!cand || WAR.aiKey === key) warCandles(rows, cand); }); }
+  for (const c of L0) warKl(c.sym, c.pair === 'h4' ? '15m' : '5m');   // 先把每張卡片的 K 線都抓好（1 分鐘快取），輪播時才不會等
 }
 function warCandles(rows, cand) {
   const cv = $('wxK'); if (!cv) return; const w = cv.clientWidth, h = cv.clientHeight; if (!w) return;
@@ -4660,7 +4671,17 @@ function warAnim() {
   if (!WAR.ro) { WAR.ro = new ResizeObserver(() => { if (WAR.d) { warBalance(WAR.d); const c = WAR.d.cand || WAR.d.nc; if (c) warKl(c.sym, WAR.d.cand && WAR.d.cand.pair === 'h4' ? '15m' : '5m').then(r => warCandles(r, WAR.d.cand)); } }); WAR.ro.observe($('qWar')); }
 }
 setInterval(() => { const el = $('wxClock'); if (el) el.textContent = `${fmtT(Date.now()).slice(-5)} TPE`; }, 1000);
+setInterval(() => {                                    // ⏱ ANALYSIS 每秒換下一張（滑鼠停在上面、按暫停、或分頁在背景時不換）
+  const D = WAR.d; if (!D || WAR.paused || WAR.hover || document.hidden || !$('wxChk')) return;
+  const n = (D.cands || []).length; if (n > 1) { WAR.ai = ((WAR.ai || 0) + 1) % n; warAnalysis(D); }
+}, 1000);
+$('qWar').addEventListener('mouseover', e => { WAR.hover = !!e.target.closest('.wxlow'); });
+$('qWar').addEventListener('mouseleave', () => { WAR.hover = false; });
+$('qWar').addEventListener('focusin', e => { if (e.target.closest('.wxlow')) WAR.hover = true; });
+$('qWar').addEventListener('focusout', () => { WAR.hover = false; });
 $('qWar').onclick = e => {
+  const a = e.target.closest('[data-wa]');
+  if (a && WAR.d) { const n = (WAR.d.cands || []).length || 1, k = a.dataset.wa; if (k === 'pause') WAR.paused = !WAR.paused; else WAR.ai = ((WAR.ai || 0) + (k === 'next' ? 1 : -1) + n) % n; warAnalysis(WAR.d); return; }
   const b = e.target.closest('[data-war]'); if (!b) return; const k = b.dataset.war;
   if (k === 'lt') $('qLtToggle').click(); else if (k === 'sp') $('qSpToggle').click(); else mnOpen(k);
 };
@@ -4911,6 +4932,9 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-02d', title: '2026/11/02 更新（ANALYSIS 輪播）', items: [
+    { ic: '🔁', sp: true, t: '作戰室的 ANALYSIS 改成輪播：所有走到第 2 步以後的特級卡片每秒換一張，右上角顯示第幾張／共幾張，可以按 ◀ ▶ 切換、⏸ 暫停；滑鼠停在上面時不會換。' }
+  ] },
   { id: '2026-11-02c', title: '2026/11/02 更新（試用只用模擬盤）', items: [
     { ic: '🧪', t: '7 天試用改成只能用模擬盤：開通時自動放 1000U 模擬資金，不用設定 Bitunix API、不會動到真的錢；試用中不能切換到實盤。付費轉正式後自動換成實盤。' }
   ] },
