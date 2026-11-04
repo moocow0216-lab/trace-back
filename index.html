@@ -1000,6 +1000,25 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
 .ksimg{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.ksthumb{width:120px;height:68px;border-radius:8px;background-size:cover;background-position:center;border:1px solid #444}.ksup{cursor:pointer}
 .ksfoot{display:flex;align-items:center;gap:10px;padding:14px 20px;border-top:1px solid #2a2a2a}.ksfoot select{padding:8px 10px;border-radius:8px;background:#1e1e1e;color:#d1d4dc;border:1px solid #444}.ksfoot .btn{padding:8px 18px}.ksok{background:#fff!important;color:#131722!important;font-weight:700}
 @media (max-width:620px){.ksbody{grid-template-columns:1fr}.ksside{flex-direction:row;overflow:auto}}
+
+/* ===== ✏️ 繪圖工具、⏪ 回放 ===== */
+.klmid{display:flex;gap:6px;flex:1;min-height:0}.klmid .klbox{flex:1}
+.kltools{display:flex;flex-direction:column;gap:2px;padding:4px;border:1px solid var(--line,#2a2e39);border-radius:8px;overflow-y:auto;overflow-x:visible;width:48px;flex:none;scrollbar-width:none}
+.kdg{position:relative;display:flex}.kdb{width:38px;height:36px;border:0;background:transparent;color:inherit;border-radius:6px;font-size:16px;cursor:pointer;display:grid;place-items:center}.kdb:hover{background:rgba(127,127,127,.15)}.kdb.on{background:rgba(41,98,255,.18);color:#2962ff}
+.kdmore{position:absolute;right:-2px;bottom:2px;width:10px;height:14px;border:0;background:transparent;color:var(--muted);font-size:10px;cursor:pointer;padding:0}.kdsep{display:block;height:1px;background:var(--line,#2a2e39);margin:4px 2px}.kdsep.v{width:1px;height:20px;margin:0 4px}
+.kldraw{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2}
+.klbox[data-cur="dot"] .klchart,.klbox[data-cur="dot"]{cursor:crosshair}.klbox[data-cur="arrow"] .klchart{cursor:default}
+.kdmenu{position:absolute;z-index:20;min-width:200px;background:var(--panel,#1e222d);border:1px solid var(--line,#2a2e39);border-radius:8px;padding:4px;box-shadow:0 10px 30px rgba(0,0,0,.4);display:flex;flex-direction:column;max-height:70vh;overflow:auto}
+.kdmenu button{display:flex;align-items:center;gap:10px;border:0;background:transparent;color:inherit;padding:8px 10px;border-radius:6px;text-align:left;cursor:pointer;font-size:14px}.kdmenu button:hover,.kdmenu button.on{background:rgba(41,98,255,.15)}.kdmenu button[disabled]{opacity:.4}.kdmenu i{font-style:normal;width:22px;text-align:center}
+.kdstar{margin-left:auto;color:var(--muted);padding:0 4px}.kdstar.on{color:#f5c518}.kdmh{margin:4px 8px;font-size:12px;color:var(--muted)}
+.kdedit{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:3px;background:var(--panel,#1e222d);border:1px solid var(--line,#2a2e39);border-radius:8px;padding:4px 6px;box-shadow:0 6px 20px rgba(0,0,0,.35);flex-wrap:wrap;max-width:94%}
+.kdc{width:20px;height:20px;border-radius:50%;border:2px solid transparent;background:var(--c);cursor:pointer}.kdc.on{border-color:#fff;box-shadow:0 0 0 2px #2962ff}
+.kdw{min-width:28px;height:26px;border:0;background:transparent;color:inherit;border-radius:5px;cursor:pointer;display:grid;place-items:center}.kdw i{display:block;width:16px;background:currentColor}.kdw.on,.kdw:hover{background:rgba(41,98,255,.18)}
+.kdfav{position:absolute;top:8px;left:8px;z-index:6;display:flex;gap:2px;background:var(--panel,#1e222d);border:1px solid var(--line,#2a2e39);border-radius:8px;padding:2px}
+.klrpb{border:1px solid var(--line,#2a2e39);background:transparent;color:inherit;border-radius:8px;padding:6px 12px;font-size:13.5px;cursor:pointer}.klrpb.on{background:#2962ff;border-color:#2962ff;color:#fff}
+.klrp{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:6px;background:var(--panel,#1e222d);border:1px solid #2962ff;border-radius:10px;padding:6px 8px;box-shadow:0 8px 24px rgba(0,0,0,.4);flex-wrap:wrap;justify-content:center;max-width:96%;font-size:13px}
+.klrp .btn{padding:5px 10px;flex:none!important;width:auto!important}.klrp select{padding:5px 6px;border-radius:6px}.krt{color:var(--muted);font-size:12px}
+@media (max-width:620px){.kltools{width:42px}.kdb{width:32px;height:32px;font-size:14px}}
 </style>
 </head>
 <body class="quant-on mn">
@@ -1199,7 +1218,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-02g</div>
+      <div class="qver" id="qVer">網站版本 2026-11-02h</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3659,7 +3678,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-02g・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-02h・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -4212,11 +4231,14 @@ function klUi() {
   host.innerHTML = `<div class="kl">
     <div class="kltop"><button class="klsym" id="klSymBtn" aria-haspopup="dialog"><b id="klSymT"></b><span>▾</span></button>
       <div class="kltf" role="group" aria-label="週期">${KL_TF.map(([v, n]) => `<button data-kltf="${v}" aria-pressed="false">${n}</button>`).join('')}</div>
-      <span class="klst" id="klSt" role="status"></span><span class="spacer"></span><button class="klgear" id="klGear" aria-label="圖表設定" title="設定">⚙</button></div>
-    <div class="klbox"><div class="kllg" id="klLg"></div><div id="klChart" class="klchart" aria-label="K 線圖，可以拖曳、用滾輪或兩指縮放"></div><div class="kltag" id="klTag" hidden aria-live="off"><b id="klTagP"></b><small id="klTagT"></small></div></div>
+      <span class="klst" id="klSt" role="status"></span><button class="klrpb" id="klRpBtn" aria-pressed="false" title="K 線回放">⏪ 回放</button><span class="spacer"></span><button class="klgear" id="klGear" aria-label="圖表設定" title="設定">⚙</button></div>
+    <div class="klmid"><div class="kltools" id="klTools" role="toolbar" aria-label="繪圖工具" aria-orientation="vertical"></div>
+    <div class="klbox"><div class="kllg" id="klLg"></div><div id="klChart" class="klchart" aria-label="K 線圖，可以拖曳、用滾輪或兩指縮放"></div><div class="kltag" id="klTag" hidden aria-live="off"><b id="klTagP"></b><small id="klTagT"></small></div><canvas id="klDraw" class="kldraw" aria-hidden="true"></canvas><div class="kdedit" id="kdEditBar" hidden></div><div class="kdfav" id="kdFav" hidden></div><div class="klrp" id="klRp" hidden></div></div></div>
     <div class="klpick" id="klPick" hidden role="dialog" aria-label="選擇幣種"><input id="klQ" placeholder="搜尋幣種，例如 BTC、ETH、SOL" autocomplete="off" aria-label="搜尋幣種"><div class="kllist" id="klList" role="listbox"></div></div></div>`;
   host.querySelector('.kltf').onclick = e => { const b = e.target.closest('[data-kltf]'); if (b) klSet(KL.sym, b.dataset.kltf); };
-  $('klGear').onclick = ksOpen;
+  $('klGear').onclick = ksOpen; $('klRpBtn').onclick = krToggle;
+  $('klRp').addEventListener('click', e => { const b = e.target.closest('[data-kr]'); if (!b) return; const k = b.dataset.kr; if (k === 'exit') krExit(); if (k === 'pick') { krPlay(false); KR.pick = true; krBar(); } if (k === 'play') krPlay(!KR.play); if (k === 'step') { krPlay(false); krStep(); } });
+  $('klRp').addEventListener('change', e => { if (e.target.dataset.kr === 'speed') { KR.speed = +e.target.value; if (KR.play) krPlay(true); } });
   $('klSymBtn').onclick = () => { const p = $('klPick'); p.hidden = !p.hidden; if (!p.hidden) { $('klQ').value = ''; klList(); $('klQ').focus(); } };
   $('klQ').oninput = klList; $('klQ').onkeydown = e => { if (e.key === 'Escape') $('klPick').hidden = true; if (e.key === 'Enter') { const f = $('klList').querySelector('[data-klsym]'); if (f) f.click(); } };
   $('klList').onclick = e => { const b = e.target.closest('[data-klsym]'); if (b) { $('klPick').hidden = true; klSet(b.dataset.klsym, KL.tf); } };
@@ -4250,17 +4272,19 @@ async function klInit() {
     KL.ch.timeScale().subscribeVisibleLogicalRangeChange(r => { if (r && r.from < 30) klOlder(); klTagDraw(); });   // 往左捲到最前面：自動載入更早的 K 線
     new ResizeObserver(() => klTagDraw()).observe($('klChart'));
   }
+  kdToolbar(); kdBind(); kdCursor();
   klSet(KL.sym, KL.tf, true);
 }
 const klVolBar = (b, prev) => { const c = ksUp(b, prev) ? KS.upBorder : KS.dnBorder, h = ksHex(c); return { time: b.time, value: b.vol, color: h ? h + '80' : 'rgba(127,127,127,.5)' }; };   // 成交量跟 K 線同一套漲跌顏色
 async function klSet(sym, tf, force) {
   if (!force && sym === KL.sym && tf === KL.tf && KL.data.length) return;
+  if (KR.on) krExit();
   KL.sym = sym; KL.tf = tf; LS.set('klSym', sym); LS.set('klTf', tf); KL.end = false;
   $('klSymT').textContent = sym.replace(/USDT$/, '') + 'USDT'; document.querySelectorAll('[data-kltf]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.kltf === tf)));
   $('klSt').textContent = '讀取中…'; const my = sym + tf; KL.want = my;
   try {
     const D = await klFetch(sym, tf); if (KL.want !== my) return;
-    KL.data = D; KL.cs.setData(klCdAll(D)); KL.vs.setData(D.map((b, i) => klVolBar(b, D[i - 1]))); KL.ch.timeScale().fitContent(); KL.ch.timeScale().scrollToPosition(8, false);
+    KL.data = D; KL.full = D; kdLoad(); kdEdit(); KL.cs.setData(klCdAll(D)); KL.vs.setData(D.map((b, i) => klVolBar(b, D[i - 1]))); KL.ch.timeScale().fitContent(); KL.ch.timeScale().scrollToPosition(8, false);
     const n = Math.min(D.length, 150); KL.ch.timeScale().setVisibleLogicalRange({ from: D.length - n, to: D.length + 8 });
     klLegend(); $('klSt').textContent = ''; klWs(); KL.lastMsg = Date.now(); klTagDraw();
   } catch (e) { $('klSt').textContent = '讀取失敗：' + e.message; }
@@ -4270,7 +4294,7 @@ async function klOlder() {
   try {
     const D = await klFetch(KL.sym, KL.tf, KL.data[0].time * 1000 - 1); if (KL.sym + KL.tf !== my) return;
     if (!D.length) { KL.end = true; return; }
-    const r = KL.ch.timeScale().getVisibleLogicalRange(); KL.data = [...D.filter(b => b.time < KL.data[0].time), ...KL.data];
+    const r = KL.ch.timeScale().getVisibleLogicalRange(), add = D.filter(b => b.time < KL.full[0].time); KL.full = [...add, ...KL.full]; if (KR.on) { KR.ri += add.length; KL.data = KL.full.slice(0, KR.ri + 1); } else KL.data = KL.full;
     KL.cs.setData(klCdAll(KL.data)); KL.vs.setData(KL.data.map((b, i) => klVolBar(b, KL.data[i - 1]))); if (r) KL.ch.timeScale().setVisibleLogicalRange({ from: r.from + D.length, to: r.to + D.length });
   } catch (e) {} finally { KL.loading = false; }
 }
@@ -4284,6 +4308,7 @@ function klWs() {                                      // 即時更新：幣安�
   ws.onclose = () => { if (KL.open && KL.wsKey === key) setTimeout(klWs, 3000); };
 }
 function klPut(b) {                                   // 把最新的 K 棒放進圖表（同一根就更新，新的一根就加在後面）
+  if (KR.on) { const F = KL.full, l2 = F[F.length - 1]; if (l2 && b.time === l2.time) F[F.length - 1] = b; else if (l2 && b.time > l2.time) F.push(b); return; }   // 回放中：新的 K 棒先存起來，不顯示
   const D = KL.data, last = D[D.length - 1]; if (!last || b.time < last.time) return;
   if (b.time === last.time) D[D.length - 1] = b; else D.push(b);
   const pv = D[D.length - 2]; KL.cs.update(klCd(b, pv)); KL.vs.update(klVolBar(b, pv)); klLegend(); klTagDraw();
@@ -4298,7 +4323,7 @@ function klTagDraw() {                                 // 右邊價格軸上的�
   const b = KL.data[KL.data.length - 1], y = KL.cs.priceToCoordinate(b.close), w = KL.ch.priceScale('right').width(), cw = $('klChart').clientWidth, T = klTheme();
   if (y == null || !w) { tag.hidden = true; return; }
   tag.hidden = false; tag.style.left = (cw - w) + 'px'; tag.style.width = w + 'px'; tag.style.top = Math.round(y - 11) + 'px'; const tc = ksUp(b, KL.data[KL.data.length - 2]) ? KS.upBorder : KS.dnBorder; tag.style.background = tc; tag.style.color = ksLum(tc) > 0.6 ? '#131722' : '#fff';   // 淺色底用深色字
-  $('klTagP').textContent = klFmt(b.close); $('klTagT').textContent = klLeft(b);
+  $('klTagP').textContent = klFmt(b.close); $('klTagT').textContent = KR.on ? '回放' : klLeft(b);
 }
 setInterval(async () => {                              // ⏱ 每秒：更新倒數；推播 3 秒沒動靜就改用每秒抓一次（確保 K 棒每秒都在跑）
   if (!KL.open || !KL.cs || document.hidden) return; klTagDraw();
@@ -4425,6 +4450,271 @@ function ksImg(file) {                                 // 讀圖片 → 縮小�
     c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); KSD.draft.bg.img = c.toDataURL('image/jpeg', 0.85); KSD.draft.bg.type = 'image'; ksPreview(); ksDraw(); }; im.onerror = () => alert('這個檔案讀不出圖片'); im.src = fr.result; };
   fr.readAsDataURL(file);
 }
+/* ---------- ✏️ K 線圖的繪圖工具（照 TradingView 左邊的工具列）＋ ⏪ K 線回放 ---------- */
+const KD = { tool: null, list: [], sel: null, drag: null, tmp: null, mouse: null, cursor: LS.get('klCur', 'cross'), magnet: LS.get('klMag', false), stay: LS.get('klStay', false), lock: false, hide: false, fav: LS.get('klFav', []), color: '#2962ff', raf: 0 };
+const KD_TOOLS = {                                       // 工具：[名稱, 圖示, 要點幾下]
+  trend: ['趨勢線', '╱', 2], ray: ['射線', '↗', 2], ext: ['延伸線', '⟷', 2], hline: ['水平線', '─', 1], hray: ['水平射線', '⟶', 1], vline: ['垂直線', '│', 1],
+  channel: ['平行通道', '▱', 3], fib: ['斐波那契回撤', '𝐅', 2],
+  long: ['多頭部位', '📈', 1], short: ['空頭部位', '📉', 1], prange: ['價格範圍', '↕', 2], drange: ['日期範圍', '↔', 2],
+  rect: ['矩形', '▭', 2], ellipse: ['橢圓', '◯', 2], arrow: ['箭頭', '➜', 2], brush: ['筆刷', '🖌', 0],
+  text: ['文字', 'T', 1], emoji: ['圖示', '😀', 1], ruler: ['測量', '📏', 2], zoom: ['放大', '🔍', 2]
+};
+const KD_GROUPS = [['cursor', '十字線', '✛', null], ['lines', '線條工具', '╱', ['trend', 'ray', 'ext', 'hline', 'hray', 'vline']], ['fibs', '通道和斐波那契', '𝐅', ['channel', 'fib']],
+  ['measure', '預測和測量', '📈', ['long', 'short', 'prange', 'drange']], ['shapes', '形狀和筆刷', '▭', ['rect', 'ellipse', 'arrow', 'brush']], ['text', '文字', 'T', ['text']], ['emoji', '圖示', '😀', ['emoji']]];
+const KD_EMO = ['🚀', '🔥', '⭐', '✅', '❌', '⚠️', '💰', '🎯', '👀', '🐂', '🐻', '💎'];
+const KD_COLS = ['#2962ff', '#f23645', '#089981', '#ff9800', '#e91e63', '#9c27b0', '#ffffff', '#787b86'];
+const KD_FIB = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1];
+const kdKey = () => 'klDraw';
+function kdLoad() { const all = LS.get(kdKey(), {}); KD.list = all[KL.sym] || []; KD.sel = null; }
+function kdSave() { const all = LS.get(kdKey(), {}); if (KD.list.length) all[KL.sym] = KD.list; else delete all[KL.sym]; LS.set(kdKey(), all); }
+/* ---- 座標換算：時間 ↔ 邏輯位置 ↔ 畫面 x；價格 ↔ 畫面 y（未來的時間用週期往後推） ---- */
+function kdT2L(t) {
+  const D = KL.data, n = D.length; if (!n) return 0; const sec = KL_SEC[KL.tf] || 60;
+  if (t >= D[n - 1].time) return n - 1 + (t - D[n - 1].time) / sec;
+  if (t <= D[0].time) return (t - D[0].time) / sec;
+  let lo = 0, hi = n - 1; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (D[m].time <= t) lo = m; else hi = m; }
+  return lo + (t - D[lo].time) / Math.max(1, D[hi].time - D[lo].time);
+}
+function kdL2T(l) {
+  const D = KL.data, n = D.length; if (!n) return 0; const sec = KL_SEC[KL.tf] || 60;
+  if (l >= n - 1) return Math.round(D[n - 1].time + (l - (n - 1)) * sec);
+  if (l <= 0) return Math.round(D[0].time + l * sec);
+  const i = Math.floor(l); return Math.round(D[i].time + (l - i) * (D[i + 1].time - D[i].time));
+}
+const kdX = t => { const v = KL.ch.timeScale().logicalToCoordinate(kdT2L(t)); return v == null ? null : v; };
+const kdY = p => KL.cs.priceToCoordinate(p);
+function kdPt(x, y) {                                   // 畫面座標 → {時間, 價格}；磁鐵模式會吸到最近那根的開高低收
+  const l = KL.ch.timeScale().coordinateToLogical(x); let t = kdL2T(l), p = KL.cs.coordinateToPrice(y);
+  if (KD.magnet && KL.data.length) { const i = Math.max(0, Math.min(KL.data.length - 1, Math.round(l))), b = KL.data[i], c = [b.open, b.high, b.low, b.close].map(v => [v, Math.abs(kdY(v) - y)]).sort((a, b2) => a[1] - b2[1])[0]; if (c[1] < 40) { p = c[0]; t = b.time; } }
+  return { t, p };
+}
+/* ---- 工具列 ---- */
+function kdToolbar() {
+  const el = $('klTools'); if (!el) return;
+  const grp = KD_GROUPS.map(([k, n, ic, tools]) => { const cur = tools && tools.includes(KD.tool), show = cur ? KD_TOOLS[KD.tool][1] : k === 'cursor' ? { cross: '✛', dot: '•', arrow: '➚' }[KD.cursor] : ic;
+    return `<div class="kdg"><button class="kdb${(k === 'cursor' && !KD.tool) || cur ? ' on' : ''}" data-kdg="${k}" title="${n}" aria-label="${n}">${show}</button>${tools && tools.length > 1 || k === 'cursor' ? `<button class="kdmore" data-kdmore="${k}" aria-label="${n}的選項">›</button>` : ''}</div>`; }).join('');
+  el.innerHTML = grp + '<i class="kdsep"></i>' +
+    `<button class="kdb${KD.tool === 'ruler' ? ' on' : ''}" data-kdt="ruler" title="測量（拖曳量價差、K 棒數、時間）" aria-label="測量">📏</button>
+     <button class="kdb${KD.tool === 'zoom' ? ' on' : ''}" data-kdt="zoom" title="放大（拖曳一段範圍）" aria-label="放大">🔍</button><i class="kdsep"></i>
+     <button class="kdb${KD.magnet ? ' on' : ''}" data-kda="magnet" title="磁鐵模式（吸附開高低收）" aria-label="磁鐵模式" aria-pressed="${KD.magnet}">🧲</button>
+     <button class="kdb${KD.stay ? ' on' : ''}" data-kda="stay" title="保持繪圖模式（畫完不會切回游標）" aria-label="保持繪圖模式" aria-pressed="${KD.stay}">✏️</button>
+     <button class="kdb${KD.lock ? ' on' : ''}" data-kda="lock" title="鎖定所有繪圖" aria-label="鎖定所有繪圖" aria-pressed="${KD.lock}">${KD.lock ? '🔒' : '🔓'}</button>
+     <button class="kdb${KD.hide ? ' on' : ''}" data-kda="hide" title="隱藏所有繪圖" aria-label="隱藏所有繪圖" aria-pressed="${KD.hide}">👁</button><i class="kdsep"></i>
+     <button class="kdb" data-kda="trash" title="刪除繪圖" aria-label="刪除繪圖">🗑</button><i class="kdsep"></i>
+     <button class="kdb${KD.favOpen ? ' on' : ''}" data-kda="fav" title="收藏的工具" aria-label="收藏的工具">☆</button>`;
+}
+function kdMenu(kind, anchor) {                          // 群組的下拉選單（例如線條工具裡選射線、水平線…）
+  kdMenuClose(); const m = document.createElement('div'); m.className = 'kdmenu'; m.id = 'kdMenu'; m.setAttribute('role', 'menu');
+  if (kind === 'cursor') m.innerHTML = [['cross', '✛', '十字'], ['dot', '•', '點'], ['arrow', '➚', '箭頭']].map(([k, ic, n]) => `<button role="menuitem" data-kdcur="${k}"${KD.cursor === k ? ' class="on"' : ''}><i>${ic}</i>${n}</button>`).join('');
+  else if (kind === 'trash') m.innerHTML = `<button role="menuitem" data-kddel="sel"${KD.sel ? '' : ' disabled'}><i>🗑</i>刪除選取的繪圖</button><button role="menuitem" data-kddel="all"><i>🧹</i>刪除全部繪圖（${KD.list.length}）</button>`;
+  else if (kind === 'fav') m.innerHTML = `<p class="kdmh">點 ☆ 收藏常用的工具</p>` + Object.entries(KD_TOOLS).filter(([k]) => !['ruler', 'zoom'].includes(k)).map(([k, [n, ic]]) => `<button role="menuitem" data-kdt="${k}"><i>${ic}</i>${n}<span class="kdstar${KD.fav.includes(k) ? ' on' : ''}" data-kdfav="${k}" role="button" aria-label="收藏 ${n}">${KD.fav.includes(k) ? '★' : '☆'}</span></button>`).join('');
+  else { const g = KD_GROUPS.find(x => x[0] === kind); m.innerHTML = g[3].map(k => `<button role="menuitem" data-kdt="${k}"${KD.tool === k ? ' class="on"' : ''}><i>${KD_TOOLS[k][1]}</i>${KD_TOOLS[k][0]}<span class="kdstar${KD.fav.includes(k) ? ' on' : ''}" data-kdfav="${k}" role="button" aria-label="收藏 ${KD_TOOLS[k][0]}">${KD.fav.includes(k) ? '★' : '☆'}</span></button>`).join(''); }
+  const r = anchor.getBoundingClientRect(), box = $('mnpKline').getBoundingClientRect(); m.style.left = (r.right - box.left + 6) + 'px'; m.style.top = (r.top - box.top) + 'px';
+  $('mnpKline').querySelector('.kl').appendChild(m); const f = m.querySelector('button:not([disabled])'); if (f) f.focus();
+}
+function kdMenuClose() { const m = $('kdMenu'); if (m) m.remove(); }
+function kdFavBar() {                                    // 收藏的工具：浮在圖表上方的小工具列
+  const el = $('kdFav'); if (!el) return; el.hidden = !KD.fav.length || !KD.favShow;
+  el.innerHTML = KD.fav.map(k => `<button class="kdb${KD.tool === k ? ' on' : ''}" data-kdt="${k}" title="${KD_TOOLS[k][0]}" aria-label="${KD_TOOLS[k][0]}">${KD_TOOLS[k][1]}</button>`).join('');
+}
+function kdUse(t) { KD.tool = KD.tool === t && !['ruler', 'zoom'].includes(t) ? null : t; KD.tmp = null; kdMenuClose(); kdToolbar(); kdFavBar(); kdCursor(); if (t === 'emoji' && KD.tool) KD.emo = KD.emo || KD_EMO[0]; }
+function kdCursor() {                                   // 游標樣式：十字／點／箭頭（畫圖時一律十字）
+  if (!KL.ch) return; const c = KD.tool ? 'cross' : KD.cursor, box = document.querySelector('.klbox');
+  KL.ch.applyOptions({ crosshair: { mode: 0, vertLine: { visible: c === 'cross', labelVisible: c !== 'arrow' }, horzLine: { visible: c === 'cross', labelVisible: c !== 'arrow' } } });
+  if (box) box.dataset.cur = c;
+}
+/* ---- 畫圖 ---- */
+function kdDraw() {
+  const cv = $('klDraw'); if (!cv || !KL.ch) return; const w = cv.clientWidth, h = cv.clientHeight, dpr = devicePixelRatio || 1;
+  if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+  const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
+  const pw = KL.ch.priceScale('right').width() || 60; g.save(); g.beginPath(); g.rect(0, 0, w - pw, h); g.clip();
+  if (!KD.hide) for (const d of KD.list) kdShape(g, d, d === KD.sel, w - pw, h);
+  if (KD.tmp) kdShape(g, KD.tmp, true, w - pw, h);
+  if (KR.pick && KD.mouse) { g.strokeStyle = '#2962ff'; g.setLineDash([5, 4]); g.lineWidth = 1.5; g.beginPath(); g.moveTo(KD.mouse.x, 0); g.lineTo(KD.mouse.x, h); g.stroke(); g.setLineDash([]); g.fillStyle = '#2962ff'; g.font = 'bold 12px sans-serif'; g.fillText('點一下從這裡開始回放', KD.mouse.x + 8, 20); }
+  g.restore();
+}
+function kdShape(g, d, sel, W, H) {
+  const P = d.pts.map(q => ({ x: kdX(q.t), y: kdY(q.p) })); if (P.some(q => q.x == null || q.y == null)) return;
+  const c = d.color || KD.color, lw = d.width || 2; g.strokeStyle = c; g.fillStyle = c; g.lineWidth = lw; g.setLineDash(d.dash ? [6, 4] : []);
+  const line = (a, b2) => { g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b2.x, b2.y); g.stroke(); };
+  const extend = (a, b2, both) => { const dx = b2.x - a.x, dy = b2.y - a.y, k = 1e4; line(both ? { x: a.x - dx * k, y: a.y - dy * k } : a, { x: b2.x + dx * k, y: b2.y + dy * k }); };
+  const lab = (txt, x, y, bg) => { g.font = '12px sans-serif'; const tw = g.measureText(txt).width + 10; g.fillStyle = bg || c; g.fillRect(x, y - 10, tw, 20); g.fillStyle = '#fff'; g.fillText(txt, x + 5, y + 4); g.fillStyle = c; };
+  const T = d.type, a = P[0], b = P[1] || P[0];
+  if (T === 'trend' || T === 'arrow') { line(a, b); if (T === 'arrow') { const an = Math.atan2(b.y - a.y, b.x - a.x), s = 12 + lw * 2; g.beginPath(); g.moveTo(b.x, b.y); g.lineTo(b.x - s * Math.cos(an - 0.45), b.y - s * Math.sin(an - 0.45)); g.lineTo(b.x - s * Math.cos(an + 0.45), b.y - s * Math.sin(an + 0.45)); g.closePath(); g.fill(); } }
+  else if (T === 'ray') extend(a, b, false);
+  else if (T === 'ext') extend(a, b, true);
+  else if (T === 'hline') { line({ x: 0, y: a.y }, { x: W, y: a.y }); lab(klFmt(d.pts[0].p), W - 90, a.y); }
+  else if (T === 'hray') { line(a, { x: W, y: a.y }); lab(klFmt(d.pts[0].p), W - 90, a.y); }
+  else if (T === 'vline') line({ x: a.x, y: 0 }, { x: a.x, y: H });
+  else if (T === 'channel') { line(a, b); const c3 = P[2] || b, dy = c3.y - (a.y + (b.y - a.y) * ((c3.x - a.x) / ((b.x - a.x) || 1))); line({ x: a.x, y: a.y + dy }, { x: b.x, y: b.y + dy }); g.globalAlpha = 0.12; g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.lineTo(b.x, b.y + dy); g.lineTo(a.x, a.y + dy); g.closePath(); g.fill(); g.globalAlpha = 1; g.setLineDash([4, 4]); line({ x: a.x, y: a.y + dy / 2 }, { x: b.x, y: b.y + dy / 2 }); g.setLineDash([]); }
+  else if (T === 'fib') { const p0 = d.pts[0].p, p1 = (d.pts[1] || d.pts[0]).p, x0 = Math.min(a.x, b.x), x1 = Math.max(a.x, b.x), FC = ['#787b86', '#f23645', '#ff9800', '#4caf50', '#089981', '#00bcd4', '#787b86'];
+    KD_FIB.forEach((f, i) => { const p = p1 + (p0 - p1) * f, y = kdY(p); if (y == null) return; g.strokeStyle = FC[i]; line({ x: x0, y }, { x: x1 + 60, y }); g.font = '11px sans-serif'; g.fillStyle = FC[i]; g.fillText(`${f} (${klFmt(p)})`, x0 + 4, y - 3);
+      if (i < KD_FIB.length - 1) { const y2 = kdY(p1 + (p0 - p1) * KD_FIB[i + 1]); g.globalAlpha = 0.07; g.fillRect(x0, Math.min(y, y2), x1 - x0 + 60, Math.abs(y2 - y)); g.globalAlpha = 1; } }); g.strokeStyle = c; g.setLineDash([4, 4]); line(a, b); g.setLineDash([]); }
+  else if (T === 'rect') { g.globalAlpha = 0.15; g.fillRect(Math.min(a.x, b.x), Math.min(a.y, b.y), Math.abs(b.x - a.x), Math.abs(b.y - a.y)); g.globalAlpha = 1; g.strokeRect(Math.min(a.x, b.x), Math.min(a.y, b.y), Math.abs(b.x - a.x), Math.abs(b.y - a.y)); }
+  else if (T === 'ellipse') { g.beginPath(); g.ellipse((a.x + b.x) / 2, (a.y + b.y) / 2, Math.abs(b.x - a.x) / 2 || 1, Math.abs(b.y - a.y) / 2 || 1, 0, 0, 7); g.globalAlpha = 0.15; g.fill(); g.globalAlpha = 1; g.stroke(); }
+  else if (T === 'brush') { if (P.length > 1) { g.lineJoin = g.lineCap = 'round'; g.beginPath(); P.forEach((q, i) => i ? g.lineTo(q.x, q.y) : g.moveTo(q.x, q.y)); g.stroke(); } }
+  else if (T === 'text') { g.font = `bold ${12 + lw * 2}px sans-serif`; g.fillStyle = c; g.fillText(d.text || '文字', a.x, a.y); }
+  else if (T === 'emoji') { g.font = `${20 + lw * 6}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(d.text || '🚀', a.x, a.y); g.textAlign = 'left'; g.textBaseline = 'alphabetic'; }
+  else if (T === 'long' || T === 'short') {                    // 部位工具：進場、止盈（綠）、止損（紅）、盈虧比
+    const e = d.pts[0], tp = d.pts[1], sl = d.pts[2], ye = a.y, yt = kdY(tp.p), ys = kdY(sl.p), xr = kdX(d.pts[3] ? d.pts[3].t : e.t);
+    if (yt == null || ys == null || xr == null) return; const x0 = Math.min(a.x, xr), wd = Math.abs(xr - a.x) || 120;
+    g.globalAlpha = 0.22; g.fillStyle = '#089981'; g.fillRect(x0, Math.min(ye, yt), wd, Math.abs(yt - ye)); g.fillStyle = '#f23645'; g.fillRect(x0, Math.min(ye, ys), wd, Math.abs(ys - ye)); g.globalAlpha = 1;
+    g.strokeStyle = '#787b86'; g.lineWidth = 1; line({ x: x0, y: ye }, { x: x0 + wd, y: ye });
+    const rw = Math.abs(tp.p - e.p), rs = Math.abs(e.p - sl.p), rr = rs ? (rw / rs).toFixed(2) : '—';
+    lab(`止盈 ${klFmt(tp.p)}（${((tp.p / e.p - 1) * 100 * (T === 'long' ? 1 : -1)).toFixed(2)}%）`, x0 + 4, yt + (T === 'long' ? 12 : -12), '#089981');
+    lab(`止損 ${klFmt(sl.p)}（${((sl.p / e.p - 1) * 100 * (T === 'long' ? 1 : -1)).toFixed(2)}%）`, x0 + 4, ys + (T === 'long' ? -12 : 12), '#f23645');
+    lab(`${T === 'long' ? '多' : '空'} ${klFmt(e.p)}・盈虧比 ${rr}`, x0 + 4, ye + (T === 'long' ? -14 : 14), '#2a2e39');
+    if (sel) for (const q of [{ x: x0 + wd / 2, y: yt }, { x: x0 + wd / 2, y: ys }, { x: x0 + wd, y: ye }, { x: a.x, y: ye }]) kdHandle(g, q); return;
+  }
+  else if (T === 'prange' || T === 'drange' || T === 'ruler') {   // 價格範圍／日期範圍／測量
+    const p0 = d.pts[0].p, p1 = (d.pts[1] || d.pts[0]).p, up = p1 >= p0, col = T === 'ruler' ? (up ? '#2962ff' : '#f23645') : c;
+    g.globalAlpha = 0.15; g.fillStyle = col; g.fillRect(Math.min(a.x, b.x), Math.min(a.y, b.y), Math.abs(b.x - a.x), Math.abs(b.y - a.y)); g.globalAlpha = 1; g.strokeStyle = col;
+    if (T !== 'drange') line({ x: (a.x + b.x) / 2, y: a.y }, { x: (a.x + b.x) / 2, y: b.y }); if (T !== 'prange') line({ x: a.x, y: (a.y + b.y) / 2 }, { x: b.x, y: (a.y + b.y) / 2 });
+    const bars = Math.round(kdT2L(d.pts[1] ? d.pts[1].t : d.pts[0].t) - kdT2L(d.pts[0].t)), sec = Math.abs((d.pts[1] || d.pts[0]).t - d.pts[0].t), hh = Math.floor(sec / 3600), dd = Math.floor(hh / 24);
+    const parts = []; if (T !== 'drange') parts.push(`${up ? '+' : ''}${klFmt(p1 - p0)}（${((p1 / p0 - 1) * 100).toFixed(2)}%）`); if (T !== 'prange') parts.push(`${bars} 根・${dd ? `${dd}天 ${hh % 24}小時` : `${hh}小時 ${Math.round(sec % 3600 / 60)}分`}`);
+    lab(parts.join('　'), Math.min(a.x, b.x), Math.max(a.y, b.y) + 18, col);
+  }
+  if (sel) P.forEach(q => kdHandle(g, q));
+}
+function kdHandle(g, q) { g.save(); g.setLineDash([]); g.fillStyle = '#fff'; g.strokeStyle = '#2962ff'; g.lineWidth = 2; g.beginPath(); g.arc(q.x, q.y, 5, 0, 7); g.fill(); g.stroke(); g.restore(); }
+/* ---- 點選、拖曳 ---- */
+const kdDist = (p, a, b) => { const dx = b.x - a.x, dy = b.y - a.y, L = dx * dx + dy * dy; let t = L ? ((p.x - a.x) * dx + (p.y - a.y) * dy) / L : 0; t = Math.max(0, Math.min(1, t)); return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy)); };
+function kdHit(m) {                                     // 滑鼠點到哪一個繪圖（回傳 [繪圖, 第幾個點 或 -1＝整個]）
+  if (KD.hide || KD.lock) return null;
+  for (let i = KD.list.length - 1; i >= 0; i--) {
+    const d = KD.list[i], P = d.pts.map(q => ({ x: kdX(q.t), y: kdY(q.p) })); if (P.some(q => q.x == null || q.y == null)) continue;
+    if (d === KD.sel) { const hp = d.type === 'long' || d.type === 'short' ? [P[1] && { x: (P[0].x + kdX(d.pts[3].t)) / 2, y: P[1].y }, P[2] && { x: (P[0].x + kdX(d.pts[3].t)) / 2, y: P[2].y }, { x: kdX(d.pts[3].t), y: P[0].y }, P[0]] : P; const j = hp.findIndex(q => q && Math.hypot(q.x - m.x, q.y - m.y) < 9); if (j >= 0) return [d, d.type === 'long' || d.type === 'short' ? [1, 2, 3, 0][j] : j]; }
+    const a = P[0], b = P[1] || P[0], T = d.type; let hit = false;
+    if (['trend', 'arrow', 'ray', 'ext'].includes(T)) hit = kdDist(m, a, b) < 6;
+    else if (T === 'hline' || T === 'hray') hit = Math.abs(m.y - a.y) < 6 && (T === 'hline' || m.x >= a.x);
+    else if (T === 'vline') hit = Math.abs(m.x - a.x) < 6;
+    else if (['rect', 'ellipse', 'fib', 'prange', 'drange', 'channel'].includes(T)) { const ys = P.map(q => q.y); hit = m.x >= Math.min(a.x, b.x) - 4 && m.x <= Math.max(a.x, b.x) + (T === 'fib' ? 60 : 4) && m.y >= Math.min(...ys) - 6 && m.y <= Math.max(...ys) + 6; }
+    else if (T === 'brush') hit = P.some((q, k) => k && kdDist(m, P[k - 1], q) < 6);
+    else if (T === 'text' || T === 'emoji') hit = Math.abs(m.x - a.x) < 40 && Math.abs(m.y - a.y) < 20;
+    else if (T === 'long' || T === 'short') { const xr = kdX(d.pts[3].t), ys = P.slice(0, 3).map(q => q.y); hit = m.x >= Math.min(a.x, xr) && m.x <= Math.max(a.x, xr) && m.y >= Math.min(...ys) && m.y <= Math.max(...ys); }
+    if (hit) return [d, -1];
+  }
+  return null;
+}
+function kdNew(type, q) {                               // 新的繪圖（部位工具一點就出現：預設止盈止損各 1.5%、寬 30 根）
+  const d = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), type, pts: [q], color: type === 'fib' ? '#787b86' : KD.color, width: 2 };
+  if (type === 'long' || type === 'short') { const s = type === 'long' ? 1 : -1, sec = KL_SEC[KL.tf] || 60; d.pts = [q, { t: q.t, p: q.p * (1 + s * 0.015) }, { t: q.t, p: q.p * (1 - s * 0.015) }, { t: q.t + 30 * sec, p: q.p }]; }
+  if (type === 'text') { const tx = prompt('輸入文字：', ''); if (!tx) return null; d.text = tx.slice(0, 120); }
+  if (type === 'emoji') d.text = KD.emo || '🚀';
+  return d;
+}
+function kdFinish(d) {
+  if (d.type === 'zoom') { const l0 = kdT2L(d.pts[0].t), l1 = kdT2L(d.pts[1].t); if (Math.abs(l1 - l0) > 2) KL.ch.timeScale().setVisibleLogicalRange({ from: Math.min(l0, l1), to: Math.max(l0, l1) }); KD.tmp = null; kdUse(null); return; }
+  if (d.type === 'ruler') { KD.ruler = d; KD.tmp = d; return; }   // 測量：留在畫面上，點別的地方就消失
+  KD.list.push(d); KD.sel = d; KD.tmp = null; kdSave(); if (!KD.stay) { KD.tool = null; kdToolbar(); kdFavBar(); kdCursor(); } kdEdit();
+}
+function kdEdit() {                                     // 選到繪圖時的小工具列：顏色、粗細、虛線、刪除
+  const el = $('kdEditBar'); if (!el) return; const d = KD.sel; el.hidden = !d || KD.lock; if (!d) return;
+  el.innerHTML = KD_COLS.map(c => `<button class="kdc${d.color === c ? ' on' : ''}" data-kdc="${c}" style="--c:${c}" aria-label="顏色 ${c}"></button>`).join('') + '<i class="kdsep v"></i>' +
+    [1, 2, 3, 4].map(w => `<button class="kdw${d.width === w ? ' on' : ''}" data-kdw="${w}" aria-label="粗細 ${w}"><i style="height:${w}px"></i></button>`).join('') +
+    `<button class="kdw${d.dash ? ' on' : ''}" data-kdd="1" aria-label="虛線">┄</button>${d.type === 'text' ? '<button class="kdw" data-kdtx="1" aria-label="改文字">✎</button>' : ''}${d.type === 'emoji' ? KD_EMO.map(e => `<button class="kdw" data-kdemo="${e}">${e}</button>`).join('') : ''}<i class="kdsep v"></i><button class="kdw" data-kddel="sel" aria-label="刪除">🗑</button>`;
+}
+function kdBind() {
+  const box = document.querySelector('.klbox'); if (!box || box.dataset.kd) return; box.dataset.kd = '1';
+  const pos = e => { const r = $('klChart').getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+  const inChart = m => m.x < $('klChart').clientWidth - (KL.ch.priceScale('right').width() || 60) && m.y < $('klChart').clientHeight - 28;
+  box.addEventListener('pointerdown', e => {               // 攔在圖表前面：畫圖、選繪圖、拖曳時，不讓圖表跟著捲動
+    if (!KL.ch || e.button > 0 || e.target.closest('.kdedit,.klrp,.kdfav')) return; const m = pos(e); if (!inChart(m)) return;
+    if (KR.pick) { e.stopPropagation(); e.preventDefault(); krStart(Math.round(KL.ch.timeScale().coordinateToLogical(m.x))); return; }
+    if (KD.ruler && !KD.tool) { KD.ruler = null; KD.tmp = null; }
+    if (KD.tool) {
+      e.stopPropagation(); e.preventDefault(); box.setPointerCapture(e.pointerId); const q = kdPt(m.x, m.y), T = KD.tool, need = KD_TOOLS[T][2];
+      if (T === 'brush') { KD.tmp = { ...kdNew('brush', q) }; KD.drag = { brush: true }; return; }
+      if (!KD.tmp) { const d = T === 'ruler' || T === 'zoom' ? { type: T, pts: [q], color: '#2962ff', width: 1 } : kdNew(T, q); if (!d) return; if (need === 1 || T === 'long' || T === 'short') return kdFinish(d); d.pts.push({ ...q }); KD.tmp = d; KD.drag = { draw: true }; return; }
+      KD.tmp.pts[KD.tmp.pts.length - 1] = q; if (KD.tmp.pts.length >= need) return kdFinish(KD.tmp); KD.tmp.pts.push({ ...q }); return;
+    }
+    const h = kdHit(m);
+    if (h) { e.stopPropagation(); e.preventDefault(); box.setPointerCapture(e.pointerId); KD.sel = h[0]; KD.drag = { d: h[0], k: h[1], m0: m, p0: JSON.parse(JSON.stringify(h[0].pts)) }; kdEdit(); }
+    else if (KD.sel) { KD.sel = null; kdEdit(); }
+  }, true);
+  box.addEventListener('pointermove', e => {
+    if (!KL.ch) return; const m = pos(e); KD.mouse = m;
+    if (KD.tmp && KD.tool && KD.tmp.type !== 'brush') { KD.tmp.pts[KD.tmp.pts.length - 1] = kdPt(m.x, m.y); e.stopPropagation(); }
+    if (KD.drag && KD.drag.brush) { KD.tmp.pts.push(kdPt(m.x, m.y)); e.stopPropagation(); }
+    else if (KD.drag && KD.drag.d) {                     // 拖曳整個繪圖或某一個點
+      e.stopPropagation(); const D = KD.drag, d = D.d, q = kdPt(m.x, m.y);
+      if (D.k >= 0) { if ((d.type === 'long' || d.type === 'short') && D.k === 0) { const dt = q.t - D.p0[0].t, dp = q.p - D.p0[0].p; d.pts = D.p0.map(x => ({ t: x.t + dt, p: x.p + dp })); } else { d.pts[D.k] = (d.type === 'long' || d.type === 'short') ? (D.k === 3 ? { t: q.t, p: D.p0[3].p } : { t: D.p0[D.k].t, p: q.p }) : q; } }
+      else { const a = kdPt(D.m0.x, D.m0.y), dt = q.t - a.t, dp = q.p - a.p; d.pts = D.p0.map(x => ({ t: x.t + dt, p: x.p + dp })); }
+    }
+  }, true);
+  box.addEventListener('pointerup', e => {
+    if (!KD.drag) return; const D = KD.drag; KD.drag = null;
+    if (D.brush && KD.tmp) { if (KD.tmp.pts.length > 1) kdFinish(KD.tmp); else KD.tmp = null; return; }
+    if (D.draw && KD.tmp && KD.tmp.pts.length === 2) { const a = KD.tmp.pts[0], b = KD.tmp.pts[1], A = { x: kdX(a.t), y: kdY(a.p) }, B = { x: kdX(b.t), y: kdY(b.p) };   // 拖曳畫法：按下、拖到終點放開就完成（兩點的工具）
+      if (Math.hypot(A.x - B.x, A.y - B.y) > 6 && KD_TOOLS[KD.tmp.type][2] === 2) kdFinish(KD.tmp); return; }
+    if (D.d) kdSave();
+  }, true);
+  box.addEventListener('dblclick', e => { if (KD.sel && KD.sel.type === 'text') { const tx = prompt('修改文字：', KD.sel.text || ''); if (tx != null) { KD.sel.text = tx.slice(0, 120); kdSave(); } } }, true);
+  document.addEventListener('keydown', e => {
+    if (!KL.open || /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return;
+    if ((e.key === 'Delete' || e.key === 'Backspace') && KD.sel) { KD.list = KD.list.filter(x => x !== KD.sel); KD.sel = null; kdSave(); kdEdit(); e.preventDefault(); }
+    if (e.key === 'Escape') { KD.tmp = null; KD.ruler = null; KR.pick = false; kdUse(null); kdMenuClose(); }
+    if (KR.on && !KR.pick && e.key === 'ArrowRight' && e.shiftKey) { krStep(); e.preventDefault(); }
+  });
+  $('klTools').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.kdmore) return kdMenu(b.dataset.kdmore, b);
+    if (b.dataset.kdg) { const g = KD_GROUPS.find(x => x[0] === b.dataset.kdg); if (!g[3]) return kdUse(null); const cur = g[3].includes(KD.tool) ? KD.tool : (KD.last && KD.last[g[0]]) || g[3][0]; (KD.last = KD.last || {})[g[0]] = cur; return kdUse(cur); }
+    if (b.dataset.kdt) return kdUse(b.dataset.kdt);
+    const a = b.dataset.kda;
+    if (a === 'magnet') { KD.magnet = !KD.magnet; LS.set('klMag', KD.magnet); }
+    if (a === 'stay') { KD.stay = !KD.stay; LS.set('klStay', KD.stay); }
+    if (a === 'lock') { KD.lock = !KD.lock; KD.sel = null; kdEdit(); }
+    if (a === 'hide') { KD.hide = !KD.hide; KD.sel = null; kdEdit(); }
+    if (a === 'trash') return kdMenu('trash', b);
+    if (a === 'fav') { if (KD.fav.length) { KD.favShow = !KD.favShow; kdFavBar(); } return kdMenu('fav', b); }
+    kdToolbar();
+  });
+  $('mnpKline').addEventListener('click', e => {
+    const m = $('kdMenu'); if (m && !m.contains(e.target) && !e.target.closest('[data-kdmore],[data-kda="trash"],[data-kda="fav"]')) kdMenuClose();
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.closest('#kdMenu')) {
+      if (e.target.dataset.kdfav) { const k = e.target.dataset.kdfav; KD.fav = KD.fav.includes(k) ? KD.fav.filter(x => x !== k) : [...KD.fav, k]; LS.set('klFav', KD.fav); KD.favShow = KD.fav.length > 0; kdFavBar(); e.target.textContent = KD.fav.includes(k) ? '★' : '☆'; e.target.classList.toggle('on', KD.fav.includes(k)); return; }
+      if (b.dataset.kdcur) { KD.cursor = b.dataset.kdcur; LS.set('klCur', KD.cursor); kdUse(null); return; }
+      if (b.dataset.kdt) { const g = KD_GROUPS.find(x => x[3] && x[3].includes(b.dataset.kdt)); if (g) (KD.last = KD.last || {})[g[0]] = b.dataset.kdt; kdUse(b.dataset.kdt); return; }
+    }
+    if (b.dataset.kddel) { if (b.dataset.kddel === 'all') { if (!confirm(`刪除 ${KL.sym} 的全部 ${KD.list.length} 個繪圖？`)) return; KD.list = []; } else KD.list = KD.list.filter(x => x !== KD.sel); KD.sel = null; kdSave(); kdEdit(); kdMenuClose(); kdToolbar(); return; }
+    if (b.closest('#kdFav') && b.dataset.kdt) return kdUse(b.dataset.kdt);
+    const d = KD.sel; if (!d || !b.closest('#kdEditBar')) return;
+    if (b.dataset.kdc) d.color = b.dataset.kdc; if (b.dataset.kdw) d.width = +b.dataset.kdw; if (b.dataset.kdd) d.dash = !d.dash;
+    if (b.dataset.kdemo) { d.text = b.dataset.kdemo; KD.emo = d.text; }
+    if (b.dataset.kdtx) { const tx = prompt('修改文字：', d.text || ''); if (tx != null) d.text = tx.slice(0, 120); }
+    kdSave(); kdEdit();
+  });
+  const loop = () => { if (KL.open) kdDraw(); KD.raf = requestAnimationFrame(loop); }; cancelAnimationFrame(KD.raf); loop();
+}
+/* ---------- ⏪ K 線回放：選一個起點，之後一根一根播放（可以調速度、單步），練習看盤、檢查策略 ---------- */
+const KR = { on: false, pick: false, ri: 0, play: false, speed: 1, timer: 0 };
+function krBar() {
+  const el = $('klRp'); if (!el) return; el.hidden = !KR.on;
+  $('klRpBtn').classList.toggle('on', KR.on); $('klRpBtn').setAttribute('aria-pressed', String(KR.on));
+  if (!KR.on) return;
+  const b = KL.data[KL.data.length - 1];
+  el.innerHTML = KR.pick ? `<span>👆 在圖上點一下，選回放的起點</span><button class="btn" data-kr="exit">取消</button>`
+    : `<button class="btn" data-kr="pick" title="重新選起點">⏮ 選起點</button><button class="btn" data-kr="play" aria-label="${KR.play ? '暫停' : '播放'}">${KR.play ? '⏸' : '▶'}</button><button class="btn" data-kr="step" title="下一根（Shift＋→）" aria-label="下一根">⏭</button>
+      <select data-kr="speed" aria-label="播放速度">${[1, 2, 3, 5, 10].map(v => `<option value="${v}"${KR.speed === v ? ' selected' : ''}>${v} 根／秒</option>`).join('')}</select>
+      <span class="krt">${b ? ksTime(b.time) : ''}・${Math.max(0, KL.full.length - KL.data.length)} 根之後</span><button class="btn" data-kr="exit">⏹ 結束回放</button>`;
+}
+function krToggle() { if (KR.on) return krExit(); KR.on = true; KR.pick = true; KR.play = false; kdUse(null); krBar(); }
+function krStart(i) {                                    // 從第 i 根開始：右邊的 K 棒先藏起來
+  const F = KL.full; KR.ri = Math.max(10, Math.min(F.length - 1, i)); KR.pick = false; krShow(); krBar();
+}
+function krShow() {
+  KL.data = KL.full.slice(0, KR.ri + 1); KL.cs.setData(klCdAll(KL.data)); KL.vs.setData(KL.data.map((b, i) => klVolBar(b, KL.data[i - 1])));
+  const n = KL.data.length; KL.ch.timeScale().setVisibleLogicalRange({ from: Math.max(0, n - 120), to: n + 10 }); klLegend(); klTagDraw();
+}
+function krStep() {
+  if (!KR.on || KR.pick) return; if (KR.ri >= KL.full.length - 1) { KR.play = false; clearInterval(KR.timer); krBar(); $('klSt').textContent = '已經回放到最新的 K 棒'; return; }
+  KR.ri++; const b = KL.full[KR.ri]; KL.data.push(b); const pv = KL.data[KL.data.length - 2]; KL.cs.update(klCd(b, pv)); KL.vs.update(klVolBar(b, pv)); klLegend(); klTagDraw(); krBar();
+}
+function krPlay(on) { KR.play = on; clearInterval(KR.timer); if (on) KR.timer = setInterval(krStep, 1000 / KR.speed); krBar(); }
+function krExit() { clearInterval(KR.timer); KR.on = false; KR.pick = false; KR.play = false; if (KL.full) { KL.data = KL.full; KL.cs.setData(klCdAll(KL.data)); KL.vs.setData(KL.data.map((b, i) => klVolBar(b, KL.data[i - 1]))); KL.ch.timeScale().scrollToRealTime(); klLegend(); klTagDraw(); } $('klSt').textContent = ''; krBar(); }
 /* ---------- 💳 方案與繳費：月費（USDT TRC20 自動確認）＋擁有者的繳費後台 ---------- */
 const BI = { d: null, a: null, code: '', timer: null, qr: null };
 const bDate = t => t ? fmtT(t).slice(0, 16) : '—';
@@ -5197,6 +5487,10 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-02h', title: '2026/11/02 更新（繪圖工具、K 線回放）', items: [
+    { ic: '✏️', t: 'K 線圖左邊新增 TradingView 式的繪圖工具列：十字線（十字／點／箭頭）、趨勢線／射線／延伸線／水平線／水平射線／垂直線、平行通道、斐波那契回撤、多頭／空頭部位、價格範圍、日期範圍、矩形、橢圓、箭頭、筆刷、文字、圖示、測量、放大、磁鐵模式、保持繪圖模式、鎖定、隱藏、刪除、收藏工具。繪圖可以點選、拖曳、改顏色粗細，每個幣分開存。' },
+    { ic: '⏪', t: '新增 K 線回放：按「⏪ 回放」在圖上點一個起點，之後可以播放（1～10 根／秒）、暫停、一根一根前進（Shift＋→）。' }
+  ] },
   { id: '2026-11-02g', title: '2026/11/02 更新（K 線圖設定、桌布）', items: [
     { ic: '⚙', t: 'K 線圖右上角新增「設定」：K 線顏色基於前一收盤價、主體／邊框／燭芯的顏色（可以分別關掉）、精確度、時區、範本（TradingView 預設、經典黑白、藍紅、空心、黑金，也能存成自己的範本）。' },
     { ic: '🖼', t: '自訂圖表桌布：跟著主題、純色、漸層，或上傳自己的圖片（可以調暗、選填滿／完整／重複）。' }
