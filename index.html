@@ -951,6 +951,21 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
 .qgbuy{display:block;text-align:center;margin-top:6px;border:1px solid #10b981!important;color:#059669!important;background:transparent!important;font-weight:700;text-decoration:none}
 
 .bild td{vertical-align:top;font-size:12.5px}.bimono{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;word-break:break-all;max-width:220px}
+
+/* ===== 🎯 停損 × 進場 最佳化 ===== */
+.swbox{margin-top:16px;border-top:1px solid var(--line,#2a3140);padding-top:14px;display:flex;flex-direction:column;gap:10px}.swh b{font-size:16px}.swh span{display:block;color:var(--muted);font-size:12.5px}
+.swctl{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}.swctl .btn{flex:none!important;width:auto!important}.swctl input{width:80px}
+.swprog{height:8px;border-radius:9px;background:rgba(127,127,127,.2);overflow:hidden}.swprog i{display:block;height:100%;background:linear-gradient(90deg,#e879c6,#a855f7)}
+.swkpi{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.swkpi div{border:1px solid var(--line,#2a3140);border-radius:12px;padding:10px 12px}.swkpi small{display:block;font-size:11px;letter-spacing:.06em;color:var(--muted)}.swkpi b{font-size:22px;font-variant-numeric:tabular-nums}.swkpi em{font-style:normal;font-size:13px;color:var(--muted)}.swkpi span{display:block;font-size:11.5px;color:var(--muted)}
+.swbest{border:1px solid #6366f1;background:rgba(99,102,241,.08);border-radius:12px;padding:10px 12px;font-size:13.5px;line-height:1.7}
+.swtabs{display:flex;gap:6px}.swtabs .btn{flex:1!important}
+.swgrid{border-collapse:separate;border-spacing:3px;width:100%;min-width:520px}.swgrid th{font-size:12px;color:var(--muted);font-weight:600;padding:4px}.swgrid th small{font-size:10px}
+.swgrid td{position:relative;text-align:center;border-radius:8px;padding:8px 4px;color:#111;min-width:62px}.swgrid td b{display:block;font-size:14px}.swgrid td small{font-size:10.5px;opacity:.8}
+.swgrid .swdot,.swlegend .swdot{position:absolute;top:4px;right:4px;width:10px;height:10px;border-radius:50%;background:#6366f1;border:2px solid #fff}.swgrid .swcur,.swlegend .swcur{position:absolute;top:4px;left:4px;width:10px;height:10px;border-radius:2px;border:2px solid #111;background:#fff}
+.swlegend{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted)}.swlegend .swgrad{width:60px;height:8px;border-radius:9px;background:linear-gradient(90deg,#ef4444,#f97316,#eab308,#84cc16,#22c55e)}.swlegend .swdot,.swlegend .swcur{position:static;display:inline-block;margin-left:8px}
+.swcanvas{width:100%;height:300px}.swll{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--muted)}.swll i{display:inline-block;width:14px;height:4px;border-radius:2px;margin-right:4px;vertical-align:middle}
+.sw3d{width:100%;height:440px}.swrbest td{background:rgba(99,102,241,.12)}.swrcur td{background:rgba(127,127,127,.12)}
+@media (max-width:620px){.swkpi{grid-template-columns:repeat(2,minmax(0,1fr))}.sw3d{height:360px}}
 </style>
 </head>
 <body class="quant-on mn">
@@ -978,7 +993,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
   <form class="qgatebox" id="qTrialForm" onsubmit="return false" hidden>
     <h1>Quant X 合約作戰室</h1>
     <p class="qgsub">申請 7 天試用</p>
-    <p class="qgnote">第一次申請、信箱驗證通過就<b>馬上開通</b>。如果 UID、信箱或手機跟之前的帳號重複，要等擁有者或管理員審核。試用 7 天可以使用一般用戶的所有功能，包含特級進場；到期會自動停止交易、平掉系統開的單，並刪除帳號和 API 金鑰。</p>
+    <p class="qgnote">第一次申請、信箱驗證通過就<b>馬上開通</b>。試用期間使用<b>模擬盤</b>（系統先放 1000U 模擬資金，不會動到真的錢、不用設定 API）。如果 UID、信箱或手機跟之前的帳號重複，要等擁有者或管理員審核。試用 7 天可以用模擬盤體驗所有功能，包含特級進場；到期會自動停止並刪除帳號。付費後就能用實盤。</p>
     <label>Bitunix UID<input id="qt_uid" inputmode="numeric" autocomplete="username" autocapitalize="off" spellcheck="false"></label>
     <label>密碼（至少 8 個字）<input id="qt_pw" type="password" autocomplete="new-password"></label>
     <label>再輸入一次密碼<input id="qt_pw2" type="password" autocomplete="new-password"></label>
@@ -1099,7 +1114,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
 
   <section class="col center">
     <div id="qBxHost" hidden></div>
-    <div class="panel" id="qBtHost" hidden><div class="qhead"><h2>📊 回測數據</h2></div><div id="tbBox" hidden></div></div>
+    <div class="panel" id="qBtHost" hidden><div class="qhead"><h2>📊 回測數據</h2></div><div id="tbBox" hidden></div><div id="swBox" class="swbox" hidden></div></div>
     <div class="panel" id="qHeatHost" hidden>
       <div class="qhead"><h2>🔥 熱力圖</h2><span class="qbtstat" id="htLive"></span></div>
       <div class="qbt" style="margin:6px 0">
@@ -1150,7 +1165,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-02a</div>
+      <div class="qver" id="qVer">網站版本 2026-11-02c</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3609,7 +3624,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-02a・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-02c・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -4652,12 +4667,87 @@ $('qWar').onclick = e => {
 setInterval(() => { if (SRV.on && !document.hidden) { warTool(); warXent(); } }, 5000);
 /* ---------- 🗡 特級咒具回測：放在「📊 回測數據」頁；有特級咒具權限的人看得到，擁有者才能按回測 ---------- */
 const TB = { timer: null };
+/* ---------- 🎯 停損 × 進場 最佳化：每一組參數跑一次完整回測，用表格、折線、3D 曲面比較 ---------- */
+const SWV = { tab: 'grid', plotly: null };
+const swSlLab = k => k === 0 ? 'OB 外緣（目前）' : `${k > 0 ? '外移' : '內縮'} ${Math.abs(k)}×OB`;
+const swSlShort = k => k === 0 ? '0' : `${k > 0 ? '+' : ''}${k}`;
+const swEntLab = e => e === 'close' ? '收盤進場（目前）' : `FVG ${Math.round(e * 100)}% 掛單`;
+const swEntShort = e => e === 'close' ? '收盤' : `${Math.round(e * 100)}%`;
+const swCol = (v, lo, hi) => {                         // 紅（差）→ 橘 → 綠（好），0 在中間
+  const t = v >= 0 ? 0.5 + 0.5 * (hi > 0 ? v / hi : 0) : 0.5 - 0.5 * (lo < 0 ? v / lo : 0), c = [[239, 68, 68], [249, 115, 22], [234, 179, 8], [132, 204, 22], [34, 197, 94]];
+  const x = Math.max(0, Math.min(0.9999, t)) * (c.length - 1), i = Math.floor(x), f = x - i, m = (a, b) => Math.round(a + (b - a) * f);
+  return `rgb(${m(c[i][0], c[i + 1][0])},${m(c[i][1], c[i + 1][1])},${m(c[i][2], c[i + 1][2])})`;
+};
+function swRender(d) {
+  const box = $('swBox'); if (!box) return; box.hidden = false;
+  const W = d.sw && d.sw.v === 1 ? d.sw : null, run = d.swRun || {}, own = d.owner;
+  let h = `<div class="swh"><div><b>🎯 停損 × 進場 最佳化</b><span>特級咒具・用同一段歷史資料，把「止損放哪裡」和「進場價」的每一種組合都回測一次，看哪一組最好</span></div></div>`;
+  if (own) h += `<div class="qbt swctl"><label class="field">期間<select id="swDays"><option value="7">7 天</option><option value="14">14 天</option><option value="30">30 天</option></select></label><label class="field">幣數<input id="swN" type="number" min="3" max="30" value="10"></label><button class="btn primary" id="swRun"${run.run ? ' disabled' : ''}>${run.run ? '最佳化中…' : '▶ 開始最佳化'}</button><span class="tlsub">7 種止損 × 6 種進場＝42 組，大約 1～3 分鐘</span></div>`;
+  if (run.run) h += `<div class="swprog"><i style="width:${run.total ? Math.round(run.done / run.total * 100) : 0}%"></i></div><p class="tlsub">${esc(run.msg || '')}（${run.done}/${run.total}）</p>`;
+  if (!W) { box.innerHTML = h + `<p class="tlsub">${own ? '還沒有結果，按「開始最佳化」。' : '擁有者還沒有跑最佳化。'}</p>`; return swBind(own); }
+  const C = W.cells, nets = C.map(c => c.net), lo = Math.min(...nets), hi = Math.max(...nets), prof = C.filter(c => c.net > 0).length, sorted = nets.slice().sort((a, b) => a - b), med = sorted[Math.floor(sorted.length / 2)], B = C.find(c => c.slK === W.best.slK && c.ent === W.best.ent) || W.best, cur = W.cur;
+  const R2 = v => `${v >= 0 ? '+' : ''}${(+v).toFixed(2)}R`;
+  h += `<p class="tlsub">${fmtT(W.at)}・最近 ${W.days} 天・${W.coins} 個幣・${W.pairs.map(p => p === 'h4' ? '4H→15M' : '1H→5M').join('＋')}・扣手續費 ${W.fee}%（一來一回）・單位 R＝每一筆冒的風險（止損距離）</p>
+    <div class="swkpi"><div><small>測試組合</small><b>${C.length}</b><span>${W.grid.sl.length} 種止損 × ${W.grid.ent.length} 種進場</span></div><div><small>賺錢的組合</small><b>${prof} <em>／${C.length}</em></b><span>${Math.round(prof / C.length * 100)}% 的組合</span></div><div><small>中位數淨利</small><b class="${med >= 0 ? 'qg' : 'qr'}">${R2(med)}</b><span>一半的組合比這低</span></div><div><small>最好 − 最差</small><b>${(hi - lo).toFixed(2)}R</b><span>參數影響有多大</span></div></div>
+    <div class="swbest"><b>🏆 最好的一組：</b>止損 <b>${swSlLab(B.slK)}</b>・進場 <b>${swEntLab(B.ent)}</b> → <b class="${B.net >= 0 ? 'qg' : 'qr'}">${R2(B.net)}</b>（${B.n} 筆、勝率 ${B.rate}%、PF ${B.pf}、最大回撤 ${B.mdd}R）${cur ? `<br><span class="tlmut">目前的設定（OB 外緣・收盤進場）：${R2(cur.net)}（${cur.n} 筆、勝率 ${cur.rate}%、PF ${cur.pf}、最大回撤 ${cur.mdd}R）</span>` : ''}</div>
+    <div class="swtabs" role="tablist">${[['line', '折線'], ['grid', '表格'], ['3d', '3D']].map(([k, n]) => `<button class="btn${SWV.tab === k ? ' primary' : ''}" role="tab" aria-selected="${SWV.tab === k}" data-swtab="${k}">${n}</button>`).join('')}</div>
+    <div class="swview" id="swView"></div>
+    <div class="swlegend"><span class="swgrad"></span>差 → 好（淨利 R）<span class="swdot"></span>最好的一組<span class="swcur"></span>目前的設定</div>
+    <details class="tbdet" open><summary>全部結果（照淨利排序）</summary><div class="tablewrap"><table class="tltab"><tr><th>#</th><th>止損</th><th>進場</th><th>筆數</th><th>勝率</th><th>淨利</th><th>PF</th><th>最大回撤</th><th>止盈／止損／套保</th><th>止損距離中位數</th></tr>
+      ${C.slice().sort((a, b) => b.net - a.net).map((c, i) => `<tr class="${c === B ? 'swrbest' : c.slK === 0 && c.ent === 'close' ? 'swrcur' : ''}"><td>${i + 1}</td><td>${swSlLab(c.slK)}</td><td>${swEntLab(c.ent)}</td><td>${c.n}</td><td>${c.rate}%</td><td class="${c.net >= 0 ? 'qg' : 'qr'}"><b>${R2(c.net)}</b></td><td>${c.pf}</td><td>${c.mdd}R</td><td class="tlmut">${c.tp}／${c.sl}／${c.lock}</td><td class="tlmut">${c.slMed}%</td></tr>`).join('')}</table></div></details>
+    <p class="tlsub">⚠️ 怎麼看：不要只挑最高的那一格。如果最好的一組旁邊的格子也都不錯（一整片綠），代表這個區域穩定，比較可信；如果只有孤零零一格特別高（像一根尖刺），很可能只是剛好碰上這段行情（過度最佳化）。筆數太少（少於 20 筆）的結果也不可靠。建議用 7、14、30 天各跑一次，三次都表現好的組合再考慮改。</p>`;
+  box.innerHTML = h; swBind(own); swDraw(W);
+}
+function swBind(own) {
+  const box = $('swBox');
+  box.querySelectorAll('[data-swtab]').forEach(b => b.onclick = () => { SWV.tab = b.dataset.swtab; box.querySelectorAll('[data-swtab]').forEach(x => { x.classList.toggle('primary', x === b); x.setAttribute('aria-selected', String(x === b)); }); swDraw(SWV.last); });
+  if (own && $('swRun')) $('swRun').onclick = async () => { try { await srvFetch('/api/tool', { op: 'sweep', days: +$('swDays').value, n: +$('swN').value }); tbLoad(); } catch (e) { alert(e.message); } };
+}
+function swDraw(W) {
+  SWV.last = W; const el = $('swView'); if (!el || !W) return;
+  const C = W.cells, S = W.grid.sl, E = W.grid.ent, nets = C.map(c => c.net), lo = Math.min(...nets), hi = Math.max(...nets), cell = (k, e) => C.find(c => c.slK === k && c.ent === e), B = cell(W.best.slK, W.best.ent) || W.best;
+  if (SWV.tab === 'grid') {
+    el.innerHTML = `<div class="tablewrap"><table class="swgrid"><tr><th>止損 ＼ 進場</th>${E.map(e => `<th>${swEntShort(e)}</th>`).join('')}</tr>${S.map(k => `<tr><th>${swSlShort(k)}${k === 0 ? '<br><small>OB 外緣</small>' : '×OB'}</th>${E.map(e => { const c = cell(k, e); return `<td style="background:${swCol(c.net, lo, hi)}" title="${swSlLab(k)}・${swEntLab(e)}：${c.net}R、${c.n} 筆、勝率 ${c.rate}%、PF ${c.pf}"><b>${c.net >= 0 ? '+' : ''}${c.net.toFixed(1)}</b><small>${c.n} 筆・${c.rate}%</small>${c === B ? '<i class="swdot"></i>' : ''}${k === 0 && e === 'close' ? '<i class="swcur"></i>' : ''}</td>`; }).join('')}</tr>`).join('')}</table></div>
+      <p class="tlsub">直的是止損位置（負數＝往 OB 裡面縮、正數＝往外放），橫的是進場方式（收盤＝碰到小週期 FVG 那根收盤進場；0%～100%＝掛單在 FVG 的那個深度，100% 是 FVG 最深處）。格子裡是淨利 R、筆數、勝率。</p>`;
+    return;
+  }
+  if (SWV.tab === 'line') {                            // 每一種進場方式一條線，橫軸是止損位置
+    el.innerHTML = '<canvas id="swLine" class="swcanvas" aria-label="每一種進場方式在不同止損位置的淨利折線圖"></canvas><div class="swll" id="swLL"></div>';
+    const cv = $('swLine'), w = cv.clientWidth, hgt = cv.clientHeight, dpr = devicePixelRatio || 1; cv.width = w * dpr; cv.height = hgt * dpr; const g = cv.getContext('2d'); g.scale(dpr, dpr);
+    const pad = { l: 52, r: 16, t: 14, b: 34 }, X = i => pad.l + i / (S.length - 1) * (w - pad.l - pad.r), Y = v => pad.t + (1 - (v - lo) / (hi - lo || 1)) * (hgt - pad.t - pad.b);
+    const dark = matchMedia('(prefers-color-scheme: dark)').matches || document.documentElement.dataset.theme === 'dark', fg = dark ? '#cbd5e1' : '#334155', gr = dark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.08)';
+    g.font = '11px sans-serif'; g.fillStyle = fg; g.strokeStyle = gr;
+    for (let i = 0; i <= 4; i++) { const v = lo + (hi - lo) * i / 4, y = Y(v); g.beginPath(); g.moveTo(pad.l, y); g.lineTo(w - pad.r, y); g.stroke(); g.fillText(`${v >= 0 ? '+' : ''}${v.toFixed(1)}R`, 4, y + 4); }
+    if (lo < 0 && hi > 0) { g.strokeStyle = dark ? 'rgba(255,255,255,.35)' : 'rgba(0,0,0,.35)'; g.setLineDash([4, 4]); g.beginPath(); g.moveTo(pad.l, Y(0)); g.lineTo(w - pad.r, Y(0)); g.stroke(); g.setLineDash([]); }
+    S.forEach((k, i) => g.fillText(swSlShort(k), X(i) - 8, hgt - 14)); g.fillText('止損位置（×OB）', w / 2 - 40, hgt - 2);
+    const PAL = ['#94a3b8', '#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6'];
+    E.forEach((e, j) => { g.strokeStyle = PAL[j % PAL.length]; g.lineWidth = e === 'close' ? 3 : 2; g.beginPath(); S.forEach((k, i) => { const y = Y(cell(k, e).net); i ? g.lineTo(X(i), y) : g.moveTo(X(i), y); }); g.stroke();
+      S.forEach((k, i) => { const c = cell(k, e); g.fillStyle = c === B ? '#6366f1' : PAL[j % PAL.length]; g.beginPath(); g.arc(X(i), Y(c.net), c === B ? 6 : 3, 0, 7); g.fill(); }); });
+    $('swLL').innerHTML = E.map((e, j) => `<span><i style="background:${PAL[j % PAL.length]}"></i>${swEntLab(e)}</span>`).join('');
+    return;
+  }
+  el.innerHTML = '<div id="sw3d" class="sw3d" aria-label="止損位置、進場深度和淨利的 3D 曲面圖，可以拖曳旋轉"><p class="tlsub">載入 3D 圖表中…</p></div>';   // 3D 曲面（Plotly，用到時才載入）
+  const go = () => {
+    const z = S.map(k => E.map(e => cell(k, e).net)), xs = E.map((e, i) => i), dark = matchMedia('(prefers-color-scheme: dark)').matches || document.documentElement.dataset.theme === 'dark', fg = dark ? '#cbd5e1' : '#334155';
+    const bi = { x: E.indexOf(B.ent), y: S.indexOf(B.slK) };
+    window.Plotly.newPlot('sw3d', [
+      { type: 'surface', x: xs, y: S, z, colorscale: [[0, '#ef4444'], [0.35, '#f97316'], [0.5, '#eab308'], [0.7, '#84cc16'], [1, '#22c55e']], cmid: 0, colorbar: { title: { text: '淨利 R', font: { color: fg } }, tickfont: { color: fg }, len: 0.7 },
+        contours: { z: { show: true, usecolormap: true, highlightcolor: '#fff', project: { z: true } } }, hovertemplate: '止損 %{y}×OB<br>進場 %{customdata}<br>淨利 %{z:.2f}R<extra></extra>', customdata: S.map(() => E.map(swEntLab)) },
+      { type: 'scatter3d', mode: 'markers', x: [bi.x], y: [B.slK], z: [B.net], marker: { size: 7, color: '#6366f1', line: { color: '#fff', width: 2 } }, name: '最好的一組', hovertemplate: '最好的一組<br>%{z:.2f}R<extra></extra>' }
+    ], { paper_bgcolor: 'rgba(0,0,0,0)', margin: { l: 0, r: 0, t: 10, b: 0 }, showlegend: false, font: { color: fg },
+      scene: { xaxis: { title: { text: '進場' }, tickvals: xs, ticktext: E.map(swEntShort), color: fg }, yaxis: { title: { text: '止損（×OB）' }, color: fg }, zaxis: { title: { text: '淨利 R' }, color: fg }, camera: { eye: { x: 1.6, y: -1.6, z: 0.9 } } } },
+      { displaylogo: false, responsive: true, modeBarButtonsToRemove: ['toImage'] });
+  };
+  if (window.Plotly) return go();
+  if (!SWV.plotly) { SWV.plotly = new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'https://cdn.plot.ly/plotly-2.27.0.min.js'; s.onload = ok; s.onerror = no; document.head.appendChild(s); }); }
+  SWV.plotly.then(() => { if (SWV.tab === '3d') go(); }).catch(() => { SWV.plotly = null; const x = $('sw3d'); if (x) x.innerHTML = '<p class="tlsub">3D 圖表載入失敗（網路連不到圖表套件），請改看「表格」或「折線」。</p>'; });
+}
 async function tbLoad() {
   const box = $('tbBox');
   let d; try { d = await srvFetch('/api/tool', { op: 'get' }); } catch (e) { box.hidden = true; return; }   // 沒有特級咒具權限：不顯示
-  box.hidden = false; tbRender(d);
+  box.hidden = false; tbRender(d); swRender(d);
   clearInterval(TB.timer);
-  if (d.btRun && d.btRun.run) TB.timer = setInterval(async () => { if (MN_PAGE !== 'bt') return clearInterval(TB.timer); try { const x = await srvFetch('/api/tool', { op: 'get' }); tbRender(x); if (!x.btRun.run) clearInterval(TB.timer); } catch (e) {} }, 3000);
+  if ((d.btRun && d.btRun.run) || (d.swRun && d.swRun.run)) TB.timer = setInterval(async () => { if (MN_PAGE !== 'bt') return clearInterval(TB.timer); try { const x = await srvFetch('/api/tool', { op: 'get' }); tbRender(x); swRender(x); if (!x.btRun.run && !(x.swRun && x.swRun.run)) clearInterval(TB.timer); } catch (e) {} }, 3000);
 }
 function tbRender(d) {
   const R = d.bt && d.bt.v === 2 ? d.bt : null, run = d.btRun || {}, NM = { all: '全部', h4: '4H→15M', h1: '1H→5M', long: '做多', short: '做空' };
@@ -4707,7 +4797,7 @@ function simUi() {
   box.hidden = !M; if (!M) return;
   if (!$('simLive')) {
     box.innerHTML = `<div class="simhead"><b>交易模式</b><div class="simseg" role="group" aria-label="交易模式"><button class="btn" id="simLive">💰 實盤</button><button class="btn" id="simPaper">🧪 模擬盤</button></div></div>
-      <p class="tlsub">只有管理員和擁有者能用。模擬盤的資金、持倉、交易紀錄、交易設定都跟實盤分開，下單不會送到 Bitunix；成交價用幣安最新價，手續費照設定扣。切換後整個網站（持倉、資金曲線、歷史紀錄、自動交易、特級交易）都會換成那一邊。</p>
+      <p class="tlsub">管理員、擁有者和試用中的帳號可以用。模擬盤的資金、持倉、交易紀錄、交易設定都跟實盤分開，下單不會送到 Bitunix；成交價用幣安最新價，手續費照設定扣。切換後整個網站（持倉、資金曲線、歷史紀錄、自動交易、特級交易）都會換成那一邊。</p>
       <div id="simFund" hidden><div class="simbal" id="simBal"></div>
         <div class="tlrow"><input id="simAmt" type="number" min="0" step="10" placeholder="金額（U）" aria-label="模擬資金金額"><button class="btn primary" id="simIn">存入</button><button class="btn" id="simOut">提出</button><button class="btn" id="simReset">重置模擬盤</button></div>
         <p class="mnmsg" id="simMsg" role="status"></p></div>
@@ -4724,6 +4814,10 @@ function simUi() {
     $('simIn').onclick = () => fund(1); $('simOut').onclick = () => fund(-1);
     $('simReset').onclick = async () => { if (!confirm('重置模擬盤？模擬資金歸零，模擬的交易紀錄全部清掉，自動交易、特級交易也會關掉（交易設定保留）。')) return;
       try { await srvFetch('/api/sim', { op: 'reset' }); msg(1, '已重置，請重新存入模擬資金'); srvPull(); } catch (e) { msg(0, e.message); } };
+  }
+  if (M.trial) {                                      // 🧪 試用中：只能用模擬盤，實盤按鈕鎖住
+    $('simLive').disabled = true; $('simLive').title = '試用期間只能用模擬盤';
+    if (!$('simTrialNote')) $('simLive').closest('.simhead').insertAdjacentHTML('afterend', '<p class="simwarn" id="simTrialNote">🧪 試用期間只能用模擬盤（已經先放 1000U 模擬資金，可以自己存入、提出）。付費後就能切換到實盤，用你的 Bitunix 帳戶交易。<a href="pay.html">前往付費</a></p>');
   }
   $('simLive').setAttribute('aria-pressed', String(!M.on)); $('simPaper').setAttribute('aria-pressed', String(!!M.on));
   $('simLive').classList.toggle('primary', !M.on); $('simPaper').classList.toggle('primary', !!M.on);
@@ -4817,6 +4911,12 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-02c', title: '2026/11/02 更新（試用只用模擬盤）', items: [
+    { ic: '🧪', t: '7 天試用改成只能用模擬盤：開通時自動放 1000U 模擬資金，不用設定 Bitunix API、不會動到真的錢；試用中不能切換到實盤。付費轉正式後自動換成實盤。' }
+  ] },
+  { id: '2026-11-02b', title: '2026/11/02 更新（停損 × 進場 最佳化）', items: [
+    { ic: '🎯', sp: true, t: '「📊 回測數據」新增停損 × 進場最佳化：7 種止損位置 × 6 種進場方式＝42 組，各跑一次完整回測，用表格、折線、3D 曲面比較淨利（R）、勝率、PF、最大回撤，標出最好的一組和目前的設定。' }
+  ] },
   { id: '2026-11-02a', title: '2026/11/02 更新', items: [
     { ic: '🧪', t: '7 天試用改成：第一次申請、信箱驗證碼通過就馬上開通；UID、信箱或手機跟之前的帳號重複的，才要擁有者或管理員審核（會通知後台）。' },
     { ic: '💰', t: '新增「容許差額」（預設 10U）：帳戶因為虧損或手續費比一般＋特級的投入資金少一點點，在這個範圍內照常開單，不會再顯示資金分配超過。' },
