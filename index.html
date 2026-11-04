@@ -968,6 +968,18 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
 @media (max-width:620px){.swkpi{grid-template-columns:repeat(2,minmax(0,1fr))}.sw3d{height:360px}}
 
 .wxpg{background:#141a2a;border:1px solid #2c3449;color:#e2e8f0;border-radius:4px;padding:0 6px;font:inherit;font-size:11px;cursor:pointer;line-height:1.6}.wxpg:hover{border-color:var(--pk)}
+
+/* ===== 🕯 K 線圖 ===== */
+.kl{display:flex;flex-direction:column;gap:6px;height:calc(100vh - 120px);min-height:420px;position:relative}
+.kltop{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.klsym{display:flex;align-items:center;gap:6px;border:1px solid var(--line,#2a2e39);background:transparent;color:inherit;border-radius:8px;padding:6px 12px;font-size:15px;cursor:pointer}.klsym b{font-weight:800}
+.kltf{display:flex;gap:2px;flex-wrap:wrap}.kltf button{border:0;background:transparent;color:var(--muted);padding:6px 9px;border-radius:6px;font-size:13px;cursor:pointer}.kltf button:hover{background:rgba(127,127,127,.12)}.kltf button[aria-pressed="true"]{color:#2962ff;background:rgba(41,98,255,.12);font-weight:700}
+.klst{font-size:12.5px;color:var(--muted)}
+.klbox{position:relative;flex:1;min-height:0;border:1px solid var(--line,#2a2e39);border-radius:8px;overflow:hidden}.klchart{position:absolute;inset:0}
+.kllg{position:absolute;left:10px;top:8px;z-index:3;font-size:12.5px;line-height:1.6;pointer-events:none;color:#d1d4dc;text-shadow:0 0 3px rgba(0,0,0,.6)}.kllg b{font-size:14px}.kllg span{margin-right:10px}.kllg i{font-style:normal;margin-left:3px;font-variant-numeric:tabular-nums}.kltfl{color:#8b93a7}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]) .kllg{color:#131722;text-shadow:0 0 3px #fff}}
+.klpick{position:absolute;top:46px;left:0;z-index:10;width:min(420px,100%);max-height:70%;display:flex;flex-direction:column;gap:6px;background:var(--panel,#1e222d);border:1px solid var(--line,#2a2e39);border-radius:10px;padding:8px;box-shadow:0 12px 40px rgba(0,0,0,.4)}
+.klpick input{width:100%}.kllist{overflow:auto;display:flex;flex-direction:column}.kllist button{display:grid;grid-template-columns:1fr auto auto;gap:2px 10px;align-items:center;text-align:left;border:0;background:transparent;color:inherit;padding:7px 8px;border-radius:6px;cursor:pointer}
+.kllist button:hover,.kllist button[aria-selected="true"]{background:rgba(41,98,255,.12)}.kllist small{grid-column:1;color:var(--muted);font-size:11px}.kllist b{grid-column:1}.kllist span{grid-row:1/3;grid-column:2;font-variant-numeric:tabular-nums}.kllist em{grid-row:1/3;grid-column:3;font-style:normal;font-variant-numeric:tabular-nums}.kllist .up{color:#26a69a}.kllist .dn{color:#ef5350}
 </style>
 </head>
 <body class="quant-on mn">
@@ -1167,7 +1179,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-02d</div>
+      <div class="qver" id="qVer">網站版本 2026-11-02e</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -1500,6 +1512,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
 <div id="mnpStats" class="mnstats"></div>
 <div id="mnpXent" class="mnxent"></div>
 <div id="mnpBill" class="mnbill"></div>
+<div id="mnpKline" class="mnkline"></div>
 <div id="mnpEq" class="mneq"></div>
 <div id="mnpToolH" class="tlwrap" hidden></div>
 <div id="mnpSet" class="mnacctwrap">
@@ -3626,7 +3639,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-02d・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-02e・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -4030,7 +4043,7 @@ var MN_PAGE = '';
 const MN_ITEMS = [                                    // [代號, 圖示, 名稱, 頁面元素, 顏色, 分類]
   ['pos', '💼', '持倉', 'qBx', '#d4af37', '交易'], ['tool', '🗡', '特級咒具', 'mnpTool', '#ef4444', '交易'], ['xent', '🔔', '額外進場', 'mnpXent', '#a78bfa', '交易'], ['cards', '📡', '訊號卡片', 'qSidePanel', '#22d3ee', '交易'],
   ['stats', '🎯', '成功率', 'mnpStats', '#34d399', '數據'], ['eq', '📈', '資金曲線', 'mnpEq', '#60a5fa', '數據'], ['hist', '📋', '歷史紀錄', 'qTabPanel', '#fbbf24', '數據'], ['bt', '📊', '回測數據', 'qBtHost', '#2dd4bf', '數據'],
-  ['heat', '🔥', '熱力圖', 'qHeatHost', '#fb923c', '市場'], ['pat', '📉', '歷史走勢', '', '#a78bfa', '市場'], ['news', '📰', '加密新聞', 'newsPanel', '#f472b6', '市場'], ['whale', '🐋', '幣安鯨魚大單', 'whalePanel', '#38bdf8', '市場'],
+  ['kline', '🕯', 'K 線圖', 'mnpKline', '#f59e0b', '市場'], ['heat', '🔥', '熱力圖', 'qHeatHost', '#fb923c', '市場'], ['pat', '📉', '歷史走勢', '', '#a78bfa', '市場'], ['news', '📰', '加密新聞', 'newsPanel', '#f472b6', '市場'], ['whale', '🐋', '幣安鯨魚大單', 'whalePanel', '#38bdf8', '市場'],
   ['bill', '💳', '方案與繳費', 'mnpBill', '#34d399', '其他'], ['set', '👤', '設定', 'mnpSet', '#7aa2ff', '其他'], ['guide', '📖', '使用說明', '', '#94a3b8', '其他']];
 /* ---------- 🗡 特級咒具：上鎖（擁有者或輸入密碼的人才能用）；一個幣一張卡片；設定收在「⚙ 設定」裡 ---------- */
 const TL = { d: null, timer: null, hf: 'all', hn: 60 };
@@ -4162,6 +4175,92 @@ function tlSettings() {                                // ⚙ 設定視窗：Dis
     };
   }
 }
+/* ---------- 🕯 K 線圖（Quant X 圖表）：幣安永續合約 K 線＋成交量、十字線、拖曳縮放、往左捲自動載入更早的 K 線、WebSocket 即時更新 ---------- */
+const KL = { sym: (LS.get('klSym', 'BTCUSDT')), tf: LS.get('klTf', '15m'), ch: null, cs: null, vs: null, data: [], ws: null, wsKey: '', loading: false, end: false, list: [], ro: null, open: false };
+const KL_TF = [['1m', '1分'], ['5m', '5分'], ['15m', '15分'], ['1h', '1小時'], ['4h', '4小時'], ['1d', '日'], ['1w', '週']];
+const klDark = () => document.documentElement.dataset.theme === 'dark' || (document.documentElement.dataset.theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+const klTheme = () => klDark() ? { bg: '#131722', grid: '#1e222d', tx: '#d1d4dc', bd: '#2a2e39', up: '#26a69a', dn: '#ef5350' } : { bg: '#ffffff', grid: '#f0f3fa', tx: '#131722', bd: '#e0e3eb', up: '#089981', dn: '#f23645' };
+const klFmt = v => { if (v == null || !isFinite(v)) return '—'; const a = Math.abs(v); return v.toFixed(a >= 1000 ? 2 : a >= 1 ? 4 : a >= 0.01 ? 5 : 7).replace(/(\.\d*?[1-9])0+$|\.0+$/, '$1'); };
+const klVol = v => v >= 1e9 ? (v / 1e9).toFixed(2) + 'B' : v >= 1e6 ? (v / 1e6).toFixed(2) + 'M' : v >= 1e3 ? (v / 1e3).toFixed(2) + 'K' : (+v).toFixed(2);
+const klBar = k => ({ time: Math.floor(k[0] / 1000), open: +k[1], high: +k[2], low: +k[3], close: +k[4], vol: +k[5] });
+async function klFetch(sym, tf, endTime) {
+  const r = await fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${sym}&interval=${tf}&limit=1000${endTime ? `&endTime=${endTime}` : ''}`);
+  const j = await r.json(); if (!Array.isArray(j)) throw new Error(j && j.msg || '讀取 K 線失敗'); return j.map(klBar);
+}
+function klUi() {
+  const host = $('mnpKline'); if ($('klChart')) return;
+  host.innerHTML = `<div class="kl">
+    <div class="kltop"><button class="klsym" id="klSymBtn" aria-haspopup="dialog"><b id="klSymT"></b><span>▾</span></button>
+      <div class="kltf" role="group" aria-label="週期">${KL_TF.map(([v, n]) => `<button data-kltf="${v}" aria-pressed="false">${n}</button>`).join('')}</div>
+      <span class="klst" id="klSt" role="status"></span></div>
+    <div class="klbox"><div class="kllg" id="klLg"></div><div id="klChart" class="klchart" aria-label="K 線圖，可以拖曳、用滾輪或兩指縮放"></div></div>
+    <div class="klpick" id="klPick" hidden role="dialog" aria-label="選擇幣種"><input id="klQ" placeholder="搜尋幣種，例如 BTC、ETH、SOL" autocomplete="off" aria-label="搜尋幣種"><div class="kllist" id="klList" role="listbox"></div></div></div>`;
+  host.querySelector('.kltf').onclick = e => { const b = e.target.closest('[data-kltf]'); if (b) klSet(KL.sym, b.dataset.kltf); };
+  $('klSymBtn').onclick = () => { const p = $('klPick'); p.hidden = !p.hidden; if (!p.hidden) { $('klQ').value = ''; klList(); $('klQ').focus(); } };
+  $('klQ').oninput = klList; $('klQ').onkeydown = e => { if (e.key === 'Escape') $('klPick').hidden = true; if (e.key === 'Enter') { const f = $('klList').querySelector('[data-klsym]'); if (f) f.click(); } };
+  $('klList').onclick = e => { const b = e.target.closest('[data-klsym]'); if (b) { $('klPick').hidden = true; klSet(b.dataset.klsym, KL.tf); } };
+}
+async function klList() {                              // 幣種清單：照 24 小時成交額排序，顯示最新價和漲跌
+  if (!KL.list.length) { try { const r = await fetch('https://fapi.binance.com/fapi/v1/ticker/24hr'); const j = await r.json(); KL.list = (Array.isArray(j) ? j : []).filter(x => /USDT$/.test(x.symbol) && !x.symbol.includes('_')).sort((a, b) => +b.quoteVolume - +a.quoteVolume); } catch (e) {} }
+  const q = ($('klQ').value || '').trim().toUpperCase().replace(/USDT$/, ''), L = KL.list.filter(x => !q || x.symbol.replace(/USDT$/, '').includes(q)).slice(0, 80);
+  $('klList').innerHTML = L.length ? L.map(x => `<button role="option" data-klsym="${x.symbol}" aria-selected="${x.symbol === KL.sym}"><b>${x.symbol.replace(/USDT$/, '')}</b><small>USDT 永續</small><span>${klFmt(+x.lastPrice)}</span><em class="${+x.priceChangePercent >= 0 ? 'up' : 'dn'}">${+x.priceChangePercent >= 0 ? '+' : ''}${(+x.priceChangePercent).toFixed(2)}%</em></button>`).join('')
+    : (q ? `<button role="option" data-klsym="${q}USDT"><b>${esc(q)}</b><small>直接打開 ${esc(q)}USDT</small></button>` : '<p class="tlsub">讀取中…</p>');
+}
+function klLegend(b) {                                 // 左上角：幣種、週期、開高低收、漲跌、成交量（十字線指到哪根就顯示哪根）
+  const T = klTheme(), D = KL.data; if (!b) b = D[D.length - 1]; if (!b) { $('klLg').innerHTML = ''; return; }
+  const i = D.findIndex(x => x.time === b.time), prev = i > 0 ? D[i - 1].close : b.open, ch = b.close - prev, pc = prev ? ch / prev * 100 : 0, col = b.close >= b.open ? T.up : T.dn;
+  $('klLg').innerHTML = `<b>${KL.sym.replace(/USDT$/, '')}USDT 永續</b><span class="kltfl">・${(KL_TF.find(x => x[0] === KL.tf) || [])[1] || KL.tf}・Binance</span><br>
+    <span>開<i style="color:${col}">${klFmt(b.open)}</i></span><span>高<i style="color:${col}">${klFmt(b.high)}</i></span><span>低<i style="color:${col}">${klFmt(b.low)}</i></span><span>收<i style="color:${col}">${klFmt(b.close)}</i></span><span><i style="color:${col}">${ch >= 0 ? '+' : ''}${klFmt(ch)}（${pc >= 0 ? '+' : ''}${pc.toFixed(2)}%）</i></span><br><span>成交量<i style="color:${col}">${klVol(b.vol)}</i></span>`;
+}
+async function klInit() {
+  klUi(); KL.open = true;
+  try { await loadLW(); } catch (e) { $('klSt').textContent = e.message; return; }
+  if (!KL.ch) {
+    const T = klTheme(), el = $('klChart');
+    KL.ch = LightweightCharts.createChart(el, { autoSize: true, layout: { background: { type: 'solid', color: T.bg }, textColor: T.tx, fontSize: 12 }, grid: { vertLines: { color: T.grid }, horzLines: { color: T.grid } },
+      crosshair: { mode: 0 }, rightPriceScale: { borderColor: T.bd }, timeScale: { borderColor: T.bd, timeVisible: true, secondsVisible: false, rightOffset: 8 },
+      localization: { locale: 'zh-TW', timeFormatter: t => { const d = new Date(t * 1000 + 8 * 3600000); return `${d.getUTCFullYear()}/${String(d.getUTCMonth() + 1).padStart(2, '0')}/${String(d.getUTCDate()).padStart(2, '0')} ${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`; } } });
+    KL.ch.timeScale().applyOptions({ tickMarkFormatter: (t, type) => { const d = new Date(t * 1000 + 8 * 3600000); return type < 3 ? `${d.getUTCMonth() + 1}/${d.getUTCDate()}` : `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`; } });   // 台北時間
+    KL.cs = KL.ch.addCandlestickSeries({ upColor: T.up, downColor: T.dn, borderUpColor: T.up, borderDownColor: T.dn, wickUpColor: T.up, wickDownColor: T.dn, priceFormat: { type: 'custom', formatter: klFmt, minMove: 1e-8 } });
+    KL.vs = KL.ch.addHistogramSeries({ priceScaleId: 'vol', priceFormat: { type: 'volume' }, lastValueVisible: false, priceLineVisible: false });
+    KL.ch.priceScale('vol').applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } }); KL.cs.priceScale().applyOptions({ scaleMargins: { top: 0.08, bottom: 0.24 } });
+    KL.ch.subscribeCrosshairMove(p => { const b = p && p.time ? KL.data.find(x => x.time === p.time) : null; klLegend(b); });
+    KL.ch.timeScale().subscribeVisibleLogicalRangeChange(r => { if (r && r.from < 30) klOlder(); });   // 往左捲到最前面：自動載入更早的 K 線
+  }
+  klSet(KL.sym, KL.tf, true);
+}
+const klVolBar = b => ({ time: b.time, value: b.vol, color: b.close >= b.open ? klTheme().up + '80' : klTheme().dn + '80' });
+async function klSet(sym, tf, force) {
+  if (!force && sym === KL.sym && tf === KL.tf && KL.data.length) return;
+  KL.sym = sym; KL.tf = tf; LS.set('klSym', sym); LS.set('klTf', tf); KL.end = false;
+  $('klSymT').textContent = sym.replace(/USDT$/, '') + 'USDT'; document.querySelectorAll('[data-kltf]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.kltf === tf)));
+  $('klSt').textContent = '讀取中…'; const my = sym + tf; KL.want = my;
+  try {
+    const D = await klFetch(sym, tf); if (KL.want !== my) return;
+    KL.data = D; KL.cs.setData(D); KL.vs.setData(D.map(klVolBar)); KL.ch.timeScale().fitContent(); KL.ch.timeScale().scrollToPosition(8, false);
+    const n = Math.min(D.length, 150); KL.ch.timeScale().setVisibleLogicalRange({ from: D.length - n, to: D.length + 8 });
+    klLegend(); $('klSt').textContent = ''; klWs();
+  } catch (e) { $('klSt').textContent = '讀取失敗：' + e.message; }
+}
+async function klOlder() {
+  if (KL.loading || KL.end || !KL.data.length) return; KL.loading = true; const my = KL.sym + KL.tf;
+  try {
+    const D = await klFetch(KL.sym, KL.tf, KL.data[0].time * 1000 - 1); if (KL.sym + KL.tf !== my) return;
+    if (!D.length) { KL.end = true; return; }
+    const r = KL.ch.timeScale().getVisibleLogicalRange(); KL.data = [...D.filter(b => b.time < KL.data[0].time), ...KL.data];
+    KL.cs.setData(KL.data); KL.vs.setData(KL.data.map(klVolBar)); if (r) KL.ch.timeScale().setVisibleLogicalRange({ from: r.from + D.length, to: r.to + D.length });
+  } catch (e) {} finally { KL.loading = false; }
+}
+function klWs() {                                      // 即時更新：幣安的 K 線推播（斷線自動重連；離開這頁就關掉）
+  const key = KL.sym.toLowerCase() + '@kline_' + KL.tf; if (KL.ws && KL.wsKey === key && KL.ws.readyState <= 1) return;
+  if (KL.ws) { KL.ws.onclose = null; try { KL.ws.close(); } catch (e) {} }
+  if (!KL.open) return;
+  KL.wsKey = key; const ws = new WebSocket('wss://fstream.binance.com/ws/' + key); KL.ws = ws;
+  ws.onmessage = m => { try { const k = JSON.parse(m.data).k; if (!k || KL.wsKey !== key) return; const b = { time: Math.floor(k.t / 1000), open: +k.o, high: +k.h, low: +k.l, close: +k.c, vol: +k.v }, D = KL.data, last = D[D.length - 1];
+    if (!last || b.time < last.time) return; if (b.time === last.time) D[D.length - 1] = b; else D.push(b); KL.cs.update(b); KL.vs.update(klVolBar(b)); if (!KL.hover) klLegend(); } catch (e) {} };
+  ws.onclose = () => { if (KL.open && KL.wsKey === key) setTimeout(klWs, 3000); };
+}
+function klClose() { KL.open = false; if (KL.ws) { KL.ws.onclose = null; try { KL.ws.close(); } catch (e) {} KL.ws = null; } }
 /* ---------- 💳 方案與繳費：月費（USDT TRC20 自動確認）＋擁有者的繳費後台 ---------- */
 const BI = { d: null, a: null, code: '', timer: null, qr: null };
 const bDate = t => t ? fmtT(t).slice(0, 16) : '—';
@@ -4894,6 +4993,7 @@ function mnOpen(k) {
   if (k === 'bt') tbLoad();                            // 🗡 特級咒具回測（有權限才顯示）
   clearInterval(TL.timer);
   if (k === 'tool') { $('mnpTool').innerHTML = '<p class="tlsub">載入中…</p>'; tlLoad('tool'); TL.timer = setInterval(() => { if (MN_PAGE === 'tool' && TL.d && !($('tlDlg') && $('tlDlg').open)) tlLoad('tool'); }, 20000); }   // 設定視窗打開時不更新
+  if (k === 'kline') klInit(); else klClose();   // 🕯 K 線圖（離開就關掉即時連線）
   if (k === 'bill') { $('mnpBill').innerHTML = '<p class="tlsub">載入中…</p>'; biLoad(); TL.timer = setInterval(() => { if (MN_PAGE === 'bill' && !document.activeElement.closest('#mnpBill input,#mnpBill select')) biLoad(BI.d && (BI.d.orders || []).some(o => o.status === 'pending')); }, 15000); }
   if (k === 'xent') { XE.dirty = false; $('mnpXent').innerHTML = '<p class="tlsub">載入中…</p>'; xeLoad(); TL.timer = setInterval(() => { if (MN_PAGE === 'xent' && !XE.dirty && !($('xeDlg') && $('xeDlg').open)) xeLoad(); }, 30000); }
   try { if (k === 'cards') { $('qSidePanel').hidden = false; renderCards(); } if (k === 'hist') { $('qTabPanel').hidden = false; hSeg(HSEG.tab); } if (k === 'stats' || k === 'eq') { EQC = null; renderHist(); } } catch (e) { console.error(e); }   // 重畫出錯也要照樣打開頁面
@@ -4902,6 +5002,7 @@ function mnOpen(k) {
   $('mnBack').focus();
 }
 function mnClose() {
+  klClose();   // 🕯 關掉 K 線圖的即時連線
   if (MN_PAGE === 'heat') htStop();
   clearInterval(TL.timer); MN_PAGE = ''; $('mnSheet').hidden = true; document.body.classList.remove('mn-sheet');
   $('mnBtn').focus();
@@ -4932,6 +5033,9 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-02e', title: '2026/11/02 更新（K 線圖）', items: [
+    { ic: '🕯', t: '選單「市場」新增 K 線圖：幣安永續合約的 K 線＋成交量，可以搜尋切換幣種、切換週期（1 分～週），十字線顯示開高低收，拖曳、縮放，往左捲會自動載入更早的 K 線，即時跳動更新。' }
+  ] },
   { id: '2026-11-02d', title: '2026/11/02 更新（ANALYSIS 輪播）', items: [
     { ic: '🔁', sp: true, t: '作戰室的 ANALYSIS 改成輪播：所有走到第 2 步以後的特級卡片每秒換一張，右上角顯示第幾張／共幾張，可以按 ◀ ▶ 切換、⏸ 暫停；滑鼠停在上面時不會換。' }
   ] },
