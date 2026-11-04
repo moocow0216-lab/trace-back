@@ -1032,6 +1032,9 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
 .klnav{position:absolute;left:50%;bottom:44px;transform:translateX(-50%);z-index:5;display:flex;gap:4px;transition:opacity .2s}.klnav button{width:32px;height:32px;border-radius:8px;border:1px solid rgba(120,123,134,.5);background:rgba(30,34,45,.85);color:#d1d4dc;font-size:16px;cursor:pointer}.klnav button:hover{border-color:#2962ff}
 .klnav[data-mode="hover"]{opacity:0}.klbox:hover .klnav[data-mode="hover"],.klnav[data-mode="hover"]:focus-within{opacity:1}.klnav[data-mode="hidden"]{display:none}
 @media (hover:none){.klnav[data-mode="hover"]{opacity:1}}
+
+.kidlg{width:min(460px,96vw)}.kitabs{display:flex;gap:18px;padding:0 20px;border-bottom:1px solid #2a2a2a}.kitabs button{border:0;background:transparent;color:#9598a1;padding:8px 0;font-size:15px;cursor:pointer;border-bottom:2px solid transparent}.kitabs button.on{color:#fff;border-bottom-color:#fff}
+.kimain{padding:12px 20px 16px;min-height:200px;max-height:60vh}.kiw{min-width:150px!important}.kimain .ksfield input[type=number]{width:110px;padding:7px 9px;border-radius:8px;background:#1e1e1e;color:#d1d4dc;border:1px solid #444}
 </style>
 </head>
 <body class="quant-on mn">
@@ -1231,7 +1234,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-02j</div>
+      <div class="qver" id="qVer">網站版本 2026-11-02k</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3691,7 +3694,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-02j・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-02k・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -4763,18 +4766,19 @@ function krPlay(on) { KR.play = on; clearInterval(KR.timer); if (on) KR.timer = 
 function krExit() { clearInterval(KR.timer); KR.on = false; KR.pick = false; KR.play = false; if (KL.full) { KL.data = KL.full; KL.cs.setData(klCdAll(KL.data)); KL.vs.setData(KL.data.map((b, i) => klVolBar(b, KL.data[i - 1]))); KL.ch.timeScale().scrollToRealTime(); klLegend(); klTagDraw(); } $('klSt').textContent = ''; krBar(); }
 /* ---------- ƒx K 線圖指標（像 TradingView 左上角的指標列：名稱＋參數、👁 隱藏、⚙ 參數、✕ 移除） ----------
    照擁有者給的 Pine 指標改寫：FVG Order Blocks [BigBeluga]、LuxAlgo SMC（CHoCH／BOS）、莊家淨額、CRT＋SMC、清算熱力圖 [BigBeluga]、天神下凡（獵殺）、12:00 基準價區間、上帝視角（每日開盤線／POC） */
-const KI_DEF = {
-  fvgob: { n: 'FVG Order Blocks [BigBeluga]', p: [['filt', 'FVG 過濾 %', 0.5, 0, 10, 0.1], ['max', '最多幾個', 6, 1, 20, 1]] },
-  smc: { n: 'LuxAlgo - Smart Money Concepts', p: [['swing', 'Swing 長度', 50, 10, 200, 1], ['inter', 'Internal 長度', 5, 2, 50, 1]] },
-  zh: { n: '莊家淨額', p: [['inter', 'Internal 結構長度', 5, 2, 20, 1]], ltf: true },
-  crt: { n: 'CRT + SMC 進場策略（H4/M15、H1/M5）', p: [['swing', 'Swing', 50, 10, 200, 1], ['inter', 'Internal', 5, 2, 50, 1], ['rr', '盈虧比', 1, 0.1, 10, 0.1]], ltf: true },
-  liq: { n: '清算熱力圖 [BigBeluga]', p: [['bars', '範圍（K 棒數）', 300, 50, 1000, 10]] },
-  hunt: { n: '天神下凡（獵殺）', p: [['swing', 'Swing', 50, 10, 100, 1], ['inter', 'Internal', 5, 2, 20, 1]], ltf: true },
-  base: { n: '12:00 基準價區間', p: [['dash', '虛線 ±%', 1.5, 0, 10, 0.1], ['in', '方框內緣 %', 2, 0, 10, 0.1], ['out', '方框外緣 %', 2.5, 0, 10, 0.1]] },
-  god: { n: '上帝視角（每日開盤線／POC）', p: [['days', '顯示幾天', 10, 1, 60, 1], ['lv', 'POC 精細度', 200, 20, 1000, 10]] }
+const KI_DEF = {                                        // p：[代號, 名稱, 預設, 最小, 最大, 間隔, 種類（空＝數字、c＝顏色、b＝開關）]
+  fvgob: { n: 'FVG Order Blocks [BigBeluga]', p: [['filt', 'FVG 過濾 %', 0.5, 0, 10, 0.1], ['max', '最多幾個', 6, 1, 20, 1], ['bullC', '看漲訂單塊', '#089981', 0, 0, 0, 'c'], ['bearC', '看跌訂單塊', '#f23645', 0, 0, 0, 'c'], ['fvgShow', '顯示 FVG 小方框', true, 0, 0, 0, 'b'], ['fvgC', 'FVG 方框', '#787b86', 0, 0, 0, 'c'], ['lab', '顯示 % 數字', true, 0, 0, 0, 'b']] },
+  smc: { n: 'LuxAlgo - Smart Money Concepts', p: [['swing', 'Swing 長度', 50, 10, 200, 1], ['inter', 'Internal 長度', 5, 2, 50, 1], ['showS', '顯示 Swing 結構', true, 0, 0, 0, 'b'], ['showI', '顯示 Internal 結構', true, 0, 0, 0, 'b'], ['bullC', '看漲結構', '#089981', 0, 0, 0, 'c'], ['bearC', '看跌結構', '#f23645', 0, 0, 0, 'c'], ['lab', '顯示 CHoCH／BOS 文字', true, 0, 0, 0, 'b']] },
+  zh: { n: '莊家淨額', p: [['inter', 'Internal 結構長度', 5, 2, 20, 1], ['longC', '莊家做多', '#00b450', 0, 0, 0, 'c'], ['shortC', '莊家做空', '#c81e1e', 0, 0, 0, 'c']], ltf: true },
+  crt: { n: 'CRT + SMC 進場策略（H4/M15、H1/M5）', p: [['swing', 'Swing', 50, 10, 200, 1], ['inter', 'Internal', 5, 2, 50, 1], ['rr', '盈虧比', 1, 0.1, 10, 0.1], ['longC', 'CRT 做多', '#00b450', 0, 0, 0, 'c'], ['shortC', 'CRT 做空', '#c81e1e', 0, 0, 0, 'c'], ['sltp', '顯示止盈止損線', true, 0, 0, 0, 'b']], ltf: true },
+  liq: { n: '清算熱力圖 [BigBeluga]', p: [['bars', '範圍（K 棒數）', 300, 50, 1000, 10], ['minC', '最小量', '#00ff00', 0, 0, 0, 'c'], ['maxC', '最大量', '#ffeb3b', 0, 0, 0, 'c']] },
+  hunt: { n: '天神下凡（獵殺）', p: [['swing', 'Swing', 50, 10, 100, 1], ['inter', 'Internal', 5, 2, 20, 1], ['longC', '獵殺做多', '#00b450', 0, 0, 0, 'c'], ['shortC', '獵殺做空', '#b40000', 0, 0, 0, 'c']], ltf: true },
+  base: { n: '12:00 基準價區間', p: [['dash', '虛線 ±%', 1.5, 0, 10, 0.1], ['in', '方框內緣 %', 2, 0, 10, 0.1], ['out', '方框外緣 %', 2.5, 0, 10, 0.1], ['baseC', '基準價', '#ff9800', 0, 0, 0, 'c'], ['dashC', '虛線', '#9e9e9e', 0, 0, 0, 'c'], ['upC', '紅框（漲後回落）', '#f23645', 0, 0, 0, 'c'], ['dnC', '綠框（跌後反彈）', '#089981', 0, 0, 0, 'c']] },
+  god: { n: '上帝視角（每日開盤線／POC）', p: [['days', '顯示幾天', 10, 1, 60, 1], ['lv', 'POC 精細度', 200, 20, 1000, 10], ['openC', '開盤價橫線', '#ff9800', 0, 0, 0, 'c'], ['pocC', 'POC', '#e040fb', 0, 0, 0, 'c'], ['sep', '顯示每日分隔線', true, 0, 0, 0, 'b'], ['lab', '顯示價格文字', true, 0, 0, 0, 'b']] }
 };
+const kiA = (c, a) => { const h = ksHex(c); if (!h) return c; const n = parseInt(h.slice(1), 16); return `rgba(${n >> 16},${n >> 8 & 255},${n & 255},${a})`; };
 const KI = { list: LS.get('klInd', [{ id: 'fvgob', on: true }, { id: 'smc', on: true }]), res: null, key: '' };
-const kiP = it => { const o = {}; for (const [k, , v] of KI_DEF[it.id].p) o[k] = it.p && it.p[k] != null ? +it.p[k] : v; return o; };
+const kiP = it => { const o = {}; for (const [k, , v, , , , ty] of KI_DEF[it.id].p) { const x = it.p && it.p[k] != null ? it.p[k] : v; o[k] = ty === 'c' ? String(x) : ty === 'b' ? !!x : +x; } return o; };
 const kiSave = () => { LS.set('klInd', KI.list); KI.key = ''; kiLegend(); };
 const kiHTF = () => KL.tf === '15m' ? { hms: 4 * 3600000, lms: 900000, slotH: 4, maxSlot: 5, hn: 'H4' } : KL.tf === '5m' ? { hms: 3600000, lms: 300000, slotH: 1, maxSlot: 23, hn: 'H1' } : null;
 function kiAtr(B, len) { const out = new Array(B.length).fill(NaN); let rma = NaN, sum = 0;
@@ -4801,21 +4805,21 @@ const KI_CALC = {
     for (let j = 2; j < B.length; j++) {
       const h = B[j], a = B[j - 2], b = B[j - 1], AT = A[j]; if (isNaN(AT)) continue;
       const fu = (h.l - a.h) / h.l * 100, fd = (a.l - h.h) / a.l * 100;
-      if (a.h < h.l && a.h < b.h && a.l < h.l && fu > P.filt) { act[0].push({ dir: 1, t0: b.t, lo: a.h - AT, hi: a.h, v: fu }); out.boxes.push({ t0: b.t, t1: B[Math.min(B.length - 1, j + 5)].t, p0: a.h, p1: h.l, fill: 'rgba(120,123,134,.28)', label: `${fu.toFixed(2)}%`, small: true }); }
-      if (a.l > h.h && a.l > b.l && a.h > h.h && fd > P.filt) { act[1].push({ dir: -1, t0: b.t, lo: a.l, hi: a.l + AT, v: fd }); out.boxes.push({ t0: b.t, t1: B[Math.min(B.length - 1, j + 5)].t, p0: h.h, p1: a.l, fill: 'rgba(120,123,134,.28)', label: `-${fd.toFixed(2)}%`, small: true }); }
+      if (a.h < h.l && a.h < b.h && a.l < h.l && fu > P.filt) { act[0].push({ dir: 1, t0: b.t, lo: a.h - AT, hi: a.h, v: fu }); if (P.fvgShow) out.boxes.push({ t0: b.t, t1: B[Math.min(B.length - 1, j + 5)].t, p0: a.h, p1: h.l, fill: kiA(P.fvgC, 0.3), label: P.lab ? `${fu.toFixed(2)}%` : '', small: true }); }
+      if (a.l > h.h && a.l > b.l && a.h > h.h && fd > P.filt) { act[1].push({ dir: -1, t0: b.t, lo: a.l, hi: a.l + AT, v: fd }); if (P.fvgShow) out.boxes.push({ t0: b.t, t1: B[Math.min(B.length - 1, j + 5)].t, p0: h.h, p1: a.l, fill: kiA(P.fvgC, 0.3), label: P.lab ? `-${fd.toFixed(2)}%` : '', small: true }); }
       for (const [s, d] of [[0, 1], [1, -1]]) {
         for (const z of [...act[s]]) if (d > 0 ? h.h < z.lo : h.l > z.hi) rm(s, z, j);
         for (const z of [...act[s]]) if (act[s].some(z1 => z1 !== z && z1.hi < z.hi && z1.hi > z.lo)) rm(s, z, j);
         while (act[s].length > P.max) act[s].shift();
       }
     }
-    for (const z of [...act[0], ...act[1]]) out.boxes.push({ t0: z.t0, t1: end, ext: true, p0: z.lo, p1: z.hi, fill: z.dir > 0 ? 'rgba(8,153,129,.30)' : 'rgba(242,54,69,.30)', stroke: z.dir > 0 ? '#089981' : '#f23645', label: `${z.dir > 0 ? '' : '-'}${z.v.toFixed(2)}%` });
+    for (const z of [...act[0], ...act[1]]) out.boxes.push({ t0: z.t0, t1: end, ext: true, p0: z.lo, p1: z.hi, fill: kiA(z.dir > 0 ? P.bullC : P.bearC, 0.3), stroke: z.dir > 0 ? P.bullC : P.bearC, label: P.lab ? `${z.dir > 0 ? '' : '-'}${z.v.toFixed(2)}%` : '' });
     out.boxes = out.boxes.filter(x => !x.small || x.t1 >= B[Math.max(0, B.length - 400)].t);
     return out;
   },
   smc(B, P) {                                          // LuxAlgo：Internal（虛線）＋Swing（實線）的 CHoCH／BOS
     const out = { lines: [] };
-    for (const [len, dash, w] of [[P.inter, true, 1], [P.swing, false, 2]]) for (const e of kiStruct(B, len).ev) if (e.from >= 0) out.lines.push({ t0: B[e.from].t, t1: B[e.i].t, p: e.p, color: e.dir > 0 ? '#089981' : '#f23645', dash, w, label: e.tag, mid: true, below: e.dir < 0 });
+    for (const [len, dash, w, on] of [[P.inter, true, 1, P.showI], [P.swing, false, 2, P.showS]]) if (on) for (const e of kiStruct(B, len).ev) if (e.from >= 0) out.lines.push({ t0: B[e.from].t, t1: B[e.i].t, p: e.p, color: e.dir > 0 ? P.bullC : P.bearC, dash, w, label: P.lab ? e.tag : '', mid: true, below: e.dir < 0 });
     return out;
   },
   zh(B, P) { const H = kiHTF(); if (!H) return { note: '只在 15 分（看 4H）或 5 分（看 1H）圖表運作' }; if (!B.some(b => b.qv > 0)) return { note: '這個資料沒有主動買入量，算不出淨額' };
@@ -4823,8 +4827,8 @@ const KI_CALC = {
     for (let i = 0; i < B.length; i++) { const b = B[i], hs = Math.floor(b.t / H.hms) * H.hms; let bu = false, be = false;
       if (!acc || hs !== acc.t) { if (acc && acc.full) { if (acc.c < acc.o && acc.net > 0) bu = true; if (acc.c > acc.o && acc.net < 0) be = true; } acc = { t: hs, o: b.o, c: b.c, net: 0, full: b.t === hs }; }
       acc.net += 2 * b.tb - b.qv; acc.c = b.c; if (bu) { setup = 1; used = false; } if (be) { setup = -1; used = false; }
-      if (setup === 1 && !used && ib.bull[i]) { out.marks.push({ t: b.t, i, dir: 1, text: '莊家做多', color: '#00b450' }); used = true; }
-      if (setup === -1 && !used && ib.bear[i]) { out.marks.push({ t: b.t, i, dir: -1, text: '莊家做空', color: '#c81e1e' }); used = true; }
+      if (setup === 1 && !used && ib.bull[i]) { out.marks.push({ t: b.t, i, dir: 1, text: '莊家做多', color: P.longC }); used = true; }
+      if (setup === -1 && !used && ib.bear[i]) { out.marks.push({ t: b.t, i, dir: -1, text: '莊家做空', color: P.shortC }); used = true; }
       if ((setup === 1 && ib.bear[i]) || (setup === -1 && ib.bull[i])) { setup = 0; used = false; } }
     return out; },
   crt(B, P) { const HT = kiHTF(); if (!HT) return { note: '只在 15 分（看 H4）或 5 分（看 H1）圖表運作' };
@@ -4837,8 +4841,8 @@ const KI_CALC = {
       if (i >= 2) { const p1 = B[i - 1], p2 = B[i - 2], d = (p1.c - p1.o) / (p1.o * 100); if (b.l > p2.h && p1.c > p2.h && d > 0) { bz.unshift({ top: b.l, bot: p2.h, i }); if (bz.length > 5) bz.pop(); } if (b.h < p2.l && p1.c < p2.l && -d > 0) { sz.unshift({ top: p2.l, bot: b.h, i }); if (sz.length > 5) sz.pop(); } }
       bz = bz.filter(z => !(b.c < z.bot)); sz = sz.filter(z => !(b.c > z.top));
       const bh = Math.max(b.o, b.c), bl = Math.min(b.o, b.c), hit = Z => Z.some(z => z.i !== i && b.h >= z.bot && b.l <= z.top && !(bl <= z.bot && bh >= z.top)), t20 = B[Math.min(B.length - 1, i + 20)].t;
-      if (la && bias === 1 && hit(bz) && cdir === 1 && b.c - S.bot >= 0.3 * atr[i]) { const tp = b.c + (b.c - S.bot) * P.rr; out.marks.push({ t: b.t, dir: 1, text: `${HT.hn} CRT 做多`, color: '#00b450' }); out.lines.push({ t0: b.t, t1: t20, p: S.bot, color: '#f23645', dash: true, w: 1, label: `SL ${klFmt(S.bot)}` }, { t0: b.t, t1: t20, p: tp, color: '#089981', dash: true, w: 1, label: `TP ${klFmt(tp)}` }); la = false; }
-      if (sa && bias === -1 && hit(sz) && cdir === -1 && S.top - b.c >= 0.3 * atr[i]) { const tp = b.c - (S.top - b.c) * P.rr; out.marks.push({ t: b.t, dir: -1, text: `${HT.hn} CRT 做空`, color: '#c81e1e' }); out.lines.push({ t0: b.t, t1: t20, p: S.top, color: '#f23645', dash: true, w: 1, label: `SL ${klFmt(S.top)}` }, { t0: b.t, t1: t20, p: tp, color: '#089981', dash: true, w: 1, label: `TP ${klFmt(tp)}` }); sa = false; } }
+      if (la && bias === 1 && hit(bz) && cdir === 1 && b.c - S.bot >= 0.3 * atr[i]) { const tp = b.c + (b.c - S.bot) * P.rr; out.marks.push({ t: b.t, dir: 1, text: `${HT.hn} CRT 做多`, color: P.longC }); if (P.sltp) out.lines.push({ t0: b.t, t1: t20, p: S.bot, color: '#f23645', dash: true, w: 1, label: `SL ${klFmt(S.bot)}` }, { t0: b.t, t1: t20, p: tp, color: '#089981', dash: true, w: 1, label: `TP ${klFmt(tp)}` }); la = false; }
+      if (sa && bias === -1 && hit(sz) && cdir === -1 && S.top - b.c >= 0.3 * atr[i]) { const tp = b.c - (S.top - b.c) * P.rr; out.marks.push({ t: b.t, dir: -1, text: `${HT.hn} CRT 做空`, color: P.shortC }); if (P.sltp) out.lines.push({ t0: b.t, t1: t20, p: S.top, color: '#f23645', dash: true, w: 1, label: `SL ${klFmt(S.top)}` }, { t0: b.t, t1: t20, p: tp, color: '#089981', dash: true, w: 1, label: `TP ${klFmt(tp)}` }); sa = false; } }
     return out; },
   liq(B, P) {                                          // BigBeluga 清算熱力圖：擺盪高低點外側＝停損／清算區，依成交量上色，價格穿過中線就算被掃
     const out = { boxes: [] }, n = B.length, s0 = Math.max(2, n - P.bars), A = kiAtr(B, 200), sec = KL_SEC[KL.tf] || 60, mult = sec >= 3600 && sec < 86400 ? 0.2 : sec < 3600 ? 0.25 : 0.2, Z = [];
@@ -4849,7 +4853,7 @@ const KI_CALC = {
         if (isPH) Z.push({ t0: B[c].t, lo: B[c].h, hi: B[c].h + at, r, end: null }); if (isPL) Z.push({ t0: B[c].t, lo: B[c].l - at, hi: B[c].l, r, end: null }); }
       for (const z of Z) if (!z.end) { const mid = (z.lo + z.hi) / 2; if (B[i].h > mid && B[i].l < mid && B[i].t > z.t0) z.end = B[i].t; }
     }
-    const col = r => { const a = [0, 255, 0], b = [255, 235, 59], t = Math.max(0, Math.min(1, r)), m = (x, y) => Math.round(x + (y - x) * t); return `rgba(${m(a[0], b[0])},${m(a[1], b[1])},${m(a[2], b[2])},${0.05 + 0.4 * t * t})`; };   // 量越大越亮（跟原版一樣，小量幾乎透明）
+    const hx = c => { const n = parseInt((ksHex(c) || '#00ff00').slice(1), 16); return [n >> 16, n >> 8 & 255, n & 255]; }, col = r => { const a = hx(P.minC), b = hx(P.maxC), t = Math.max(0, Math.min(1, r)), m = (x, y) => Math.round(x + (y - x) * t); return `rgba(${m(a[0], b[0])},${m(a[1], b[1])},${m(a[2], b[2])},${0.05 + 0.4 * t * t})`; };   // 量越大越亮（跟原版一樣，小量幾乎透明）
     for (const z of Z) out.boxes.push({ t0: z.t0, t1: z.end || B[n - 1].t, ext: !z.end, p0: z.lo, p1: z.hi, fill: col(z.r) });
     return out; },
   hunt(B, P) { const H = kiHTF(); if (!H) return { note: '只在 15 分（看 4H）或 5 分（看 1H）圖表運作' };
@@ -4859,7 +4863,7 @@ const KI_CALC = {
         if (acc) { if (acc.day !== cur) { day = []; cur = acc.day; } day.push(acc); const n = day.length; if (n >= 2) { const p = day[n - 2], q = day[n - 1]; if (q.slot === p.slot + 1 && q.slot <= H.maxSlot) { const lp = p.c < p.o && q.c > q.o && q.l < p.l, sp = p.c > p.o && q.c < q.o && q.h > p.h; if (lp || sp) win = { dir: lp ? 1 : -1, trig: false }; } } }
         acc = { o: b.o, h: b.h, l: b.l, c: b.c, slot, day: d }; } else { acc.h = Math.max(acc.h, b.h); acc.l = Math.min(acc.l, b.l); acc.c = b.c; }
       if (win.dir && !win.trig) { const brk = win.dir === 1 ? (sb.bull[i] || ib.bull[i]) : (sb.bear[i] || ib.bear[i]); if (brk) { win.trig = true; pend = { dir: win.dir, i }; } }
-      if (pend && i === pend.i + 1) { out.marks.push({ t: b.t, dir: pend.dir, text: pend.dir > 0 ? '獵殺做多' : '獵殺做空', color: pend.dir > 0 ? '#00b450' : '#b40000' }); pend = null; } }
+      if (pend && i === pend.i + 1) { out.marks.push({ t: b.t, dir: pend.dir, text: pend.dir > 0 ? '獵殺做多' : '獵殺做空', color: pend.dir > 0 ? P.longC : P.shortC }); pend = null; } }
     return out; },
   base(B, P) {                                         // 12:00（台北）基準價：虛線 ±%、上方紅框（漲後回落區）、下方綠框（跌後反彈區）；只畫最新一天，到隔天 0:00
     const out = { boxes: [], lines: [] }, TZ8 = 8 * 3600000; let k = -1;
@@ -4867,19 +4871,19 @@ const KI_CALC = {
     if (k < 0) { for (let i = B.length - 1; i >= 0; i--) { const d = new Date(B[i].t + TZ8), noon = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 12) - TZ8; if (B[i].t <= noon && B[i].t + (KL_SEC[KL.tf] || 60) * 1000 > noon) { k = i; break; } } }
     if (k < 0) return { note: '找不到 12:00 的 K 棒（請用 1 小時以下的週期）' };
     const base = B[k].o, t0 = B[k].t, t1 = Math.min(t0 + 12 * 3600000, B[B.length - 1].t), f = x => base * (1 + x / 100);
-    out.lines.push({ t0, t1, p: base, color: '#ff9800', dash: true, w: 2, label: `12:00 ${klFmt(base)}` }, { t0, t1, p: f(P.dash), color: '#9e9e9e', dash: true, w: 1 }, { t0, t1, p: f(-P.dash), color: '#9e9e9e', dash: true, w: 1 });
-    out.boxes.push({ t0, t1, p0: f(P.in), p1: f(P.out), fill: 'rgba(242,54,69,.2)', stroke: '#f23645' }, { t0, t1, p0: f(-P.out), p1: f(-P.in), fill: 'rgba(8,153,129,.2)', stroke: '#089981' });
+    out.lines.push({ t0, t1, p: base, color: P.baseC, dash: true, w: 2, label: `12:00 ${klFmt(base)}` }, { t0, t1, p: f(P.dash), color: P.dashC, dash: true, w: 1 }, { t0, t1, p: f(-P.dash), color: P.dashC, dash: true, w: 1 });
+    out.boxes.push({ t0, t1, p0: f(P.in), p1: f(P.out), fill: kiA(P.upC, 0.2), stroke: P.upC }, { t0, t1, p0: f(-P.out), p1: f(-P.in), fill: kiA(P.dnC, 0.2), stroke: P.dnC });
     out.vlines = [{ t: t0, color: 'rgba(158,158,158,.6)' }]; return out; },
   god(B, P) {                                          // 每天 08:00（台北）分隔線、開盤價橫線、前一天的 POC（成交量最大的價位）
     const out = { lines: [], vlines: [] }, TZ8 = 8 * 3600000, days = new Map();
     for (const b of B) { const k = Math.floor((b.t + TZ8 - 8 * 3600000) / 86400000); if (!days.has(k)) days.set(k, []); days.get(k).push(b); }
     const ks = [...days.keys()].slice(-P.days);
     for (const k of ks) { const L = days.get(k), t0 = k * 86400000 - TZ8 + 8 * 3600000, t1 = t0 + 86400000, endT = Math.min(t1, B[B.length - 1].t);
-      out.vlines.push({ t: t0, color: 'rgba(158,158,158,.45)', dash: true });
-      out.lines.push({ t0, t1: endT, p: L[0].o, color: '#ff9800', w: 2, label: `開盤 ${klFmt(L[0].o)}` });
+      if (P.sep) out.vlines.push({ t: t0, color: 'rgba(158,158,158,.45)', dash: true });
+      out.lines.push({ t0, t1: endT, p: L[0].o, color: P.openC, w: 2, label: P.lab ? `開盤 ${klFmt(L[0].o)}` : '' });
       const lo = Math.min(...L.map(b => b.l)), hi = Math.max(...L.map(b => b.h)), n = P.lv, st = (hi - lo) / n; if (!(st > 0)) continue; const V = new Array(n).fill(0);
       for (const b of L) { const a = Math.max(0, Math.floor((b.l - lo) / st)), z = Math.min(n - 1, Math.floor((b.h - lo) / st)); for (let s = a; s <= z; s++) V[s] += (b.v || 0) / (z - a + 1); }
-      const mi = V.indexOf(Math.max(...V)); out.lines.push({ t0, t1: endT, p: lo + st * (mi + 0.5), color: '#e040fb', w: 2, label: 'POC' }); }
+      const mi = V.indexOf(Math.max(...V)); out.lines.push({ t0, t1: endT, p: lo + st * (mi + 0.5), color: P.pocC, w: 2, label: P.lab ? 'POC' : '' }); }
     return out; }
 };
 function kiCompute() {                                 // 資料或參數變了才重算
@@ -4909,7 +4913,7 @@ function kiDraw(g, W, H) {                             // 把指標畫到繪圖�
 function kiLegend() {
   const el = $('kiLg'); if (!el) return;
   el.innerHTML = KI.list.map((it, i) => { const D = KI_DEF[it.id]; if (!D) return ''; const P = kiP(it);
-    return `<div class="kirow${it.on ? '' : ' off'}" data-ki="${i}"><span class="kin">${esc(D.n)}</span><span class="kip">${Object.values(P).join(' ')}</span><span class="kinote" id="kiNote${i}"></span>
+    return `<div class="kirow${it.on ? '' : ' off'}" data-ki="${i}"><span class="kin">${esc(D.n)}</span><span class="kip">${KI_DEF[it.id].p.filter(x => !x[6]).map(x => P[x[0]]).join(' ')}</span><span class="kinote" id="kiNote${i}"></span>
       <span class="kibtns"><button data-kia="eye" aria-label="${it.on ? '隱藏' : '顯示'} ${esc(D.n)}" title="${it.on ? '隱藏' : '顯示'}">${it.on ? '👁' : '🚫'}</button><button data-kia="set" aria-label="${esc(D.n)} 的參數" title="參數">⚙</button><button data-kia="del" aria-label="移除 ${esc(D.n)}" title="移除">✕</button></span></div>`; }).join('');
   kiLegendNotes();
 }
@@ -4926,9 +4930,34 @@ function kiSet(i, anchor) {                            // 參數小視窗
   const r = anchor.getBoundingClientRect(), box = $('mnpKline').getBoundingClientRect(); m.style.left = (r.left - box.left) + 'px'; m.style.top = (r.bottom - box.top + 4) + 'px';
   $('mnpKline').querySelector('.kl').appendChild(m); const f = m.querySelector('input'); if (f) f.focus();
 }
+const KID = { i: -1, tab: 'in', saved: null };
+function kiDlg(i) {                                     // ⚙ 指標設定視窗（跟 TradingView 一樣分「輸入」「樣式」，改了馬上預覽，取消就還原）
+  kdMenuClose(); KID.i = i; KID.tab = 'in'; KID.saved = JSON.stringify(KI.list[i].p || null);
+  let d = $('kiDlgE'); if (!d) { d = document.createElement('dialog'); d.id = 'kiDlgE'; d.className = 'kldlg kidlg'; d.setAttribute('aria-labelledby', 'kiDlgT'); document.body.appendChild(d);
+    d.addEventListener('cancel', e => { e.preventDefault(); kiDlgCancel(); });
+    d.addEventListener('input', e => { const t = e.target; if (!t.dataset.kip) return; const it = KI.list[KID.i], D = KI_DEF[it.id], def = D.p.find(x => x[0] === t.dataset.kip); it.p = it.p || {};
+      if (def[6] === 'b') it.p[def[0]] = t.checked; else if (def[6] === 'c') { it.p[def[0]] = t.value; t.parentElement.style.setProperty('--c', t.value); } else { const v = +t.value; if (t.value !== '' && isFinite(v)) it.p[def[0]] = Math.max(def[3], Math.min(def[4], v)); }
+      KI.key = ''; kiLegend(); });
+    d.addEventListener('click', e => { const b = e.target.closest('[data-kitab],[data-kiact]'); if (!b) return;
+      if (b.dataset.kitab) { KID.tab = b.dataset.kitab; return kiDlgDraw(); }
+      const a = b.dataset.kiact; if (a === 'cancel') kiDlgCancel(); if (a === 'ok') { kiSave(); d.close(); } if (a === 'def') { delete KI.list[KID.i].p; KI.key = ''; kiLegend(); kiDlgDraw(); } }); }
+  kiDlgDraw(); d.showModal();
+}
+function kiDlgDraw() {
+  const d = $('kiDlgE'), it = KI.list[KID.i], D = KI_DEF[it.id], P = kiP(it), ins = D.p.filter(x => !x[6]), sty = D.p.filter(x => x[6]);
+  const row = ([k, n, , mn, mx, st, ty]) => ty === 'b' ? `<label class="ksrow"><input type="checkbox" data-kip="${k}"${P[k] ? ' checked' : ''}><span>${n}</span></label>`
+    : ty === 'c' ? `<div class="kscrow"><span class="kslab kiw">${n}</span><span class="kscol" style="--c:${esc(P[k])}"><input type="color" data-kip="${k}" value="${ksHex(P[k]) || '#000000'}" aria-label="${n}顏色"></span></div>`
+    : `<label class="ksfield"><span class="kiw">${n}</span><input type="number" data-kip="${k}" min="${mn}" max="${mx}" step="${st}" value="${P[k]}"></label>`;
+  d.innerHTML = `<div class="kshead"><h3 id="kiDlgT">${esc(D.n)}</h3><button class="ksx" data-kiact="cancel" aria-label="關閉">✕</button></div>
+    <div class="kitabs" role="tablist"><button role="tab" data-kitab="in" aria-selected="${KID.tab === 'in'}" class="${KID.tab === 'in' ? 'on' : ''}">輸入</button><button role="tab" data-kitab="st" aria-selected="${KID.tab === 'st'}" class="${KID.tab === 'st' ? 'on' : ''}">樣式</button></div>
+    <div class="ksmain kimain" role="tabpanel">${KID.tab === 'in' ? (ins.map(row).join('') || '<p class="kshint">沒有可以調整的輸入</p>') + (D.ltf ? '<p class="kshint">這個指標只在 15 分（看 4H）或 5 分（看 1H）圖表運作。</p>' : '') : sty.map(row).join('')}</div>
+    <div class="ksfoot"><button class="btn" data-kiact="def">預設值</button><span class="spacer"></span><button class="btn" data-kiact="cancel">取消</button><button class="btn ksok" data-kiact="ok">確定</button></div>`;
+}
+function kiDlgCancel() { const it = KI.list[KID.i]; if (it) { const p = JSON.parse(KID.saved); if (p) it.p = p; else delete it.p; KI.key = ''; kiLegend(); } $('kiDlgE').close(); }
 function kiBind() {
-  $('kiLg').addEventListener('click', e => { const b = e.target.closest('[data-kia]'); if (!b) return; const i = +b.closest('[data-ki]').dataset.ki, a = b.dataset.kia;
-    if (a === 'eye') { KI.list[i].on = !KI.list[i].on; kiSave(); } else if (a === 'del') { KI.list.splice(i, 1); kiSave(); } else kiSet(i, b); });
+  $('kiLg').addEventListener('click', e => { const b = e.target.closest('[data-kia]'); if (!b) return; e.stopPropagation(); const i = +b.closest('[data-ki]').dataset.ki, a = b.dataset.kia;
+    if (a === 'eye') { KI.list[i].on = !KI.list[i].on; kiSave(); } else if (a === 'del') { KI.list.splice(i, 1); kiSave(); } else kiDlg(i); });
+  $('kiLg').addEventListener('dblclick', e => { const r = e.target.closest('[data-ki]'); if (r) kiDlg(+r.dataset.ki); });   // 點兩下指標名稱也能打開設定
   $('klIndBtn').onclick = e => { e.stopPropagation(); kiAddMenu($('klIndBtn')); };
   $('mnpKline').addEventListener('click', e => {
     const a = e.target.closest('[data-kiadd]'); if (a) { const k = a.dataset.kiadd; if (!KI.list.some(x => x.id === k)) KI.list.push({ id: k, on: true }); kiSave(); kdMenuClose(); return; }
@@ -5708,6 +5737,9 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-02k', title: '2026/11/02 更新（指標設定）', items: [
+    { ic: '⚙', t: '修正：K 線圖指標列的 ⚙ 按了沒反應。現在會打開跟 TradingView 一樣的指標設定視窗，分「輸入」（參數）和「樣式」（顏色、要顯示哪些東西），改了馬上預覽，可以按「預設值」還原。點兩下指標名稱也能打開。' }
+  ] },
   { id: '2026-11-02j', title: '2026/11/02 更新（K 線圖版面設定）', items: [
     { ic: '✏️', t: 'K 線圖設定新增「版面」：背景、垂直／水平網格線（顏色、開關）、窗格分隔符號、十字準線（顏色、樣式、粗細）、浮水印（商品代碼、週期、描述）、刻度文字顏色和大小、刻度線條、導覽按鈕（縮放、左右移動、回到最新）。' }
   ] },
