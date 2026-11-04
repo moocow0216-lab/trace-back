@@ -1055,6 +1055,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
 .kiinl{justify-content:flex-start!important;gap:10px!important;flex-wrap:wrap}.kiinl .kiil{font-size:13.5px;color:#d1d4dc}.kiinl .ksrow{margin:0}
 .kitip{display:inline-block;margin-left:6px;color:#787b86;cursor:help;font-size:13px}
 .kirow2 input[type=text]{width:160px;padding:7px 9px;border-radius:8px;background:#1e1e1e;color:#d1d4dc;border:1px solid #444}
+.kidot{margin-left:6px}
 </style>
 </head>
 <body class="quant-on mn">
@@ -1254,7 +1255,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-02n</div>
+      <div class="qver" id="qVer">網站版本 2026-11-02o</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3714,7 +3715,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-02n・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-02o・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -4911,7 +4912,7 @@ function krExit() { clearInterval(KR.timer); KR.on = false; KR.pick = false; KR.
 /* ---------- ƒx K 線圖指標（像 TradingView 左上角的指標列：名稱＋參數、👁 隱藏、⚙ 參數、✕ 移除） ----------
    照擁有者給的 Pine 指標改寫：FVG Order Blocks [BigBeluga]、LuxAlgo SMC（CHoCH／BOS）、莊家淨額、CRT＋SMC、清算熱力圖 [BigBeluga]、天神下凡（獵殺）、12:00 基準價區間、上帝視角（每日開盤線／POC） */
 const KI_DEF = {                                        // p：[代號, 名稱, 預設, 最小, 最大, 間隔, 種類（空＝數字、c＝顏色、b＝開關、s＝選單）, 選單]；['_h', '分組標題']
-  fvgob: { n: 'FVG Order Blocks [BigBeluga]', p: [['_h', '設定'], ['filt', 'FVG 過濾（%）', 0.5, 0, 10, 0.1], ['max', '最多顯示幾個訂單塊（每邊）', 6, 1, 20, 1], ['fvgShow', '顯示 FVG', true, 0, 0, 0, 'b'], ['lab', '顯示 % 數值', true, 0, 0, 0, 'b'],
+  fvgob: { n: 'FVG Order Blocks [BigBeluga]', p: [['_h', '設定'], ['filt', 'FVG 過濾（%）', 0.5, 0, 10, 0.1], ['max', '最多顯示幾個訂單塊（每邊）', 6, 1, 20, 1], ['fvgShow', '顯示 FVG', true, 0, 0, 0, 'b'], ['broken', '顯示被突破的訂單塊（Broken Blocks）', false, 0, 0, 0, 'b'], ['sig', '訂單塊訊號（Order Blocks Signals）', false, 0, 0, 0, 'b'], ['lab', '顯示 % 數值', true, 0, 0, 0, 'b'],
     ['_h', '顏色'], ['bullC', '看漲訂單塊', '#089981', 0, 0, 0, 'c'], ['bearC', '看跌訂單塊', '#f23645', 0, 0, 0, 'c'], ['fvgC', 'FVG', '#787b86', 0, 0, 0, 'c']] },
   smc: { n: 'LuxAlgo - Smart Money Concepts', p: [['_h', '一般'], ['mode', '模式', 'hist', 0, 0, 0, 's', [['hist', 'Historical（全部）'], ['present', 'Present（只顯示最新）']]], ['lab', '顯示 CHoCH／BOS 文字', true, 0, 0, 0, 'b'],
     ['_h', '即時內部結構（Internal）'], ['showI', '顯示內部結構', true, 0, 0, 0, 'b'], ['inter', '內部結構長度', 5, 2, 50, 1], ['iBullC', '看漲結構', '#089981', 0, 0, 0, 'c'], ['iBearC', '看跌結構', '#f23645', 0, 0, 0, 'c'],
@@ -4968,7 +4969,10 @@ const KI_CALC = {
       if (a.h < h.l && a.h < b.h && a.l < h.l && fu > P.filt) { act[0].push({ dir: 1, t0: b.t, lo: a.h - AT, hi: a.h, v: fu }); if (P.fvgShow) out.boxes.push({ t0: b.t, t1: B[Math.min(B.length - 1, j + 5)].t, p0: a.h, p1: h.l, fill: kiA(P.fvgC, 0.3), label: P.lab ? `${fu.toFixed(2)}%` : '', small: true }); }
       if (a.l > h.h && a.l > b.l && a.h > h.h && fd > P.filt) { act[1].push({ dir: -1, t0: b.t, lo: a.l, hi: a.l + AT, v: fd }); if (P.fvgShow) out.boxes.push({ t0: b.t, t1: B[Math.min(B.length - 1, j + 5)].t, p0: h.h, p1: a.l, fill: kiA(P.fvgC, 0.3), label: P.lab ? `-${fd.toFixed(2)}%` : '', small: true }); }
       for (const [s, d] of [[0, 1], [1, -1]]) {
-        for (const z of [...act[s]]) if (d > 0 ? h.h < z.lo : h.l > z.hi) rm(s, z, j);
+        for (const z of [...act[s]]) if (d > 0 ? h.h < z.lo : h.l > z.hi) { rm(s, z, j); if (P.broken) out.boxes.push({ t0: z.t0, t1: h.t, p0: z.lo, p1: z.hi, fill: kiA(d > 0 ? P.bullC : P.bearC, 0.12), stroke: kiA(d > 0 ? P.bullC : P.bearC, 0.5), dash: true }); }   // Broken Blocks：被突破的也留著（淡色虛框）
+        if (P.sig) for (const z of act[s]) { const pv = B[j - 1]; if (z.sigI != null && j - z.sigI < 10) continue;   // Order Blocks Signals：價格回到訂單塊又收回去
+          if (d > 0 && pv.l > z.hi && h.l <= z.hi && h.c > z.hi) { (out.marks = out.marks || []).push({ t: h.t, dir: 1, text: '▲', color: P.bullC, atr: 0.3 }); z.sigI = j; }
+          if (d < 0 && pv.h < z.lo && h.h >= z.lo && h.c < z.lo) { (out.marks = out.marks || []).push({ t: h.t, dir: -1, text: '▼', color: P.bearC, atr: 0.3 }); z.sigI = j; } }
         for (const z of [...act[s]]) if (act[s].some(z1 => z1 !== z && z1.hi < z.hi && z1.hi > z.lo)) rm(s, z, j);
         while (act[s].length > P.max) act[s].shift();
       }
@@ -5076,7 +5080,7 @@ function kiDraw(g, W, H, gb) {
   for (const it of KI.list) { const r = R[it.id]; if (!it.on || !r) continue; const G = kiG(it), fs = +G.fs || 10;
     for (const b of G.box ? r.boxes || [] : []) { const x0 = X(b.t0), x1 = b.ext ? W : X(b.t1), y0 = Y(b.p1), y1 = Y(b.p0); if (x0 == null || x1 == null || y0 == null || y1 == null || x1 < 0 || x0 > W) continue;
       const X0 = kSr(Math.min(x0, x1)), X1 = kSr(Math.max(x0, x1)), Y0 = kSr(Math.min(y0, y1)), Y1 = kSr(Math.max(y0, y1));
-      gb.fillStyle = b.fill; gb.fillRect(X0, Y0, X1 - X0, Y1 - Y0); if (b.stroke) { gb.strokeStyle = b.stroke; gb.lineWidth = 1; gb.strokeRect(kSn(X0), kSn(Y0), kSn(X1) - kSn(X0), kSn(Y1) - kSn(Y0)); }
+      gb.fillStyle = b.fill; gb.fillRect(X0, Y0, X1 - X0, Y1 - Y0); if (b.stroke) { gb.strokeStyle = b.stroke; gb.lineWidth = 1; gb.setLineDash(b.dash ? [4, 3] : []); gb.strokeRect(kSn(X0), kSn(Y0), kSn(X1) - kSn(X0), kSn(Y1) - kSn(Y0)); gb.setLineDash([]); }
       if (G.lab && b.label && Math.abs(y1 - y0) > fs) { g.fillStyle = '#e0e3eb'; g.font = `${b.small ? fs - 1 : fs}px sans-serif`; g.textAlign = b.small ? 'center' : 'right'; g.fillText(b.label, Math.round(b.small ? (x0 + x1) / 2 : Math.min(W, x1) - 6), Math.round((y0 + y1) / 2 + fs / 2.6)); g.textAlign = 'left'; } }
     for (const v of G.line ? r.vlines || [] : []) { const x = X(v.t); if (x == null || x < 0 || x > W) continue; g.strokeStyle = v.color; g.lineWidth = 1; g.setLineDash(v.dash ? [4, 4] : [2, 3]); const xs = kSn(x); g.beginPath(); g.moveTo(xs, 0); g.lineTo(xs, H); g.stroke(); g.setLineDash([]); }
     for (const l of G.line ? r.lines || [] : []) { const x0 = X(l.t0), x1 = X(l.t1), y = Y(l.p); if (x0 == null || x1 == null || y == null || x1 < 0 || x0 > W) continue;
@@ -5148,7 +5152,7 @@ function pineParse(src) {                                // 把 Pine 程式裡�
     const line = noCom.slice(noCom.lastIndexOf('\n', m.index) + 1, m.index), vm = /([A-Za-z_]\w*)\s*=\s*$/.exec(line);
     let ty = m[1] || ''; const def = pineVal(named.defval != null ? named.defval : pos[0], consts);
     if (!ty) ty = typeof def === 'boolean' ? 'bool' : typeof def === 'number' ? (Number.isInteger(def) ? 'int' : 'float') : typeof def === 'string' && /^#/.test(def) ? 'color' : 'string';
-    out.push({ v: vm ? vm[1] : 'in' + out.length, ty, def, title: (named.title != null || pos[1] != null) ? String(pineVal(named.title != null ? named.title : pos[1], consts) ?? '') : '',   // 標題空白就不顯示（跟 TV 一樣） group: pineVal(named.group, consts) || '', inline: pineVal(named.inline, consts) || '', tip: pineVal(named.tooltip, consts) || '',
+    out.push({ v: vm ? vm[1] : 'in' + out.length, ty, def, title: (named.title != null || pos[1] != null) ? String(pineVal(named.title != null ? named.title : pos[1], consts) ?? '') : '', group: pineVal(named.group, consts) || '', inline: pineVal(named.inline, consts) || '', tip: pineVal(named.tooltip, consts) || '',
       min: pineVal(named.minval), max: pineVal(named.maxval), step: pineVal(named.step), opts: named.options ? pineVal(named.options, consts) : null });
     re.lastIndex = i;
   }
@@ -5157,9 +5161,10 @@ function pineParse(src) {                                // 把 Pine 程式裡�
 const kiNorm = s => String(s || '').toLowerCase().replace(/[\s()（）:：,，。.\-_/]/g, '');
 const KI_ALIAS = {                                       // 匯入的 TV 設定 → 這裡指標的參數（名稱相同的會自動對上）
   smc: [[/^mode$/i, 'mode'], [/internal.*struct|show_?internals?$/i, 'showI'], [/swing.*struct|show_?structure$/i, 'showS'], [/^length$/i, 'swing']],
-  fvgob: [[/filter|過濾/i, 'filt'], [/max|count|數量/i, 'max']],
+  fvgob: [[/filter|過濾/i, 'filt'], [/amount|max|count|數量/i, 'max'], [/broken/i, 'broken'], [/signal/i, 'sig'], [/fair\s*value|^show_?fvg$|^fvg$/i, 'fvgShow']],
   liq: [[/bars|amount|範圍/i, 'bars']]
 };
+const KI_ALIAS_COL = { fvgob: ['bullC', 'bearC', 'fvgC'], smc: ['iBullC', 'iBearC', 'sBullC', 'sBearC'] };
 function kiPineMap(it) {                                 // 找出每個匯入的設定對應到哪個參數（對不上的只儲存、不影響這裡的圖）
   const D = KI_DEF[it.id], map = {}; if (!it.pine) return map;
   for (const pi of it.pine.inputs) {
@@ -5167,6 +5172,7 @@ function kiPineMap(it) {                                 // 找出每個匯入�
     if (!k) for (const [re, key] of KI_ALIAS[it.id] || []) if (re.test(pi.title) || re.test(pi.v)) { k = key; break; }
     if (k) { const def = D.p.find(x => x[0] === k); if (def && ((def[6] === 'b') === (pi.ty === 'bool')) && ((def[6] === 'c') === (pi.ty === 'color'))) map[pi.v] = k; }
   }
+  const cols = KI_ALIAS_COL[it.id]; if (cols) { const used = new Set(Object.values(map)), free = cols.filter(k => !used.has(k)); for (const pi of it.pine.inputs) if (pi.ty === 'color' && !map[pi.v] && free.length) map[pi.v] = free.shift(); }   // 顏色照順序對（例如 Color +/- → 看漲、看跌）
   return map;
 }
 function kiPineVal(it, pi) { const v = it.pine.vals && it.pine.vals[pi.v]; return v !== undefined ? v : pi.def; }
@@ -5181,7 +5187,7 @@ const PINE_TF = [['', '跟著圖表'], ['1', '1 分'], ['3', '3 分'], ['5', '5 
 function kiPineRows(it) {                                // 照 TV 的樣子畫出輸入分頁：分組標題、同一行的放一起、ⓘ 提示
   const map = kiPineMap(it), rows = [], L = it.pine.inputs; let lastG = null;
   const ctl = (pi, lab) => { const v = kiPineVal(it, pi), on = map[pi.v] ? ' kimapped' : '', at = `data-kpi="${esc(pi.v)}" aria-label="${esc(pi.title)}"`;
-    if (pi.ty === 'bool') return `<label class="ksrow kpib${on}"><input type="checkbox" ${at}${v ? ' checked' : ''}>${lab ? `<span>${esc(pi.title)}</span>` : ''}</label>`;
+    if (pi.ty === 'bool') return `<label class="ksrow kpib"><input type="checkbox" ${at}${v ? ' checked' : ''}>${lab ? `<span>${esc(pi.title)}${dot(pi)}</span>` : ''}</label>`;
     if (pi.ty === 'color') return `<span class="kscol${on}" style="--c:${esc(v)}"><input type="color" ${at} value="${ksHex(v) || '#787b86'}"></span>`;
     if (pi.opts && pi.opts.length) return `<select ${at} class="${on}">${pi.opts.map(o => `<option value="${esc(o)}"${String(o) === String(v) ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select>`;
     if (pi.ty === 'int' || pi.ty === 'float') return `<input type="number" ${at} class="${on}" value="${esc(v)}"${pi.min != null ? ` min="${pi.min}"` : ''}${pi.max != null ? ` max="${pi.max}"` : ''} step="${pi.step != null ? pi.step : pi.ty === 'int' ? 1 : 'any'}">`;
@@ -5189,12 +5195,13 @@ function kiPineRows(it) {                                // 照 TV 的樣子畫�
     if (pi.ty === 'timeframe') return `<select ${at}>${PINE_TF.map(([o, n]) => `<option value="${o}"${o === String(v) ? ' selected' : ''}>${n}</option>`).join('')}</select>`;
     if (pi.ty === 'text_area') return `<textarea ${at} rows="2" class="kparea">${esc(v)}</textarea>`;
     return `<input type="text" ${at} value="${esc(v)}">`; };
+  const dot = pi => map[pi.v] ? '<i class="kidot" title="這個設定會影響這裡的圖" aria-label="會影響圖表"></i>' : '';
   const tip = pi => pi.tip ? `<span class="kitip" title="${esc(pi.tip)}" tabindex="0" aria-label="說明：${esc(pi.tip)}">ⓘ</span>` : '';
   for (let i = 0; i < L.length; i++) {
     const pi = L[i]; if (pi.group !== lastG) { if (pi.group) rows.push(`<h4>${esc(pi.group)}</h4>`); lastG = pi.group; }
     if (pi.inline) { const grp = [pi]; while (i + 1 < L.length && L[i + 1].inline === pi.inline && L[i + 1].group === pi.group) grp.push(L[++i]);
-      rows.push(`<div class="kirow2 kiinl">${grp.map((x, j) => x.ty === 'bool' ? ctl(x, true) : `${x.title && (j > 0 || grp.length === 1 || grp[0].ty !== 'bool') ? `<span class="kiil">${esc(x.title)}</span>` : ''}${ctl(x)}`).join('')}${grp.map(tip).join('')}</div>`); continue; }
-    rows.push(pi.ty === 'bool' ? `<div class="kirow2">${ctl(pi, true)}${tip(pi)}</div>` : `<div class="kirow2"><span>${esc(pi.title)}${tip(pi)}</span>${ctl(pi)}</div>`);
+      rows.push(`<div class="kirow2 kiinl">${grp.map((x, j) => x.ty === 'bool' ? ctl(x, true) : `${x.title ? `<span class="kiil">${esc(x.title)}</span>` : ''}${ctl(x)}${dot(x)}`).join('')}${grp.map(tip).join('')}</div>`); continue; }
+    rows.push(pi.ty === 'bool' ? `<div class="kirow2">${ctl(pi, true)}${tip(pi)}</div>` : `<div class="kirow2"><span>${esc(pi.title)}${dot(pi)}${tip(pi)}</span>${ctl(pi)}</div>`);
   }
   return rows.join('');
 }
@@ -5206,7 +5213,7 @@ function kiPineImport(i) {                               // 貼上 Pine 程式 �
     <div class="ksfoot"><span class="spacer"></span><button class="btn" data-pi="x">取消</button><button class="btn ksok" data-pi="ok">匯入</button></div>`;
   d.onclick = e => { const b = e.target.closest('[data-pi]'); if (!b) return; if (b.dataset.pi === 'x') return d.close();
     const L = pineParse($('kiPineSrc').value || ''); if (!L.length) { $('kiPineMsg').textContent = '找不到任何 input 設定，請確認貼的是完整的 Pine 程式碼。'; return; }
-    it.pine = { inputs: L, vals: (it.pine && it.pine.vals) || {}, at: Date.now() }; KI.key = ''; kiSave(); d.close(); kiDlgDraw();
+    it.pine = { inputs: L, vals: (it.pine && it.pine.vals) || {}, at: Date.now(), pv: 2, src: $('kiPineSrc').value.slice(0, 200000) }; KI.key = ''; kiSave(); d.close(); kiDlgDraw();
     const n = Object.keys(kiPineMap(it)).length; alert(`匯入了 ${L.length} 個設定，其中 ${n} 個會直接影響這裡的圖（設定旁邊有藍點）。`); };
   d.showModal(); setTimeout(() => $('kiPineSrc').focus(), 50);
 }
@@ -5240,7 +5247,7 @@ function kiDlgDraw() {
     : ty === 's' ? `<div class="kirow2"><span>${n}</span><select data-kip="${k}" aria-label="${n}">${opts.map(([v, t]) => `<option value="${v}"${P[k] === v ? ' selected' : ''}>${t}</option>`).join('')}</select></div>`
     : `<div class="kirow2"><span>${n}</span><input type="number" data-kip="${k}" min="${mn}" max="${mx}" step="${st}" value="${P[k]}" aria-label="${n}"></div>`;
   const gk = (k, n) => `<label class="ksrow"><input type="checkbox" data-kig="${k}"${G[k] ? ' checked' : ''}><span>${n}</span></label>`;
-  const body = KID.tab === 'in' ? `<div class="kipine">${it.pine ? `<span>📋 已匯入 TradingView 設定（${it.pine.inputs.length} 個，<i class="kidot"></i> 會影響這裡的圖）</span><button class="btn" data-kiact="pine">重新匯入</button><button class="btn" data-kiact="unpine">移除</button>` : '<span>想要跟 TradingView 一模一樣的設定？</span><button class="btn" data-kiact="pine">📋 匯入 Pine 設定</button>'}</div>`
+  const body = KID.tab === 'in' ? `<div class="kipine">${it.pine ? `<span>📋 已匯入 TradingView 設定（${it.pine.inputs.length} 個，<i class="kidot"></i> ${Object.keys(kiPineMap(it)).length} 個會影響這裡的圖）${it.pine.pv !== 2 ? '<br><b class="qy">⚠ 這是舊版匯入的，分組和同一行的排列可能不對，請按「重新匯入」再貼一次。</b>' : ''}</span><button class="btn" data-kiact="pine">重新匯入</button><button class="btn" data-kiact="unpine">移除</button>` : '<span>想要跟 TradingView 一模一樣的設定？</span><button class="btn" data-kiact="pine">📋 匯入 Pine 設定</button>'}</div>`
       + (it.pine ? kiPineRows(it) : D.p.map(row).join('')) + (D.ltf ? '<p class="kshint">這個指標只在 15 分（看 4H）或 5 分（看 1H）圖表運作。</p>' : '')
     : KID.tab === 'st' ? `<h4>圖形物件</h4>${gk('box', '方框')}${gk('lab', '窗格頁籤（標籤、文字）')}${gk('line', '線條')}${gk('tbl', '表格')}
         <h4>輸出值</h4><div class="kirow2"><span>精確度</span><select data-kig="prec" aria-label="精確度"><option value="auto"${G.prec === 'auto' ? ' selected' : ''}>系統預設</option>${[0, 1, 2, 3, 4, 5, 6, 7, 8].map(n => `<option value="${n}"${String(G.prec) === String(n) ? ' selected' : ''}>${n === 0 ? '整數' : '0.' + '0'.repeat(n - 1) + '1'}</option>`).join('')}</select></div>
@@ -6036,6 +6043,9 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-02o', title: '2026/11/02 更新（匯入 TV 設定修正）', items: [
+    { ic: '🔧', t: '修正匯入 Pine 設定時，分組、同一行、提示、數字範圍讀不到的問題（請按「重新匯入」再貼一次）。FVG Order Blocks 的 Filter Gaps by %、Fair Value Gaps、Blocks Amount、Broken Blocks、Order Blocks Signals、Color +/- 全部會影響圖表；新增被突破訂單塊（淡色虛框）和訂單塊訊號（▲▼）。' }
+  ] },
   { id: '2026-11-02n', title: '2026/11/02 更新（畫面更銳利、匯入 TV 設定）', items: [
     { ic: '🔎', t: 'K 線圖的指標和繪圖改成對齊螢幕像素畫，線條、文字更銳利；指標的方框改畫在 K 線後面，不會把 K 線蓋得霧霧的。' },
     { ic: '📋', t: '指標設定的「輸入」分頁可以「📋 匯入 Pine 設定」：把 TradingView 的指標原始碼貼上，所有 input 設定（分組、同一行、ⓘ 提示、預設值、選單）都會照 TV 的樣子出現；有藍點的設定會直接影響這裡的圖。' }
