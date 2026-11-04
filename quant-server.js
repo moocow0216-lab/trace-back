@@ -941,7 +941,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-11-02a';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-11-02c';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1073,7 +1073,7 @@ setInterval(() => {                                    // 每 2 秒：模擬交�
     if (S.pos.length && simAcct(S).eq <= 0) { for (const p of [...S.pos]) simClose(S, p, p.qty, PX.map[p.symbol] || p.avgOpenPrice, true); dirty = true; }
   }
 }, 2000);
-const bxEquity = X => { const A = X.BX.acct; return A ? A.avail + A.frozen + A.margin + A.cross + A.iso : 0; };
+const bxEquity = X => { if (X.sim && X.A.bx && X.A.bx.sim && !X.BX.acct) { try { return simAcct(X.A.bx).eq; } catch (e) {} } const A = X.BX.acct; return A ? A.avail + A.frozen + A.margin + A.cross + A.iso : 0; };   // 模擬盤還沒讀到帳戶時，直接用模擬資金算
 const msT = v => (v > 0 && v < 1e12 ? v * 1000 : v);   // 交易所回傳的時間有時是秒、有時是毫秒，統一成毫秒
 const bxMapPos = data => (Array.isArray(data) ? data : []).map(p => ({
   id: String(p.positionId), sym: p.symbol, dir: sideDir(p.side), side: p.side, qty: num(p.qty), lev: num(p.leverage), mode: p.marginMode,
@@ -1601,6 +1601,46 @@ function toolLux(B) {
 }
 // 🛡 進場後每個價格的判斷（卡片、回測、即時都用這個）：先看止損／套保線，再看止盈 1:1，最後更新最高浮盈
 // 套保：價格每往有利方向走 1%（100x＝+100%、75x＝+75%），止損往有利方向移一格——第 1 格移到進場價（保本），之後每多 1% 再移 1%
+// 🎯 停損 × 進場 參數最佳化：同一份歷史資料，每一組（止損位置、進場深度）都跑一次完整策略，比較淨利（R）、PF、最大回撤
+const TSW = { run: false, done: 0, total: 0, msg: '' };
+const SW_SL = [-0.5, -0.25, 0, 0.25, 0.5, 0.75, 1], SW_ENT = ['close', 0, 0.25, 0.5, 0.75, 1];
+async function toolSweep(X, cfg) {
+  const S = ST.tool.set, days = [7, 14, 30].includes(+cfg.days) ? +cfg.days : 14, n = Math.max(3, Math.min(30, Math.round(+cfg.n || S.n || 10))), T = TS(X), fee = ((ST.eq && ST.eq.fee) ?? 0.05) / 100;
+  const start = Date.now() - days * 24 * HOUR, pairs = ['h4', 'h1'].filter(p => S[p]), syms = await toolUniverse(n), data = [];
+  TSW.total = syms.length * pairs.length + SW_SL.length * SW_ENT.length; TSW.done = 0;
+  for (const sym of syms) for (const pair of pairs) {   // 先把每個幣的 K 線抓下來（只抓一次）
+    TSW.msg = `抓資料：${sym}`;
+    try { const P = TOOL_P[pair], o = toolOpt(P, T.hold), from = start - (o.warm + 10) * P.lms;
+      const L = await toolKlRange(sym, P.ltf, P.lms, from, Date.now()), H = await toolKlRange(sym, P.htf, P.hms, from - 520 * P.hms, Date.now());
+      if (L.length >= o.warm + 50 && H.length >= 210) data.push({ sym, pair, P, o, L, H });
+    } catch (e) {}
+    TSW.done++;
+  }
+  const cells = [];
+  for (const slK of SW_SL) for (const ent of SW_ENT) {
+    TSW.msg = `測試 止損 ${slK >= 0 ? '+' : ''}${slK}×OB・進場 ${ent === 'close' ? '收盤' : `FVG ${Math.round(ent * 100)}%`}`;
+    const tr = [];
+    for (const D of data) {
+      for (const s0 of toolStrat(D.H, D.L, D.P, { ...D.o, slK, ent }).setups) {
+        if (!s0.entryAt || s0.touchAt < start || s0.st === 'entry') continue;   // 還沒出場的不算
+        const risk = Math.abs(s0.entry - s0.sl); if (!(risk > 0)) continue;
+        const r = s0.dir * (s0.xp - s0.entry) / risk - 2 * fee * s0.entry / risk;   // 這一筆賺幾 R（扣一來一回的手續費）
+        tr.push({ r, xt: s0.xt, how: s0.how, slPct: risk / s0.entry * 100 });
+      }
+      await sleep(0);                                  // 讓伺服器的其他工作也能跑
+    }
+    tr.sort((a, b) => a.xt - b.xt);
+    let eq = 0, pk = 0, dd = 0; for (const t of tr) { eq += t.r; pk = Math.max(pk, eq); dd = Math.max(dd, pk - eq); }
+    const w = tr.filter(t => t.r > 0), gw = w.reduce((a, t) => a + t.r, 0), gl = -tr.filter(t => t.r <= 0).reduce((a, t) => a + t.r, 0), sp = tr.map(t => t.slPct).sort((a, b) => a - b);
+    cells.push({ slK, ent, n: tr.length, win: w.length, rate: tr.length ? +(w.length / tr.length * 100).toFixed(1) : 0, net: +eq.toFixed(2), avg: tr.length ? +(eq / tr.length).toFixed(3) : 0, pf: gl > 0 ? +(gw / gl).toFixed(2) : (gw > 0 ? 99 : 0), mdd: +dd.toFixed(2),
+      tp: tr.filter(t => t.how === 'tp').length, sl: tr.filter(t => t.how === 'sl').length, lock: tr.filter(t => t.how === 'lock').length, slMed: sp.length ? +sp[Math.floor(sp.length / 2)].toFixed(2) : 0 });
+    TSW.done++;
+  }
+  const ok = cells.filter(c => c.n >= 5), best = (ok.length ? ok : cells).slice().sort((a, b) => b.net - a.net)[0], cur = cells.find(c => c.slK === 0 && c.ent === 'close');
+  ST.tool.sweep = { v: 1, at: Date.now(), days, coins: syms.length, pairs, sets: data.length, fee: fee * 100, grid: { sl: SW_SL, ent: SW_ENT }, cells, best, cur };
+  dirty = true; TOOLV++; TSW.msg = '完成';
+}
+
 function toolStep(z, p, t) {
   const stop = z.lk && z.dir * (z.lk - z.sl) > 0 ? z.lk : z.sl;
   if (z.dir * (p - stop) <= 0) { Object.assign(z, { st: 'done', how: stop === z.sl ? 'sl' : 'lock', xt: t, xp: z.dir > 0 ? Math.min(p, stop) : Math.max(p, stop), endAt: t }); return true; }
@@ -1674,7 +1714,10 @@ function toolStrat(H, L, P, o) {
         if (up) { z.st = 'brk'; z.brkAt = ct; z.tag = up; z.bI = i; }   // ③ 同方向 CHoCH／BOS
         const f = z.dir > 0 ? hB : hS;
         if (z.st === 'brk' && i > z.bI && f) {          // ④ 回踩小週期 FVG → 進場
-          const e = b.c, sl = z.dir > 0 ? z.lo : z.hi, rk = z.dir * (e - sl);   // 止損＝4H／1H 的 FVG／OB 整個範圍的外緣（做多＝最低、做空＝最高）
+          const ob = Math.abs(z.obHi - z.obLo), sl = z.dir > 0 ? z.lo - (o.slK || 0) * ob : z.hi + (o.slK || 0) * ob;   // 止損＝4H／1H 的 FVG／OB 外緣（最佳化時可以再往外／往內移「OB 高度 × slK」）
+          let e = b.c;                                 // 進場價：預設＝碰到小週期 FVG 那根 K 的收盤；最佳化時可以改成掛單在 FVG 的某個深度（0＝邊緣、1＝最深）
+          if (o.ent != null && o.ent !== 'close') { const lv = z.dir > 0 ? f.top - o.ent * (f.top - f.bot) : f.bot + o.ent * (f.top - f.bot); e = (z.dir > 0 ? b.l <= lv : b.h >= lv) ? (z.dir > 0 ? Math.min(lv, b.o) : Math.max(lv, b.o)) : null; }
+          const rk = e == null ? 0 : z.dir * (e - sl);
           if (rk > 0) { Object.assign(z, { st: 'entry', entryAt: ct, eI: i, entry: e, sl, tp: e + z.dir * rk, fvgL: f.bot, fvgH: f.top }); continue; }
         }
       }
@@ -1905,7 +1948,7 @@ function billApply(o, tx, how, from) {                 // 收到錢：延長天�
   if (!usr2) return;
   const usr = usr2;
   const from0 = Math.max(now, usr.paidUntil || 0, usr.trialEnd || 0); usr.paidUntil = from0 + (o.days || 30) * DAYMS; usr.billLock = false; usr.billRem = '';
-  if (usr.trialId) { const r = ST.trials.find(x => x.id === usr.trialId); if (r && ['active', 'closing'].includes(r.status)) { r.status = 'converted'; r.convertedAt = now; } delete usr.trialId; usr.trialEnd = 0; }
+  if (usr.trialId) { const r = ST.trials.find(x => x.id === usr.trialId); if (r && ['active', 'closing'].includes(r.status)) { r.status = 'converted'; r.convertedAt = now; } delete usr.trialId; usr.trialEnd = 0; if (usr.role !== 'admin') usr.sim = false; if (ST.accts[usr.uid + '~sim']) { const SX = ctx(usr.uid + '~sim'); SX.A.lt.on = false; SX.A.lt.sp = false; } }   // 轉付費：換成實盤（模擬盤的自動交易關掉）
   log('收到月費', o.uid, o.amount, how);
   const msg = `已收到 ${o.amount} USDT（${o.m || 1} 個月方案），方案延長到 ${tw(usr.paidUntil)}（台北）。`;
   if (ST.accts[o.uid]) dcX(ctx(o.uid), `💳 **${msg}** 謝謝！`);
@@ -2056,6 +2099,7 @@ function trialDups(r) {                                // 比對：UID、信箱�
   for (const u of ST.users) { if (u.trialId === r.id) continue; const f = []; if (u.uid === r.uid) f.push('UID'); if (u.bind && u.bind.email === r.email) f.push('信箱'); if (u.bind && u.bind.phone === r.phone) f.push('電話'); if (f.length) out.push({ src: 'user', f, uid: u.uid, status: u.trialId ? 'trial-user' : 'user', at: u.created || 0 }); }
   return out;
 }
+const trialSim = usr => !!(usr && usr.trialId && usr.trialEnd > Date.now() && !(usr.paidUntil > Date.now()));   // 🧪 試用中＝只能用模擬盤（付費後才能用實盤）
 function trialActivate(r, by) {                       // 🧪 開通試用：建立帳號（一般用戶全部功能＋特級進場），7 天
   if (ST.users.some(x => x.uid === r.uid)) return `UID ${r.uid} 已經有帳號了`;
   const c = ST.users.find(x => x.bind && (x.bind.email === r.email || x.bind.phone === r.phone));
@@ -2063,6 +2107,8 @@ function trialActivate(r, by) {                       // 🧪 開通試用：建
   const now = Date.now();
   ST.users.push({ uid: r.uid, role: 'viewer', salt: r.salt, hash: r.hash, created: now, bind: { email: r.email, phone: r.phone, google: false, at: now }, trialId: r.id, trialEnd: now + TRIAL_DAYS * 24 * HOUR });
   if (!ST.tool.grants.includes(r.uid)) ST.tool.grants.push(r.uid);
+  const usr = ST.users.find(x => x.uid === r.uid); usr.sim = true;   // 試用只能用模擬盤：先放 1000U 模擬資金，登入就能直接試
+  ctx(r.uid); const SX = ctx(r.uid + '~sim'); if (!(SX.A.bx.bal > 0)) SX.A.bx.bal = 1000;
   Object.assign(r, { status: 'active', approvedAt: now, approvedBy: by, expireAt: now + TRIAL_DAYS * 24 * HOUR }); dirty = true; log('開通試用', r.uid, 'by', by);
   return '';
 }
@@ -2087,6 +2133,7 @@ setInterval(async () => {                              // 每分鐘：到期的�
         r.status = 'closing'; r.closeAt = now; dirty = true;
         if (ST.users.some(x => x.uid === r.uid) && ST.accts[r.uid]) {
           const X = ctx(r.uid); X.A.lt.on = false; X.A.lt.sp = false; X.LT.pause = { t: now, why: '試用期結束' }; touchLT(X);
+          if (ST.accts[r.uid + '~sim']) { const SX = ctx(r.uid + '~sim'); SX.A.lt.on = false; SX.A.lt.sp = false; SX.LT.pause = { t: now, why: '試用期結束' }; touchLT(SX); }
           dcX(X, '⏰ **7 天試用期結束**：自動交易、特級交易已停止，系統開的單正在平倉，之後帳號（含 API 金鑰）會刪除。謝謝試用！');
           if (hasKey(X)) trialCloseAll(X).then(n => log('試用到期平倉', r.uid, n)).catch(e => log('試用到期平倉失敗', r.uid, e.message));
         }
@@ -2889,7 +2936,7 @@ http.createServer(async (req, res) => {
     const me = who(req), admin = keyOk(req) || (me && me.role === 'admin'), owner = keyOk(req) || (me && me.uid === ownerUid());   // 擁有者 ⊃ 灰色管理員 ⊃ 一般
     if (u.pathname.startsWith('/api/') && !me && !keyOk(req)) return send(res, 401, { error: '請先登入', needLogin: true, needSetup: !ST.users.length });
     if (me && needBind(me) && u.pathname !== '/api/me' && u.pathname !== '/api/bind') return send(res, 403, { error: '請先綁定 Google 信箱和手機號碼', needBind: true });
-    const meU = me || ST.users.find(x => x.uid === ownerUid()), simOn = !!(admin && meU && meU.sim);   // 🧪 管理員、擁有者切到模擬盤：整個網站看的、改的都是模擬帳號
+    const meU = me || ST.users.find(x => x.uid === ownerUid()), simOn = !!(meU && ((admin && meU.sim) || trialSim(meU)));   // 試用中的人一律用模擬盤   // 🧪 管理員、擁有者切到模擬盤：整個網站看的、改的都是模擬帳號
     const X = ctx((me ? me.uid : ownerUid()) + (simOn ? '~sim' : ''));   // 這次請求的「自己」：每個帳號只看得到、改得到自己的 Bitunix／自動交易／Discord（用管理金鑰登入＝擁有者）
     if (req.method === 'GET' && u.pathname === '/api/me') return send(res, 200, { uid: me ? me.uid : '管理金鑰', role: admin ? 'admin' : 'viewer', owner: !!owner, needBind: needBind(me), bind: bindOut(me), google: gClient(), trialEnd: me && me.trialEnd || 0, bill: me ? billState(me) : null });
     if (req.method === 'GET' && u.pathname === '/api/users') {
@@ -2929,7 +2976,7 @@ http.createServer(async (req, res) => {
         bx: { set: hasKey(X), notify: X.A.bx.notify, liq: X.A.bx.liq, liqPct: X.A.bx.liqPct, at: X.BX.at, err: X.BX.err, acct: X.BX.acct,
           pos: X.BX.pos.map(p => ({ ...p, px: PX.map[p.sym] || null, tp: ((X.BX.tpsl && X.BX.tpsl.get(p.id)) || {}).tp || 0, sl: ((X.BX.tpsl && X.BX.tpsl.get(p.id)) || {}).sl || 0, sig: !!ST.cards.find(c => c.sym === p.sym && c.dir === p.dir && c.et && isLive(c)), bot: !!X.A.ltTrades.find(t => t.status === 'open' && t.positionId === p.id) })) },
         eco: { list: ECO.list.filter(e => e.t > Date.now() - 7 * 24 * HOUR), at: ECO.at, err: ECO.err, hasNext: !!ECO.hasNext, today: ecoToday().map(e => ({ t: e.t, zh: e.zh || e.title })), block: (() => { const B = ecoNext(); return B ? { on: B.from <= Date.now(), from: B.from, until: B.until, list: B.list.map(e => ({ t: e.t, zh: e.zh || e.title })) } : null; })() },
-        sim: admin && meU ? (() => { const L = ctx(meU.uid).A.lt, o = { on: simOn, liveOn: !!(L.on || L.sp) }; if (simOn) { const a = simAcct(X.A.bx); Object.assign(o, { bal: +X.A.bx.bal.toFixed(4), eq: +a.eq.toFixed(4), avail: +a.avail.toFixed(4), open: X.A.bx.pos.length }); } return o; })() : null,
+        sim: meU && (admin || trialSim(meU)) ? (() => { const L = ctx(meU.uid).A.lt, o = { on: simOn, liveOn: !!(L.on || L.sp), trial: trialSim(meU) }; if (simOn) { const a = simAcct(X.A.bx); Object.assign(o, { bal: +X.A.bx.bal.toFixed(4), eq: +a.eq.toFixed(4), avail: +a.avail.toFixed(4), open: X.A.bx.pos.length }); } return o; })() : null,
         lt: { cfg: X.A.lt, spSkip: X.LT.spSkip || [], bud: ltBudEq(X), man: (X.A.man && X.A.man.list || []).slice(0, 20), low: (() => { const ov = ltOver(X); return ov ? { why: ov } : null; })(), pause: X.LT.pause || null, toolOk: toolOkUid(X.uid), spBot: ltSpEq(X), spDay: X.LT.spDayPnl || 0, msg: X.LT.msg, dayPnl: X.LT.dayPnl || 0, v: X.v, bot: ltBotEq(X), acctEq: bxEquity(X) },
         aws: !(X.base === ownerUid()) ? null : { on: ST.aws.on, created: ST.aws.created, auto: ST.aws.auto, price: ST.aws.price, detected: awsDetect(), ...awsNext() }
       };
@@ -2962,8 +3009,9 @@ http.createServer(async (req, res) => {
         return send(res, 400, { error: '不認得的操作' });
       }
       if (u.pathname === '/api/sim') {                    // 🧪 模擬盤：切換、存入／提出模擬資金、重置
-        if (!admin || !meU) return send(res, 403, { error: '只有管理員和擁有者可以用模擬盤' });
+        if (!meU || !(admin || trialSim(meU))) return send(res, 403, { error: '只有管理員、擁有者和試用中的帳號可以用模擬盤' });
         const op = String(b.op || '');
+        if (op === 'mode' && trialSim(meU) && !b.sim) return send(res, 400, { error: '試用期間只能用模擬盤，付費後就可以切換到實盤' });
         if (op === 'mode') { meU.sim = !!b.sim; dirty = true; if (meU.sim) ctx(meU.uid + '~sim'); log('切換模擬盤', meU.uid, meU.sim ? '模擬盤' : '實盤'); return send(res, 200, { ok: true, sim: meU.sim }); }
         if (!simOn) return send(res, 400, { error: '要先切到模擬盤' });
         const S = X.A.bx, a = simAcct(S);
@@ -3320,7 +3368,7 @@ http.createServer(async (req, res) => {
           dirty = true; log('特級咒具解鎖', me ? me.uid : ''); return send(res, 200, { ok: true });
         }
         if (!toolOk(me, owner)) return send(res, 403, { error: '特級咒具還沒解鎖', locked: true, hasPw: !!T.pw });
-        if (op === 'get') return send(res, 200, { owner, v: TOOLV, px: Object.fromEntries(Object.entries(T.px || {}).map(([k, v]) => [k, { ...v, c: PX.map[k] || v.c }])), bt: T.bt || null, btRun: { run: TBT.run, done: TBT.done, total: TBT.total, msg: TBT.msg }, cards: Object.values(T.cards).sort((a, b) => b.touchAt - a.touchAt), hist: T.hist.slice(0, 300), wait: Object.entries(T.wait).flatMap(([k, L]) => L.map(z => ({ sym: k.split('|')[0], pair: k.split('|')[1], ...z }))), set: T.set, scan: T.scan, hook: me && T.hooks[me.uid] ? '已設定' : '', hookLast: (() => { try { return me && T.hooks[me.uid] ? dcStat(dec(T.hooks[me.uid])) : null; } catch (e) { return null; } })(), hasPw: !!T.pw, grants: owner ? T.grants : undefined });
+        if (op === 'get') return send(res, 200, { owner, v: TOOLV, px: Object.fromEntries(Object.entries(T.px || {}).map(([k, v]) => [k, { ...v, c: PX.map[k] || v.c }])), bt: T.bt || null, btRun: { run: TBT.run, done: TBT.done, total: TBT.total, msg: TBT.msg }, sw: T.sweep || null, swRun: { run: TSW.run, done: TSW.done, total: TSW.total, msg: TSW.msg }, cards: Object.values(T.cards).sort((a, b) => b.touchAt - a.touchAt), hist: T.hist.slice(0, 300), wait: Object.entries(T.wait).flatMap(([k, L]) => L.map(z => ({ sym: k.split('|')[0], pair: k.split('|')[1], ...z }))), set: T.set, scan: T.scan, hook: me && T.hooks[me.uid] ? '已設定' : '', hookLast: (() => { try { return me && T.hooks[me.uid] ? dcStat(dec(T.hooks[me.uid])) : null; } catch (e) { return null; } })(), hasPw: !!T.pw, grants: owner ? T.grants : undefined });
         if (op === 'hook') {
           if (!me) return send(res, 400, { error: '用管理金鑰登入不能設定' });
           const w = String(b.webhook || '').replace(/\s+/g, '');
@@ -3334,8 +3382,14 @@ http.createServer(async (req, res) => {
           return ok ? send(res, 200, { ok: true }) : send(res, 400, { error: `傳送失敗：${(st && st.err) || '原因不明'}` });
         }
         if (!owner) return send(res, 403, { error: '只有擁有者可以改' });
+        if (op === 'sweep') {                            // 🎯 停損 × 進場 最佳化（在背景跑）
+          if (TBT.run || TSW.run) return send(res, 400, { error: '回測或最佳化進行中，請稍等' });
+          TSW.run = true; TSW.msg = '準備中…';
+          toolSweep(X, b).catch(e => { TSW.msg = '最佳化失敗：' + e.message; log('最佳化失敗', e.message); }).finally(() => { TSW.run = false; });
+          return send(res, 200, { ok: true });
+        }
         if (op === 'bt') {                               // 🗡 特級咒具回測（在背景跑，幾分鐘）
-          if (TBT.run) return send(res, 400, { error: '回測進行中，請稍等' });
+          if (TBT.run || TSW.run) return send(res, 400, { error: '回測進行中，請稍等' });
           TBT.run = true; TBT.msg = '準備中…';
           toolBacktest(X, b).catch(e => { TBT.msg = '回測失敗：' + e.message; log('特級咒具回測失敗', e.message); }).finally(() => { TBT.run = false; });
           return send(res, 200, { ok: true });
