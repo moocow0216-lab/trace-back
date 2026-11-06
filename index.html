@@ -1289,7 +1289,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-03f</div>
+      <div class="qver" id="qVer">網站版本 2026-11-03g</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3749,7 +3749,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-03f・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-03g・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -6454,9 +6454,27 @@ function warAnim() {
     for (let i = -10; i < 20; i++) { g.beginPath(); g.moveTo(i * w / 10, h * 0.22); g.lineTo(i * w / 10 + h * 0.6, h); g.stroke(); g.beginPath(); g.moveTo(i * w / 10, h * 0.22); g.lineTo(i * w / 10 - h * 0.6, h); g.stroke(); }
     // 後牆的大螢幕：資金曲線縮圖
     const sx = w * 0.30, sy = h * 0.04, sw = w * 0.40, sh = h * 0.22; g.fillStyle = '#05080f'; g.fillRect(sx, sy, sw, sh); g.strokeStyle = '#2b3550'; g.strokeRect(sx, sy, sw, sh);
-    const D = WAR.d; if (D) { const cl = D.trades.filter(t => t.status !== 'open' && t.exitAt).slice().sort((a, b) => a.exitAt - b.exitAt).slice(-40); let v = 0; const p = [0, ...cl.map(t => (v += wNet(t)))];
-      if (p.length > 1) { const lo = Math.min(...p), hi = Math.max(...p) || 1, sp = hi - lo || 1; g.beginPath(); p.forEach((q, i) => { const x = sx + 8 + i / (p.length - 1) * (sw - 16), y = sy + sh - 8 - (q - lo) / sp * (sh - 16); i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.strokeStyle = '#34d399'; g.lineWidth = 2; g.stroke(); }
-      g.fillStyle = '#7dd3fc'; g.font = `bold ${Math.max(10, w * 0.011)}px monospace`; g.fillText(`EQUITY ${D.eq.toFixed(2)}U`, sx + 8, sy + 16); }
+    const D = WAR.d; if (D) {                          // 大螢幕：跟下面 BALANCE 同一套算法（起始權益＋每筆出場＋目前權益）；還沒有出場的單時，改顯示持倉
+      const fs = Math.max(10, w * 0.011), cl = D.trades.filter(t => t.status !== 'open' && t.exitAt).slice().sort((a, b) => a.exitAt - b.exitAt).slice(-40);
+      const st0 = D.eq - cl.reduce((a, t) => a + wNet(t), 0); let v = st0; const p = [st0, ...cl.map(t => (v += wNet(t)))]; if (D.open.length || p.length < 2) p.push(D.eq);
+      const ch = D.eq - st0, up = ch >= 0, col = up ? '#34d399' : '#f87171';
+      g.fillStyle = '#7dd3fc'; g.font = `bold ${fs}px monospace`; g.fillText(`EQUITY ${D.eq.toFixed(2)}U`, sx + 8, sy + 16);
+      g.textAlign = 'right'; g.fillStyle = col; g.fillText(`${up ? '+' : ''}${ch.toFixed(2)}U・${cl.length} 筆`, sx + sw - 8, sy + 16); g.textAlign = 'left';
+      const top = sy + 24, bot = sy + sh - 8, lo = Math.min(...p), hi = Math.max(...p), sp = hi - lo || Math.max(1, Math.abs(hi) * 0.001);
+      const X = i => sx + 8 + i / Math.max(1, p.length - 1) * (sw - 16), Y = q => bot - (q - lo) / sp * (bot - top - 6) - 3;
+      g.strokeStyle = 'rgba(125,211,252,.08)'; g.lineWidth = 1; for (let k = 0; k < 3; k++) { const y = top + (bot - top) * k / 2; g.beginPath(); g.moveTo(sx + 6, y); g.lineTo(sx + sw - 6, y); g.stroke(); }
+      if (cl.length) {                                 // 權益曲線（含漸層和最後一點的閃爍）
+        const grd = g.createLinearGradient(0, top, 0, bot); grd.addColorStop(0, col + '55'); grd.addColorStop(1, col + '00');
+        g.beginPath(); p.forEach((q, i) => i ? g.lineTo(X(i), Y(q)) : g.moveTo(X(i), Y(q))); g.lineTo(X(p.length - 1), bot); g.lineTo(X(0), bot); g.closePath(); g.fillStyle = grd; g.fill();
+        g.beginPath(); p.forEach((q, i) => i ? g.lineTo(X(i), Y(q)) : g.moveTo(X(i), Y(q))); g.strokeStyle = col; g.lineWidth = 2; g.stroke();
+        const lx = X(p.length - 1), ly = Y(p[p.length - 1]); g.fillStyle = col; g.globalAlpha = 0.5 + 0.5 * Math.sin(now / 300); g.beginPath(); g.arc(lx, ly, 3.5, 0, 7); g.fill(); g.globalAlpha = 1;
+      } else {                                         // 還沒有出場的單：顯示持倉和掃描動畫
+        const sl = sy + 24 + ((now / 25) % (sh - 30)); g.fillStyle = 'rgba(125,211,252,.06)'; g.fillRect(sx + 2, sl, sw - 4, 8);
+        g.font = `${fs * 0.9}px monospace`;
+        if (D.open.length) { D.open.slice(0, 4).forEach((t, k) => { const y = top + 14 + k * (fs + 5), u = +t.upnl || 0; g.fillStyle = '#cbd5e1'; g.fillText(`${(t.sym || '').replace(/USDT$/, '')} ${t.dir > 0 ? '多' : '空'}`, sx + 10, y); g.textAlign = 'right'; g.fillStyle = u >= 0 ? '#34d399' : '#f87171'; g.fillText(`${u >= 0 ? '+' : ''}${u.toFixed(2)}U`, sx + sw - 10, y); g.textAlign = 'left'; }); }
+        else { g.fillStyle = '#64748b'; g.fillText('還沒有出場的單・等第一筆交易', sx + 10, top + 16); }
+        g.fillStyle = '#475569'; g.fillText(`今日 ${wU(D.day + (D.T ? D.spDay || 0 : 0))}・持倉 ${D.open.length}`, sx + 10, bot - 2);
+      } }
     // 角落的雷達
     const rx = w * 0.91, ry = h * 0.80, rr = Math.min(w, h) * 0.08; g.strokeStyle = 'rgba(52,211,153,.35)'; for (let k = 1; k <= 3; k++) { g.beginPath(); g.arc(rx, ry, rr * k / 3, 0, 7); g.stroke(); }
     const ang = (now / 1000) % (Math.PI * 2); g.beginPath(); g.moveTo(rx, ry); g.lineTo(rx + Math.cos(ang) * rr, ry + Math.sin(ang) * rr); g.strokeStyle = '#34d399'; g.stroke();
@@ -6761,6 +6779,9 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-03g', title: '2026/11/03 更新（交易室大螢幕）', items: [
+    { ic: '🖥', t: '交易室後牆的大螢幕改成跟 BALANCE 同一套算法：權益曲線含漸層、右上角顯示累計盈虧和筆數、最新一點會閃爍；還沒有出場的單時，改顯示目前持倉和未實現盈虧，不會再是一片黑。' }
+  ] },
   { id: '2026-11-03f', title: '2026/11/03 更新（多圖回放）', items: [
     { ic: '⏪', t: '回放可以選好幾張圖一起回放：按「⏪ 回放」先勾要回放的圖，再在主圖上點起點，所有選到的圖用同一個時間一起往前走（每一步＝選到的圖裡最小的週期；週期比較大的圖，K 棒收盤時才出現，不會偷看未來）。' },
     { ic: '🔧', t: '修正多重圖表的週期選單在深色模式下看不到字。' }
