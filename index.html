@@ -884,7 +884,7 @@ header{align-items:center}
 .wxc q{font:600 11px ui-monospace,Menlo,monospace;color:#cbd5e1;quotes:"“" "”";white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .wxbtns{display:flex;gap:6px}.wxbtns .btn{padding:3px 9px;font-size:12px}
 .wxscene{position:relative;border:1px solid #232a3d;border-radius:8px;overflow:hidden;background:#070b16}
-.wxscene canvas{display:block;width:100%;aspect-ratio:16/8.6;min-height:340px}
+.wxscene canvas{display:block;width:100%;aspect-ratio:16/8}
 .wxtick{position:absolute;top:6px;left:50%;transform:translateX(-50%);z-index:1;font:600 11px ui-monospace,Menlo,monospace;color:#7dd3fc;background:rgba(5,8,16,.75);border:1px solid #1f2a44;border-radius:4px;padding:2px 10px;white-space:nowrap;max-width:94%;overflow:hidden;text-overflow:ellipsis}
 .wxbal,.wxpanel{background:#0f1320;border:1px solid #232a3d;border-radius:8px;padding:8px 10px;min-width:0}
 .wxph{display:flex;justify-content:space-between;gap:8px;font:700 11.5px ui-monospace,Menlo,monospace;color:#cbd5e1;margin-bottom:6px;letter-spacing:.04em}.wxph span{color:#f472b6;font-weight:600}
@@ -1268,7 +1268,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-03b</div>
+      <div class="qver" id="qVer">網站版本 2026-11-03c</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3728,7 +3728,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-03b・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-03c・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -6084,7 +6084,7 @@ function warRender() {
       <div class="wxtop"><b class="wxlogo">Quant <i>X</i></b><span class="wxtag">合約作戰室・訊號偵測 × 自動下單</span><span class="wxprog"><span id="wxProgT"></span><span class="wxbar"><i id="wxProg"></i></span><b id="wxProgP"></b></span><span class="wxclock" id="wxClock"></span></div>
       <div class="wxcards" id="wxCards"></div>
       <div class="wxx" id="wxX"></div>
-      <div class="wxscene"><div class="wxtick" id="wxTick"></div><canvas id="wxScene" aria-label="反應爐動畫：8 個角色的光圈圍著 X 核心旋轉，資料沿著光環接力"></canvas></div>
+      <div class="wxscene"><div class="wxtick" id="wxTick"></div><canvas id="wxScene" aria-label="交易室動畫：8 個角色在各自的位置工作"></canvas></div>
       <div class="wxbal"><div class="wxph"><b>BALANCE ・ 資金曲線</b><span id="wxBalSub"></span></div><div class="wxbalb"><canvas id="wxBal"></canvas><div class="wxbalv"><small>目前權益</small><b id="wxBalV"></b><span id="wxBalD"></span></div></div></div>
       <div class="wxlow"><div class="wxpanel"><div class="wxph"><b id="wxAnT">ANALYSIS</b><span id="wxAnS"></span></div><div class="wxan"><canvas id="wxK"></canvas><ul class="wxchk" id="wxChk"></ul></div></div>
         <div class="wxpanel"><div class="wxph"><b>thresholds ・ 條件</b><span>每一個數字都是系統相信的門檻</span></div><pre class="wxcode" id="wxCode"></pre><div class="wxpipe" id="wxPipe"></div></div></div>
@@ -6297,137 +6297,62 @@ function xDraw(g, w, h, now, reduce) {                // 休息區＋3 個額外
     g.fillStyle = on ? col : '#4b5468'; g.font = `bold ${Math.max(9, w * 0.0085)}px monospace`; g.textAlign = 'center'; g.fillText(en, X0, Y0 + sz * 0.95); g.textAlign = 'left';
   }
 }
-/* ---------- ⚛ THE REACTOR：8 個角色變成光圈，圍著「X 駭客核心」轉；資料像光流一樣沿著光環接力 ---------- */
-const RX = { rain: null, rw: 0, glitch: 0, hex: '', hexAt: 0, pulses: [] };
-const RX_GLY = '0123456789ABCDEFXΣΔ#$%&<>/\\|';
-function rxHalo(g, X, Y, r, col, k, now, act, depth) {   // 一個光圈：外面三層發光環，裡面是發光的火柴人
-  const a = 0.45 + depth * 0.55, pul = act ? 1 + 0.18 * Math.sin(now / 90) : 1 + 0.05 * Math.sin(now / 700 + X);
-  g.save(); g.globalCompositeOperation = 'lighter';
-  const gr = g.createRadialGradient(X, Y, r * 0.2, X, Y, r * 2.2 * pul); gr.addColorStop(0, col + (act ? '66' : '33')); gr.addColorStop(1, col + '00'); g.fillStyle = gr; g.beginPath(); g.arc(X, Y, r * 2.2 * pul, 0, 7); g.fill();
-  for (let i = 0; i < 3; i++) { const rr = r * (1 + i * 0.16) * pul, sp = now / (900 + i * 400) * (i % 2 ? -1 : 1);
-    g.strokeStyle = col; g.globalAlpha = a * (0.9 - i * 0.25); g.lineWidth = act ? 3 - i * 0.6 : 2 - i * 0.5; g.shadowColor = col; g.shadowBlur = act ? 18 : 10;
-    g.beginPath(); g.ellipse(X, Y, rr, rr * 0.92, sp * 0.2, sp, sp + Math.PI * (1.4 + i * 0.2)); g.stroke(); }
-  g.restore();
-  g.save(); g.shadowColor = col; g.shadowBlur = act ? 16 : 8; g.globalAlpha = a;
-  const p = act ? { pose: 'run', dir: 1 } : { pose: 'work', dir: 1 };
-  stick(g, X, Y + r * 0.62, r * 0.48, '#ffffff', p, now, BOT[k] ? BOT[k].ph : 0, a);
-  g.restore();
-}
-function rxCore(g, cx, cy, R, now, reduce) {             // 核心：圓形駭客螢幕（矩陣字雨＋掃描線＋旋轉刻度環）＋發光的 X
-  g.save();
-  const bg = g.createRadialGradient(cx, cy, R * 0.1, cx, cy, R); bg.addColorStop(0, '#101a33'); bg.addColorStop(1, '#03060e'); g.fillStyle = bg; g.beginPath(); g.arc(cx, cy, R, 0, 7); g.fill();
-  g.beginPath(); g.arc(cx, cy, R * 0.97, 0, 7); g.clip();
-  const fs = Math.max(8, R * 0.11), cols = Math.ceil(R * 2 / fs);
-  if (!RX.rain || RX.rw !== cols) { RX.rain = Array.from({ length: cols }, () => ({ y: Math.random() * R * 2, v: 0.6 + Math.random() * 1.6, s: Array.from({ length: 14 }, () => RX_GLY[Math.floor(Math.random() * RX_GLY.length)]) })); RX.rw = cols; }
-  g.font = `${fs}px ui-monospace,Menlo,monospace`; g.textAlign = 'center';
-  RX.rain.forEach((c, i) => { if (!reduce) c.y += c.v * fs * 0.12; if (c.y > R * 2 + fs * 14) { c.y = -Math.random() * R; c.v = 0.6 + Math.random() * 1.6; }
-    if (Math.random() < 0.04) c.s[Math.floor(Math.random() * 14)] = RX_GLY[Math.floor(Math.random() * RX_GLY.length)];
-    const x = cx - R + i * fs + fs / 2; c.s.forEach((ch, j) => { const y = cy - R + c.y - j * fs; g.fillStyle = j === 0 ? 'rgba(220,255,240,.95)' : `rgba(${j < 4 ? '45,255,180' : '20,180,255'},${Math.max(0, 0.55 - j * 0.04)})`; g.fillText(ch, x, y); }); });
-  const sy = cy - R + ((now / 18) % (R * 2)); const sg = g.createLinearGradient(0, sy - R * 0.25, 0, sy); sg.addColorStop(0, 'rgba(0,255,200,0)'); sg.addColorStop(1, 'rgba(0,255,200,.22)'); g.fillStyle = sg; g.fillRect(cx - R, sy - R * 0.25, R * 2, R * 0.25);
-  g.restore();
-  // 旋轉刻度環
-  g.save(); g.translate(cx, cy);
-  for (const [rr, sp, seg, col] of [[R * 1.06, 0.00035, 36, '#22d3ee'], [R * 1.17, -0.00022, 12, '#e879f9'], [R * 1.28, 0.00012, 60, 'rgba(148,163,184,.55)']]) {
-    g.save(); g.rotate(reduce ? 0 : now * sp); g.strokeStyle = col; g.lineWidth = rr === R * 1.17 ? 2.5 : 1.2; g.shadowColor = col; g.shadowBlur = 6;
-    for (let k = 0; k < seg; k++) { const a0 = k / seg * Math.PI * 2; g.beginPath(); g.arc(0, 0, rr, a0, a0 + Math.PI * 2 / seg * (rr === R * 1.17 ? 0.55 : 0.35)); g.stroke(); }
-    g.restore(); }
-  g.restore();
-  // X（霓虹漸層＋故障效果）
-  if (!reduce && now - RX.glitch > 1600 + Math.random() * 2400) RX.glitch = now;
-  const gl = !reduce && now - RX.glitch < 180, X0 = R * 0.52, lw = R * 0.2;
-  const drawX = (dx, dy, col, al) => { g.save(); g.globalAlpha = al; g.strokeStyle = col; g.lineWidth = lw; g.lineCap = 'round'; g.shadowColor = typeof col === 'string' ? col : '#e879f9'; g.shadowBlur = R * 0.35;
-    g.beginPath(); g.moveTo(cx - X0 + dx, cy - X0 + dy); g.lineTo(cx + X0 + dx, cy + X0 + dy); g.moveTo(cx + X0 + dx, cy - X0 + dy); g.lineTo(cx - X0 + dx, cy + X0 + dy); g.stroke(); g.restore(); };
-  const xg = g.createLinearGradient(cx - X0, cy - X0, cx + X0, cy + X0); xg.addColorStop(0, '#f472b6'); xg.addColorStop(0.5, '#ffffff'); xg.addColorStop(1, '#22d3ee');
-  if (gl) { g.save(); g.globalCompositeOperation = 'lighter'; drawX(-R * 0.06, 0, 'rgba(255,40,120,.8)', 0.9); drawX(R * 0.06, 0, 'rgba(40,220,255,.8)', 0.9); g.restore(); }
-  drawX(0, 0, xg, 0.95 + 0.05 * Math.sin(now / 300));
-  g.save(); g.strokeStyle = 'rgba(10,15,30,.85)'; g.lineWidth = lw * 0.28; g.lineCap = 'round'; g.beginPath(); g.moveTo(cx - X0 * 0.75, cy - X0 * 0.75); g.lineTo(cx + X0 * 0.75, cy + X0 * 0.75); g.moveTo(cx + X0 * 0.75, cy - X0 * 0.75); g.lineTo(cx - X0 * 0.75, cy + X0 * 0.75); g.stroke(); g.restore();   // X 中間的電路細線
-  if (gl) { const n = 3; for (let k = 0; k < n; k++) { const yy = cy - R + Math.random() * R * 2, hh = R * (0.04 + Math.random() * 0.08); try { const im = g.getImageData(Math.max(0, (cx - R) * (devicePixelRatio || 1)), Math.max(0, yy * (devicePixelRatio || 1)), Math.round(R * 2 * (devicePixelRatio || 1)), Math.max(1, Math.round(hh * (devicePixelRatio || 1)))); g.putImageData(im, Math.round((cx - R + (Math.random() - 0.5) * R * 0.3) * (devicePixelRatio || 1)), Math.round(yy * (devicePixelRatio || 1))); } catch (e) {} } }   // 故障：橫向錯位
-  // 讀數
-  if (now - RX.hexAt > 120) { RX.hex = Array.from({ length: 8 }, () => '0123456789ABCDEF'[Math.floor(Math.random() * 16)]).join(''); RX.hexAt = now; }
-  g.save(); g.font = `bold ${Math.max(9, R * 0.11)}px ui-monospace,Menlo,monospace`; g.textAlign = 'center'; g.fillStyle = '#7dd3fc'; g.fillText('QUANT X CORE', cx, cy + R * 1.45); g.fillStyle = 'rgba(232,121,249,.85)'; g.font = `${Math.max(8, R * 0.09)}px ui-monospace,Menlo,monospace`; g.fillText(`0x${RX.hex}`, cx, cy + R * 1.6); g.restore();
-  for (const p of RX.pulses) { const t = (now - p.at) / 1200; if (t > 1) continue; g.save(); g.strokeStyle = p.col; g.globalAlpha = 1 - t; g.lineWidth = 3 * (1 - t) + 0.5; g.shadowColor = p.col; g.shadowBlur = 14; g.beginPath(); g.arc(cx, cy, R * (1 + t * 1.4), 0, 7); g.stroke(); g.restore(); }
-  RX.pulses = RX.pulses.filter(p => now - p.at < 1200);
-}
-function rxStrands(g, cx, cy, Rx, Ry, now, reduce) {     // 光環：很多條彩色的細線一起轉（顏色照角色排）
-  const cols = ROLE.map(r => r[4]), N = 64, P = 90;
-  g.save(); g.globalCompositeOperation = 'lighter'; g.lineWidth = 1;
-  for (let s = 0; s < N; s++) {
-    const ph = s * 2.399, wob = 0.06 + (s % 7) * 0.012, k = 2 + (s % 4), t = reduce ? 0 : now / (4000 + (s % 9) * 700), col = cols[s % cols.length];
-    g.strokeStyle = col; g.globalAlpha = 0.09 + (s % 5) * 0.025; g.beginPath();
-    for (let j = 0; j <= P; j++) { const a = j / P * Math.PI * 2, r = 1 + wob * Math.sin(a * k + ph + t * 6) + 0.03 * Math.sin(a * 9 - t * 9 + s), x = cx + Rx * r * Math.cos(a + t * 0.6), y = cy + Ry * r * Math.sin(a + t * 0.6) + Ry * 0.08 * Math.sin(a * 3 + ph + t * 3); j ? g.lineTo(x, y) : g.moveTo(x, y); }
-    g.stroke(); }
-  g.restore();
-}
-function rxSpark(g, x, y, w, h, vals, col, kind) {        // 小卡片裡的走勢（真的資料；沒有就顯示 —）
-  if (!vals || vals.length < 2) { g.fillStyle = '#475569'; g.font = '11px ui-monospace,monospace'; g.fillText('—', x + 4, y + h / 2 + 4); return; }
-  const lo = Math.min(...vals, kind === 'bar' ? 0 : Infinity), hi = Math.max(...vals, kind === 'bar' ? 0 : -Infinity), sp = hi - lo || 1, Y = v => y + h - (v - lo) / sp * h;
-  if (kind === 'bar') { const bw = w / vals.length; vals.forEach((v, i) => { g.fillStyle = v >= 0 ? '#22c55e' : '#ef4444'; const y0 = Y(0), y1 = Y(v); g.fillRect(x + i * bw + 1, Math.min(y0, y1), Math.max(1, bw - 2), Math.max(1, Math.abs(y1 - y0))); }); return; }
-  g.save(); g.strokeStyle = col; g.lineWidth = 1.6; g.shadowColor = col; g.shadowBlur = 6; g.beginPath(); vals.forEach((v, i) => { const xx = x + i / (vals.length - 1) * w; i ? g.lineTo(xx, Y(v)) : g.moveTo(xx, Y(v)); }); g.stroke();
-  const gr = g.createLinearGradient(0, y, 0, y + h); gr.addColorStop(0, col + '44'); gr.addColorStop(1, col + '00'); g.lineTo(x + w, y + h); g.lineTo(x, y + h); g.closePath(); g.fillStyle = gr; g.shadowBlur = 0; g.fill(); g.restore();
-}
-function rxPanel(g, x, y, w, h, title, col) { g.save(); g.fillStyle = 'rgba(10,16,32,.78)'; g.strokeStyle = 'rgba(99,102,241,.35)'; g.lineWidth = 1; g.beginPath(); g.roundRect ? g.roundRect(x, y, w, h, 6) : g.rect(x, y, w, h); g.fill(); g.stroke(); g.fillStyle = col || '#a5b4fc'; g.font = `bold ${Math.max(9, w * 0.055)}px ui-monospace,Menlo,monospace`; g.fillText(title, x + 8, y + 15); g.restore(); }
-function warReactor(g, w, h, now, reduce) {
-  const D = WAR.d, K = WAR.k || {}, fz = Math.max(9, w * 0.0095);
-  const bg = g.createRadialGradient(w / 2, h * 0.52, 10, w / 2, h * 0.52, w * 0.6); bg.addColorStop(0, '#0d1430'); bg.addColorStop(1, '#04060d'); g.fillStyle = bg; g.fillRect(0, 0, w, h);
-  g.strokeStyle = 'rgba(99,102,241,.06)'; g.lineWidth = 1; for (let x = 0; x < w; x += 28) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); } for (let y = 0; y < h; y += 28) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
-  g.fillStyle = '#c7d2fe'; g.font = `bold ${fz}px ui-monospace,Menlo,monospace`; g.fillText('◆ THE REACTOR', 10, 18); g.fillStyle = '#64748b'; g.font = `${fz * 0.9}px ui-monospace,Menlo,monospace`; g.fillText('— 8 個角色圍著核心・每 5 秒一棒資料接力', 10 + (g.font = `bold ${fz}px ui-monospace,Menlo,monospace`, g.measureText('◆ THE REACTOR ').width), 18);
-  // ---- 左：INJECTOR BANK（真實資料）
-  const lx = w * 0.01, lw = w * 0.18, top = h * 0.07, ch = (h * 0.9) / 4 - 6;
-  const cl = D ? D.trades.filter(t => t.status !== 'open' && t.exitAt).slice().sort((a, b) => a.exitAt - b.exitAt) : [];
-  let v = 0; const eqv = [0, ...cl.slice(-60).map(t => (v += wNet(t)))], pnl = cl.slice(-24).map(wNet), wr = []; cl.slice(-60).forEach((t, i, A) => { const s = A.slice(Math.max(0, i - 19), i + 1); wr.push(s.filter(x => wNet(x) > 0).length / s.length * 100); });
-  const cards = [['EQUITY', D ? `${D.eq.toFixed(1)}U` : '—', eqv, '#34d399', 'line'], ['P/L・每筆', pnl.length ? `${pnl[pnl.length - 1] >= 0 ? '+' : ''}${pnl[pnl.length - 1].toFixed(2)}` : '—', pnl, '#22c55e', 'bar'], ['WIN RATE・近 20 筆', wr.length ? `${wr[wr.length - 1].toFixed(0)}%` : '—', wr, '#a78bfa', 'line'], ['OPEN・持倉', D ? `${D.open.length} 筆` : '—', D ? D.open.slice(0, 3).map(p => p.sym ? p.sym.replace(/USDT$/, '') : '') : [], '#38bdf8', 'list']];
-  cards.forEach(([t, val, arr, col, kind], i) => { const y = top + i * (ch + 6); rxPanel(g, lx, y, lw, ch, t, col); g.fillStyle = '#f8fafc'; g.font = `bold ${fz * 1.15}px ui-monospace,Menlo,monospace`; g.textAlign = 'right'; g.fillText(val, lx + lw - 8, y + 16); g.textAlign = 'left';
-    if (kind === 'list') { g.fillStyle = '#cbd5e1'; g.font = `${fz}px ui-monospace,Menlo,monospace`; (arr.length ? arr : ['（沒有持倉）']).forEach((s, k) => g.fillText(s, lx + 10, y + 34 + k * (fz + 4))); }
-    else rxSpark(g, lx + 8, y + 24, lw - 16, ch - 32, arr, col, kind); });
-  // ---- 右：CONTROL STACK
-  const rx0 = w * 0.81, rw = w * 0.18;
-  const C = D && D.cand, op = D && D.open[0];
-  rxPanel(g, rx0, top, rw, h * 0.3, 'LIVE TICKET', '#f472b6');
-  const tk = op ? [[op.sym || '', op.dir > 0 ? '做多' : '做空'], ['進場', op.entry ? klFmtW(op.entry) : '—'], ['止損', op.sl ? klFmtW(op.sl) : '—'], ['止盈', op.tp ? klFmtW(op.tp) : '—']] : C ? [[C.sym || '', C.dir > 0 ? '做多' : '做空'], ['階段', { touch0: '回踩中', touch: '等收盤', brk: '等回踩 FVG' }[C.st] || C.st], ['FVG', C.val != null ? (+C.val).toFixed(2) + '%' : '—'], ['週期', C.pair === 'h4' ? '4H→15M' : '1H→5M']] : [['待命', ''], ['', '沒有持倉，也沒有特級卡片']];
-  tk.forEach(([a, b], k) => { const y = top + 34 + k * (fz + 7); g.fillStyle = k ? '#94a3b8' : '#f8fafc'; g.font = `${k ? '' : 'bold '}${fz * (k ? 1 : 1.15)}px ui-monospace,Menlo,monospace`; g.fillText(a, rx0 + 10, y); g.textAlign = 'right'; g.fillStyle = k ? '#e2e8f0' : (b === '做多' ? '#22c55e' : '#ef4444'); g.fillText(b, rx0 + rw - 10, y); g.textAlign = 'left'; });
-  const cy0 = top + h * 0.3 + 8; rxPanel(g, rx0, cy0, rw, h * 0.34, 'CONFIDENCE', '#22d3ee');
-  ROLE.forEach(([k, en, , , col], i) => { const y = cy0 + 30 + i * ((h * 0.34 - 38) / 8), pr = K[k] ? Math.max(0, Math.min(1, K[k][3])) : 0; g.fillStyle = '#94a3b8'; g.font = `${fz * 0.85}px ui-monospace,Menlo,monospace`; g.fillText(en, rx0 + 10, y + 4); const bx = rx0 + rw * 0.42, bw = rw * 0.5; g.fillStyle = 'rgba(148,163,184,.15)'; g.fillRect(bx, y - 3, bw, 6); g.save(); g.fillStyle = col; g.shadowColor = col; g.shadowBlur = 6; g.fillRect(bx, y - 3, bw * pr, 6); g.restore(); });
-  const ly0 = cy0 + h * 0.34 + 8, lh = h * 0.97 - ly0; rxPanel(g, rx0, ly0, rw, lh, 'RELAY LOG', '#fbbf24');
-  (WAR.log || []).slice(0, Math.max(1, Math.floor((lh - 24) / (fz + 5)))).forEach((e, k) => { const y = ly0 + 32 + k * (fz + 5); g.fillStyle = '#64748b'; g.font = `${fz * 0.85}px ui-monospace,Menlo,monospace`; g.fillText(fmtT(e.t).slice(-5), rx0 + 10, y); g.fillStyle = '#e2e8f0'; g.fillText(e.path.map(p => (ROLE.find(r => r[0] === p) || [])[1]).join('→').slice(0, 26), rx0 + 10 + rw * 0.24, y); });
-  // ---- 中：反應爐
-  const cx = w * 0.5, cy = h * 0.5, Rx = w * 0.22, Ry = h * 0.31, R = Math.min(w * 0.075, h * 0.15);
-  rxStrands(g, cx, cy, Rx, Ry, now, reduce);
-  const rot = reduce ? 0 : now / 60000, pos = {};
-  ROLE.forEach(([k], i) => { const a = -Math.PI / 2 + i / ROLE.length * Math.PI * 2 + rot; pos[k] = { x: cx + Rx * Math.cos(a), y: cy + Ry * Math.sin(a), d: (Math.sin(a) + 1) / 2, a }; });
-  WAR.pos = pos;
-  const E = WAR.ev, et = E && E.path ? (now - E.at) / 1000 : 99, act = new Set();
-  // 資料光流：沿著光環從一個角色流到下一個
-  if (E && E.path && !reduce) for (let s = 0; s < E.path.length - 1; s++) { const lt = et - s * HOP; if (lt < 0 || lt > HOP + 0.4) continue; const A0 = pos[E.path[s]], B0 = pos[E.path[s + 1]]; act.add(E.path[s]); if (lt > HOP * 0.7) act.add(E.path[s + 1]);
-    let da = B0.a - A0.a; while (da > Math.PI) da -= Math.PI * 2; while (da < -Math.PI) da += Math.PI * 2; const pr = Math.min(1, lt / HOP), col = (ROLE.find(r => r[0] === E.path[s]) || [])[4];
-    g.save(); g.globalCompositeOperation = 'lighter'; for (let q = 0; q < 14; q++) { const pp = pr - q * 0.025; if (pp < 0) break; const a = A0.a + da * pp, x = cx + Rx * Math.cos(a), y = cy + Ry * Math.sin(a); g.fillStyle = col; g.globalAlpha = (1 - q / 14) * 0.9; g.shadowColor = col; g.shadowBlur = 16; g.beginPath(); g.arc(x, y, Math.max(1.5, R * 0.09 * (1 - q / 14)), 0, 7); g.fill(); } g.restore();
-    if (s === E.path.length - 2 && lt > HOP && !E.pulsed) { E.pulsed = true; RX.pulses.push({ at: now, col }); } }
-  const order = ROLE.map(r => r[0]).sort((a, b) => pos[a].d - pos[b].d), hr = Math.min(w * 0.03, h * 0.065);
-  const drawAgent = k => { const r = ROLE.find(x => x[0] === k), P = pos[k], sc = 0.75 + P.d * 0.45, st = K[k] ? K[k][0] : 'ok';
-    rxHalo(g, P.x, P.y, hr * sc, r[4], k, now, act.has(k), P.d);
-    g.save(); g.textAlign = 'center'; g.font = `bold ${fz * sc}px ui-monospace,Menlo,monospace`; g.fillStyle = '#e0e7ff'; g.globalAlpha = 0.55 + P.d * 0.45; g.fillText(r[1], P.x, P.y + hr * sc * 1.75);
-    g.fillStyle = { ok: '#22c55e', wait: '#fbbf24', bad: '#ef4444', off: '#64748b' }[st] || '#64748b'; g.beginPath(); g.arc(P.x - g.measureText(r[1]).width / 2 - 7, P.y + hr * sc * 1.75 - fz * 0.35, 3, 0, 7); g.fill(); g.restore(); };
-  order.filter(k => pos[k].d < 0.5).forEach(drawAgent);
-  rxCore(g, cx, cy, R, now, reduce);
-  order.filter(k => pos[k].d >= 0.5).forEach(drawAgent);
-  // 額外進場（FLOW／PIVOT／AMBUSH）：外圈的小衛星，有訊號就亮起來、發光流進核心
-  XL.forEach(([k, en, zh, col], i) => { const a = Math.PI * (0.22 + i * 0.28), x = cx + Rx * 1.32 * Math.cos(a) * (i === 1 ? 0 : 1) + (i === 1 ? 0 : 0), y = h * (0.72 + i * 0.1), X = w * 0.225, sig = xRecent(k), on = !!sig;   // 放在左下角，不擋到角色
-    g.save(); g.globalCompositeOperation = 'lighter'; g.strokeStyle = col; g.shadowColor = col; g.shadowBlur = on ? 16 : 4; g.globalAlpha = on ? 0.95 : 0.35; g.lineWidth = on ? 2.5 : 1.5; const rr = hr * 0.55 * (on ? 1 + 0.15 * Math.sin(now / 120) : 1); g.beginPath(); g.arc(X, y - rr, rr, 0, 7); g.stroke();
-    if (on && !reduce) { const t = (now / 900) % 1, px = X + (cx - X) * t, py = y - rr + (cy - (y - rr)) * t; g.fillStyle = col; g.globalAlpha = 1 - t * 0.6; g.beginPath(); g.arc(px, py, 3, 0, 7); g.fill(); }
-    g.restore(); g.fillStyle = on ? '#f8fafc' : '#64748b'; g.font = `bold ${fz * 0.85}px ui-monospace,Menlo,monospace`; g.fillText(`${en}${on ? ' ⚡ 有訊號' : '・待命'}`, X + hr * 0.75, y - hr * 0.55 + fz * 0.35); });
-  // 最後一棒的台詞
-  if (E && E.path && E.text) { const tEnd = (E.path.length - 1) * HOP; if (et > tEnd && et < tEnd + 2.6) { const P = pos[E.say], txt = E.text.replace(/<[^>]+>/g, ''); g.font = `bold ${fz * 1.05}px sans-serif`; const tw = g.measureText(txt).width + 14, bx = Math.min(Math.max(w * 0.2, P.x - tw / 2), w * 0.8 - tw), by = P.y - hr * 2.4;
-    g.fillStyle = 'rgba(8,12,24,.92)'; g.strokeStyle = 'rgba(232,121,249,.85)'; g.beginPath(); g.roundRect ? g.roundRect(bx, by - 14, tw, 22, 6) : g.rect(bx, by - 14, tw, 22); g.fill(); g.stroke(); g.fillStyle = '#fae8ff'; g.fillText(txt, bx + 7, by + 1); } }
-}
-const klFmtW = v => { const a = Math.abs(v); return (+v).toFixed(a >= 1000 ? 1 : a >= 1 ? 4 : 6).replace(/\.?0+$/, ''); };
 function warAnim() {
   cancelAnimationFrame(WAR.raf); clearInterval(WAR.evT); WAR.evT = setInterval(warEvent, 5000); setTimeout(warEvent, 600);
   const cv = $('wxScene'), reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!WAR.io && 'IntersectionObserver' in window) { WAR.io = new IntersectionObserver(es => { WAR.vis = es[0].isIntersecting; }); WAR.io.observe(cv); WAR.vis = true; }
+  let last = 0;
   const draw = now => {
     if (!document.body.contains(cv)) return;
-    const w = cv.clientWidth, h = cv.clientHeight, dpr = devicePixelRatio || 1;
+    if (now - last < 33 || WAR.vis === false) { WAR.raf = requestAnimationFrame(draw); return; }   // 最多 30 FPS；捲到看不到時不畫
+    last = now;
+    const w = cv.clientWidth, h = cv.clientHeight, dpr = Math.min(1.5, devicePixelRatio || 1);
     if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
     const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
-    warReactor(g, w, h, now, reduce);   // ⚛ 反應爐（光圈角色＋X 駭客核心）
+    // 房間：地板格線（斜的，有立體感）、後牆
+    const bg = g.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, '#0d1428'); bg.addColorStop(1, '#070b16'); g.fillStyle = bg; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#0f1830'; g.fillRect(0, 0, w, h * 0.22); g.strokeStyle = 'rgba(120,140,200,.07)'; g.lineWidth = 1;
+    for (let i = -10; i < 20; i++) { g.beginPath(); g.moveTo(i * w / 10, h * 0.22); g.lineTo(i * w / 10 + h * 0.6, h); g.stroke(); g.beginPath(); g.moveTo(i * w / 10, h * 0.22); g.lineTo(i * w / 10 - h * 0.6, h); g.stroke(); }
+    // 後牆的大螢幕：資金曲線縮圖
+    const sx = w * 0.30, sy = h * 0.04, sw = w * 0.40, sh = h * 0.22; g.fillStyle = '#05080f'; g.fillRect(sx, sy, sw, sh); g.strokeStyle = '#2b3550'; g.strokeRect(sx, sy, sw, sh);
+    const D = WAR.d; if (D) { const cl = D.trades.filter(t => t.status !== 'open' && t.exitAt).slice().sort((a, b) => a.exitAt - b.exitAt).slice(-40); let v = 0; const p = [0, ...cl.map(t => (v += wNet(t)))];
+      if (p.length > 1) { const lo = Math.min(...p), hi = Math.max(...p) || 1, sp = hi - lo || 1; g.beginPath(); p.forEach((q, i) => { const x = sx + 8 + i / (p.length - 1) * (sw - 16), y = sy + sh - 8 - (q - lo) / sp * (sh - 16); i ? g.lineTo(x, y) : g.moveTo(x, y); }); g.strokeStyle = '#34d399'; g.lineWidth = 2; g.stroke(); }
+      g.fillStyle = '#7dd3fc'; g.font = `bold ${Math.max(10, w * 0.011)}px monospace`; g.fillText(`EQUITY ${D.eq.toFixed(2)}U`, sx + 8, sy + 16); }
+    // 角落的雷達
+    const rx = w * 0.91, ry = h * 0.80, rr = Math.min(w, h) * 0.08; g.strokeStyle = 'rgba(52,211,153,.35)'; for (let k = 1; k <= 3; k++) { g.beginPath(); g.arc(rx, ry, rr * k / 3, 0, 7); g.stroke(); }
+    const ang = (now / 1000) % (Math.PI * 2); g.beginPath(); g.moveTo(rx, ry); g.lineTo(rx + Math.cos(ang) * rr, ry + Math.sin(ang) * rr); g.strokeStyle = '#34d399'; g.stroke();
+    g.fillStyle = '#6b7a99'; g.font = `${Math.max(9, w * 0.009)}px monospace`; g.fillText('WHALE RADAR', rx - rr, ry + rr + 14);
+    // 桌子
+    for (const [k, [x, y]] of Object.entries(DESK)) {
+      const X = x * w, Y = y * h, dw = w * 0.11, dh = h * 0.07;
+      g.fillStyle = '#141b2e'; g.beginPath(); g.moveTo(X - dw / 2, Y); g.lineTo(X, Y - dh / 2); g.lineTo(X + dw / 2, Y); g.lineTo(X, Y + dh / 2); g.closePath(); g.fill(); g.strokeStyle = '#26304a'; g.stroke();
+      g.fillStyle = '#0a0f1c'; g.fillRect(X - dw * 0.22, Y - dh * 1.25, dw * 0.44, dh * 0.75); g.strokeStyle = '#33405f'; g.strokeRect(X - dw * 0.22, Y - dh * 1.25, dw * 0.44, dh * 0.75);
+      const col = (ROLE.find(r => r[0] === k) || [])[4]; g.fillStyle = col; g.globalAlpha = 0.65; for (let i = 0; i < 5; i++) { const bh = (0.2 + ((Math.sin(now / 600 + i + x * 9) + 1) / 2) * 0.5) * dh * 0.6; g.fillRect(X - dw * 0.18 + i * dw * 0.075, Y - dh * 0.55 - bh, dw * 0.05, bh); } g.globalAlpha = 1;
+    }
+    // 火柴人：平常在桌前打字；接力時帶著資料「瞬移衝刺」到下一個人旁邊交出去，再衝回來
+    const E = WAR.ev, et = E && E.path ? (now - E.at) / 1000 : 99, sz = Math.max(9, w * 0.017);
+    for (const [k, en, zh, , col] of ROLE) {
+      const b = BOT[k], p = reduce ? { x: HOME(k)[0], y: HOME(k)[1], pose: 'work', dir: 1 } : runPos(k, now), X = p.x * w, Y = p.y * h;
+      b.trail.push([X, Y, p.pose, p.dir]); if (b.trail.length > 7) b.trail.shift();
+      if (p.pose === 'run') {                          // 殘影＋速度線＝瞬移的感覺
+        b.trail.slice(0, -1).forEach(([tx, ty, , td], i) => stick(g, tx, ty, sz, col, { pose: 'run', dir: td }, now, b.ph, 0.08 + i * 0.05));
+        g.strokeStyle = col; g.globalAlpha = 0.5; g.lineWidth = 1.5; for (let i = 0; i < 4; i++) { const ly = Y - sz * (0.4 + i * 0.45); g.beginPath(); g.moveTo(X - p.dir * sz * (1.2 + i * 0.2), ly); g.lineTo(X - p.dir * sz * (2.6 + i * 0.5), ly); g.stroke(); } g.globalAlpha = 1;
+      } else b.trail.length = 0;
+      g.fillStyle = 'rgba(0,0,0,.35)'; g.beginPath(); g.ellipse(X, Y + 2, sz * 0.55, sz * 0.16, 0, 0, 7); g.fill();
+      const hand = stick(g, X, Y, sz, col, p, now, b.ph, 1);
+      if (p.carry && hand) {                           // 手上的資料包（發光小方塊）
+        let [px, py] = hand; if (p.pose === 'give') { const tgt = HOME(E.path[E.path.indexOf(k) + 1]); px += (tgt[0] * w - px) * p.give * 0.55; }
+        g.save(); g.shadowColor = '#ff6bb0'; g.shadowBlur = 12; g.fillStyle = '#ffd1e6'; g.fillRect(px - sz * 0.22, py - sz * 0.22, sz * 0.44, sz * 0.44); g.restore();
+      }
+      if (p.pose === 'catch' && !p.carry) { g.strokeStyle = 'rgba(255,209,230,.8)'; g.lineWidth = 2; g.beginPath(); g.arc(X, Y - sz * 1.4, sz * (0.8 + (et % 1) * 1.2), 0, 7); g.stroke(); }   // 接到時閃一下
+      const st = WAR.k && WAR.k[k] ? WAR.k[k][0] : 'ok'; if (st === 'bad') { g.fillStyle = '#ef4444'; g.beginPath(); g.arc(X + sz * 0.5, Y - sz * 2.35, sz * 0.18, 0, 7); g.fill(); }
+      g.fillStyle = '#c7d2fe'; g.font = `bold ${Math.max(9, w * 0.0085)}px monospace`; g.textAlign = 'center'; g.fillText(en, X, Y + sz * 0.95); g.textAlign = 'left';
+    }
+    xDraw(g, w, h, now, reduce);   // 🔔 額外進場的休息區
+    // 最後一棒拿到資料後冒出台詞
+    if (E && E.path && E.text) { const tEnd = (E.path.length - 1) * HOP; if (et > tEnd && et < tEnd + 2.6) { const hm = HOME(E.say), tx = hm[0] * w, ty = hm[1] * h - sz * 3.2, txt = E.text.replace(/<[^>]+>/g, '');
+      g.font = `bold ${Math.max(10, w * 0.0105)}px sans-serif`; const tw = g.measureText(txt).width + 14, bx0 = Math.min(Math.max(4, tx - tw / 2), w - tw - 4);
+      g.fillStyle = 'rgba(10,14,26,.92)'; g.strokeStyle = 'rgba(255,107,170,.85)'; g.beginPath(); g.roundRect ? g.roundRect(bx0, ty - 14, tw, 22, 6) : g.rect(bx0, ty - 14, tw, 22); g.fill(); g.stroke(); g.fillStyle = '#ffe4f1'; g.fillText(txt, bx0 + 7, ty + 1); } }
     WAR.raf = requestAnimationFrame(draw);
   };
   WAR.raf = requestAnimationFrame(draw);
@@ -6697,6 +6622,9 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-03c', title: '2026/11/03 更新（交易室動畫恢復）', items: [
+    { ic: '↩️', t: '作戰室中間的動畫恢復成原本的交易室（火柴人接力、休息區），反應爐版本先收起來。動畫改成最多 30 FPS、捲到看不到時自動暫停，比較省電。' }
+  ] },
   { id: '2026-11-03b', title: '2026/11/03 更新（圖表同步、圖表鎖）', items: [
     { ic: '🔄', t: 'K 線圖的設定、指標、繪圖、Pine 腳本會存在伺服器，同一個帳號在電腦、手機上自動同步（改完約 2 秒上傳，其他裝置 15 秒內更新）。' },
     { ic: '🔒', t: 'K 線圖暫時鎖住：打開要輸入密碼（擁有者第一次打開時設定）。擁有者可以按右上角 🔒 重新鎖住、改密碼或關閉鎖。' },
