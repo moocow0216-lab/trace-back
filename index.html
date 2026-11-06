@@ -1087,6 +1087,9 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
 .kmlgw{position:absolute;left:6px;top:4px;z-index:5;max-width:calc(100% - 70px);pointer-events:none}.kmlgw .kilg{pointer-events:auto}
 .kifoldb{pointer-events:auto;align-self:flex-start;border:0;background:rgba(30,34,45,.75);color:#d1d4dc;border-radius:4px;padding:1px 7px;font-size:11.5px;cursor:pointer;line-height:1.5;margin-top:1px}.kifoldb.up{padding:0 6px;font-size:11px;opacity:.7}.kifoldb:hover{opacity:1;background:rgba(41,98,255,.35)}
 .klbox.kllight .kifoldb{background:rgba(255,255,255,.8);color:#131722}
+
+.kl select,.kl select option,.kldlg select option{color-scheme:dark}.kmtf option,.kl select option{background:#1e222d;color:#d1d4dc}.kmtf{color-scheme:dark}
+.krsel{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border:1px solid #2a2e39;border-radius:6px;font-size:12.5px;cursor:pointer}.krsel input{accent-color:#2962ff}
 </style>
 </head>
 <body class="quant-on mn">
@@ -1286,7 +1289,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-03e</div>
+      <div class="qver" id="qVer">網站版本 2026-11-03f</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3746,7 +3749,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-03e・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-03f・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -4311,8 +4314,8 @@ function klUi() {
     if (k === 'left') ts.setVisibleLogicalRange({ from: r.from - w * 0.25, to: r.to - w * 0.25 }); if (k === 'right') ts.setVisibleLogicalRange({ from: r.from + w * 0.25, to: r.to + w * 0.25 }); if (k === 'reset') { ts.resetTimeScale(); ts.scrollToRealTime(); } };
   $('klLayBtn').onclick = e => { e.stopPropagation(); kmMenu($('klLayBtn')); };
   $('klGear').onclick = ksOpen; $('klLockBtn').onclick = klLockMenu; $('klRpBtn').onclick = krToggle;
-  $('klRp').addEventListener('click', e => { const b = e.target.closest('[data-kr]'); if (!b) return; const k = b.dataset.kr; if (k === 'exit') krExit(); if (k === 'pick') { krPlay(false); KR.pick = true; krBar(); } if (k === 'play') krPlay(!KR.play); if (k === 'step') { krPlay(false); krStep(); } });
-  $('klRp').addEventListener('change', e => { if (e.target.dataset.kr === 'speed') { KR.speed = +e.target.value; if (KR.play) krPlay(true); } });
+  $('klRp').addEventListener('click', e => { const b = e.target.closest('[data-kr]'); if (!b) return; const k = b.dataset.kr; if (k === 'exit') krExit(); if (k === 'go') { if (!KR.sel.size) return alert('至少要選一張圖'); KR.choose = false; KR.pick = true; krBar(); } if (k === 'pick') { krPlay(false); krExit(); krToggle(); } if (k === 'play') krPlay(!KR.play); if (k === 'step') { krPlay(false); krStep(); } });
+  $('klRp').addEventListener('change', e => { if (e.target.dataset.krv) { e.target.checked ? KR.sel.add(e.target.dataset.krv) : KR.sel.delete(e.target.dataset.krv); return; } if (e.target.dataset.kr === 'speed') { KR.speed = +e.target.value; if (KR.play) krPlay(true); } });
   $('klSymBtn').onclick = () => { const p = $('klPick'); p.hidden = !p.hidden; if (!p.hidden) { $('klQ').value = ''; klList(); $('klQ').focus(); } };
   $('klQ').oninput = klList; $('klQ').onkeydown = e => { if (e.key === 'Escape') $('klPick').hidden = true; if (e.key === 'Enter') { const f = $('klList').querySelector('[data-klsym]'); if (f) f.click(); } };
   $('klList').onclick = e => { const b = e.target.closest('[data-klsym]'); if (b) { $('klPick').hidden = true; klSet(b.dataset.klsym, KL.tf); } };
@@ -4371,7 +4374,7 @@ async function klOlder() {
   try {
     const D = await klFetch(KL.sym, KL.tf, KL.data[0].time * 1000 - 1); if (KL.sym + KL.tf !== my) return;
     if (!D.length) { KL.end = true; return; }
-    const r = KL.ch.timeScale().getVisibleLogicalRange(), add = D.filter(b => b.time < KL.full[0].time); KL.full = [...add, ...KL.full]; if (KR.on) { KR.ri += add.length; KL.data = KL.full.slice(0, KR.ri + 1); } else KL.data = KL.full;
+    const r = KL.ch.timeScale().getVisibleLogicalRange(), add = D.filter(b => b.time < KL.full[0].time); KL.full = [...add, ...KL.full]; if (KR.on && KR.clock && KR.sel.has('m0')) { KL.data = KL.full.slice(0, Math.max(1, krCnt(KL.full, KL_SEC[KL.tf] || 60))); KR.ri = KL.data.length - 1; } else KL.data = KL.full;
     KL.cs.setData(klCdAll(KL.data)); KL.vs.setData(KL.data.map((b, i) => klVolBar(b, KL.data[i - 1]))); if (r) KL.ch.timeScale().setVisibleLogicalRange({ from: r.from + D.length, to: r.to + D.length });
   } catch (e) {} finally { KL.loading = false; }
 }
@@ -4385,7 +4388,7 @@ function klWs() {                                      // 即時更新：幣安�
   ws.onclose = () => { if (KL.open && KL.wsKey === key) setTimeout(klWs, 3000); };
 }
 function klPut(b) {                                   // 把最新的 K 棒放進圖表（同一根就更新，新的一根就加在後面）
-  if (KR.on) { const F = KL.full, l2 = F[F.length - 1]; if (l2 && b.time === l2.time) F[F.length - 1] = b; else if (l2 && b.time > l2.time) F.push(b); return; }   // 回放中：新的 K 棒先存起來，不顯示
+  if (KR.on && KR.sel.has('m0')) { const F = KL.full, l2 = F[F.length - 1]; if (l2 && b.time === l2.time) F[F.length - 1] = b; else if (l2 && b.time > l2.time) F.push(b); return; }   // 回放中：新的 K 棒先存起來，不顯示
   const D = KL.data, last = D[D.length - 1]; if (!last || b.time < last.time) return;
   if (b.time === last.time) D[D.length - 1] = b; else D.push(b);
   const pv = D[D.length - 2]; KL.cs.update(klCd(b, pv)); KL.vs.update(klVolBar(b, pv)); klLegend(); klTagDraw();
@@ -4402,7 +4405,7 @@ function klTagDraw() {                                 // 右邊價格軸上的�
   if (y == null || !w) { tag.hidden = true; if (sy) sy.hidden = true; return; }
   if (sy) { sy.hidden = !S.symLab; if (S.symLab) { sy.textContent = KL.sym + '.P'; sy.style.top = Math.round(y - 10) + 'px'; sy.style.right = (w + 2) + 'px'; } }   // 商品名稱標籤（價格標籤左邊那格）
   tag.hidden = !S.priceLab; $('klTagT').hidden = !S.cd; tag.style.left = (cw - w) + 'px'; tag.style.width = w + 'px'; tag.style.top = Math.round(y - 11) + 'px'; const tc = ksUp(b, KL.data[KL.data.length - 2]) ? KS.upBorder : KS.dnBorder; tag.style.background = tc; tag.style.color = ksLum(tc) > 0.6 ? '#131722' : '#fff';   // 淺色底用深色字
-  $('klTagP').textContent = klFmt(b.close); $('klTagT').textContent = KR.on ? '回放' : klLeft(b);
+  $('klTagP').textContent = klFmt(b.close); $('klTagT').textContent = KR.on && KR.sel.has('m0') && !KR.choose ? '回放' : klLeft(b);
 }
 setInterval(async () => {                              // ⏱ 每秒：更新倒數；推播 3 秒沒動靜就改用每秒抓一次（確保 K 棒每秒都在跑）
   if (!KL.open || !KL.cs || document.hidden) return; klTagDraw();
@@ -4615,13 +4618,15 @@ function kmMake(i, c) {
   kmSet(P, c.sym, c.tf, true); kmTheme(); setTimeout(() => kmLegendInd(P), 0); return P;
 }
 async function kmSet(P, sym, tf, force) {
+  if (P.rp && KR.on) krExit();
   if (!force && P.sym === sym && P.tf === tf && P.data.length) return; P.sym = sym; P.tf = tf; kmSave();
   P.el.querySelector('.kmsym').value = sym.replace(/USDT$/, ''); P.el.querySelector('.kmtf').value = tf; const my = sym + tf; P.want = my;
   try { const D = (await klFetch(sym, tf, 0, 500)).filter(b => [b.open, b.high, b.low, b.close].every(isFinite)); if (P.dead || P.want !== my) return;
     P.data = D; P.cs.setData(klCdAll(D)); P.vs.setData(D.map((b, i) => klVolBar(b, D[i - 1]))); P.ch.timeScale().setVisibleLogicalRange({ from: Math.max(0, D.length - 90), to: D.length + 5 }); kmLegend(P); kmWs(P);
   } catch (e) { P.el.querySelector('.kmlg').textContent = '讀取失敗：' + e.message; }
 }
-function kmPut(P, b) { const D = P.data, last = D[D.length - 1]; if (!last || b.time < last.time) return; if (b.time === last.time) D[D.length - 1] = b; else D.push(b); const pv = D[D.length - 2]; P.cs.update(klCd(b, pv)); P.vs.update(klVolBar(b, pv)); if (!P.hover) kmLegend(P); }
+function kmPut(P, b) { if (P.rp) { const F = P.full, l = F[F.length - 1]; if (l && b.time === l.time) F[F.length - 1] = b; else if (l && b.time > l.time) F.push(b); return; }   // 回放中：先存起來
+  const D = P.data, last = D[D.length - 1]; if (!last || b.time < last.time) return; if (b.time === last.time) D[D.length - 1] = b; else D.push(b); const pv = D[D.length - 2]; P.cs.update(klCd(b, pv)); P.vs.update(klVolBar(b, pv)); if (!P.hover) kmLegend(P); }
 function kmWs(P) {                                       // 即時更新（推播斷掉時每 2 秒抓一次）
   if (P.ws) { P.ws.onclose = null; try { P.ws.close(); } catch (e) {} } clearInterval(P.poll); if (P.dead || !KL.open) return;
   const key = P.sym.toLowerCase() + '@kline_' + P.tf; P.last = Date.now();
@@ -5005,31 +5010,49 @@ function kdPropsIn(e) {
 }
 function kdPropsCancel() { const d = KDP.d, o = JSON.parse(KDP.saved); if (d) { for (const k of Object.keys(d)) delete d[k]; Object.assign(d, o); } $('kdDlg').close(); kdEdit(); }
 /* ---------- ⏪ K 線回放：選一個起點，之後一根一根播放（可以調速度、單步），練習看盤、檢查策略 ---------- */
-const KR = { on: false, pick: false, ri: 0, play: false, speed: 1, timer: 0 };
+const KR = { on: false, pick: false, ri: 0, play: false, speed: 1, timer: 0, sel: new Set(['m0']), clock: 0 };
+/* ---- ⏪ 多圖回放：選哪幾張圖一起回放，用同一個時間一起往前走（週期比較大的圖，那根 K 收盤時才出現，不會偷看未來） ---- */
+const krViews = () => [['m0', '主圖', KL.sym, KL.tf], ...KM.panes.map(P => ['p' + P.i, `第 ${P.i + 2} 格`, P.sym, P.tf])];
+const krTfName = tf => (KL_TF.find(x => x[0] === tf) || [])[1] || tf;
 function krBar() {
   const el = $('klRp'); if (!el) return; el.hidden = !KR.on;
   $('klRpBtn').classList.toggle('on', KR.on); $('klRpBtn').setAttribute('aria-pressed', String(KR.on));
   if (!KR.on) return;
-  const b = KL.data[KL.data.length - 1];
-  el.innerHTML = KR.pick ? `<span>👆 在圖上點一下，選回放的起點</span><button class="btn" data-kr="exit">取消</button>`
-    : `<button class="btn" data-kr="pick" title="重新選起點">⏮ 選起點</button><button class="btn" data-kr="play" aria-label="${KR.play ? '暫停' : '播放'}">${KR.play ? '⏸' : '▶'}</button><button class="btn" data-kr="step" title="下一根（Shift＋→）" aria-label="下一根">⏭</button>
-      <select data-kr="speed" aria-label="播放速度">${[1, 2, 3, 5, 10].map(v => `<option value="${v}"${KR.speed === v ? ' selected' : ''}>${v} 根／秒</option>`).join('')}</select>
-      <span class="krt">${b ? ksTime(b.time) : ''}・${Math.max(0, KL.full.length - KL.data.length)} 根之後</span><button class="btn" data-kr="exit">⏹ 結束回放</button>`;
+  if (KR.choose) { el.innerHTML = `<b>要回放哪幾張圖？</b>${krViews().map(([v, n, sym, tf]) => `<label class="krsel"><input type="checkbox" data-krv="${v}"${KR.sel.has(v) ? ' checked' : ''}> ${n}・${esc(sym.replace(/USDT$/, ''))} ${krTfName(tf)}</label>`).join('')}<button class="btn primary" data-kr="go">👆 選起點</button><button class="btn" data-kr="exit">取消</button>`; return; }
+  const left = Math.max(0, KL.full.length - KL.data.length);
+  el.innerHTML = KR.pick ? `<span>👆 在主圖上點一下，選回放的起點（${KR.sel.size} 張圖一起回放）</span><button class="btn" data-kr="exit">取消</button>`
+    : `<button class="btn" data-kr="pick" title="重新選圖和起點">⏮ 重選</button><button class="btn" data-kr="play" aria-label="${KR.play ? '暫停' : '播放'}">${KR.play ? '⏸' : '▶'}</button><button class="btn" data-kr="step" title="下一步（Shift＋→）" aria-label="下一步">⏭</button>
+      <select data-kr="speed" aria-label="播放速度">${[1, 2, 3, 5, 10].map(v => `<option value="${v}"${KR.speed === v ? ' selected' : ''}>${v} 步／秒</option>`).join('')}</select>
+      <span class="krt">${KR.clock ? ksTime(Math.floor(KR.clock / 1000) - 1) : ''}・${KR.sel.size} 張圖${KR.sel.has('m0') ? `・主圖還有 ${left} 根` : ''}</span><button class="btn" data-kr="exit">⏹ 結束回放</button>`;
 }
-function krToggle() { if (KR.on) return krExit(); KR.on = true; KR.pick = true; KR.play = false; kdUse(null); krBar(); }
-function krStart(i) {                                    // 從第 i 根開始：右邊的 K 棒先藏起來
-  const F = KL.full; KR.ri = Math.max(10, Math.min(F.length - 1, i)); KR.pick = false; krShow(); krBar();
+function krToggle() { if (KR.on) return krExit(); KR.on = true; KR.play = false; kdUse(null); KR.sel = new Set([...KR.sel].filter(v => krViews().some(x => x[0] === v))); if (!KR.sel.size) KR.sel.add('m0');
+  if (KM.panes.length) { KR.choose = true; KR.pick = false; } else { KR.sel = new Set(['m0']); KR.choose = false; KR.pick = true; } krBar(); }
+const krCnt = (F, sec) => { let lo = 0, hi = F.length; while (lo < hi) { const m = (lo + hi) >> 1; if ((F[m].time + sec) * 1000 <= KR.clock) lo = m + 1; else hi = m; } return lo; };   // 到「現在」為止收盤的 K 棒有幾根
+function krApply(first) {                                // 照回放時間，更新每一張選到的圖
+  if (KR.sel.has('m0') && KL.full) { const n = Math.max(1, krCnt(KL.full, KL_SEC[KL.tf] || 60));
+    if (first || n < KL.data.length) { KL.data = KL.full.slice(0, n); KL.cs.setData(klCdAll(KL.data)); KL.vs.setData(KL.data.map((b, i) => klVolBar(b, KL.data[i - 1]))); KL.ch.timeScale().setVisibleLogicalRange({ from: Math.max(0, n - 120), to: n + 10 }); }
+    else while (KL.data.length < n) { const b = KL.full[KL.data.length]; KL.data.push(b); const pv = KL.data[KL.data.length - 2]; KL.cs.update(klCd(b, pv)); KL.vs.update(klVolBar(b, pv)); }
+    KR.ri = KL.data.length - 1; klLegend(); klTagDraw(); }
+  for (const P of KM.panes) { if (!KR.sel.has('p' + P.i)) continue; if (!P.rp) { P.rp = true; P.full = P.data.slice(); } const n = Math.max(1, krCnt(P.full, KL_SEC[P.tf] || 60));
+    if (first || n < P.data.length) { P.data = P.full.slice(0, n); P.cs.setData(klCdAll(P.data)); P.vs.setData(P.data.map((b, i) => klVolBar(b, P.data[i - 1]))); P.ch.timeScale().setVisibleLogicalRange({ from: Math.max(0, n - 90), to: n + 5 }); }
+    else while (P.data.length < n) { const b = P.full[P.data.length]; P.data.push(b); const pv = P.data[P.data.length - 2]; P.cs.update(klCd(b, pv)); P.vs.update(klVolBar(b, pv)); }
+    P.key = ''; kmLegend(P); }
 }
-function krShow() {
-  KL.data = KL.full.slice(0, KR.ri + 1); KL.cs.setData(klCdAll(KL.data)); KL.vs.setData(KL.data.map((b, i) => klVolBar(b, KL.data[i - 1])));
-  const n = KL.data.length; KL.ch.timeScale().setVisibleLogicalRange({ from: Math.max(0, n - 120), to: n + 10 }); klLegend(); klTagDraw();
+function krStart(i) {                                    // 在主圖第 i 根選起點：回放時間＝那根收盤
+  const F = KL.full, k = Math.max(10, Math.min(F.length - 1, i)); KR.clock = (F[k].time + (KL_SEC[KL.tf] || 60)) * 1000; KR.pick = false; krApply(true); krBar();
 }
-function krStep() {
-  if (!KR.on || KR.pick) return; if (KR.ri >= KL.full.length - 1) { KR.play = false; clearInterval(KR.timer); krBar(); $('klSt').textContent = '已經回放到最新的 K 棒'; return; }
-  KR.ri++; const b = KL.full[KR.ri]; KL.data.push(b); const pv = KL.data[KL.data.length - 2]; KL.cs.update(klCd(b, pv)); KL.vs.update(klVolBar(b, pv)); klLegend(); klTagDraw(); krBar();
+function krStep() {                                      // 往前一步＝選到的圖裡最小的週期
+  if (!KR.on || KR.pick || KR.choose) return;
+  const secs = [...KR.sel].map(v => v === 'm0' ? KL_SEC[KL.tf] : KL_SEC[(KM.panes[+v.slice(1)] || {}).tf]).filter(Boolean), dt = Math.min(...secs, 86400 * 7) * 1000;
+  const ends = [...KR.sel].map(v => { if (v === 'm0') return KL.full && KL.full.length ? (KL.full[KL.full.length - 1].time + KL_SEC[KL.tf]) * 1000 : 0; const P = KM.panes[+v.slice(1)]; return P && P.full && P.full.length ? (P.full[P.full.length - 1].time + KL_SEC[P.tf]) * 1000 : 0; });
+  if (KR.clock >= Math.max(...ends)) { KR.play = false; clearInterval(KR.timer); krBar(); $('klSt').textContent = '已經回放到最新的 K 棒'; return; }
+  KR.clock += dt; krApply(false); krBar();
 }
 function krPlay(on) { KR.play = on; clearInterval(KR.timer); if (on) KR.timer = setInterval(krStep, 1000 / KR.speed); krBar(); }
-function krExit() { clearInterval(KR.timer); KR.on = false; KR.pick = false; KR.play = false; if (KL.full) { KL.data = KL.full; KL.cs.setData(klCdAll(KL.data)); KL.vs.setData(KL.data.map((b, i) => klVolBar(b, KL.data[i - 1]))); KL.ch.timeScale().scrollToRealTime(); klLegend(); klTagDraw(); } $('klSt').textContent = ''; krBar(); }
+function krExit() { clearInterval(KR.timer); KR.on = false; KR.pick = false; KR.choose = false; KR.play = false; KR.clock = 0;
+  if (KL.full) { KL.data = KL.full; KL.cs.setData(klCdAll(KL.data)); KL.vs.setData(KL.data.map((b, i) => klVolBar(b, KL.data[i - 1]))); KL.ch.timeScale().scrollToRealTime(); klLegend(); klTagDraw(); }
+  for (const P of KM.panes) if (P.rp) { P.rp = false; P.data = P.full; P.full = null; P.cs.setData(klCdAll(P.data)); P.vs.setData(P.data.map((b, i) => klVolBar(b, P.data[i - 1]))); P.ch.timeScale().scrollToRealTime(); P.key = ''; kmLegend(P); }
+  $('klSt').textContent = ''; krBar(); }
 /* ---------- ƒx K 線圖指標（像 TradingView 左上角的指標列：名稱＋參數、👁 隱藏、⚙ 參數、✕ 移除） ----------
    照擁有者給的 Pine 指標改寫：FVG Order Blocks [BigBeluga]、LuxAlgo SMC（CHoCH／BOS）、莊家淨額、CRT＋SMC、清算熱力圖 [BigBeluga]、天神下凡（獵殺）、12:00 基準價區間、上帝視角（每日開盤線／POC） */
 const KI_DEF = {                                        // p：[代號, 名稱, 預設, 最小, 最大, 間隔, 種類（空＝數字、c＝顏色、b＝開關、s＝選單）, 選單]；['_h', '分組標題']
@@ -6738,6 +6761,10 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-03f', title: '2026/11/03 更新（多圖回放）', items: [
+    { ic: '⏪', t: '回放可以選好幾張圖一起回放：按「⏪ 回放」先勾要回放的圖，再在主圖上點起點，所有選到的圖用同一個時間一起往前走（每一步＝選到的圖裡最小的週期；週期比較大的圖，K 棒收盤時才出現，不會偷看未來）。' },
+    { ic: '🔧', t: '修正多重圖表的週期選單在深色模式下看不到字。' }
+  ] },
   { id: '2026-11-03e', title: '2026/11/03 更新（每格都能加指標、指標名稱收起）', items: [
     { ic: 'ƒx', t: '多重圖表的每一格都能加自己的指標（格子左上角的 ƒx），包含 Pine 腳本；設定、隱藏、移除跟主圖一樣，會跟著帳號同步。' },
     { ic: '︿', t: '指標名稱可以收起來：按指標列下面的 ︿，只剩一個小小的「ƒx 3 ﹀」，不會擋到 K 棒，指標照樣畫在圖上；再按一下就展開。每一格分開記。' }
