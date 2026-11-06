@@ -1081,6 +1081,12 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
 .kmtf{padding:3px 4px;border-radius:6px;border:0;background:rgba(127,127,127,.12);color:inherit;font-size:12px}.kmlg{font-variant-numeric:tabular-nums;white-space:nowrap}.kmmax{margin-left:auto;border:0;background:transparent;color:inherit;cursor:pointer;font-size:15px;padding:0 4px}.kmmax:hover{color:#2962ff}
 .kmc{flex:1;min-height:0;position:relative}.kmopt{display:flex;gap:8px;align-items:center;padding:8px 10px;font-size:13px;border-top:1px solid var(--line,#2a2e39);margin-top:4px}
 @media (max-width:760px){.klgrid[data-l="6"],.klgrid[data-l="4"]{grid-template-columns:1fr 1fr}.klgrid[data-l="6"]{grid-template-rows:repeat(3,1fr)}.klgrid[data-l="2h"]{grid-template-columns:1fr;grid-template-rows:1fr 1fr}.kl{height:auto;min-height:calc(100vh - 120px)}.klgrid:not([data-l="1"]){min-height:calc(100vh - 160px)}}
+
+.kmind{border:0;background:rgba(127,127,127,.12);color:inherit;border-radius:6px;padding:3px 7px;font-size:12px;cursor:pointer;font-style:italic;font-weight:700}.kmind:hover{background:rgba(41,98,255,.2)}
+.kmbg,.kmtop{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.kmbg{z-index:0}.kmtop{z-index:2}.kmc .tv-lightweight-charts{position:relative;z-index:1}
+.kmlgw{position:absolute;left:6px;top:4px;z-index:5;max-width:calc(100% - 70px);pointer-events:none}.kmlgw .kilg{pointer-events:auto}
+.kifoldb{pointer-events:auto;align-self:flex-start;border:0;background:rgba(30,34,45,.75);color:#d1d4dc;border-radius:4px;padding:1px 7px;font-size:11.5px;cursor:pointer;line-height:1.5;margin-top:1px}.kifoldb.up{padding:0 6px;font-size:11px;opacity:.7}.kifoldb:hover{opacity:1;background:rgba(41,98,255,.35)}
+.klbox.kllight .kifoldb{background:rgba(255,255,255,.8);color:#131722}
 </style>
 </head>
 <body class="quant-on mn">
@@ -1280,7 +1286,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-03d</div>
+      <div class="qver" id="qVer">網站版本 2026-11-03e</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3740,7 +3746,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-03d・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-03e・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -4577,8 +4583,8 @@ const KM_LAY = [['1', '▢', '1 格'], ['2h', '◫', '2 格（左右）'], ['2v'
 const KM_N = { 1: 1, '2h': 2, '2v': 2, 3: 3, 4: 4, 6: 6 };
 const KM = { lay: LS.get('klLayout', '1'), cfg: LS.get('klPanes', []), syncSym: LS.get('klSyncSym', false), panes: [] };
 const KM_DEF = [['ETHUSDT', '15m'], ['BTCUSDT', '1h'], ['SOLUSDT', '15m'], ['BTCUSDT', '4h'], ['BNBUSDT', '15m']];
-function kmCfg(i) { const c = KM.cfg[i] || {}; return { sym: c.sym || KM_DEF[i][0], tf: c.tf || KM_DEF[i][1] }; }
-function kmSave() { LS.set('klPanes', KM.panes.map(p => ({ sym: p.sym, tf: p.tf })).concat(KM.cfg.slice(KM.panes.length))); }
+function kmCfg(i) { const c = KM.cfg[i] || {}; return { sym: c.sym || KM_DEF[i][0], tf: c.tf || KM_DEF[i][1], ind: c.ind || [] }; }
+function kmSave() { KM.cfg = KM.panes.map(p => ({ sym: p.sym, tf: p.tf, ind: p.ind.map(({ id, on, p: pp, g, vis, pine }) => ({ id, on, p: pp, g, vis, pine: pine ? { inputs: pine.inputs, vals: pine.vals, pv: pine.pv } : undefined })) })).concat(KM.cfg.slice(KM.panes.length)); LS.set('klPanes', KM.cfg); }
 function kmLayout(lay) {                                // 換版面：重建簡易圖
   if (lay) { KM.lay = lay; LS.set('klLayout', lay); }
   const grid = $('klGrid'); if (!grid || !window.LightweightCharts) return; grid.dataset.l = KM.lay;
@@ -4588,23 +4594,25 @@ function kmLayout(lay) {                                // 換版面：重建簡
   if (need > 0 && !KL.list.length) try { klList(); } catch (e) {}   // 幣種清單（輸入框的提示）
   const b = $('klLayBtn'); if (b) b.textContent = (KM_LAY.find(x => x[0] === KM.lay) || KM_LAY[0])[1] + ' ' + (KM_N[KM.lay] || 1) + ' 格';
 }
-function kmKill(P) { if (!P) return; P.dead = true; clearInterval(P.poll); if (P.ws) { P.ws.onclose = null; try { P.ws.close(); } catch (e) {} } try { P.ch.remove(); } catch (e) {} P.el.remove(); }
+function kmKill(P) { if (!P) return; P.dead = true; for (const k of Object.keys(KP.series)) if (k.startsWith('p' + P.i + '|')) delete KP.series[k]; for (const k of Object.keys(KP.pls)) if (k.startsWith('p' + P.i + '|')) delete KP.pls[k]; clearInterval(P.poll); if (P.ws) { P.ws.onclose = null; try { P.ws.close(); } catch (e) {} } try { P.ch.remove(); } catch (e) {} P.el.remove(); }
 function kmMake(i, c) {
   const el = document.createElement('div'); el.className = 'klmini'; el.dataset.i = i;
-  el.innerHTML = `<div class="kmh"><input class="kmsym" list="kmSyms" value="${esc(c.sym.replace(/USDT$/, ''))}" aria-label="第 ${i + 2} 格的幣種" spellcheck="false" autocapitalize="characters"><select class="kmtf" aria-label="第 ${i + 2} 格的週期">${KL_TF.map(([v, n]) => `<option value="${v}"${v === c.tf ? ' selected' : ''}>${n}</option>`).join('')}</select><span class="kmlg"></span><button class="kmmax" title="換到主圖（可以畫圖、加指標）" aria-label="換到主圖">⤢</button></div><div class="kmc"></div>`;
+  el.innerHTML = `<div class="kmh"><button class="kmind" title="這一格的指標" aria-label="第 ${i + 2} 格的指標">ƒx</button><input class="kmsym" list="kmSyms" value="${esc(c.sym.replace(/USDT$/, ''))}" aria-label="第 ${i + 2} 格的幣種" spellcheck="false" autocapitalize="characters"><select class="kmtf" aria-label="第 ${i + 2} 格的週期">${KL_TF.map(([v, n]) => `<option value="${v}"${v === c.tf ? ' selected' : ''}>${n}</option>`).join('')}</select><span class="kmlg"></span><button class="kmmax" title="換到主圖（可以畫圖）" aria-label="換到主圖">⤢</button></div><div class="kmc"><canvas class="kmbg" aria-hidden="true"></canvas><canvas class="kmtop" aria-hidden="true"></canvas><div class="kmlgw"><div class="kilg" data-kvid="p${i}"></div></div></div>`;
   $('klGrid').appendChild(el);
   const T = klTheme(), ch = LightweightCharts.createChart(el.querySelector('.kmc'), { autoSize: true, layout: { background: { type: 'solid', color: 'rgba(0,0,0,0)' }, textColor: klDark() ? '#d1d4dc' : '#131722', fontSize: 11 }, grid: { vertLines: { color: 'rgba(127,127,127,.07)' }, horzLines: { color: 'rgba(127,127,127,.07)' } },
     rightPriceScale: { borderColor: T.bd }, timeScale: { borderColor: T.bd, timeVisible: true, secondsVisible: false, rightOffset: 5 }, crosshair: { mode: 0 }, localization: { locale: 'zh-TW', timeFormatter: ksTime } });
   ch.timeScale().applyOptions({ tickMarkFormatter: ksTick });
   const cs = ch.addCandlestickSeries({ ...ksSeries(), lastValueVisible: true, priceLineStyle: 1, priceFormat: { type: 'custom', formatter: klFmt, minMove: 1e-8 } }), vs = ch.addHistogramSeries({ priceScaleId: 'vol', priceFormat: { type: 'volume' }, lastValueVisible: false, priceLineVisible: false });
   ch.priceScale('vol').applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } }); cs.priceScale().applyOptions({ scaleMargins: { top: 0.08, bottom: 0.2 } });
-  const P = { i, el, ch, cs, vs, sym: c.sym, tf: c.tf, data: [] };
+  const P = { i, el, ch, cs, vs, sym: c.sym, tf: c.tf, data: [], ind: (c.ind || []).map(x => ({ ...x })), key: '', res: null };
+  for (const it of P.ind) if (/^pine:/.test(it.id) && !it.pine) { const sc = KP.scripts.find(x => 'pine:' + x.id === it.id); if (sc) it.pine = { inputs: pineParse(sc.code), vals: {}, pv: 2, src: '' }; }
+  el.querySelector('.kmind').addEventListener('click', e => { e.stopPropagation(); kiAddMenu(e.currentTarget, 'p' + i); });
   ch.subscribeCrosshairMove(p => kmLegend(P, p && p.time ? P.data.find(x => x.time === p.time) : null));
   el.querySelector('.kmsym').addEventListener('change', e => { let v = e.target.value.trim().toUpperCase().replace(/[^A-Z0-9]/g, ''); if (!v) return; if (!/USDT$/.test(v)) v += 'USDT'; kmSet(P, v, P.tf); });
   el.querySelector('.kmsym').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); e.stopPropagation(); });
   el.querySelector('.kmtf').addEventListener('change', e => kmSet(P, P.sym, e.target.value));
   el.querySelector('.kmmax').addEventListener('click', () => { const s0 = KL.sym, t0 = KL.tf; klSet(P.sym, P.tf); kmSet(P, s0, t0); });   // 跟主圖交換
-  kmSet(P, c.sym, c.tf, true); kmTheme(); return P;
+  kmSet(P, c.sym, c.tf, true); kmTheme(); setTimeout(() => kmLegendInd(P), 0); return P;
 }
 async function kmSet(P, sym, tf, force) {
   if (!force && P.sym === sym && P.tf === tf && P.data.length) return; P.sym = sym; P.tf = tf; kmSave();
@@ -4626,6 +4634,15 @@ function kmLegend(P, b) {
   const D = P.data; P.hover = !!b; if (!b) b = D[D.length - 1]; const el = P.el.querySelector('.kmlg'); if (!b) { el.textContent = ''; return; }
   const i = D.indexOf(b), prev = i > 0 ? D[i - 1].close : b.open, pc = prev ? (b.close - prev) / prev * 100 : 0, up = ksUp(b, D[i - 1]);
   el.innerHTML = `<span style="color:${up ? KS.upBorder : KS.dnBorder}">${klFmt(b.close)}　${pc >= 0 ? '+' : ''}${pc.toFixed(2)}%</span>`;
+}
+function kmLegendInd(P) { if (!P) return; kiLegendFor(P.el.querySelector('.kilg'), P.ind, 'p' + P.i); }
+function kmDrawInd(P) {                                  // 把這一格的指標畫上去（借用主圖的畫法：暫時把「目前的圖」換成這一格）
+  const cvT = P.el.querySelector('.kmtop'), cvB = P.el.querySelector('.kmbg'); if (!cvT || !P.data.length) return;
+  if (!P.ind.length && !P.hadInd) return; P.hadInd = P.ind.length > 0;
+  const sv = { data: KL.data, tf: KL.tf, sym: KL.sym, ch: KL.ch, cs: KL.cs, list: KI.list, res: KI.res, key: KI.key, atr: KI.atr };
+  KL.data = P.data; KL.tf = P.tf; KL.sym = P.sym; KL.ch = P.ch; KL.cs = P.cs; KI.list = P.ind; KI.res = P.res; KI.key = P.key; KVID = 'p' + P.i;
+  try { const [g, w, h] = kdCanvas(cvT), [gb] = kdCanvas(cvB), pw = P.ch.priceScale('right').width() || 50; g.save(); g.beginPath(); g.rect(0, 0, w - pw, h); g.clip(); gb.save(); gb.beginPath(); gb.rect(0, 0, w - pw, h); gb.clip(); kiDraw(g, w - pw, h, gb); g.restore(); gb.restore(); if (!P.ind.length) try { P.cs.setMarkers([]); } catch (e) {} }
+  catch (e) {} finally { P.res = KI.res; P.key = KI.key; KL.data = sv.data; KL.tf = sv.tf; KL.sym = sv.sym; KL.ch = sv.ch; KL.cs = sv.cs; KI.list = sv.list; KI.res = sv.res; KI.key = sv.key; KI.atr = sv.atr; KVID = 'm0'; }
 }
 function kmTheme() {                                     // 簡易圖跟主圖用同一套顏色、背景
   const box = document.querySelector('.klbox'); for (const P of KM.panes) { if (box) { P.el.style.backgroundColor = box.style.backgroundColor; P.el.style.backgroundImage = box.style.backgroundImage; P.el.style.backgroundSize = box.style.backgroundSize; }
@@ -4883,7 +4900,7 @@ function kdBind() {
     if (b.dataset.kdtx) { const tx = prompt('修改文字：', d.text || ''); if (tx != null) d.text = tx.slice(0, 120); }
     kdSave(); kdEdit();
   });
-  const loop = () => { if (KL.open) kdDraw(); KD.raf = requestAnimationFrame(loop); }; cancelAnimationFrame(KD.raf); loop();
+  const loop = () => { if (KL.open) { kdDraw(); for (const P of KM.panes) kmDrawInd(P); } KD.raf = requestAnimationFrame(loop); }; cancelAnimationFrame(KD.raf); loop();
 }
 /* ---------- ✏️ 繪圖的屬性視窗（照 TradingView：樣式／文字／坐標／可見性，範本） ---------- */
 const KD_DASH = [[], [2, 3], [6, 4]];
@@ -5212,17 +5229,20 @@ function kiDraw(g, W, H, gb) {
       rows.forEach((row, ri) => { const y = tblY + ri * rh; g.fillStyle = ri % 2 ? 'rgba(30,34,45,.92)' : 'rgba(42,46,57,.92)'; g.fillRect(x0, y, cw + vw, rh); g.fillStyle = '#9598a1'; g.fillText(row[0], x0 + 8, y + rh - 6); g.fillStyle = '#e0e3eb'; g.fillText(String(row[1]), x0 + cw + 8, y + rh - 6); }); tblY += rows.length * rh + 8; } }
 }
 /* ---- 左上角的指標列、加入指標、參數 ---- */
-function kiLegend() {
-  const el = $('kiLg'); if (!el) return;
-  el.innerHTML = KI.list.map((it, i) => { const D = KI_DEF[it.id]; if (!D) return ''; const P = kiP(it);
-    return `<div class="kirow${it.on ? '' : ' off'}" data-ki="${i}"><span class="kin">${esc(D.n)}</span><span class="kip">${kiG(it).inp && it.pine ? it.pine.inputs.filter(x => !['bool', 'color', 'text_area'].includes(x.ty)).map(x => esc(String(kiPineVal(it, x)))).join(' ') : kiG(it).inp ? KI_DEF[it.id].p.filter(x => x[0] !== '_h' && (!x[6] || x[6] === 's')).map(x => x[6] === 's' ? ((x[7].find(o => o[0] === P[x[0]]) || [])[1] || '').split('（')[0] : P[x[0]]).join(' ') : ''}</span><span class="kinote" id="kiNote${i}"></span>
-      <span class="kibtns"><button data-kia="eye" aria-label="${it.on ? '隱藏' : '顯示'} ${esc(D.n)}" title="${it.on ? '隱藏' : '顯示'}">${it.on ? '👁' : '🚫'}</button><button data-kia="set" aria-label="${esc(D.n)} 的參數" title="參數">⚙</button><button data-kia="del" aria-label="移除 ${esc(D.n)}" title="移除">✕</button></span></div>`; }).join('');
-  kiLegendNotes();
+function kiLegendFor(el, list, vid) {                   // 指標列（左上角）：可以整個收起來，才不會擋到 K 棒
+  if (!el) return; el.dataset.kvid = vid; const fold = !!KIF.fold[vid];
+  if (!list.length) { el.innerHTML = ''; return; }
+  if (fold) { el.innerHTML = `<button class="kifoldb" data-kifold aria-expanded="false" title="展開指標名稱">ƒx ${list.length} ﹀</button>`; return; }
+  el.innerHTML = list.map((it, i) => { const D = KI_DEF[it.id]; if (!D) return ''; const P = kiP(it);
+    return `<div class="kirow${it.on ? '' : ' off'}" data-ki="${i}"><span class="kin">${esc(D.n)}</span><span class="kip">${kiG(it).inp && it.pine ? it.pine.inputs.filter(x => !['bool', 'color', 'text_area'].includes(x.ty)).map(x => esc(String(kiPineVal(it, x)))).join(' ') : kiG(it).inp ? KI_DEF[it.id].p.filter(x => x[0] !== '_h' && (!x[6] || x[6] === 's')).map(x => x[6] === 's' ? ((x[7].find(o => o[0] === P[x[0]]) || [])[1] || '').split('（')[0] : P[x[0]]).join(' ') : ''}</span><span class="kinote" id="kiNote${vid}_${i}"></span>
+      <span class="kibtns"><button data-kia="eye" aria-label="${it.on ? '隱藏' : '顯示'} ${esc(D.n)}" title="${it.on ? '隱藏' : '顯示'}">${it.on ? '👁' : '🚫'}</button><button data-kia="set" aria-label="${esc(D.n)} 的參數" title="參數">⚙</button><button data-kia="del" aria-label="移除 ${esc(D.n)}" title="移除">✕</button></span></div>`; }).join('')
+    + `<button class="kifoldb up" data-kifold aria-expanded="true" title="收起指標名稱（不擋 K 棒）">︿</button>`;
 }
-function kiLegendNotes() { if (!KI.res) return; KI.list.forEach((it, i) => { const el = $('kiNote' + i), r = KI.res[it.id]; if (el) el.textContent = it.on && r && r.note ? `（${r.note}）` : ''; }); }
-function kiAddMenu(anchor) {
-  kdMenuClose(); const m = document.createElement('div'); m.className = 'kdmenu kiadd'; m.id = 'kdMenu'; m.setAttribute('role', 'menu');
-  m.innerHTML = '<p class="kdmh">指標（你給的 Pine 指標改寫）</p>' + Object.entries(KI_DEF).map(([k, d]) => `<button role="menuitem" data-kiadd="${k}"><i>ƒ</i><span>${esc(d.n)}${d.ltf ? '<small>15 分／5 分圖表</small>' : ''}</span>${KI.list.some(x => x.id === k) ? '<em>已加入</em>' : ''}</button>`).join('');
+function kiLegend() { kiLegendFor($('kiLg'), KI.list, 'm0'); kiLegendNotes(); if (typeof KM !== 'undefined') KM.panes.forEach(P => kmLegendInd(P)); }
+function kiLegendNotes() { if (!KI.res) return; KI.list.forEach((it, i) => { const el = $('kiNote' + KVID + '_' + i), r = KI.res[it.id]; if (el) el.textContent = it.on && r && r.note ? `（${r.note}）` : ''; }); }
+function kiAddMenu(anchor, vid) {
+  kdMenuClose(); KI.addVid = vid || 'm0'; const L0 = kiListFor(KI.addVid); const m = document.createElement('div'); m.className = 'kdmenu kiadd'; m.id = 'kdMenu'; m.setAttribute('role', 'menu');
+  m.innerHTML = '<p class="kdmh">' + (KI.addVid === 'm0' ? '主圖的指標' : `第 ${+KI.addVid.slice(1) + 2} 格的指標`) + '</p>' + Object.entries(KI_DEF).map(([k, d]) => `<button role="menuitem" data-kiadd="${k}"><i>ƒ</i><span>${esc(d.n)}${d.ltf ? '<small>15 分／5 分圖表</small>' : ''}</span>${L0.some(x => x.id === k) ? '<em>已加入</em>' : ''}</button>`).join('');
   const r = anchor.getBoundingClientRect(), box = $('mnpKline').getBoundingClientRect(); m.style.left = (r.left - box.left) + 'px'; m.style.top = (r.bottom - box.top + 4) + 'px';
   $('mnpKline').querySelector('.kl').appendChild(m);
 }
@@ -5322,42 +5342,49 @@ function kiPineRows(it) {                                // 照 TV 的樣子畫�
   return rows.join('');
 }
 function kiPineImport(i) {                               // 貼上 Pine 程式 → 匯入設定
-  const it = KI.list[i]; let d = $('kiPineDlg'); if (!d) { d = document.createElement('dialog'); d.id = 'kiPineDlg'; d.className = 'kldlg kidlg'; document.body.appendChild(d); }
+  const it = kidList()[i]; let d = $('kiPineDlg'); if (!d) { d = document.createElement('dialog'); d.id = 'kiPineDlg'; d.className = 'kldlg kidlg'; document.body.appendChild(d); }
   d.innerHTML = `<div class="kshead"><h3>匯入 TradingView 的設定</h3><button class="ksx" data-pi="x" aria-label="關閉">✕</button></div><div class="ksmain kimain">
     <p class="kshint">在 TradingView 打開這個指標的原始碼（Pine 編輯器），全選複製，貼在下面。會把裡面所有的 input 設定（分組、同一行、提示、預設值）照 TV 的樣子放進「輸入」分頁。</p>
     <textarea id="kiPineSrc" class="kparea" rows="12" placeholder="//@version=5&#10;indicator(...)&#10;..." spellcheck="false"></textarea><p class="kshint" id="kiPineMsg" role="status"></p></div>
     <div class="ksfoot"><span class="spacer"></span><button class="btn" data-pi="x">取消</button><button class="btn ksok" data-pi="ok">匯入</button></div>`;
   d.onclick = e => { const b = e.target.closest('[data-pi]'); if (!b) return; if (b.dataset.pi === 'x') return d.close();
     const L = pineParse($('kiPineSrc').value || ''); if (!L.length) { $('kiPineMsg').textContent = '找不到任何 input 設定，請確認貼的是完整的 Pine 程式碼。'; return; }
-    it.pine = { inputs: L, vals: (it.pine && it.pine.vals) || {}, at: Date.now(), pv: 2, src: $('kiPineSrc').value.slice(0, 200000) }; KI.key = ''; kiSave(); d.close(); kiDlgDraw();
+    it.pine = { inputs: L, vals: (it.pine && it.pine.vals) || {}, at: Date.now(), pv: 2, src: $('kiPineSrc').value.slice(0, 200000) }; kiTouch(); kiSaveFor(KID.vid); d.close(); kiDlgDraw();
     const n = Object.keys(kiPineMap(it)).length; alert(`匯入了 ${L.length} 個設定，其中 ${n} 個會直接影響這裡的圖（設定旁邊有藍點）。`); };
   d.showModal(); setTimeout(() => $('kiPineSrc').focus(), 50);
 }
-const KID = { i: -1, tab: 'in', saved: null };
-const D0 = () => KI_DEF[KI.list[KID.i].id] || {};
-function kiDlg(i) {                                     // ⚙ 指標設定視窗（照 TradingView：輸入／樣式／可見性；改了馬上預覽，取消就還原）
-  kdMenuClose(); KID.i = i; KID.tab = 'in'; KID.saved = JSON.stringify(KI.list[i]);
+const KID = { i: -1, tab: 'in', saved: null, vid: 'm0' };
+const kidList = () => kiListFor(KID.vid);
+function kiTouch() { if (KID.vid === 'm0') { KI.key = ''; kiLegend(); } else { const P = KM.panes[+KID.vid.slice(1)]; if (P) { P.key = ''; kmLegendInd(P); } } }
+const kiListFor = vid => vid && vid !== 'm0' ? ((KM.panes[+vid.slice(1)] || {}).ind || []) : KI.list;   // 每一格自己的指標
+function kiSaveFor(vid) { if (!vid || vid === 'm0') return kiSave(); const P = KM.panes[+vid.slice(1)]; if (P) { P.key = ''; kmSave(); kmLegendInd(P); } }
+const KIF = { fold: LS.get('kiFold', {}) };
+
+const D0 = () => KI_DEF[kidList()[KID.i].id] || {};
+function kiDlg(i, vid) {
+  KID.vid = vid || 'm0';                                     // ⚙ 指標設定視窗（照 TradingView：輸入／樣式／可見性；改了馬上預覽，取消就還原）
+  kdMenuClose(); KID.i = i; KID.tab = 'in'; KID.saved = JSON.stringify(kidList()[i]);
   let d = $('kiDlgE'); if (!d) { d = document.createElement('dialog'); d.id = 'kiDlgE'; d.className = 'kldlg kidlg'; d.setAttribute('aria-labelledby', 'kiDlgT'); document.body.appendChild(d);
     d.addEventListener('cancel', e => { e.preventDefault(); kiDlgCancel(); });
-    const upd = e => { const t = e.target, it = KI.list[KID.i]; if (!it) return;
+    const upd = e => { const t = e.target, it = kidList()[KID.i]; if (!it) return;
       if (t.id === 'kiDefSel') { const v = t.value; t.value = ''; const my = LS.get('kiMyDef', {});
         if (v === 'reset') { delete it.p; delete it.g; delete it.vis; if (it.pine) it.pine.vals = {}; } if (v === 'save') { my[it.id] = { p: it.p || {}, g: it.g || {}, vis: it.vis || {} }; LS.set('kiMyDef', my); alert('已存成這個指標的預設值，之後新加入的都會用這組設定'); } if (v === 'my' && my[it.id]) Object.assign(it, JSON.parse(JSON.stringify(my[it.id])));
-        KI.key = ''; kiLegend(); return kiDlgDraw(); }
-      if (t.dataset.kig) { it.g = { ...(it.g || {}) }; it.g[t.dataset.kig] = t.type === 'checkbox' ? t.checked : t.value; KI.key = ''; kiLegend(); return; }
-      if (t.dataset.kivis) { it.vis = { min: true, hour: true, day: true, week: true, ...(it.vis || {}) }; it.vis[t.dataset.kivis] = t.checked; KI.key = ''; kiLegend(); return; }
+        kiTouch(); return kiDlgDraw(); }
+      if (t.dataset.kig) { it.g = { ...(it.g || {}) }; it.g[t.dataset.kig] = t.type === 'checkbox' ? t.checked : t.value; kiTouch(); return; }
+      if (t.dataset.kivis) { it.vis = { min: true, hour: true, day: true, week: true, ...(it.vis || {}) }; it.vis[t.dataset.kivis] = t.checked; kiTouch(); return; }
       if (t.dataset.kpi && it.pine) { const pi = it.pine.inputs.find(x => x.v === t.dataset.kpi); if (!pi) return; it.pine.vals = { ...(it.pine.vals || {}) };
-        it.pine.vals[pi.v] = t.type === 'checkbox' ? t.checked : (pi.ty === 'int' || pi.ty === 'float') && !(pi.opts && pi.opts.length) ? (t.value === '' ? pi.def : +t.value) : t.value; if (t.type === 'color') t.parentElement.style.setProperty('--c', t.value); KI.key = ''; kiLegend(); return; }
+        it.pine.vals[pi.v] = t.type === 'checkbox' ? t.checked : (pi.ty === 'int' || pi.ty === 'float') && !(pi.opts && pi.opts.length) ? (t.value === '' ? pi.def : +t.value) : t.value; if (t.type === 'color') t.parentElement.style.setProperty('--c', t.value); kiTouch(); return; }
       if (!t.dataset.kip) return; const def = KI_DEF[it.id].p.find(x => x[0] === t.dataset.kip); it.p = { ...(it.p || {}) };
       if (def[6] === 'b') it.p[def[0]] = t.checked; else if (def[6] === 'c') { it.p[def[0]] = t.value; t.parentElement.style.setProperty('--c', t.value); } else if (def[6] === 's') it.p[def[0]] = t.value; else { const v = +t.value; if (t.value !== '' && isFinite(v)) it.p[def[0]] = Math.max(def[3], Math.min(def[4], v)); }
-      KI.key = ''; kiLegend(); };
+      kiTouch(); };
     d.addEventListener('input', upd); d.addEventListener('change', upd);
     d.addEventListener('click', e => { const b = e.target.closest('[data-kitab],[data-kiact]'); if (!b) return;
       if (b.dataset.kitab) { KID.tab = b.dataset.kitab; return kiDlgDraw(); }
-      const a = b.dataset.kiact; if (a === 'cancel') kiDlgCancel(); if (a === 'ok') { kiSave(); d.close(); } if (a === 'pine') kiPineImport(KID.i); if (a === 'edit') { d.close(); kpOpen(D0().sid); } if (a === 'unpine' && confirm('移除匯入的 TradingView 設定，改回這裡的簡易設定？')) { delete KI.list[KID.i].pine; KI.key = ''; kiLegend(); kiDlgDraw(); } }); }
+      const a = b.dataset.kiact; if (a === 'cancel') kiDlgCancel(); if (a === 'ok') { kiSaveFor(KID.vid); d.close(); } if (a === 'pine') kiPineImport(KID.i); if (a === 'edit') { d.close(); kpOpen(D0().sid); } if (a === 'unpine' && confirm('移除匯入的 TradingView 設定，改回這裡的簡易設定？')) { delete kidList()[KID.i].pine; kiTouch(); kiDlgDraw(); } }); }
   kiDlgDraw(); d.showModal();
 }
 function kiDlgDraw() {
-  const d = $('kiDlgE'), it = KI.list[KID.i], D = KI_DEF[it.id], P = kiP(it), G = kiG(it), V = { min: true, hour: true, day: true, week: true, ...(it.vis || {}) }, my = LS.get('kiMyDef', {})[it.id];
+  const d = $('kiDlgE'), it = kidList()[KID.i], D = KI_DEF[it.id], P = kiP(it), G = kiG(it), V = { min: true, hour: true, day: true, week: true, ...(it.vis || {}) }, my = LS.get('kiMyDef', {})[it.id];
   const row = ([k, n, , mn, mx, st, ty, opts]) => k === '_h' ? `<h4>${n}</h4>`
     : ty === 'b' ? `<label class="ksrow"><input type="checkbox" data-kip="${k}"${P[k] ? ' checked' : ''}><span>${n}</span></label>`
     : ty === 'c' ? `<div class="kirow2"><span>${n}</span><span class="kscol" style="--c:${esc(P[k])}"><input type="color" data-kip="${k}" value="${ksHex(P[k]) || '#000000'}" aria-label="${n}"></span></div>`
@@ -5376,7 +5403,7 @@ function kiDlgDraw() {
     <div class="ksmain kimain" role="tabpanel">${body}</div>
     <div class="ksfoot"><select id="kiDefSel" aria-label="預設值"><option value="">預設值</option><option value="reset">重設設定</option><option value="save">儲存為預設值</option>${my ? '<option value="my">套用我的預設值</option>' : ''}</select><span class="spacer"></span><button class="btn" data-kiact="cancel">取消</button><button class="btn ksok" data-kiact="ok">確認</button></div>`;
 }
-function kiDlgCancel() { const o = JSON.parse(KID.saved), it = KI.list[KID.i]; if (it) { for (const k of Object.keys(it)) delete it[k]; Object.assign(it, o); KI.key = ''; kiLegend(); } $('kiDlgE').close(); }
+function kiDlgCancel() { const o = JSON.parse(KID.saved), it = kidList()[KID.i]; if (it) { for (const k of Object.keys(it)) delete it[k]; Object.assign(it, o); kiTouch(); } $('kiDlgE').close(); }
 /* ---------- 📝 Pine Script 執行器（Pine v5 的常用子集）：把使用者寫的 Pine 程式一根一根 K 棒跑出來 ---------- */
 const PN = (() => {
   class PineErr extends Error { constructor(msg, line) { super(msg); this.line = line; } }
@@ -5731,6 +5758,7 @@ const PN = (() => {
 })();
 
 /* ---------- 📝 Pine 編輯器：自己寫 Pine 程式，加到 K 線圖上（支援 Pine v5 常用語法） ---------- */
+let KVID = 'm0';   // 目前在畫哪一格（m0＝主圖、p0～p4＝其他格）
 const KP = { scripts: LS.get('klPine', []), cur: null, open: false, series: {}, pls: {}, pane: null, paneSeries: {}, res: {}, lastRun: {}, sync: false };
 const KP_TPL = `//@version=5
 indicator("我的指標", overlay = true)
@@ -5764,12 +5792,12 @@ for (const it of KI.list) if (/^pine:/.test(it.id) && !it.pine) { const sc = KP.
 function kpInputs(it) { const o = {}; if (it && it.pine) for (const pi of it.pine.inputs) if (it.pine.vals && it.pine.vals[pi.v] !== undefined) o[pi.ln] = it.pine.vals[pi.v]; return o; }
 function kpRun(sid, B, it) {                             // 執行腳本（太頻繁的話 2 秒內沿用上一次的結果，最新一根還是會更新）
   const sc = KP.scripts.find(s => s.id === sid); if (!sc) return { note: '找不到這個腳本' };
-  const key = `${KL.sym}|${KL.tf}|${B.length}|${B.length ? B[B.length - 1].t : 0}|${JSON.stringify(it && it.pine ? it.pine.vals : {})}|${sc.at}`, L = KP.lastRun[sid];
+  const key = `${KL.sym}|${KL.tf}|${B.length}|${B.length ? B[B.length - 1].t : 0}|${JSON.stringify(it && it.pine ? it.pine.vals : {})}|${sc.at}`, L = KP.lastRun[KVID + '|' + sid];
   if (L && L.key === key && Date.now() - L.at < 2000) return L.res;
   let res;
   try { const t0 = performance.now(), ast = PN.parse(sc.code), o = PN.run(ast, B, { sec: KL_SEC[KL.tf] || 60, tf: KL.tf, sym: KL.sym, inputs: kpInputs(it) }); res = kpConv(o, B, sid); res.ms = Math.round(performance.now() - t0); res.meta = o.meta; KP.err = KP.err || {}; delete KP.err[sid]; }
   catch (e) { res = { note: `第 ${e.line || '?'} 行：${e.message}` }; KP.err = KP.err || {}; KP.err[sid] = { msg: e.message, line: e.line }; }
-  KP.lastRun[sid] = { key, at: Date.now(), res }; KP.res[sid] = res; kpApply(); if (KP.open && KP.cur === sid) kpConsole(); return res;
+  KP.lastRun[KVID + '|' + sid] = { key, at: Date.now(), res }; KP.res[KVID + '|' + sid] = res; kpApply(); if (KVID === 'm0' && KP.open && KP.cur === sid) kpConsole(); return res;
 }
 function kpX(B, x, xloc) { if (xloc === 'bt') return +x; const k = Math.round(+x), n = B.length, sec = (KL_SEC[KL.tf] || 60) * 1000; return k < n ? (k >= 0 ? B[k].t : B[0].t + k * sec) : B[n - 1].t + (k - n + 1) * sec; }
 const kpCol = c => c == null || (typeof c === 'number' && isNaN(c)) ? null : String(c);
@@ -5795,25 +5823,25 @@ function kpPane(on) {                                     // 副圖（overlay = 
 function kpApply() {                                     // 依照目前開著的腳本，建立／更新／移除圖上的線條
   if (!KL.ch || !KL.data.length) return;
   const act = KI.list.filter(it => /^pine:/.test(it.id) && it.on && !(it.vis && it.vis[kdCat(KL.tf)] === false)), want = new Set(), D = KL.data, marks = [];
-  const needPane = act.some(it => { const r = KP.res[it.id.slice(5)]; return r && r.plots && r.overlay === false; }); kpPane(needPane);
+  const needPane = KVID === 'm0' && act.some(it => { const r = KP.res['m0|' + it.id.slice(5)]; return r && r.plots && r.overlay === false; }); if (KVID === 'm0') kpPane(needPane);
   for (const it of act) {
-    const sid = it.id.slice(5), r = KP.res[sid]; if (!r || !r.plots) continue; const ch = r.overlay === false ? KP.pane : KL.ch; if (!ch) continue; const G = kiG(it);
+    const sid = it.id.slice(5), r = KP.res[KVID + '|' + sid]; if (!r || !r.plots || (r.overlay === false && KVID !== 'm0')) continue;   // 副圖的腳本只畫在主圖 const ch = r.overlay === false ? KP.pane : KL.ch; if (!ch) continue; const G = kiG(it);
     let first = null;
     for (const p of r.plots) {
-      if (p.dsp === 'none') continue; const key = `${sid}|${p.id}|${r.overlay === false ? 'p' : 'm'}`; want.add(key); let S = KP.series[key];
+      if (p.dsp === 'none') continue; const key = `${KVID}|${sid}|${p.id}|${r.overlay === false ? 'p' : 'm'}`; want.add(key); let S = KP.series[key];
       const hist = ['histogram', 'columns'].includes(p.sty), col0 = p.c.find(Boolean) || '#2962ff';
       if (!S) { S = KP.series[key] = { s: hist ? ch.addHistogramSeries({ priceLineVisible: false, lastValueVisible: r.overlay === false, base: 0 }) : ch.addLineSeries({ lineWidth: p.lw || 1, priceLineVisible: false, lastValueVisible: r.overlay === false, crosshairMarkerVisible: false, lineType: p.sty === 'stepline' ? 1 : 0, lineVisible: !['circles', 'cross'].includes(p.sty), pointMarkersVisible: ['circles', 'cross'].includes(p.sty) }), ch, pl: [] }; }
       S.s.applyOptions({ color: col0, title: G.inp ? '' : '' });
       const off = p.off || 0, data = D.map((b, k) => { const j = k - off, v = j >= 0 && j < p.v.length ? p.v[j] : NaN, c = j >= 0 ? p.c[j] : null; return isFinite(v) ? (c ? { time: b.time, value: v, color: c } : { time: b.time, value: v }) : { time: b.time }; });
       S.s.setData(data); if (!first) first = S;
     }
-    for (const h of r.hlines || []) { const base = r.overlay === false ? first : null, tgt = base ? base.s : KL.cs; if (!tgt) continue; const key = `${sid}|hl|${h.p}|${r.overlay === false ? 'p' : 'm'}`; want.add(key);
+    for (const h of r.hlines || []) { const base = r.overlay === false ? first : null, tgt = base ? base.s : KL.cs; if (!tgt) continue; const key = `${KVID}|${sid}|hl|${h.p}|${r.overlay === false ? 'p' : 'm'}`; want.add(key);
       if (!KP.pls[key]) KP.pls[key] = { tgt, pl: tgt.createPriceLine({ price: h.p, color: kpCol(h.color) || '#787b86', lineWidth: h.lw || 1, lineStyle: h.sty === 'solid' ? 0 : h.sty === 'dotted' ? 1 : 2, axisLabelVisible: true, title: h.title || '' }) }; }
     if (G.lab && r.overlay !== false) for (const s of r.shapes || []) { const b = D[s.i]; if (!b) continue; const up = /up|below/.test(s.sty) || s.loc === 'belowbar';
       marks.push({ time: b.time, position: s.loc === 'belowbar' ? 'belowBar' : s.loc === 'abovebar' ? 'aboveBar' : 'inBar', color: kpCol(s.color) || '#2962ff', shape: /triangleup|arrowup|labelup/.test(s.sty) ? 'arrowUp' : /triangledown|arrowdown|labeldown/.test(s.sty) ? 'arrowDown' : s.sty === 'circle' || s.sty === 'char' ? 'circle' : 'square', text: s.ch ? s.ch + (s.text ? ' ' + s.text : '') : String(s.text || ''), size: { tiny: 0.5, small: 1, normal: 1.4, large: 2, huge: 3, auto: 1 }[s.size] || 1 }); }
   }
-  for (const [k, S] of Object.entries(KP.series)) if (!want.has(k)) { try { S.ch.removeSeries(S.s); } catch (e) {} delete KP.series[k]; }
-  for (const [k, P] of Object.entries(KP.pls)) if (!want.has(k) || !Object.values(KP.series).some(S => S.s === P.tgt) && P.tgt !== KL.cs) { try { P.tgt.removePriceLine(P.pl); } catch (e) {} delete KP.pls[k]; }
+  for (const [k, S] of Object.entries(KP.series)) if (k.startsWith(KVID + '|') && !want.has(k)) { try { S.ch.removeSeries(S.s); } catch (e) {} delete KP.series[k]; }
+  for (const [k, P] of Object.entries(KP.pls)) if (k.startsWith(KVID + '|') && (!want.has(k)) || !Object.values(KP.series).some(S => S.s === P.tgt) && P.tgt !== KL.cs) { try { P.tgt.removePriceLine(P.pl); } catch (e) {} delete KP.pls[k]; }
   marks.sort((a, b) => a.time - b.time); try { KL.cs.setMarkers(marks); } catch (e) {}
 }
 /* ---- 編輯器 ---- */
@@ -5841,7 +5869,7 @@ function kpLines() { const ta = $('kpCode'), n = ta.value.split('\n').length, er
 function kpDirty(v) { KP.dirty = v; const b = document.querySelector('[data-kp2="save"]'); if (b) b.textContent = v ? '💾 儲存 •' : '💾 儲存'; }
 function kpConsole(msg, ok) {
   const el = $('kpCon'); if (!el) return; if (msg) { el.className = 'kpcon ' + (ok ? 'ok' : 'bad'); el.textContent = msg; return; }
-  const er = KP.err && KP.err[KP.cur], r = KP.res[KP.cur], on = KI.list.some(it => it.id === 'pine:' + KP.cur);
+  const er = KP.err && KP.err[KP.cur], r = KP.res['m0|' + KP.cur], on = KI.list.some(it => it.id === 'pine:' + KP.cur);
   el.className = 'kpcon' + (er ? ' bad' : r ? ' ok' : ''); el.textContent = er ? `❌ 第 ${er.line || '?'} 行：${er.msg}` : r ? `✅ 執行成功（${r.ms} 毫秒）・${r.plots.length} 條線、${(r.shapes || []).length} 個標記、${r.boxes.length} 個方框、${r.labels.length} 個標籤${r.overlay === false ? '・畫在副圖' : ''}` : on ? '執行中…' : '寫好後按「▶ 加到圖表」（Ctrl＋Enter）。支援 Pine v5 常用語法，按「？語法」看可以用哪些。'; kpLines();
 }
 function kpDo(a) {
@@ -5849,7 +5877,7 @@ function kpDo(a) {
   if (a === 'x') { if (KP.dirty && !confirm('目前的修改還沒儲存，確定要關閉？')) return; KP.open = false; $('kpEd').hidden = true; document.querySelector('.kl').classList.remove('kphas'); return; }
   if (a === 'new') { const nm = prompt('新腳本的名稱：', '我的指標 ' + (KP.scripts.length + 1)); if (!nm) return; const s = { id: Date.now().toString(36), name: nm.slice(0, 40), code: KP_TPL.replace('我的指標', nm.slice(0, 40)), at: Date.now() }; KP.scripts.push(s); kpSave(); kpReg(s); KP.cur = s.id; kpLoad(); return; }
   if (a === 'ren') { const nm = prompt('重新命名：', sc.name); if (!nm) return; sc.name = nm.slice(0, 40); kpSave(); kpReg(sc); kpLoad(); kiLegend(); return; }
-  if (a === 'del') { if (!confirm(`刪除腳本「${sc.name}」？圖上的這個指標也會移除。`)) return; KP.scripts = KP.scripts.filter(s => s !== sc); kpSave(); KI.list = KI.list.filter(it => it.id !== 'pine:' + sc.id); delete KI_DEF['pine:' + sc.id]; delete KP.res[sc.id]; kiSave(); kpApply(); if (!KP.scripts.length) return kpDo('x'); KP.cur = KP.scripts[0].id; kpLoad(); return; }
+  if (a === 'del') { if (!confirm(`刪除腳本「${sc.name}」？圖上的這個指標也會移除。`)) return; KP.scripts = KP.scripts.filter(s => s !== sc); kpSave(); KI.list = KI.list.filter(it => it.id !== 'pine:' + sc.id); delete KI_DEF['pine:' + sc.id]; for (const k of Object.keys(KP.res)) if (k.endsWith('|' + sc.id)) delete KP.res[k]; kiSave(); kpApply(); if (!KP.scripts.length) return kpDo('x'); KP.cur = KP.scripts[0].id; kpLoad(); return; }
   if (a === 'help') { kpConsole('支援：變數（var、:=、+=）、if／else if／else、for、while、自訂函式（=>）、[a, b] = 多個回傳值、x[1] 歷史值；input.int／float／bool／color／string／source；ta.sma／ema／rma／wma／hma／vwma／rsi／atr／tr／highest／lowest／stdev／change／crossover／crossunder／pivothigh／pivotlow／macd／bb／stoch／cci／vwap／supertrend／barssince／valuewhen；math.*、str.tostring／format、color.new／rgb；plot、plotshape、plotchar、hline、bgcolor、fill、box.new／line.new／label.new（含 set_*、delete）、array.*。還不支援：request.security、strategy、table、switch、type／method。', true); return; }
   if (a === 'save' || a === 'add') {
     const code = $('kpCode').value; try { PN.parse(code); } catch (e) { KP.err = KP.err || {}; KP.err[sc.id] = { msg: e.message, line: e.line }; kpConsole(); if (a === 'add') return; }
@@ -5857,7 +5885,7 @@ function kpDo(a) {
     const id = 'pine:' + sc.id, it = KI.list.find(x => x.id === id), inputs = pineParse(code);
     if (it) it.pine = { inputs, vals: (it.pine && it.pine.vals) || {}, pv: 2, src: '' };
     if (a === 'add' && !it) KI.list.push({ id, on: true, pine: { inputs, vals: {}, pv: 2, src: '' } });
-    delete KP.lastRun[sc.id]; kiSave(); kpConsole(a === 'add' ? '執行中…' : '已儲存', true); KI.key = '';
+    for (const k of Object.keys(KP.lastRun)) if (k.endsWith('|' + sc.id)) delete KP.lastRun[k]; kiSave(); for (const P of KM.panes) P.key = ''; kpConsole(a === 'add' ? '執行中…' : '已儲存', true); KI.key = '';
   }
 }
 /* ---------- 🔄 K 線圖跨裝置同步（同一個帳號：設定、指標、繪圖、Pine 腳本、收藏），🔒 圖表鎖 ---------- */
@@ -5887,7 +5915,7 @@ function ksyReload() {                                   // 重新讀取設定�
     for (const it of KI.list) if (/^pine:/.test(it.id) && !it.pine) { const sc = KP.scripts.find(s => 'pine:' + s.id === it.id); if (sc) it.pine = { inputs: pineParse(sc.code), vals: {}, pv: 2, src: '' }; }
     KI.list = KI.list.filter(it => !/^pine:/.test(it.id) || KP.scripts.some(s => 'pine:' + s.id === it.id));
     KD.fav = LS.get('klFav', []); KD.cursor = LS.get('klCur', 'cross'); KD.magnet = LS.get('klMag', false); KD.stay = LS.get('klStay', false);
-    if (KL.ch) { kdLoad(); kdEdit(); kdToolbar(); kdFavBar(); kdCursor(); KI.key = ''; kiLegend(); ksApply(); KM.cfg = LS.get('klPanes', []); KM.syncSym = LS.get('klSyncSym', false); const nl = LS.get('klLayout', '1'); if (nl !== KM.lay) kmLayout(nl); else KM.panes.forEach((P, i) => { const c = kmCfg(i); kmSet(P, c.sym, c.tf); }); }
+    if (KL.ch) { kdLoad(); kdEdit(); kdToolbar(); kdFavBar(); kdCursor(); kiTouch(); ksApply(); KM.cfg = LS.get('klPanes', []); KM.syncSym = LS.get('klSyncSym', false); const nl = LS.get('klLayout', '1'); if (nl !== KM.lay) kmLayout(nl); else KM.panes.forEach((P, i) => { const c = kmCfg(i); kmSet(P, c.sym, c.tf); }); }
   } catch (e) { console.error('同步套用失敗', e); }
 }
 function ksyBadge(t, bad) { const el = $('klSync'); if (!el) return; el.textContent = (bad ? '⚠ ' : '🔄 ') + t; el.className = 'klsync' + (bad ? ' bad' : ''); clearTimeout(KSY.bt); KSY.bt = setTimeout(() => { el.textContent = ''; }, 4000); }
@@ -5919,13 +5947,16 @@ async function klLockMenu() {                            // 擁有者：重新�
     if (a === '3') { const r = await srvFetch('/api/chartlock', { op: 'set', on: !KL.lockOn }); KL.lockOn = r.on; alert(r.on ? '已開啟圖表鎖' : '已關閉圖表鎖，大家都能直接使用'); } } catch (e) { alert(e.message); }
 }
 function kiBind() {
-  $('kiLg').addEventListener('click', e => { const b = e.target.closest('[data-kia]'); if (!b) return; e.stopPropagation(); const i = +b.closest('[data-ki]').dataset.ki, a = b.dataset.kia;
-    if (a === 'eye') { KI.list[i].on = !KI.list[i].on; kiSave(); } else if (a === 'del') { KI.list.splice(i, 1); kiSave(); } else kiDlg(i); });
-  $('kiLg').addEventListener('dblclick', e => { const r = e.target.closest('[data-ki]'); if (r) kiDlg(+r.dataset.ki); });   // 點兩下指標名稱也能打開設定
+  $('mnpKline').addEventListener('click', e => {               // 每一格的指標列：👁 ⚙ ✕、收起／展開
+    const host = e.target.closest('[data-kvid]'); if (!host) return; const vid = host.dataset.kvid, L = kiListFor(vid);
+    if (e.target.closest('[data-kifold]')) { e.stopPropagation(); KIF.fold[vid] = !KIF.fold[vid]; LS.set('kiFold', KIF.fold); if (vid === 'm0') kiLegend(); else kmLegendInd(KM.panes[+vid.slice(1)]); return; }
+    const b = e.target.closest('[data-kia]'); if (!b) return; e.stopPropagation(); const i = +b.closest('[data-ki]').dataset.ki, a = b.dataset.kia;
+    if (a === 'eye') { L[i].on = !L[i].on; kiSaveFor(vid); } else if (a === 'del') { L.splice(i, 1); kiSaveFor(vid); } else kiDlg(i, vid); }, true);
+  $('mnpKline').addEventListener('dblclick', e => { const host = e.target.closest('[data-kvid]'), r = e.target.closest('[data-ki]'); if (host && r) kiDlg(+r.dataset.ki, host.dataset.kvid); });   // 點兩下指標名稱也能打開設定
   $('klIndBtn').onclick = e => { e.stopPropagation(); kiAddMenu($('klIndBtn')); };
   $('klPineBtn').onclick = () => KP.open && !$('kpEd').hidden ? kpDo('x') : kpOpen();
   $('mnpKline').addEventListener('click', e => {
-    const a = e.target.closest('[data-kiadd]'); if (a) { const k = a.dataset.kiadd; if (!KI.list.some(x => x.id === k)) { const my = LS.get('kiMyDef', {})[k]; KI.list.push({ id: k, on: true, ...(my ? JSON.parse(JSON.stringify(my)) : {}) }); } kiSave(); kdMenuClose(); return; }
+    const a = e.target.closest('[data-kiadd]'); if (a) { const k = a.dataset.kiadd, L = kiListFor(KI.addVid); if (!L.some(x => x.id === k)) { const my = LS.get('kiMyDef', {})[k], it = { id: k, on: true, ...(my ? JSON.parse(JSON.stringify(my)) : {}) }; if (/^pine:/.test(k)) { const sc = KP.scripts.find(x => 'pine:' + x.id === k); if (sc) it.pine = { inputs: pineParse(sc.code), vals: {}, pv: 2, src: '' }; } L.push(it); } kiSaveFor(KI.addVid); kdMenuClose(); return; }
     const ok = e.target.closest('[data-kiok]'); if (ok) { const it = KI.list[+ok.dataset.kiok], p = {}; for (const inp of $('kdMenu').querySelectorAll('[data-kip]')) { const v = +inp.value; if (isFinite(v)) p[inp.dataset.kip] = Math.max(+inp.min, Math.min(+inp.max, v)); } it.p = p; kiSave(); kdMenuClose(); return; }
     const rs = e.target.closest('[data-kireset]'); if (rs) { delete KI.list[+rs.dataset.kireset].p; kiSave(); kdMenuClose(); }
   });
@@ -6707,6 +6738,10 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-03e', title: '2026/11/03 更新（每格都能加指標、指標名稱收起）', items: [
+    { ic: 'ƒx', t: '多重圖表的每一格都能加自己的指標（格子左上角的 ƒx），包含 Pine 腳本；設定、隱藏、移除跟主圖一樣，會跟著帳號同步。' },
+    { ic: '︿', t: '指標名稱可以收起來：按指標列下面的 ︿，只剩一個小小的「ƒx 3 ﹀」，不會擋到 K 棒，指標照樣畫在圖上；再按一下就展開。每一格分開記。' }
+  ] },
   { id: '2026-11-03d', title: '2026/11/03 更新（多重圖表）', items: [
     { ic: '▦', t: 'K 線圖新增多重圖表：上方的「▢ 1 格」可以選 1、2（左右／上下）、3、4、6 格。第 1 格是主圖（畫圖、指標、Pine 都在這裡），其他格可以各自選幣種和週期、即時更新；按 ⤢ 可以跟主圖交換。可以勾「同步幣種」讓所有格子跟著主圖換幣。版面和每格的設定會跟著帳號同步到其他裝置。' }
   ] },
