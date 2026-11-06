@@ -1090,6 +1090,13 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
 
 .kl select,.kl select option,.kldlg select option{color-scheme:dark}.kmtf option,.kl select option{background:#1e222d;color:#d1d4dc}.kmtf{color-scheme:dark}
 .krsel{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border:1px solid #2a2e39;border-radius:6px;font-size:12.5px;cursor:pointer}.krsel input{accent-color:#2962ff}
+
+.wxscene{position:relative}.wxstyle{position:absolute;right:10px;top:8px;z-index:3;border:1px solid rgba(148,163,184,.35);background:rgba(8,12,24,.7);color:#cbd5e1;border-radius:999px;padding:3px 10px;font-size:12px;cursor:pointer}.wxstyle:hover{border-color:#e879f9;color:#fff}
+
+.wxpop{position:absolute;z-index:4;width:min(250px,40%);background:rgba(6,10,22,.92);border:1px solid var(--c,#22d3ee);border-radius:8px;box-shadow:0 0 18px rgba(34,211,238,.25);font:11.5px/1.45 ui-monospace,Menlo,Consolas,monospace;color:#e2e8f0;pointer-events:none;transition:opacity .2s;overflow:hidden}
+.wxpoph{display:flex;align-items:center;gap:4px;padding:5px 8px;background:rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.08)}.wxpoph i{width:7px;height:7px;border-radius:50%;background:#ef4444}.wxpoph i:nth-child(2){background:#fbbf24}.wxpoph i:nth-child(3){background:#22c55e}.wxpoph b{margin-left:6px;color:var(--c,#22d3ee);font-size:12px}
+.wxpopl{padding:6px 8px 0;color:#f8fafc}.wxpopq{padding:2px 8px 0;color:#94a3b8;font-size:11px}.wxpopc{margin:6px 8px 8px;padding:6px 8px;background:#020617;border-radius:6px;color:#86efac;white-space:pre;overflow:hidden;min-height:5.6em;font-size:11px}.wxcur{color:var(--c,#22d3ee)}
+@media (max-width:700px){.wxpop{width:min(200px,55%);font-size:10.5px}}
 </style>
 </head>
 <body class="quant-on mn">
@@ -1289,7 +1296,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-03g</div>
+      <div class="qver" id="qVer">網站版本 2026-11-03j</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3749,7 +3756,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-03g・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-03j・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -6223,7 +6230,7 @@ function warRender() {
       <div class="wxtop"><b class="wxlogo">Quant <i>X</i></b><span class="wxtag">合約作戰室・訊號偵測 × 自動下單</span><span class="wxprog"><span id="wxProgT"></span><span class="wxbar"><i id="wxProg"></i></span><b id="wxProgP"></b></span><span class="wxclock" id="wxClock"></span></div>
       <div class="wxcards" id="wxCards"></div>
       <div class="wxx" id="wxX"></div>
-      <div class="wxscene"><div class="wxtick" id="wxTick"></div><canvas id="wxScene" aria-label="交易室動畫：8 個角色在各自的位置工作"></canvas></div>
+      <div class="wxscene"><div class="wxtick" id="wxTick"></div><button class="wxstyle" id="wxStyle" title="切換畫面風格"></button><canvas id="wxScene" aria-label="作戰室動畫：8 個角色是通道環，繞著駭客核心轉，接力時有資料封包飛過去"></canvas></div>
       <div class="wxbal"><div class="wxph"><b>BALANCE ・ 資金曲線</b><span id="wxBalSub"></span></div><div class="wxbalb"><canvas id="wxBal"></canvas><div class="wxbalv"><small>目前權益</small><b id="wxBalV"></b><span id="wxBalD"></span></div></div></div>
       <div class="wxlow"><div class="wxpanel"><div class="wxph"><b id="wxAnT">ANALYSIS</b><span id="wxAnS"></span></div><div class="wxan"><canvas id="wxK"></canvas><ul class="wxchk" id="wxChk"></ul></div></div>
         <div class="wxpanel"><div class="wxph"><b>thresholds ・ 條件</b><span>每一個數字都是系統相信的門檻</span></div><pre class="wxcode" id="wxCode"></pre><div class="wxpipe" id="wxPipe"></div></div></div>
@@ -6436,18 +6443,171 @@ function xDraw(g, w, h, now, reduce) {                // 休息區＋3 個額外
     g.fillStyle = on ? col : '#4b5468'; g.font = `bold ${Math.max(9, w * 0.0085)}px monospace`; g.textAlign = 'center'; g.fillText(en, X0, Y0 + sz * 0.95); g.textAlign = 'left';
   }
 }
-function warAnim() {
-  cancelAnimationFrame(WAR.raf); clearInterval(WAR.evT); WAR.evT = setInterval(warEvent, 5000); setTimeout(warEvent, 600);
-  const cv = $('wxScene'), reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (!WAR.io && 'IntersectionObserver' in window) { WAR.io = new IntersectionObserver(es => { WAR.vis = es[0].isIntersecting; }); WAR.io.observe(cv); WAR.vis = true; }
-  let last = 0;
-  const draw = now => {
-    if (!document.body.contains(cv)) return;
-    if (now - last < 33 || WAR.vis === false) { WAR.raf = requestAnimationFrame(draw); return; }   // 最多 30 FPS；捲到看不到時不畫
-    last = now;
-    const w = cv.clientWidth, h = cv.clientHeight, dpr = Math.min(1.5, devicePixelRatio || 1);
-    if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
-    const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
+/* ---------- 🪐 星系作戰室：8 個角色是帶環的星球，繞著「駭客核心」轉；每一次接力是一顆小行星沿著彩虹光環飛過去 ----------
+   效能：發光、漸層、細線都先畫在快取畫布上，每一格只做貼上和旋轉（最多 30 FPS，看不到時暫停） */
+const GX = { C: null, rain: null, rw: 0, rainAt: 0, glitch: 0, hex: '', hexAt: 0, pulses: [] };
+const GX_RB = ['#ff3b3b', '#ff8c1a', '#ffd60a', '#2ee86a', '#2f8bff', '#5b3cff', '#b14cff', '#ff4fd8'];   // 紅橙黃綠藍靛紫（第 8 顆用粉紅）
+const GX_GLY = '0123456789ABCDEFXΣΔ#$%&<>/\\|';
+const gxCv = (w, h, d) => { const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(w * d)); c.height = Math.max(1, Math.round(h * d)); const g = c.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0); return [c, g]; };
+const gxHue = a => `hsl(${((a / (Math.PI * 2)) * 290 + 360) % 360},100%,62%)`;   // 角度 → 彩虹色（紅→紫）
+function gxBuild(w, h, d) {
+  const C = { key: `${w}x${h}x${d}`, d, cx: w * 0.5, cy: h * 0.53, Rx: w * 0.27, Ry: h * 0.30, R: Math.min(w * 0.065, h * 0.14), pr: Math.min(w * 0.022, h * 0.046) };
+  const { cx, cy, Rx, R, pr } = C;
+  { const [c, g] = gxCv(w, h, d), bg = g.createRadialGradient(cx, cy, 10, cx, cy, w * 0.65); bg.addColorStop(0, '#0c1230'); bg.addColorStop(0.6, '#060917'); bg.addColorStop(1, '#020309'); g.fillStyle = bg; g.fillRect(0, 0, w, h);   // 星空
+    for (let i = 0; i < 260; i++) { const x = Math.random() * w, y = Math.random() * h, r = Math.random() < 0.08 ? 1.4 : 0.6 + Math.random() * 0.5; g.fillStyle = `rgba(${200 + Math.random() * 55},${200 + Math.random() * 55},255,${0.25 + Math.random() * 0.6})`; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); }
+    for (const [x, y, rr, col] of [[w * 0.18, h * 0.25, w * 0.18, 'rgba(139,92,246,.07)'], [w * 0.82, h * 0.7, w * 0.2, 'rgba(236,72,153,.06)'], [w * 0.6, h * 0.15, w * 0.15, 'rgba(34,211,238,.05)']]) { const ng = g.createRadialGradient(x, y, 0, x, y, rr); ng.addColorStop(0, col); ng.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = ng; g.fillRect(0, 0, w, h); }
+    C.bg = c; }
+  // 大光環：3 層彩虹細線（畫成正圓，貼上時壓扁成橢圓、各自轉）
+  const S = Rx * 2.6; C.S = S; C.ring = [];
+  for (let L = 0; L < 2; L++) { const [c, g] = gxCv(S, S, d * 0.6); g.setTransform(d * 0.6, 0, 0, d * 0.6, 0, 0); g.globalCompositeOperation = 'lighter'; g.lineWidth = 1;
+    for (let s = 0; s < 28; s++) { const k = 2 + ((s + L) % 4), ph = (s * 3 + L) * 2.399, wob = 0.05 + ((s + L) % 6) * 0.014, al = 0.16 + (s % 5) * 0.035, N = 140; let px = 0, py = 0;
+      for (let j = 0; j <= N; j++) { const a = j / N * Math.PI * 2, r = Rx * (1 + wob * Math.sin(a * k + ph) + 0.035 * Math.sin(a * 9 + s)), x = S / 2 + r * Math.cos(a), y = S / 2 + r * Math.sin(a);
+        if (j) { g.strokeStyle = gxHue(a); g.globalAlpha = al; g.beginPath(); g.moveTo(px, py); g.lineTo(x, y); g.stroke(); } px = x; py = y; } }
+    C.ring.push(c); }
+  { const g = C.bg.getContext('2d'); g.save(); g.setTransform(d, 0, 0, d, 0, 0); g.globalCompositeOperation = 'lighter'; g.translate(cx, cy); g.scale(1, C.Ry / Rx); g.drawImage(C.ring[0], -S / 2, -S / 2, S, S); g.restore(); C.ring = [C.ring[1]]; }   // 一層畫進背景（不動），只有一層在轉
+  // 通道環：每個角色是一個由很多細線組成、斜放的環（像蟲洞通道），分成「後半＋光暈」「前半」兩張，前後交錯畫出立體感
+  C.pl = {}; const z = pr * 6;
+  const torus = (gb, gf, col) => {
+    const o = z / 2, Rm = pr * 1.6, rm = pr * 0.42, al = 1.0, be = -0.32, ca = Math.cos(al), sa = Math.sin(al), cb = Math.cos(be), sb = Math.sin(be), N = 96;
+    const P = (th, ph) => { const X = (Rm + rm * Math.cos(ph)) * Math.cos(th), Y = (Rm + rm * Math.cos(ph)) * Math.sin(th), Zz = rm * Math.sin(ph), y1 = Y * ca - Zz * sa, z1 = Y * sa + Zz * ca; return [o + X * cb - y1 * sb, o + X * sb + y1 * cb, z1]; };
+    const strand = (phOf, alpha, lw) => { let prev = null; for (let j = 0; j <= N; j++) { const th = j / N * Math.PI * 2, cur = P(th, phOf(th)); if (prev) { const g = (prev[2] + cur[2]) / 2 >= 0 ? gf : gb; g.globalAlpha = alpha * (0.55 + 0.45 * Math.max(0, Math.cos(phOf(th)))); g.lineWidth = lw; g.strokeStyle = col; g.beginPath(); g.moveTo(prev[0], prev[1]); g.lineTo(cur[0], cur[1]); g.stroke(); } prev = cur; } };
+    for (const g of [gb, gf]) { g.globalCompositeOperation = 'lighter'; g.lineCap = 'round'; }
+    for (let i = 0; i < 14; i++) { const ph0 = i / 14 * Math.PI * 2; strand(() => ph0, 0.5, 1); }                      // 沿著環的細線（管子的表面）
+    for (let i = 0; i < 8; i++) { const ph0 = i / 8 * Math.PI * 2, k = (i % 2 ? 1 : -1) * (3 + (i % 3)); strand(th => ph0 + k * th, 0.28, 0.9); }   // 繞著管子轉的螺旋線（通道的感覺）
+    for (let i = 0; i < 3; i++) { const ph0 = i * 2.1; strand(th => ph0 + 0.4 * Math.sin(th * 5 + i), 0.85, 1.6); }         // 比較亮的幾條
+    gf.globalAlpha = 1; gb.globalAlpha = 1;
+  };
+  ROLE.forEach(([k], i) => { const rc = GX_RB[i % GX_RB.length];
+    const [b, gb] = gxCv(z, z, d), hg = gb.createRadialGradient(z / 2, z / 2, pr * 0.3, z / 2, z / 2, pr * 2.6); hg.addColorStop(0, rc + '30'); hg.addColorStop(1, rc + '00'); gb.fillStyle = hg; gb.fillRect(0, 0, z, z);
+    const [f, gf] = gxCv(z, z, d); torus(gb, gf, rc);
+    const [gl, gg] = gxCv(z, z, d), g2 = gg.createRadialGradient(z / 2, z / 2, 0, z / 2, z / 2, z / 2); g2.addColorStop(0, rc + 'aa'); g2.addColorStop(0.4, rc + '33'); g2.addColorStop(1, rc + '00'); gg.fillStyle = g2; gg.fillRect(0, 0, z, z);
+    C.pl[k] = { back: b, ball: null, front: f, glow: gl, rc, rx: pr * 1.6, ry: pr * 1.6 * Math.cos(1.0), rot: -0.32 }; });
+  C.pz = z;
+  // 小衛星（額外進場）
+  C.moon = {}; for (const [k, , , col] of XL) { const mz = pr * 3, [c, g] = gxCv(mz, mz, d), o = mz / 2, r = pr * 0.55, mg = g.createRadialGradient(o - r * 0.3, o - r * 0.3, r * 0.1, o, o, r); mg.addColorStop(0, '#ffffff'); mg.addColorStop(0.3, col); mg.addColorStop(1, '#06070d'); g.fillStyle = mg; g.beginPath(); g.arc(o, o, r, 0, 7); g.fill(); C.moon[k] = c; } C.mz = pr * 3;
+  // 資料封包（取代小行星）：霓虹六角形＋中間的 </>，飛的時候後面拖著 0 和 1
+  { const az = pr * 1.5, [c, g] = gxCv(az, az, d), o = az / 2, r = az * 0.36; g.lineJoin = 'round';
+    const hex = rr => { g.beginPath(); for (let i = 0; i < 6; i++) { const a = Math.PI / 6 + i * Math.PI / 3; i ? g.lineTo(o + rr * Math.cos(a), o + rr * Math.sin(a)) : g.moveTo(o + rr * Math.cos(a), o + rr * Math.sin(a)); } g.closePath(); };
+    hex(r); g.fillStyle = 'rgba(2,6,20,.92)'; g.fill(); g.shadowColor = '#22d3ee'; g.shadowBlur = az * 0.18; g.strokeStyle = '#22d3ee'; g.lineWidth = Math.max(1.5, az * 0.06); g.stroke();
+    hex(r * 0.72); g.shadowBlur = 0; g.strokeStyle = 'rgba(232,121,249,.85)'; g.lineWidth = 1; g.stroke();
+    g.fillStyle = '#e0fbff'; g.font = `bold ${Math.round(az * 0.26)}px ui-monospace,Menlo,monospace`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.shadowColor = '#22d3ee'; g.shadowBlur = 6; g.fillText('</>', o, o + 0.5);
+    C.ast = c; C.az = az; }
+  C.dot = {}; GX_RB.forEach(col => { const [c, g] = gxCv(24, 24, d), dg = g.createRadialGradient(12, 12, 0, 12, 12, 12); dg.addColorStop(0, '#ffffff'); dg.addColorStop(0.3, col); dg.addColorStop(1, col + '00'); g.fillStyle = dg; g.fillRect(0, 0, 24, 24); C.dot[col] = c; });
+  // 駭客核心：刻度環、X（正常／紅／藍）
+  C.cring = [[R * 1.08, 36, '#22d3ee', 1.2, 0.35], [R * 1.2, 12, '#e879f9', 2.5, 0.55], [R * 1.33, 60, 'rgba(148,163,184,.55)', 1.2, 0.35], [R * 1.5, 4, 'rgba(34,211,238,.55)', 1.5, 0.18]].map(([rr, seg, col, lw, frac]) => { const zz = rr * 2 + 24, [c, g] = gxCv(zz, zz, d); g.strokeStyle = col; g.lineWidth = lw; g.shadowColor = col; g.shadowBlur = 6;
+    for (let q = 0; q < seg; q++) { const a0 = q / seg * Math.PI * 2; g.beginPath(); g.arc(zz / 2, zz / 2, rr, a0, a0 + Math.PI * 2 / seg * frac); g.stroke(); } if (seg === 60) { g.shadowBlur = 0; for (let q = 0; q < 120; q++) { const a = q / 120 * Math.PI * 2, l = q % 10 ? 3 : 7; g.beginPath(); g.moveTo(zz / 2 + Math.cos(a) * (rr + 3), zz / 2 + Math.sin(a) * (rr + 3)); g.lineTo(zz / 2 + Math.cos(a) * (rr + 3 + l), zz / 2 + Math.sin(a) * (rr + 3 + l)); g.stroke(); } } return c; });
+  const X0 = R * 0.5, lw = R * 0.19, xz = R * 2.4, mkX = col => { const [c, g] = gxCv(xz, xz, d), o = xz / 2; g.lineCap = 'round'; g.lineWidth = lw; g.shadowBlur = R * 0.35;
+    if (col === 'grad') { const xg = g.createLinearGradient(o - X0, o - X0, o + X0, o + X0); xg.addColorStop(0, '#f472b6'); xg.addColorStop(0.5, '#ffffff'); xg.addColorStop(1, '#22d3ee'); g.strokeStyle = xg; g.shadowColor = '#e879f9'; } else { g.strokeStyle = col; g.shadowColor = col; }
+    g.beginPath(); g.moveTo(o - X0, o - X0); g.lineTo(o + X0, o + X0); g.moveTo(o + X0, o - X0); g.lineTo(o - X0, o + X0); g.stroke();
+    if (col === 'grad') { g.shadowBlur = 0; g.strokeStyle = 'rgba(10,15,30,.85)'; g.lineWidth = lw * 0.26; g.beginPath(); g.moveTo(o - X0 * 0.75, o - X0 * 0.75); g.lineTo(o + X0 * 0.75, o + X0 * 0.75); g.moveTo(o + X0 * 0.75, o - X0 * 0.75); g.lineTo(o - X0 * 0.75, o + X0 * 0.75); g.stroke(); } return c; };
+  C.X = mkX('grad'); C.Xr = mkX('rgba(255,40,120,.85)'); C.Xc = mkX('rgba(40,220,255,.85)'); C.xz = xz;
+  { const [c] = gxCv(R * 2, R * 2, Math.min(d, 1)); C.rainC = c; }
+  return C;
+}
+function gxRain(C, now, reduce) {                        // 核心裡的矩陣字雨（每秒更新 20 次）
+  if (now - GX.rainAt < 50) return; GX.rainAt = now; const R = C.R, c = C.rainC, g = c.getContext('2d'), dd = c.width / (R * 2); g.setTransform(dd, 0, 0, dd, 0, 0); g.clearRect(0, 0, R * 2, R * 2);
+  const bg = g.createRadialGradient(R, R, R * 0.1, R, R, R); bg.addColorStop(0, '#0e1a36'); bg.addColorStop(1, '#02050c'); g.fillStyle = bg; g.beginPath(); g.arc(R, R, R, 0, 7); g.fill(); g.save(); g.beginPath(); g.arc(R, R, R * 0.97, 0, 7); g.clip();
+  const fs = Math.max(8, R * 0.13), cols = Math.ceil(R * 2 / fs);
+  if (!GX.rain || GX.rw !== cols) { GX.rain = Array.from({ length: cols }, () => ({ y: Math.random() * R * 2, v: 0.6 + Math.random() * 1.6, s: Array.from({ length: 12 }, () => GX_GLY[Math.floor(Math.random() * GX_GLY.length)]) })); GX.rw = cols; }
+  g.font = `${fs}px ui-monospace,Menlo,monospace`; g.textAlign = 'center';
+  GX.rain.forEach((cl, i) => { if (!reduce) cl.y += cl.v * fs * 0.35; if (cl.y > R * 2 + fs * 12) { cl.y = -Math.random() * R; cl.v = 0.6 + Math.random() * 1.6; } if (Math.random() < 0.08) cl.s[Math.floor(Math.random() * 12)] = GX_GLY[Math.floor(Math.random() * GX_GLY.length)];
+    const x = i * fs + fs / 2; cl.s.forEach((ch, j) => { const y = cl.y - j * fs; if (y < -fs || y > R * 2 + fs) return; g.fillStyle = j === 0 ? 'rgba(220,255,240,.95)' : `rgba(${j < 4 ? '45,255,180' : '20,180,255'},${Math.max(0, 0.55 - j * 0.045)})`; g.fillText(ch, x, y); }); });
+  const sy = (now / 18) % (R * 2), sgr = g.createLinearGradient(0, sy - R * 0.25, 0, sy); sgr.addColorStop(0, 'rgba(0,255,200,0)'); sgr.addColorStop(1, 'rgba(0,255,200,.22)'); g.fillStyle = sgr; g.fillRect(0, sy - R * 0.25, R * 2, R * 0.25); g.restore();
+}
+function gxHud(g, w, h, now) {                           // 左上角：權益小螢幕（跟 BALANCE 同一套算法）
+  const D = WAR.d; if (!D) return; const x0 = w * 0.015, y0 = h * 0.06, sw = w * 0.2, sh = h * 0.24, fs = Math.max(9, w * 0.0095);
+  g.fillStyle = 'rgba(5,8,18,.82)'; g.strokeStyle = 'rgba(99,102,241,.4)'; g.lineWidth = 1; g.beginPath(); g.roundRect ? g.roundRect(x0, y0, sw, sh, 6) : g.rect(x0, y0, sw, sh); g.fill(); g.stroke();
+  const cl = D.trades.filter(t => t.status !== 'open' && t.exitAt).slice().sort((a, b) => a.exitAt - b.exitAt).slice(-40), st0 = D.eq - cl.reduce((a, t) => a + wNet(t), 0); let v = st0; const p = [st0, ...cl.map(t => (v += wNet(t)))]; if (D.open.length || p.length < 2) p.push(D.eq);
+  const ch = D.eq - st0, col = ch >= 0 ? '#34d399' : '#f87171';
+  g.fillStyle = '#7dd3fc'; g.font = `bold ${fs}px monospace`; g.fillText(`EQUITY ${D.eq.toFixed(2)}U`, x0 + 8, y0 + 15); g.fillStyle = col; g.font = `${fs * 0.9}px monospace`; g.fillText(`${ch >= 0 ? '+' : ''}${ch.toFixed(2)}U・${cl.length} 筆・持倉 ${D.open.length}`, x0 + 8, y0 + 15 + fs + 3);
+  const top = y0 + 22 + fs * 2, bot = y0 + sh - 8;
+  if (cl.length) { const lo = Math.min(...p), hi = Math.max(...p), sp = hi - lo || 1, X = i => x0 + 8 + i / Math.max(1, p.length - 1) * (sw - 16), Y = q => bot - (q - lo) / sp * (bot - top);
+    g.beginPath(); p.forEach((q, i) => i ? g.lineTo(X(i), Y(q)) : g.moveTo(X(i), Y(q))); g.strokeStyle = col; g.lineWidth = 1.8; g.stroke(); g.fillStyle = col; g.globalAlpha = 0.5 + 0.5 * Math.sin(now / 300); g.beginPath(); g.arc(X(p.length - 1), Y(p[p.length - 1]), 3, 0, 7); g.fill(); g.globalAlpha = 1; }
+  else { g.font = `${fs * 0.88}px monospace`; if (D.open.length) D.open.slice(0, 3).forEach((t, k) => { const u = +t.upnl || 0, y = top + 10 + k * (fs + 4); g.fillStyle = '#cbd5e1'; g.fillText(`${(t.sym || '').replace(/USDT$/, '')} ${t.dir > 0 ? '多' : '空'}`, x0 + 10, y); g.textAlign = 'right'; g.fillStyle = u >= 0 ? '#34d399' : '#f87171'; g.fillText(`${u >= 0 ? '+' : ''}${u.toFixed(2)}U`, x0 + sw - 10, y); g.textAlign = 'left'; }); else { g.fillStyle = '#64748b'; g.fillText('等第一筆交易', x0 + 10, top + 12); } }
+}
+const GX_CODE = {                                        // 每個角色現在在做什麼（簡短程式碼）
+  chief: (K, D) => [`chief.tick()`, `if (risk.ok && size.ok)`, `  dispatch(next_card)`, `mode = "${D && D.sim ? 'sim' : 'live'}"`],
+  scan: (K) => [`for (sym of universe) {`, `  z = cvd_z(sym, "1m")`, `  if (z > 3.0) emit(card)`, `}  // ${K[2] || ''}`],
+  vet: (K) => [`vet(card) {`, `  fvg in [0.3%, 5%]  ✓`, `  body_inside(ob)    ✓`, `  ltf_break(dir)     …`, `}  // ${K[2] || ''}`],
+  intel: (K) => [`intel.read({`, `  btc_trend, funding,`, `  macro_events,`, `})  // ${K[2] || ''}`],
+  size: (K) => [`qty = budget * lev`, `    / entry_price`, `assert(qty <= cap)`, `// ${K[2] || ''}`],
+  fills: (K) => [`ex.place({`, `  side, qty, sl, tp,`, `  type: "MARKET"`, `})  // ${K[2] || ''}`],
+  risk: (K) => [`if (day_loss > limit)`, `  halt_new_orders()`, `trail_stop(1%)`, `// ${K[2] || ''}`],
+  crawl: (K) => [`ws.subscribe("kline")`, `rest.poll(depth, oi)`, `cache.refresh()`, `// ${K[2] || ''}`]
+};
+function gxPop(k, now) {                                 // 跑到哪一個角色，就在旁邊打開一個小視窗
+  const K = (WAR.k || {})[k] || [], r = ROLE.find(x => x[0] === k), D = WAR.d, code = (GX_CODE[k] || (() => []))(K, D).map(l => String(l).replace(/<[^>]+>/g, '').replace(/\s*\/\/\s*$/, '')).filter(l => l.trim());
+  WAR.pop = { k, at: now, code, head: `${r[1]}・${r[2]}`, line: `${K[1] ? K[1] + '：' : ''}${K[2] != null ? String(K[2]).replace(/<[^>]+>/g, '') : r[3]}`, q: String(K[4] || '').replace(/<[^>]+>/g, ''), col: GX.C ? GX.C.pl[k].rc : '#22d3ee' };
+}
+function gxPopDraw(pos, w, h, now) {                     // 視窗跟著角色移動；程式碼一個字一個字打出來
+  let el = document.getElementById('wxPop'); const P = WAR.pop, sc = document.querySelector('.wxscene');
+  if (!P || now - P.at > 4200 || WAR.style === 'room') { if (el) el.hidden = true; return; }
+  if (!el && sc) { el = document.createElement('div'); el.id = 'wxPop'; el.className = 'wxpop'; el.setAttribute('role', 'status'); el.setAttribute('aria-live', 'polite'); sc.appendChild(el); }
+  if (!el) return; const p = pos[P.k]; if (!p) return;
+  const typed = Math.floor((now - P.at) / 28), all = P.code.join('\n'), shown = all.slice(0, typed);
+  if (el.dataset.k !== P.k + P.at) { el.dataset.k = P.k + P.at; el.style.setProperty('--c', P.col); el.innerHTML = `<div class="wxpoph"><i></i><i></i><i></i><b>${esc(P.head)}</b></div><div class="wxpopl">▸ ${esc(P.line)}</div>${P.q ? `<div class="wxpopq">「${esc(P.q)}」</div>` : ''}<pre class="wxpopc"></pre>`; }
+  el.querySelector('.wxpopc').innerHTML = esc(shown) + (typed < all.length || Math.floor(now / 450) % 2 ? '<span class="wxcur">▌</span>' : '');
+  el.hidden = false; el.style.opacity = now - P.at > 3700 ? String(Math.max(0, (4200 - (now - P.at)) / 500)) : '1';
+  const cw = sc.clientWidth, ch = sc.clientHeight, sx = cw / w, ew = el.offsetWidth || 220, eh = el.offsetHeight || 120;
+  let x = p.x * sx + (p.x > w / 2 ? -ew - 46 : 46), y = p.y * (ch / h) - eh / 2; x = Math.max(6, Math.min(cw - ew - 6, x)); y = Math.max(30, Math.min(ch - eh - 6, y));
+  el.style.left = x + 'px'; el.style.top = y + 'px';
+}
+function warGalaxy(g, w, h, now, reduce) {
+  const d = Math.min(1.5, devicePixelRatio || 1); if (!GX.C || GX.C.key !== `${w}x${h}x${d}`) GX.C = gxBuild(w, h, d);
+  const C = GX.C, { cx, cy, Rx, Ry, R, pr } = C, K = WAR.k || {}, fz = Math.max(9, w * 0.0095), t = reduce ? 0 : now;
+  const cvEl = g.canvas; if (cvEl.dataset.gxbg !== C.key) { cvEl.dataset.gxbg = C.key; cvEl.style.background = `#020309 url(${C.bg.toDataURL('image/jpeg', 0.9)}) 0 0 / 100% 100% no-repeat`; }   // 背景用 CSS 貼一次就好，每一格不用重畫
+  g.save(); g.globalCompositeOperation = 'lighter'; C.ring.forEach(c => { g.save(); g.translate(cx, cy); g.scale(1, Ry / Rx); g.rotate(t / 16000); g.drawImage(c, -C.S / 2, -C.S / 2, C.S, C.S); g.restore(); }); g.restore();
+  const rot = t / 70000, pos = {};
+  ROLE.forEach(([k], i) => { const a = -Math.PI / 2 + i / ROLE.length * Math.PI * 2 + rot; pos[k] = { x: cx + Rx * Math.cos(a), y: cy + Ry * Math.sin(a) + Math.sin(now / 1200 + i) * 2, d: (Math.sin(a) + 1) / 2, a }; });
+  const E = WAR.ev, et = E && E.path ? (now - E.at) / 1000 : 99, act = new Set(), asts = [];
+  if (E && E.path) for (let s = 0; s < E.path.length - 1; s++) { const lt = et - s * HOP; if (lt < 0 || lt > HOP + 0.4) continue; act.add(E.path[s]); if (lt > HOP * 0.7) act.add(E.path[s + 1]); if (reduce) continue;
+    const A0 = pos[E.path[s]], B0 = pos[E.path[s + 1]]; let da = B0.a - A0.a; while (da > Math.PI) da -= Math.PI * 2; while (da < -Math.PI) da += Math.PI * 2; asts.push({ A0, da, pr: Math.min(1, lt / HOP), col: C.pl[E.path[s]].rc });
+    if (s === E.path.length - 2 && lt > HOP && !E.pulsed) { E.pulsed = true; GX.pulses.push({ at: now, col: C.pl[E.path[s + 1]].rc }); } }
+  if (E && E.path) { E.popd = E.popd || {}; for (let s = 0; s < E.path.length; s++) { const due = s === 0 ? 0 : s * HOP - 0.05; if (et >= due && !E.popd[s] && et < due + HOP) { E.popd[s] = 1; gxPop(E.path[s], now); } } }   // 跑到哪個角色，就打開它的資訊視窗
+  const drawPlanet = k => { const P = pos[k], pl = C.pl[k], on = act.has(k), sc = (0.72 + P.d * 0.48) * (on ? 1.12 + 0.06 * Math.sin(now / 100) : 1), z = C.pz * sc, st = K[k] ? K[k][0] : 'ok', r = ROLE.find(x => x[0] === k);
+    g.save(); g.globalAlpha = 0.55 + P.d * 0.45;
+    if (on) { g.globalCompositeOperation = 'lighter'; g.drawImage(pl.glow, P.x - z * 0.65, P.y - z * 0.65, z * 1.3, z * 1.3); g.globalCompositeOperation = 'source-over'; }
+    g.drawImage(pl.back, P.x - z / 2, P.y - z / 2, z, z);
+    if (!reduce) { g.globalCompositeOperation = 'lighter'; const cr = Math.cos(pl.rot), sr = Math.sin(pl.rot); for (let q = 0; q < 3; q++) { const a = now / (900 + q * 350) * (q % 2 ? -1 : 1) + q * 2.1, ex = pl.rx * sc * Math.cos(a), ey = pl.ry * sc * Math.sin(a), x = P.x + ex * cr - ey * sr, y = P.y + ex * sr + ey * cr, dz = 6 * sc; g.globalAlpha = Math.sin(a) > 0 ? 0.95 : 0.3; g.drawImage(C.dot[pl.rc] || Object.values(C.dot)[0], x - dz, y - dz, dz * 2, dz * 2); } g.globalCompositeOperation = 'source-over'; }   // 光點沿著通道環流動
+    g.globalAlpha = 0.55 + P.d * 0.45; g.drawImage(pl.front, P.x - z / 2, P.y - z / 2, z, z); g.restore();
+    g.save(); g.textAlign = 'center'; g.globalAlpha = 0.6 + P.d * 0.4; g.font = `bold ${fz * Math.min(1.15, sc)}px ui-monospace,Menlo,monospace`; g.fillStyle = '#e0e7ff'; const ly = P.y + pr * sc * 2.25; g.fillText(r[1], P.x, ly);
+    g.fillStyle = { ok: '#22c55e', wait: '#fbbf24', bad: '#ef4444', off: '#64748b' }[st] || '#64748b'; g.beginPath(); g.arc(P.x - g.measureText(r[1]).width / 2 - 7, ly - fz * 0.35, 3, 0, 7); g.fill(); g.restore(); };
+  const order = ROLE.map(r => r[0]).sort((a, b) => pos[a].d - pos[b].d);
+  order.filter(k => pos[k].d < 0.5).forEach(drawPlanet);
+  // 駭客核心
+  gxRain(C, now, reduce); g.drawImage(C.rainC, cx - R, cy - R, R * 2, R * 2);
+  C.cring.forEach((c, i) => { const zz = c.width / d; g.save(); g.translate(cx, cy); g.rotate(t * [0.00035, -0.00022, 0.00012, -0.0006][i]); g.drawImage(c, -zz / 2, -zz / 2, zz, zz); g.restore(); });
+  if (!reduce && now - GX.glitch > 1600 + Math.random() * 2400) GX.glitch = now; const gl = !reduce && now - GX.glitch < 180, xz = C.xz;
+  if (gl) { g.save(); g.globalCompositeOperation = 'lighter'; g.drawImage(C.Xr, cx - xz / 2 - R * 0.07, cy - xz / 2, xz, xz); g.drawImage(C.Xc, cx - xz / 2 + R * 0.07, cy - xz / 2, xz, xz); g.restore(); }
+  g.save(); g.globalAlpha = 0.9 + 0.1 * Math.sin(now / 300); g.drawImage(C.X, cx - xz / 2 + (gl ? (Math.random() - 0.5) * R * 0.08 : 0), cy - xz / 2, xz, xz); g.restore();
+  if (now - GX.hexAt > 150) { GX.hex = Array.from({ length: 8 }, () => '0123456789ABCDEF'[Math.floor(Math.random() * 16)]).join(''); GX.hexAt = now; }
+  g.save(); g.textAlign = 'center'; g.font = `bold ${Math.max(9, R * 0.12)}px ui-monospace,Menlo,monospace`; g.fillStyle = '#7dd3fc'; g.fillText('QUANT X CORE', cx, cy + R * 1.78); g.font = `${Math.max(8, R * 0.1)}px ui-monospace,Menlo,monospace`; g.fillStyle = 'rgba(232,121,249,.85)'; g.fillText(`0x${GX.hex}`, cx, cy + R * 1.95); g.restore();
+  for (const p of GX.pulses) { const q = (now - p.at) / 1200; if (q > 1) continue; g.save(); g.strokeStyle = p.col; g.globalAlpha = 1 - q; g.lineWidth = 3 * (1 - q) + 0.5; g.beginPath(); g.ellipse(cx, cy, R * (1.2 + q * 2), R * (1.2 + q * 2) * 0.8, 0, 0, 7); g.stroke(); g.restore(); } GX.pulses = GX.pulses.filter(p => now - p.at < 1200);
+  // 小行星：沿著光環從一顆星球飛到下一顆，後面拖著彩色的光尾
+  for (const A of asts) {                              // 資料封包：沿著光環飛，後面一串 0／1 慢慢淡掉
+    const dot = C.dot[A.col] || Object.values(C.dot)[0], fs = Math.max(8, pr * 0.42), tick = Math.floor(now / 90);
+    g.save(); g.font = `bold ${fs}px ui-monospace,Menlo,monospace`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    for (let q = 1; q < 16; q++) { const pp = A.pr - q * 0.022; if (pp < 0) break; const a = A.A0.a + A.da * pp, x = cx + Rx * Math.cos(a), y = cy + Ry * Math.sin(a), al = 1 - q / 16;
+      g.globalCompositeOperation = 'lighter'; g.globalAlpha = al * 0.5; g.drawImage(dot, x - 5, y - 5, 10, 10);
+      g.globalCompositeOperation = 'source-over'; g.globalAlpha = al; g.fillStyle = q < 3 ? '#e0fbff' : A.col; g.fillText(((q * 7 + tick) % 3) ? '1' : '0', x + Math.sin(q * 1.7) * fs * 0.5, y + Math.cos(q * 2.3) * fs * 0.45); }
+    g.restore(); const a = A.A0.a + A.da * A.pr, x = cx + Rx * Math.cos(a), y = cy + Ry * Math.sin(a), s = C.az * (0.8 + ((Math.sin(a) + 1) / 2) * 0.45);
+    g.save(); g.globalCompositeOperation = 'lighter'; g.globalAlpha = 0.7; g.drawImage(dot, x - s * 0.6, y - s * 0.6, s * 1.2, s * 1.2); g.restore();
+    g.save(); g.translate(x, y); g.rotate(Math.sin(now / 220) * 0.25); g.drawImage(C.ast, -s / 2, -s / 2, s, s); g.restore(); }
+  order.filter(k => pos[k].d >= 0.5).forEach(drawPlanet);
+  // 額外進場：左下角的三顆小衛星，有訊號就亮起來、射一顆小行星到核心
+  XL.forEach(([k, en, , col], i) => { const X = w * 0.06 + i * w * 0.075, Y = h * 0.9, on = !!xRecent(k), mz = C.mz * (on ? 1.15 + 0.08 * Math.sin(now / 120) : 1);
+    g.save(); g.globalAlpha = on ? 1 : 0.4; g.drawImage(C.moon[k], X - mz / 2, Y - mz / 2, mz, mz); g.restore();
+    if (on && !reduce) { const q = (now / 1100) % 1, px = X + (cx - X) * q, py = Y + (cy - Y) * q - Math.sin(q * Math.PI) * h * 0.12, s = C.az * 0.6; g.save(); g.translate(px, py); g.rotate(Math.sin(now / 220) * 0.25); g.drawImage(C.ast, -s / 2, -s / 2, s, s); g.restore(); }
+    g.fillStyle = on ? '#f8fafc' : '#64748b'; g.font = `bold ${fz * 0.85}px ui-monospace,Menlo,monospace`; g.textAlign = 'center'; g.fillText(on ? `${en} ⚡` : en, X, Y + mz * 0.55 + fz); g.textAlign = 'left'; });
+  // 右下角：鯨魚雷達
+  { const rx = w * 0.92, ry = h * 0.8, rr = Math.min(w, h) * 0.08; g.strokeStyle = 'rgba(52,211,153,.35)'; g.lineWidth = 1; for (let q = 1; q <= 3; q++) { g.beginPath(); g.arc(rx, ry, rr * q / 3, 0, 7); g.stroke(); } const a = reduce ? 0 : now / 900; g.strokeStyle = 'rgba(52,211,153,.8)'; g.beginPath(); g.moveTo(rx, ry); g.lineTo(rx + rr * Math.cos(a), ry + rr * Math.sin(a)); g.stroke(); g.fillStyle = '#5b6478'; g.font = `${fz * 0.85}px monospace`; g.textAlign = 'center'; g.fillText('WHALE RADAR', rx, ry + rr + fz + 2); g.textAlign = 'left'; }
+  gxHud(g, w, h, now);
+  if (E && E.path && E.text) { const tEnd = (E.path.length - 1) * HOP; if (et > tEnd && et < tEnd + 2.6) { const P = pos[E.say], txt = E.text.replace(/<[^>]+>/g, ''); g.font = `bold ${fz * 1.05}px sans-serif`; const tw = g.measureText(txt).width + 14, bx = Math.min(Math.max(8, P.x - tw / 2), w - tw - 8), by = P.y - pr * 2.9;
+    g.fillStyle = 'rgba(8,12,24,.92)'; g.strokeStyle = C.pl[E.say].rc; g.beginPath(); g.roundRect ? g.roundRect(bx, by - 14, tw, 22, 6) : g.rect(bx, by - 14, tw, 22); g.fill(); g.stroke(); g.fillStyle = '#f8fafc'; g.fillText(txt, bx + 7, by + 1); } }
+  gxPopDraw(pos, w, h, now);
+}
+function warRoomClassic(g, w, h, now, reduce) {   // 🧍 原本的交易室（可以切換回來）
+  if (g.canvas.dataset.gxbg) { g.canvas.dataset.gxbg = ''; g.canvas.style.background = ''; } { const pe = document.getElementById('wxPop'); if (pe) pe.hidden = true; }
     // 房間：地板格線（斜的，有立體感）、後牆
     const bg = g.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, '#0d1428'); bg.addColorStop(1, '#070b16'); g.fillStyle = bg; g.fillRect(0, 0, w, h);
     g.fillStyle = '#0f1830'; g.fillRect(0, 0, w, h * 0.22); g.strokeStyle = 'rgba(120,140,200,.07)'; g.lineWidth = 1;
@@ -6510,6 +6670,21 @@ function warAnim() {
     if (E && E.path && E.text) { const tEnd = (E.path.length - 1) * HOP; if (et > tEnd && et < tEnd + 2.6) { const hm = HOME(E.say), tx = hm[0] * w, ty = hm[1] * h - sz * 3.2, txt = E.text.replace(/<[^>]+>/g, '');
       g.font = `bold ${Math.max(10, w * 0.0105)}px sans-serif`; const tw = g.measureText(txt).width + 14, bx0 = Math.min(Math.max(4, tx - tw / 2), w - tw - 4);
       g.fillStyle = 'rgba(10,14,26,.92)'; g.strokeStyle = 'rgba(255,107,170,.85)'; g.beginPath(); g.roundRect ? g.roundRect(bx0, ty - 14, tw, 22, 6) : g.rect(bx0, ty - 14, tw, 22); g.fill(); g.stroke(); g.fillStyle = '#ffe4f1'; g.fillText(txt, bx0 + 7, ty + 1); } }
+}
+function warAnim() {
+  WAR.style = LS.get('warStyle', 'galaxy'); const sb = $('wxStyle'); if (sb && !sb.dataset.b) { sb.dataset.b = '1'; const lab = () => { sb.textContent = WAR.style === 'room' ? '🪐 換成星系' : '🧍 換成交易室'; }; lab(); sb.onclick = () => { WAR.style = WAR.style === 'room' ? 'galaxy' : 'room'; LS.set('warStyle', WAR.style); lab(); }; }
+  cancelAnimationFrame(WAR.raf); clearInterval(WAR.evT); WAR.evT = setInterval(warEvent, 5000); setTimeout(warEvent, 600);
+  const cv = $('wxScene'), reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!WAR.io && 'IntersectionObserver' in window) { WAR.io = new IntersectionObserver(es => { WAR.vis = es[0].isIntersecting; }); WAR.io.observe(cv); WAR.vis = true; }
+  let last = 0;
+  const draw = now => {
+    if (!document.body.contains(cv)) return;
+    if (now - last < 33 || WAR.vis === false) { WAR.raf = requestAnimationFrame(draw); return; }   // 最多 30 FPS；捲到看不到時不畫
+    last = now;
+    const w = cv.clientWidth, h = cv.clientHeight, dpr = Math.min(1.5, devicePixelRatio || 1);
+    if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+    const g = cv.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, w, h);
+    (WAR.style === 'room' ? warRoomClassic : warGalaxy)(g, w, h, now, reduce);   // 🪐 星系（預設）或 🧍 交易室
     WAR.raf = requestAnimationFrame(draw);
   };
   WAR.raf = requestAnimationFrame(draw);
@@ -6779,6 +6954,16 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-03j', title: '2026/11/03 更新（資料封包）', items: [
+    { ic: '⬡', t: '接力時飛的隕石改成駭客風的「資料封包」：霓虹六角形，中間是 </>，後面拖著一串閃爍的 0 和 1 慢慢淡掉；額外進場的衛星發訊號時也是射出資料封包。' }
+  ] },
+  { id: '2026-11-03i', title: '2026/11/03 更新（通道環、角色資訊視窗）', items: [
+    { ic: '🌀', t: '星系作戰室的 8 個角色改成「通道環」：每個角色是一個由很多細線和螺旋線組成、斜放的發光環（像蟲洞通道），顏色照紅橙黃綠藍靛紫；環的後半和前半分開畫，看起來是立體的，還有光點沿著環流動。' },
+    { ic: '🪟', t: '小行星跑到哪一個角色，那個角色旁邊就打開一個小視窗：目前在做什麼（狀態、數值和台詞），以及一個字一個字打出來的簡短程式碼，大約 4 秒後淡出。' }
+  ] },
+  { id: '2026-11-03h', title: '2026/11/03 更新（星系作戰室）', items: [
+    { ic: '🪐', t: '作戰室中間改成星系：8 個角色變成帶環的星球（環照紅橙黃綠藍靛紫排），沿著彩虹光環繞著「駭客核心」（矩陣字雨、刻度環、霓虹 X、故障效果）轉；每一次接力，是一顆小行星拖著光尾從一顆星球飛到下一顆。左上角是權益小螢幕，左下角是額外進場的三顆衛星，右下角是鯨魚雷達。右上角可以一鍵切回原本的交易室。效能版：發光的東西都先畫好存起來，電腦不會卡。' }
+  ] },
   { id: '2026-11-03g', title: '2026/11/03 更新（交易室大螢幕）', items: [
     { ic: '🖥', t: '交易室後牆的大螢幕改成跟 BALANCE 同一套算法：權益曲線含漸層、右上角顯示累計盈虧和筆數、最新一點會閃爍；還沒有出場的單時，改顯示目前持倉和未實現盈虧，不會再是一片黑。' }
   ] },
