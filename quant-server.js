@@ -41,7 +41,7 @@ const DEF_REP = { cap: 100, btN: 50, days: 14, next: 0 };                   // �
 let ST = { cards: [], bt: { at: 0, coins: 0, trades: [] }, set: { ...DEF_SET }, trade: { ...DEF_TRADE }, google: { clientId: '' }, eq: { ...DEF_EQ }, rep: { ...DEF_REP }, reports: [], users: [], sessions: [], accts: {}, owner: '' };
 try {
   const j = JSON.parse(fs.readFileSync(FILE, 'utf8'));
-  ST = { cards: j.cards || [], bt: j.bt || ST.bt, set: { ...DEF_SET, ...(j.set || {}) }, trade: { ...DEF_TRADE, ...(j.trade || {}) }, google: { clientId: '', ...(j.google || {}) }, eq: { ...DEF_EQ, ...(j.eq || {}) }, rep: { ...DEF_REP, ...(j.rep || {}) }, reports: j.reports || [], users: j.users || [], sessions: j.sessions || [], aws: j.aws || {}, accts: j.accts || {}, owner: j.owner || '', bstat: j.bstat || null, hb: j.hb || '', ecoDay: j.ecoDay || '', ecoUntil: j.ecoUntil || 0, tool: j.tool || null, xent: j.xent || null, trials: j.trials || [], bill: j.bill || null, alive: j.alive || 0, boots: j.boots || [], exit: j.exit || null, hb2: j.hb2 || null, lastErr: j.lastErr || null };
+  ST = { cards: j.cards || [], bt: j.bt || ST.bt, set: { ...DEF_SET, ...(j.set || {}) }, trade: { ...DEF_TRADE, ...(j.trade || {}) }, google: { clientId: '', ...(j.google || {}) }, eq: { ...DEF_EQ, ...(j.eq || {}) }, rep: { ...DEF_REP, ...(j.rep || {}) }, reports: j.reports || [], users: j.users || [], sessions: j.sessions || [], aws: j.aws || {}, accts: j.accts || {}, owner: j.owner || '', bstat: j.bstat || null, hb: j.hb || '', ecoDay: j.ecoDay || '', ecoUntil: j.ecoUntil || 0, tool: j.tool || null, xent: j.xent || null, trials: j.trials || [], bill: j.bill || null, charts: j.charts || {}, chartLock: j.chartLock || { on: true, salt: '', hash: '' }, alive: j.alive || 0, boots: j.boots || [], exit: j.exit || null, hb2: j.hb2 || null, lastErr: j.lastErr || null };
   // 舊版（只有一個帳號）：原本的 Bitunix 金鑰、自動交易、實盤紀錄、Discord 搬到擁有者（第一個管理員）的帳號底下
   if (!j.accts && (j.bx || j.lt || j.ltTrades || j.notify)) {
     const a = ST.users.find(u => u.role === 'admin'), uid = a ? a.uid : '__owner';
@@ -941,7 +941,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-11-02c';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-11-03a';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -2989,7 +2989,7 @@ http.createServer(async (req, res) => {
     if (req.method === 'POST' && u.pathname.startsWith('/api/')) {
       // 個人設定：每個帳號都能改「自己的」；其他（掃描條件、浮盈規則、回測、帳號管理、AWS）只有管理員能改
       // 個人（每個帳號）：自己的 API、Discord、交易設定、平倉；管理員（灰色）：帳號管理；其他全站設定只有擁有者能改
-      const PERSONAL = ['/api/bind', '/api/bitunix', '/api/lt/config', '/api/lt/testOpen', '/api/lt/close', '/api/lt/closeAll', '/api/lt/adopt', '/api/notify', '/api/notify/test', '/api/me/password', '/api/tool', '/api/lt/withdraw', '/api/sim', '/api/xent', '/api/bill'];
+      const PERSONAL = ['/api/bind', '/api/bitunix', '/api/lt/config', '/api/lt/testOpen', '/api/lt/close', '/api/lt/closeAll', '/api/lt/adopt', '/api/notify', '/api/notify/test', '/api/me/password', '/api/tool', '/api/lt/withdraw', '/api/sim', '/api/xent', '/api/bill', '/api/chartcfg', '/api/chartlock'];
       const ADMIN = ['/api/users', '/api/users/delete', '/api/users/kick', '/api/check', '/api/trial'];
       if (ADMIN.includes(u.pathname) && !admin) return send(res, 403, { error: '這個功能只有管理員可以用' });
       if (!PERSONAL.includes(u.pathname) && !ADMIN.includes(u.pathname) && !owner) return send(res, 403, { error: '這個設定只有擁有者可以改' });
@@ -3027,6 +3027,22 @@ http.createServer(async (req, res) => {
           const L = X.A.lt; Object.assign(S, { bal: 0, pos: [], hist: [], ord: [] }); X.A.ltTrades = []; Object.assign(L, { on: false, sp: false, budget: 0, spBudget: 0, startCap: 0, startAt: 0, wd: 0, spWd: 0, spStartAt: 0, dayHit: '', spDayHit: '' });
           X.LT.pause = null; dirty = true; touchLT(X); return send(res, 200, { ok: true });
         }
+        return send(res, 400, { error: '不認得的操作' });
+      }
+      if (u.pathname === '/api/chartcfg') {              // 🕯 K 線圖設定跨裝置同步（同一個帳號：設定、指標、繪圖、Pine 腳本）
+        const uid = (me ? me.uid : ownerUid()).replace(/~sim$/, ''), C = ST.charts || (ST.charts = {});
+        if (String(b.op || 'get') === 'set') { const data = b.data && typeof b.data === 'object' ? b.data : {}, raw = JSON.stringify(data); if (raw.length > 4e6) return send(res, 413, { error: '圖表資料太大（超過 4MB），請換小一點的桌布圖片' });
+          C[uid] = { at: Date.now(), dev: String(b.dev || '').slice(0, 40), data }; dirty = true; return send(res, 200, { ok: true, at: C[uid].at }); }
+        const c = C[uid]; if (b.since && c && c.at <= +b.since) return send(res, 200, { at: c.at, same: true });
+        return send(res, 200, c ? { at: c.at, dev: c.dev, data: c.data } : { at: 0 });
+      }
+      if (u.pathname === '/api/chartlock') {             // 🔒 K 線圖暫時鎖住：輸入密碼才能打開（擁有者設定密碼）
+        const L = ST.chartLock || (ST.chartLock = { on: true, salt: '', hash: '' }), op = String(b.op || 'status'), ip = ipOf(req);
+        if (op === 'status') return send(res, 200, { on: !!L.on, hasPw: !!L.hash, owner: !!owner });
+        if (op === 'unlock') { if (!L.on) return send(res, 200, { ok: true }); if (!L.hash) return send(res, 400, { error: '擁有者還沒設定解鎖密碼' }); if (locked(ip)) return send(res, 429, { error: '錯太多次了，請稍後再試' });
+          if (!pwOk(L, String(b.pw || ''))) { failed(ip); return send(res, 401, { error: '密碼不對' }); } return send(res, 200, { ok: true }); }
+        if (!owner) return send(res, 403, { error: '只有擁有者可以設定圖表鎖' });
+        if (op === 'set') { if (b.pw != null) { const pw = String(b.pw); if (pw.length < 4) return send(res, 400, { error: '密碼至少 4 個字' }); Object.assign(L, hashPw(pw)); } if (typeof b.on === 'boolean') L.on = b.on; dirty = true; return send(res, 200, { ok: true, on: L.on, hasPw: !!L.hash }); }
         return send(res, 400, { error: '不認得的操作' });
       }
       if (u.pathname === '/api/bill') {                  // 💳 自己的方案：查狀態、算價格、開付款單、自己認領、查付款
