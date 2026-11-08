@@ -441,7 +441,7 @@ async function dcRun() {
       try {
         const r = await fetch(m.cfg.webhook, {
           method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(8000),
-          body: JSON.stringify({ content: m.content.slice(0, 1900), username: 'Quant X 合約作戰室', allowed_mentions: { parse: [] } })
+          body: JSON.stringify({ content: m.content.slice(0, 1900), username: 'QEVRAX', allowed_mentions: { parse: [] } })
         });
         if (r.status === 429) { const j = await r.json().catch(() => ({})); await sleep(Math.ceil((+j.retry_after || 2) * 1000) + 200); continue; }   // Discord 限速，等一下再送
         if (!r.ok) { const tx = (await r.text().catch(() => '')).slice(0, 200); log('Discord 傳送失敗', r.status, tx); m.err = dcErr(r.status, tx); break; }
@@ -941,7 +941,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-11-03a';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-11-08a';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1931,7 +1931,7 @@ function billOrder(uid, code, months) {                // 開付款單：整數�
   const o = { id: crypto.randomBytes(6).toString('hex'), uid, addr: B.addr, m: q.m, base: q.base, planPct: q.planPct, pct: q.pct, code: q.code, price: q.price, micro, amount: (micro / 1e6).toFixed(2), at: now, exp: now + B.orderHours * HOUR, status: 'pending', days: B.days * q.m };
   B.orders.unshift(o); if (B.orders.length > 3000) B.orders.length = 3000; dirty = true; return o;
 }
-function billMail(usr, subj, text) { if (mailOn() && usr && usr.bind && usr.bind.email) sendMail(usr.bind.email, 'Quant X：' + subj, text + `\n\n${SITE}`).catch(e => log('寄信失敗', usr.uid, e.message)); }
+function billMail(usr, subj, text) { if (mailOn() && usr && usr.bind && usr.bind.email) sendMail(usr.bind.email, 'QEVRAX：' + subj, text + `\n\n${SITE}`).catch(e => log('寄信失敗', usr.uid, e.message)); }
 function billApply(o, tx, how, from) {                 // 收到錢：延長天數（從目前到期日、試用到期日或今天，取最晚的往後加）；試用中付費＝轉成付費；直接購買＝建立帳號
   const B = BL(), usr0 = ST.users.find(x => x.uid === o.uid), now = Date.now();
   o.status = 'paid'; o.paidAt = now; o.tx = tx || o.tx || ''; o.how = how; o.from = from || o.from || ''; dirty = true;
@@ -2699,7 +2699,7 @@ function readBody(req, max = 30e6) {
 /* ---------------- 📧 寄信（Gmail SMTP，用「應用程式密碼」）：忘記密碼、擁有者登入驗證碼、轉讓擁有者驗證碼 ----------------
    設定放在 /opt/quant/.env：SMTP_USER=寄件的 Gmail、SMTP_PASS=16 碼應用程式密碼（不用另外裝套件） */
 const tlsM = require('tls'), netM = require('net');
-const MAIL = { host: process.env.SMTP_HOST || 'smtp.gmail.com', port: +process.env.SMTP_PORT || 465, user: process.env.SMTP_USER || '', pass: String(process.env.SMTP_PASS || '').replace(/\s+/g, ''), secure: process.env.SMTP_SECURE !== '0', name: process.env.MAIL_NAME || 'Quant X 合約作戰室' };
+const MAIL = { host: process.env.SMTP_HOST || 'smtp.gmail.com', port: +process.env.SMTP_PORT || 465, user: process.env.SMTP_USER || '', pass: String(process.env.SMTP_PASS || '').replace(/\s+/g, ''), secure: process.env.SMTP_SECURE !== '0', name: process.env.MAIL_NAME || 'QEVRAX' };
 const mailOn = () => !!(MAIL.user && MAIL.pass);
 const SITE = (process.env.SITE_URL || 'https://moocow0216-lab.github.io/trace-back/').replace(/\/?$/, '/');
 const b64 = x => Buffer.from(String(x), 'utf8').toString('base64');
@@ -2752,7 +2752,7 @@ async function mailCode(usr, kind, extra = {}) {      // 寄 6 位數驗證碼�
   for (const [k, v] of CODES) if (v.exp < Date.now()) CODES.delete(k);
   CODES.set(pre, { uid: usr.uid, kind, h: sha(code), exp: Date.now() + 10 * 60000, tries: 0, ...extra });
   const what = kind === 'login' ? '擁有者登入' : `把擁有者轉讓給 ${extra.to}`;
-  await sendMail(usr.bind.email, `Quant X：${what}的驗證碼 ${code}`, `你的驗證碼是：${code}\n\n用途：帳號 ${usr.uid} ${what}\n10 分鐘內有效，只能用一次。\n\n如果不是你本人在操作，代表你的密碼可能外洩了，請盡快改密碼。`);
+  await sendMail(usr.bind.email, `QEVRAX：${what}的驗證碼 ${code}`, `你的驗證碼是：${code}\n\n用途：帳號 ${usr.uid} ${what}\n10 分鐘內有效，只能用一次。\n\n如果不是你本人在操作，代表你的密碼可能外洩了，請盡快改密碼。`);
   return pre;
 }
 
@@ -2813,7 +2813,7 @@ http.createServer(async (req, res) => {
           if (!/^[a-z0-9.+_-]{1,64}@(gmail|googlemail)\.com$/.test(email)) return send(res, 400, { error: '請輸入 Google 信箱（@gmail.com）' });
           if (!mailAllow('buyip:' + ip, 8) || !mailAllow('buymail:' + email, 4)) return send(res, 429, { error: '寄太多次了，請一小時後再試' });
           const code = String(crypto.randomInt(100000, 1000000)); BUYC.set(email, { h: sha(code), exp: Date.now() + 10 * 60000, n: 0 });
-          sendMail(email, 'Quant X：信箱驗證碼', `你的驗證碼是：${code}\n\n10 分鐘內有效。如果不是你本人操作，忽略這封信就好。`).catch(e => log('驗證碼寄不出去', maskMail(email), e.message));
+          sendMail(email, 'QEVRAX：信箱驗證碼', `你的驗證碼是：${code}\n\n10 分鐘內有效。如果不是你本人操作，忽略這封信就好。`).catch(e => log('驗證碼寄不出去', maskMail(email), e.message));
           return send(res, 200, { ok: true, msg: '驗證碼已寄出，請到信箱收信（也看一下垃圾郵件）' });
         }
         if (op === 'order') {                            // 🆕 新用戶下單：UID、密碼、信箱（驗證碼）、手機都對才開付款單；付款成功才建立帳號
@@ -2884,7 +2884,7 @@ http.createServer(async (req, res) => {
         const tok = crypto.randomBytes(24).toString('hex');
         for (const [k, v] of RESETS) if (v.exp < Date.now() || v.uid === usr.uid) RESETS.delete(k);   // 同一個帳號只留最新的連結
         RESETS.set(sha(tok), { uid: usr.uid, exp: Date.now() + 30 * 60000 });
-        sendMail(email, 'Quant X：重設密碼', `你好，\n\n有人（希望是你）要求重設帳號 ${usr.uid} 的密碼。請在 30 分鐘內打開下面的連結設定新密碼：\n\n${SITE}?reset=${tok}\n\n連結只能用一次。重設後，這個帳號在所有裝置的登入都會被登出。\n\n如果不是你本人要求的，忽略這封信就好，你的密碼不會被改。`)
+        sendMail(email, 'QEVRAX：重設密碼', `你好，\n\n有人（希望是你）要求重設帳號 ${usr.uid} 的密碼。請在 30 分鐘內打開下面的連結設定新密碼：\n\n${SITE}?reset=${tok}\n\n連結只能用一次。重設後，這個帳號在所有裝置的登入都會被登出。\n\n如果不是你本人要求的，忽略這封信就好，你的密碼不會被改。`)
           .then(() => log('寄出重設密碼信', usr.uid, maskMail(email)))
           .catch(e => { log('重設密碼信寄不出去', usr.uid, e.message); dcX(ctx(ownerUid()), `📧 **寄信失敗**（${usr.uid} 的重設密碼信）：${mdEsc(e.message)}\n請檢查 /opt/quant/.env 的 SMTP_USER、SMTP_PASS`); });
         return send(res, 200, OK);
