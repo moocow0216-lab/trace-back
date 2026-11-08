@@ -1018,8 +1018,9 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
 .kdw{min-width:28px;height:26px;border:0;background:transparent;color:inherit;border-radius:5px;cursor:pointer;display:grid;place-items:center}.kdw i{display:block;width:16px;background:currentColor}.kdw.on,.kdw:hover{background:rgba(41,98,255,.18)}
 .kdfav{position:absolute;top:8px;left:8px;z-index:6;display:flex;gap:2px;background:var(--panel,#1e222d);border:1px solid var(--line,#2a2e39);border-radius:8px;padding:2px}
 .klrpb{border:1px solid var(--line,#2a2e39);background:transparent;color:inherit;border-radius:8px;padding:6px 12px;font-size:13.5px;cursor:pointer}.klrpb.on{background:#2962ff;border-color:#2962ff;color:#fff}
-.klrp{display:flex;align-items:center;gap:4px;flex-wrap:wrap;padding:2px 4px;border:1px solid rgba(41,98,255,.55);border-radius:8px;font-size:12.5px;min-width:0}
-.klrp .btn{padding:3px 8px;min-height:0;font-size:12.5px;line-height:1.4;flex:none!important;width:auto!important}.klrp select{padding:2px 4px;border-radius:6px;font-size:12px}.klrp>b,.klrp>span{padding:0 4px;white-space:nowrap}.krt{color:var(--muted);font-size:11.5px}.klrp .krsel{padding:2px 6px;font-size:12px}
+.klrp{flex:0 1 auto;display:flex;align-items:center;gap:4px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;padding:2px 4px;border:1px solid rgba(41,98,255,.55);border-radius:8px;font-size:12.5px;min-width:0}
+.klrp .btn{padding:3px 8px;min-height:0;font-size:12.5px;line-height:1.4;flex:none!important;width:auto!important}.klrp select{padding:2px 4px;border-radius:6px;font-size:12px}.klrp>b,.klrp>span{padding:0 4px;white-space:nowrap}.krt{color:var(--muted);font-size:11.5px}.klrp .krsel{padding:2px 6px;font-size:12px;white-space:nowrap;flex:none}.kltop{flex-wrap:nowrap}.kltop>*{flex-shrink:0}.kltop>.klrp{flex-shrink:1;min-width:0}
+@media (max-width:1100px){.kltop{flex-wrap:wrap}.kltop>.klrp{flex:1 1 100%;order:5}}
 @media (max-width:620px){.kltools{width:42px}.kdb{width:32px;height:32px;font-size:14px}}
 
 .kilg{display:flex;flex-direction:column;gap:1px;pointer-events:auto}.kirow{display:flex;align-items:center;gap:6px;font-size:12.5px;line-height:1.5;padding:1px 6px;border-radius:4px;width:max-content;max-width:100%;color:#d1d4dc;text-shadow:0 0 3px rgba(0,0,0,.7)}
@@ -1306,7 +1307,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-08b</div>
+      <div class="qver" id="qVer">網站版本 2026-11-08c</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3766,7 +3767,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-08b・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-08c・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -4380,9 +4381,37 @@ async function klInit() {
     KL.ch.subscribeCrosshairMove(p => { const b = p && p.time ? KL.data.find(x => x.time === p.time) : null; klLegend(b); });
     KL.ch.timeScale().subscribeVisibleLogicalRangeChange(r => { if (r && r.from < 30) klOlder(); klTagDraw(); });   // 往左捲到最前面：自動載入更早的 K 線
     new ResizeObserver(() => klTagDraw()).observe($('klChart'));
+    KL.ax = { ch: KL.ch, cs: KL.cs }; kaxBind($('klChart'), KL.ax);
   }
   $('klLockBtn').hidden = !KL.lockOwner; kdToolbar(); kdBind(); kdCursor(); kmLayout(); if (!$('kiLg').dataset.b) { $('kiLg').dataset.b = '1'; kiBind(); } kiLegend();
   klSet(KL.sym, KL.tf, true);
+}
+/* ---- ↕ 滾輪縮放：滑鼠在價格軸上 → 只拉長／壓扁 K 棒（時間軸不動）；在時間軸上 → 只縮放時間（價格不動）。
+   價格比例一打開就固定，拖曳圖表可以上下左右自由移動，不會一直被「自動比例」吸回去；在價格軸上點兩下＝重新自動對齊 ---- */
+const kaxRaf = f => requestAnimationFrame(() => requestAnimationFrame(f));
+function kaxSeries(ax) { return [ax.cs, ...Object.values(KP.series).filter(S => S && S.ch === ax.ch).map(S => S.s)]; }
+function kaxFit(ax) {                                     // 先自動對齊一次，下兩格畫面再固定住
+  if (!ax || !ax.ch) return; ax.ov = null; const ps = ax.ch.priceScale('right'); ps.applyOptions({ autoScale: true });
+  const my = ax.fitN = (ax.fitN || 0) + 1; kaxRaf(() => { if (ax.fitN === my && !ax.ov) try { ps.applyOptions({ autoScale: false }); } catch (e) {} });
+}
+function kaxRange(ax, top, bot, H) {                      // 讓畫面上緣＝top、下緣＝bot（借自動比例套一次，再固定）
+  const sm = ax.ch.priceScale('right').options().scaleMargins || { top: 0.1, bottom: 0.1 }, d = bot - top;
+  ax.ov = [top + d * (1 - sm.bottom), top + d * sm.top]; ax.want = [top, bot];
+  for (const se of kaxSeries(ax)) try { se.applyOptions({ autoscaleInfoProvider: orig => ax.ov ? (se === ax.cs ? { priceRange: { minValue: ax.ov[0], maxValue: ax.ov[1] } } : null) : orig() }); } catch (e) {}
+  const ps = ax.ch.priceScale('right'); ps.applyOptions({ autoScale: true });
+  const my = ax.fitN = (ax.fitN || 0) + 1; kaxRaf(() => { if (ax.fitN !== my) return; try { ps.applyOptions({ autoScale: false }); } catch (e) {} ax.ov = null; ax.want = null; });
+}
+function kaxBind(el, ax) {
+  const zone = e => { const r = el.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top, pw = ax.ch.priceScale('right').width() || 0, th = ax.ch.timeScale().height() || 0, H = r.height - th;
+    return { y: x > r.width - pw && y < H, x: y > H && x < r.width - pw, H }; };
+  el.addEventListener('wheel', e => {
+    const z = zone(e); if (!z.x && !z.y) return; e.preventDefault(); e.stopPropagation();
+    const f = Math.exp(Math.max(-1, Math.min(1, (e.deltaY || 0) / 100)) * 0.12);   // 往上滾＝放大
+    if (z.y) { let t, b; if (ax.want) [t, b] = ax.want; else { t = ax.cs.coordinateToPrice(0); b = ax.cs.coordinateToPrice(z.H); } if (t == null || b == null || !isFinite(t) || !isFinite(b) || t === b) return;
+      const m = (t + b) / 2; kaxRange(ax, m + (t - m) * f, m + (b - m) * f, z.H); }
+    else { const ts = ax.ch.timeScale(), lr = ts.getVisibleLogicalRange(); if (!lr) return; const w = (lr.to - lr.from) * f; if (w < 5 || w > 6000) return; ts.setVisibleLogicalRange({ from: lr.to - w, to: lr.to }); }
+  }, { passive: false, capture: true });
+  el.addEventListener('dblclick', e => { if (zone(e).y) kaxFit(ax); });
 }
 const klVolBar = (b, prev) => { const c = ksUp(b, prev) ? KS.upBorder : KS.dnBorder, h = ksHex(c); return { time: b.time, value: b.vol, color: h ? h + '80' : 'rgba(127,127,127,.5)' }; };   // 成交量跟 K 線同一套漲跌顏色
 async function klSet(sym, tf, force) {
@@ -4394,10 +4423,10 @@ async function klSet(sym, tf, force) {
   try {
     const D = (await klFetch(sym, tf)).filter(b => [b.open, b.high, b.low, b.close].every(isFinite) && b.time > 0); if (KL.want !== my) return; if (!D.length) throw new Error('幣安沒有回傳 K 線');
     KL.data = D; KL.full = D; kdLoad(); kdEdit(); KL.cs.setData(klCdAll(D)); KL.vs.setData(D.map((b, i) => klVolBar(b, D[i - 1]))); KL.ch.timeScale().fitContent(); KL.ch.timeScale().scrollToPosition(8, false);
-    const n = Math.min(D.length, 150); KL.ch.timeScale().setVisibleLogicalRange({ from: D.length - n, to: D.length + 8 });
+    const n = Math.min(D.length, 150); KL.ch.timeScale().setVisibleLogicalRange({ from: D.length - n, to: D.length + 8 }); kaxFit(KL.ax);
     klLegend(); $('klSt').textContent = ''; klWs(); KL.lastMsg = Date.now(); klTagDraw();
     if (KM.syncSym) KM.panes.forEach(P => kmSet(P, sym, P.tf));   // ▦ 同步幣種
-    setTimeout(() => { const L0 = KL.data[KL.data.length - 1]; if (L0 && KL.cs.priceToCoordinate(L0.close) == null) { KL.ch.priceScale('right').applyOptions({ autoScale: true }); KL.cs.priceScale().applyOptions({ autoScale: true }); KL.ch.timeScale().scrollToRealTime(); } }, 400);   // 自我修復：最新價不在畫面上就重設比例 { const o = ksBg(); KL.ch.applyOptions({ watermark: o.watermark }); }   // 浮水印跟著幣種、週期換
+    setTimeout(() => { const L0 = KL.data[KL.data.length - 1]; if (L0 && KL.cs.priceToCoordinate(L0.close) == null) { KL.ch.priceScale('right').applyOptions({ autoScale: true }); KL.cs.priceScale().applyOptions({ autoScale: true }); KL.ch.timeScale().scrollToRealTime(); kaxFit(KL.ax); } }, 400);   // 自我修復：最新價不在畫面上就重設比例 { const o = ksBg(); KL.ch.applyOptions({ watermark: o.watermark }); }   // 浮水印跟著幣種、週期換
   } catch (e) { $('klSt').textContent = '讀取失敗：' + e.message; }
 }
 async function klOlder() {
@@ -4638,7 +4667,7 @@ function kmMake(i, c) {
   ch.timeScale().applyOptions({ tickMarkFormatter: ksTick });
   const cs = ch.addCandlestickSeries({ ...ksSeries(), lastValueVisible: true, priceLineStyle: 1, priceFormat: { type: 'custom', formatter: klFmt, minMove: 1e-8 } }), vs = ch.addHistogramSeries({ priceScaleId: 'vol', priceFormat: { type: 'volume' }, lastValueVisible: false, priceLineVisible: false });
   ch.priceScale('vol').applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } }); cs.priceScale().applyOptions({ scaleMargins: { top: 0.08, bottom: 0.2 } });
-  const P = { i, el, ch, cs, vs, sym: c.sym, tf: c.tf, data: [], ind: (c.ind || []).map(x => ({ ...x })), key: '', res: null };
+  const P = { i, el, ch, cs, vs, sym: c.sym, tf: c.tf, data: [], ind: (c.ind || []).map(x => ({ ...x })), key: '', res: null }; P.ax = { ch, cs }; kaxBind(el.querySelector('.kmc'), P.ax);
   for (const it of P.ind) if (/^pine:/.test(it.id) && !it.pine) { const sc = KP.scripts.find(x => 'pine:' + x.id === it.id); if (sc) it.pine = { inputs: pineParse(sc.code), vals: {}, pv: 2, src: '' }; }
   el.querySelector('.kmind').addEventListener('click', e => { e.stopPropagation(); kiAddMenu(e.currentTarget, 'p' + i); });
   ch.subscribeCrosshairMove(p => kmLegend(P, p && p.time ? P.data.find(x => x.time === p.time) : null));
@@ -4652,7 +4681,7 @@ async function kmSet(P, sym, tf, force) {
   if (!force && P.sym === sym && P.tf === tf && P.data.length) return; P.sym = sym; P.tf = tf; kmSave();
   P.el.querySelector('.kmsym b').textContent = sym.replace(/USDT$/, ''); P.el.querySelector('.kmtf').value = tf; const my = sym + tf; P.want = my;
   try { const D = (await klFetch(sym, tf, 0, 500)).filter(b => [b.open, b.high, b.low, b.close].every(isFinite)); if (P.dead || P.want !== my) return;
-    P.data = D; P.cs.setData(klCdAll(D)); P.vs.setData(D.map((b, i) => klVolBar(b, D[i - 1]))); P.ch.timeScale().setVisibleLogicalRange({ from: Math.max(0, D.length - 90), to: D.length + 5 }); kmLegend(P); kmWs(P);
+    P.data = D; P.cs.setData(klCdAll(D)); P.vs.setData(D.map((b, i) => klVolBar(b, D[i - 1]))); P.ch.timeScale().setVisibleLogicalRange({ from: Math.max(0, D.length - 90), to: D.length + 5 }); kaxFit(P.ax); kmLegend(P); kmWs(P);
   } catch (e) { P.el.querySelector('.kmlg').textContent = '讀取失敗：' + e.message; }
 }
 function kmPut(P, b) { if (P.rp) { const F = P.full, l = F[F.length - 1]; if (l && b.time === l.time) F[F.length - 1] = b; else if (l && b.time > l.time) F.push(b); return; }   // 回放中：先存起來
@@ -5049,7 +5078,7 @@ function krBar() {
   const el = $('klRp'); if (!el) return; el.hidden = !KR.on;
   $('klRpBtn').classList.toggle('on', KR.on); $('klRpBtn').setAttribute('aria-pressed', String(KR.on));
   if (!KR.on) return;
-  if (KR.choose) { el.innerHTML = `<b>要回放哪幾張圖？</b>${krViews().map(([v, n, sym, tf]) => `<label class="krsel"><input type="checkbox" data-krv="${v}"${KR.sel.has(v) ? ' checked' : ''}> ${n}・${esc(sym.replace(/USDT$/, ''))} ${krTfName(tf)}</label>`).join('')}<button class="btn primary" data-kr="go">👆 選起點</button><button class="btn" data-kr="exit">取消</button>`; return; }
+  if (KR.choose) { el.innerHTML = `<button class="btn primary" data-kr="go">👆 選起點</button><button class="btn" data-kr="exit">取消</button><b>回放：</b>${krViews().map(([v, n, sym, tf]) => `<label class="krsel" title="${n}・${esc(sym)} ${krTfName(tf)}"><input type="checkbox" data-krv="${v}"${KR.sel.has(v) ? ' checked' : ''}> ${v === 'm0' ? '主圖' : n.replace(/ /g, '')} ${esc(sym.replace(/USDT$/, ''))}</label>`).join('')}`; return; }
   const left = Math.max(0, KL.full.length - KL.data.length);
   el.innerHTML = KR.pick ? `<span>👆 在主圖上點一下選起點（${KR.sel.size} 張圖）</span><button class="btn" data-kr="exit">取消</button>`
     : `<button class="btn" data-kr="pick" title="重新選圖和起點">⏮ 重選</button><button class="btn" data-kr="play" aria-label="${KR.play ? '暫停' : '播放'}">${KR.play ? '⏸' : '▶'}</button><button class="btn" data-kr="step" title="下一步（Shift＋→）" aria-label="下一步">⏭</button>
@@ -5061,11 +5090,11 @@ function krToggle() { if (KR.on) return krExit(); KR.on = true; KR.play = false;
 const krCnt = (F, sec) => { let lo = 0, hi = F.length; while (lo < hi) { const m = (lo + hi) >> 1; if ((F[m].time + sec) * 1000 <= KR.clock) lo = m + 1; else hi = m; } return lo; };   // 到「現在」為止收盤的 K 棒有幾根
 function krApply(first) {                                // 照回放時間，更新每一張選到的圖
   if (KR.sel.has('m0') && KL.full) { const n = Math.max(1, krCnt(KL.full, KL_SEC[KL.tf] || 60));
-    if (first || n < KL.data.length) { KL.data = KL.full.slice(0, n); KL.cs.setData(klCdAll(KL.data)); KL.vs.setData(KL.data.map((b, i) => klVolBar(b, KL.data[i - 1]))); KL.ch.timeScale().setVisibleLogicalRange({ from: Math.max(0, n - 120), to: n + 10 }); }
+    if (first || n < KL.data.length) { KL.data = KL.full.slice(0, n); KL.cs.setData(klCdAll(KL.data)); KL.vs.setData(KL.data.map((b, i) => klVolBar(b, KL.data[i - 1]))); KL.ch.timeScale().setVisibleLogicalRange({ from: Math.max(0, n - 120), to: n + 10 }); if (first) kaxFit(KL.ax); }
     else while (KL.data.length < n) { const b = KL.full[KL.data.length]; KL.data.push(b); const pv = KL.data[KL.data.length - 2]; KL.cs.update(klCd(b, pv)); KL.vs.update(klVolBar(b, pv)); }
     KR.ri = KL.data.length - 1; klLegend(); klTagDraw(); }
   for (const P of KM.panes) { if (!KR.sel.has('p' + P.i)) continue; if (!P.rp) { P.rp = true; P.full = P.data.slice(); } const n = Math.max(1, krCnt(P.full, KL_SEC[P.tf] || 60));
-    if (first || n < P.data.length) { P.data = P.full.slice(0, n); P.cs.setData(klCdAll(P.data)); P.vs.setData(P.data.map((b, i) => klVolBar(b, P.data[i - 1]))); P.ch.timeScale().setVisibleLogicalRange({ from: Math.max(0, n - 90), to: n + 5 }); }
+    if (first || n < P.data.length) { P.data = P.full.slice(0, n); P.cs.setData(klCdAll(P.data)); P.vs.setData(P.data.map((b, i) => klVolBar(b, P.data[i - 1]))); P.ch.timeScale().setVisibleLogicalRange({ from: Math.max(0, n - 90), to: n + 5 }); if (first) kaxFit(P.ax); }
     else while (P.data.length < n) { const b = P.full[P.data.length]; P.data.push(b); const pv = P.data[P.data.length - 2]; P.cs.update(klCd(b, pv)); P.vs.update(klVolBar(b, pv)); }
     P.key = ''; kmLegend(P); }
 }
@@ -5081,8 +5110,8 @@ function krStep() {                                      // 往前一步＝選�
 }
 function krPlay(on) { KR.play = on; clearInterval(KR.timer); if (on) KR.timer = setInterval(krStep, 1000 / KR.speed); krBar(); }
 function krExit() { clearInterval(KR.timer); KR.on = false; KR.pick = false; KR.choose = false; KR.play = false; KR.clock = 0;
-  if (KL.full) { KL.data = KL.full; KL.cs.setData(klCdAll(KL.data)); KL.vs.setData(KL.data.map((b, i) => klVolBar(b, KL.data[i - 1]))); KL.ch.timeScale().scrollToRealTime(); klLegend(); klTagDraw(); }
-  for (const P of KM.panes) if (P.rp) { P.rp = false; P.data = P.full; P.full = null; P.cs.setData(klCdAll(P.data)); P.vs.setData(P.data.map((b, i) => klVolBar(b, P.data[i - 1]))); P.ch.timeScale().scrollToRealTime(); P.key = ''; kmLegend(P); }
+  if (KL.full) { KL.data = KL.full; KL.cs.setData(klCdAll(KL.data)); KL.vs.setData(KL.data.map((b, i) => klVolBar(b, KL.data[i - 1]))); KL.ch.timeScale().scrollToRealTime(); kaxFit(KL.ax); klLegend(); klTagDraw(); }
+  for (const P of KM.panes) if (P.rp) { P.rp = false; P.data = P.full; P.full = null; P.cs.setData(klCdAll(P.data)); P.vs.setData(P.data.map((b, i) => klVolBar(b, P.data[i - 1]))); P.ch.timeScale().scrollToRealTime(); kaxFit(P.ax); P.key = ''; kmLegend(P); }
   $('klSt').textContent = ''; krBar(); }
 /* ---------- ƒx K 線圖指標（像 TradingView 左上角的指標列：名稱＋參數、👁 隱藏、⚙ 參數、✕ 移除） ----------
    照擁有者給的 Pine 指標改寫：FVG Order Blocks [BigBeluga]、LuxAlgo SMC（CHoCH／BOS）、莊家淨額、CRT＋SMC、清算熱力圖 [BigBeluga]、天神下凡（獵殺）、12:00 基準價區間、上帝視角（每日開盤線／POC） */
@@ -6996,6 +7025,11 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-08c', title: '2026/11/08 更新（軸上滾輪縮放、拖曳不再被吸回去）', items: [
+    { ic: '↕', t: 'K 線圖：滑鼠放在右邊價格軸上滾滾輪，只拉長或壓扁 K 棒，時間軸不動；放在下面時間軸上滾，只縮放時間，價格不動。每一格都可以。' },
+    { ic: '🧲', t: '打開圖表後就能上下左右自由拖曳，不會再被自動比例吸回去；想重新對齊，在價格軸上點兩下。' },
+    { ic: '⏪', t: '回放的選圖列不會再把右上角的按鈕擠到下一行，圖表大小不會在按回放時改變。' }
+  ] },
   { id: '2026-11-08b', title: '2026/11/08 更新（K 線圖填滿畫面、回放列變小）', items: [
     { ic: '🖥', t: 'K 線圖改成填滿整個視窗，左右和下面不再留白。' },
     { ic: '⏪', t: '回放的控制列縮小，搬到上排「回放」按鈕旁邊，不會再擋住圖表。' }
