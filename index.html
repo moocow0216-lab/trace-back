@@ -1307,7 +1307,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-08c</div>
+      <div class="qver" id="qVer">網站版本 2026-11-08d</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3767,7 +3767,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-08c・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-08d・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -4799,6 +4799,14 @@ function kdCursor() {                                   // 游標樣式：十字
 const KPX = { d: 1 };
 const kSn = (v, lw) => { const d = KPX.d, p = Math.round((lw || 1) * d); return (Math.round(v * d) + (p % 2 ? 0.5 : 0)) / d; };   // 對齊螢幕像素：線條才會銳利
 const kSr = v => Math.round(v * KPX.d) / KPX.d;
+function klSnap() {                                    // 每一格的圖表對齊螢幕的實際像素：落在小數點位置時，瀏覽器會重新取樣，K 棒和線就會變糊
+  const d = devicePixelRatio || 1;
+  for (const el of document.querySelectorAll('#klGrid .klbox, #klGrid .kmc')) {
+    const ox = +el.dataset.sx || 0, oy = +el.dataset.sy || 0, r = el.getBoundingClientRect(), bx = r.left - ox, by = r.top - oy;
+    const nx = Math.round(bx * d) / d - bx, ny = Math.round(by * d) / d - by;
+    if (Math.abs(nx - ox) > 0.005 || Math.abs(ny - oy) > 0.005) { el.dataset.sx = nx; el.dataset.sy = ny; el.style.left = nx.toFixed(3) + 'px'; el.style.top = ny.toFixed(3) + 'px'; }
+  }
+}
 function kdCanvas(cv) {                                 // 畫布大小對準實際像素（不會被縮放而變模糊）
   const r = cv.getBoundingClientRect(), d = devicePixelRatio || 1, W = Math.round(r.width * d), H = Math.round(r.height * d);
   if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
@@ -4965,7 +4973,7 @@ function kdBind() {
     if (b.dataset.kdtx) { const tx = prompt('修改文字：', d.text || ''); if (tx != null) d.text = tx.slice(0, 120); }
     kdSave(); kdEdit();
   });
-  const loop = () => { if (KL.open) { kdDraw(); for (const P of KM.panes) kmDrawInd(P); } KD.raf = requestAnimationFrame(loop); }; cancelAnimationFrame(KD.raf); loop();
+  let fr = 0; const loop = () => { if (KL.open) { if (fr++ % 20 === 0) klSnap(); kdDraw(); for (const P of KM.panes) kmDrawInd(P); } KD.raf = requestAnimationFrame(loop); }; cancelAnimationFrame(KD.raf); loop();
 }
 /* ---------- ✏️ 繪圖的屬性視窗（照 TradingView：樣式／文字／坐標／可見性，範本） ---------- */
 const KD_DASH = [[], [2, 3], [6, 4]];
@@ -7025,6 +7033,9 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-08d', title: '2026/11/08 修正（主圖比較糊）', items: [
+    { ic: '🔍', t: '修正 K 線圖主圖看起來比其他格糊：圖表落在半個像素的位置時，瀏覽器會把整張圖重新取樣；現在每一格都會自動對齊螢幕的實際像素。' }
+  ] },
   { id: '2026-11-08c', title: '2026/11/08 更新（軸上滾輪縮放、拖曳不再被吸回去）', items: [
     { ic: '↕', t: 'K 線圖：滑鼠放在右邊價格軸上滾滾輪，只拉長或壓扁 K 棒，時間軸不動；放在下面時間軸上滾，只縮放時間，價格不動。每一格都可以。' },
     { ic: '🧲', t: '打開圖表後就能上下左右自由拖曳，不會再被自動比例吸回去；想重新對齊，在價格軸上點兩下。' },
