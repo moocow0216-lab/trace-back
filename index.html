@@ -661,6 +661,8 @@ body.simmode::before{content:"";position:fixed;inset:0 0 auto;height:3px;backgro
 .mnsheet{position:fixed;inset:0;z-index:80;background:var(--bg,#0b0f16);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
 .mnsheethead{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid #262d3a;background:rgba(11,15,22,.96)}.mnsheethead h2{margin:0;font-size:17px}
 .mnsheetbody{flex:1;overflow:auto;padding:14px 16px calc(24px + env(safe-area-inset-bottom,0px))}
+.mnsheet.mnfull .mnsheetbody{display:flex;flex-direction:column;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px))}.mnsheet.mnfull .mnpage[data-p="kline"]{max-width:none;width:100%;flex:1;min-height:0}
+.mnsheet.mnfull #mnpKline{flex:1;min-height:0;display:flex;flex-direction:column}.mnsheet.mnfull #mnpKline>.kl{flex:1;height:auto;min-height:420px}
 .mnpage{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
 .mnpage>.panel,.mnpage>.qcfg{margin:0}
 body.mn-sheet{overflow:hidden}
@@ -1016,8 +1018,8 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
 .kdw{min-width:28px;height:26px;border:0;background:transparent;color:inherit;border-radius:5px;cursor:pointer;display:grid;place-items:center}.kdw i{display:block;width:16px;background:currentColor}.kdw.on,.kdw:hover{background:rgba(41,98,255,.18)}
 .kdfav{position:absolute;top:8px;left:8px;z-index:6;display:flex;gap:2px;background:var(--panel,#1e222d);border:1px solid var(--line,#2a2e39);border-radius:8px;padding:2px}
 .klrpb{border:1px solid var(--line,#2a2e39);background:transparent;color:inherit;border-radius:8px;padding:6px 12px;font-size:13.5px;cursor:pointer}.klrpb.on{background:#2962ff;border-color:#2962ff;color:#fff}
-.klrp{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:6px;background:var(--panel,#1e222d);border:1px solid #2962ff;border-radius:10px;padding:6px 8px;box-shadow:0 8px 24px rgba(0,0,0,.4);flex-wrap:wrap;justify-content:center;max-width:96%;font-size:13px}
-.klrp .btn{padding:5px 10px;flex:none!important;width:auto!important}.klrp select{padding:5px 6px;border-radius:6px}.krt{color:var(--muted);font-size:12px}
+.klrp{display:flex;align-items:center;gap:4px;flex-wrap:wrap;padding:2px 4px;border:1px solid rgba(41,98,255,.55);border-radius:8px;font-size:12.5px;min-width:0}
+.klrp .btn{padding:3px 8px;min-height:0;font-size:12.5px;line-height:1.4;flex:none!important;width:auto!important}.klrp select{padding:2px 4px;border-radius:6px;font-size:12px}.klrp>b,.klrp>span{padding:0 4px;white-space:nowrap}.krt{color:var(--muted);font-size:11.5px}.klrp .krsel{padding:2px 6px;font-size:12px}
 @media (max-width:620px){.kltools{width:42px}.kdb{width:32px;height:32px;font-size:14px}}
 
 .kilg{display:flex;flex-direction:column;gap:1px;pointer-events:auto}.kirow{display:flex;align-items:center;gap:6px;font-size:12.5px;line-height:1.5;padding:1px 6px;border-radius:4px;width:max-content;max-width:100%;color:#d1d4dc;text-shadow:0 0 3px rgba(0,0,0,.7)}
@@ -1304,7 +1306,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-08a</div>
+      <div class="qver" id="qVer">網站版本 2026-11-08b</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3764,7 +3766,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-08a・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-08b・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -4317,9 +4319,9 @@ function klUi() {
   host.innerHTML = `<div class="kl">
     <div class="kltop">
       <div class="kltf" role="group" aria-label="週期">${KL_TF.map(([v, n]) => `<button data-kltf="${v}" aria-pressed="false">${n}</button>`).join('')}</div>
-      <span class="klst" id="klSt" role="status"></span><button class="klrpb" id="klLayBtn" aria-haspopup="menu" title="多重圖表：選擇要看幾個圖">▢ 1 格</button><button class="klrpb" id="klIndBtn" aria-haspopup="menu" title="指標">ƒx 指標</button><button class="klrpb" id="klPineBtn" title="Pine 編輯器：自己寫指標">📝 Pine</button><button class="klrpb" id="klRpBtn" aria-pressed="false" title="K 線回放">⏪ 回放</button><span class="klsync" id="klSync" role="status"></span><span class="spacer"></span><button class="klgear" id="klLockBtn" aria-label="圖表鎖" title="圖表鎖（擁有者）" hidden>🔒</button><button class="klgear" id="klGear" aria-label="圖表設定" title="設定">⚙</button></div>
+      <span class="klst" id="klSt" role="status"></span><button class="klrpb" id="klLayBtn" aria-haspopup="menu" title="多重圖表：選擇要看幾個圖">▢ 1 格</button><button class="klrpb" id="klIndBtn" aria-haspopup="menu" title="指標">ƒx 指標</button><button class="klrpb" id="klPineBtn" title="Pine 編輯器：自己寫指標">📝 Pine</button><button class="klrpb" id="klRpBtn" aria-pressed="false" title="K 線回放">⏪ 回放</button><div class="klrp" id="klRp" hidden role="group" aria-label="回放控制"></div><span class="klsync" id="klSync" role="status"></span><span class="spacer"></span><button class="klgear" id="klLockBtn" aria-label="圖表鎖" title="圖表鎖（擁有者）" hidden>🔒</button><button class="klgear" id="klGear" aria-label="圖表設定" title="設定">⚙</button></div>
     <div class="klmid"><div class="kltools" id="klTools" role="toolbar" aria-label="繪圖工具" aria-orientation="vertical"></div>
-    <div class="klbox"><div class="kllgw"><div class="kllg" id="klLg"></div><div class="kilg" id="kiLg"></div></div><canvas id="klDrawBg" class="kldrawbg" aria-hidden="true"></canvas><div id="klChart" class="klchart" aria-label="K 線圖，可以拖曳、用滾輪或兩指縮放"></div><div class="kltag" id="klTag" hidden aria-live="off"><b id="klTagP"></b><small id="klTagT"></small></div><div class="kltagsym" id="klTagSym" hidden></div><canvas id="klDraw" class="kldraw" aria-hidden="true"></canvas><div class="kdedit" id="kdEditBar" hidden></div><div class="kdfav" id="kdFav" hidden></div><div class="klrp" id="klRp" hidden></div><div class="klnav" id="klNav" data-mode="hover" role="group" aria-label="導覽"><button data-nv="out" aria-label="縮小">−</button><button data-nv="in" aria-label="放大">＋</button><button data-nv="left" aria-label="往左">‹</button><button data-nv="right" aria-label="往右">›</button><button data-nv="reset" aria-label="回到最新">⟳</button></div></div></div>
+    <div class="klbox"><div class="kllgw"><div class="kllg" id="klLg"></div><div class="kilg" id="kiLg"></div></div><canvas id="klDrawBg" class="kldrawbg" aria-hidden="true"></canvas><div id="klChart" class="klchart" aria-label="K 線圖，可以拖曳、用滾輪或兩指縮放"></div><div class="kltag" id="klTag" hidden aria-live="off"><b id="klTagP"></b><small id="klTagT"></small></div><div class="kltagsym" id="klTagSym" hidden></div><canvas id="klDraw" class="kldraw" aria-hidden="true"></canvas><div class="kdedit" id="kdEditBar" hidden></div><div class="kdfav" id="kdFav" hidden></div><div class="klnav" id="klNav" data-mode="hover" role="group" aria-label="導覽"><button data-nv="out" aria-label="縮小">−</button><button data-nv="in" aria-label="放大">＋</button><button data-nv="left" aria-label="往左">‹</button><button data-nv="right" aria-label="往右">›</button><button data-nv="reset" aria-label="回到最新">⟳</button></div></div></div>
     <div class="klpick" id="klPick" hidden role="dialog" aria-label="選擇幣種"><input id="klQ" placeholder="搜尋幣種，例如 BTC、ETH、SOL" autocomplete="off" aria-label="搜尋幣種"><div class="kllist" id="klList" role="listbox"></div></div></div>`;
   { const box = host.querySelector('.klbox'), grid = document.createElement('div'); grid.id = 'klGrid'; grid.className = 'klgrid'; grid.dataset.l = '1'; box.parentNode.insertBefore(grid, box);
     const main = document.createElement('div'); main.id = 'klMain'; main.className = 'klmain';   // 主格：跟其他格一樣在左上角選幣種、週期
@@ -5049,10 +5051,10 @@ function krBar() {
   if (!KR.on) return;
   if (KR.choose) { el.innerHTML = `<b>要回放哪幾張圖？</b>${krViews().map(([v, n, sym, tf]) => `<label class="krsel"><input type="checkbox" data-krv="${v}"${KR.sel.has(v) ? ' checked' : ''}> ${n}・${esc(sym.replace(/USDT$/, ''))} ${krTfName(tf)}</label>`).join('')}<button class="btn primary" data-kr="go">👆 選起點</button><button class="btn" data-kr="exit">取消</button>`; return; }
   const left = Math.max(0, KL.full.length - KL.data.length);
-  el.innerHTML = KR.pick ? `<span>👆 在主圖上點一下，選回放的起點（${KR.sel.size} 張圖一起回放）</span><button class="btn" data-kr="exit">取消</button>`
+  el.innerHTML = KR.pick ? `<span>👆 在主圖上點一下選起點（${KR.sel.size} 張圖）</span><button class="btn" data-kr="exit">取消</button>`
     : `<button class="btn" data-kr="pick" title="重新選圖和起點">⏮ 重選</button><button class="btn" data-kr="play" aria-label="${KR.play ? '暫停' : '播放'}">${KR.play ? '⏸' : '▶'}</button><button class="btn" data-kr="step" title="下一步（Shift＋→）" aria-label="下一步">⏭</button>
       <select data-kr="speed" aria-label="播放速度">${[1, 2, 3, 5, 10].map(v => `<option value="${v}"${KR.speed === v ? ' selected' : ''}>${v} 步／秒</option>`).join('')}</select>
-      <span class="krt">${KR.clock ? ksTime(Math.floor(KR.clock / 1000) - 1) : ''}・${KR.sel.size} 張圖${KR.sel.has('m0') ? `・主圖還有 ${left} 根` : ''}</span><button class="btn" data-kr="exit">⏹ 結束回放</button>`;
+      <span class="krt">${KR.clock ? ksTime(Math.floor(KR.clock / 1000) - 1) : ''}・${KR.sel.size} 張圖${KR.sel.has('m0') ? `・剩 ${left} 根` : ''}</span><button class="btn" data-kr="exit" aria-label="結束回放">⏹ 結束</button>`;
 }
 function krToggle() { if (KR.on) return krExit(); KR.on = true; KR.play = false; kdUse(null); KR.sel = new Set([...KR.sel].filter(v => krViews().some(x => x[0] === v))); if (!KR.sel.size) KR.sel.add('m0');
   if (KM.panes.length) { KR.choose = true; KR.pick = false; } else { KR.sel = new Set(['m0']); KR.choose = false; KR.pick = true; } krBar(); }
@@ -6945,7 +6947,7 @@ function mnOpen(k) {
   if (MODE !== 'quant') setMode('quant');             // 在歷史走勢頁時先回到合約量化，訊號卡片、歷史紀錄才會在
   const it = MN_ITEMS.find(x => x[0] === k); if (!it) return;
   if (MN_PAGE === 'heat' && k !== 'heat') htStop();
-  MN_PAGE = k;
+  MN_PAGE = k; $('mnSheet').classList.toggle('mnfull', k === 'kline');   // 🕯 K 線圖填滿整個視窗
   for (const pg of $('mnSheetBody').children) pg.hidden = pg.dataset.p !== k;
   $('mnTitle').textContent = it[1] + ' ' + it[2];
   const el = it[3] && $(it[3]); if (el) el.hidden = false;
@@ -6994,6 +6996,10 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-08b', title: '2026/11/08 更新（K 線圖填滿畫面、回放列變小）', items: [
+    { ic: '🖥', t: 'K 線圖改成填滿整個視窗，左右和下面不再留白。' },
+    { ic: '⏪', t: '回放的控制列縮小，搬到上排「回放」按鈕旁邊，不會再擋住圖表。' }
+  ] },
   { id: '2026-11-08a', title: '2026/11/08 更新（K 線圖每一格用同一種選幣方式）', items: [
     { ic: '🔍', t: 'K 線圖每一格（包含主圖）左上角都有一樣的幣種按鈕，按下去跳出搜尋清單（顯示最新價和漲跌），選了只換那一格。' },
     { ic: '🧭', t: '主圖左上角也加上指標 ƒx、週期選單和最新價；最上排的幣種按鈕拿掉，只留週期按鈕。' }
