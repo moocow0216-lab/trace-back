@@ -1308,7 +1308,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-08g</div>
+      <div class="qver" id="qVer">網站版本 2026-11-08h</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3768,7 +3768,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-08g・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-08h・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -5591,11 +5591,18 @@ const PN = (() => {
       throw new PineErr('這裡下一行要縮排寫內容', P.ln);
     }
     function stmt(ind) {
-      const Lk = L[k++], P = { t: lex(Lk.text, Lk.ln), i: 0, ln: Lk.ln }, X = parseExpr(P), done = () => { if (P.i < P.t.length) throw new PineErr(`「${P.t[P.i].v}」前面少了東西，或多打了字`, P.ln); };
+      const Lk = L[k++]; let txt = Lk.text.replace(/^export\s+/, ''), isMeth = false; if (/^method\s+/.test(txt)) { isMeth = true; txt = txt.replace(/^method\s+/, ''); }
+      const P = { t: lex(txt, Lk.ln), i: 0, ln: Lk.ln }, X = parseExpr(P), done = () => { if (P.i < P.t.length) throw new PineErr(`「${P.t[P.i].v}」前面少了東西，或多打了字`, P.ln); };
       const T0 = P.t[0];
       if (!T0) return { t: 'nop' };
       if (T0.k === 'id' && /^(indicator|study|strategy|library)$/.test(T0.v)) { const e = X.tern(); done(); meta = e; if (T0.v === 'strategy') throw new PineErr('目前不支援 strategy（策略回測），請改成 indicator', P.ln); return { t: 'meta', e, ln: P.ln }; }
-      if (T0.k === 'id' && /^(import|export|type|method|enum)$/.test(T0.v)) throw new PineErr(`目前不支援「${T0.v}」`, P.ln);
+      if (T0.k === 'id' && T0.v === 'type') {                // 自訂型別：type 名稱，下一行縮排寫欄位（型別 名稱 = 預設值）
+        P.i++; const tn = X.eat('id').v; done(); TYPES.add(tn); const fields = [];
+        while (k < L.length && L[k].ind > ind) { const F = L[k++], PT = lex(F.text, F.ln); let q = PT.findIndex(t => t.k === 'op' && t.v === '='); const end = q < 0 ? PT.length : q; let nm = null; for (let z = end - 1; z >= 0; z--) if (PT[z].k === 'id') { nm = PT[z].v; break; }
+          if (!nm) throw new PineErr('type 的欄位看不懂', F.ln); let def = null; if (q >= 0) { const Q = { t: PT.slice(q + 1), i: 0, ln: F.ln }; def = parseExpr(Q).tern(); } fields.push({ n: nm, def }); }
+        return { t: 'type', n: tn, fields, ln: P.ln }; }
+      if (T0.k === 'id' && /^(import|enum)$/.test(T0.v)) throw new PineErr(`目前不支援「${T0.v}」`, P.ln);
+      if (T0.k === 'id' && T0.v === 'switch') { P.i++; return swParse(ind, P, X); }
       if (T0.k === 'kw' && (T0.v === 'break' || T0.v === 'continue')) { P.i++; done(); return { t: T0.v, ln: P.ln }; }
       if (T0.k === 'kw' && T0.v === 'if') { P.i++; const c = X.tern(); done(); const th = block2(ind), s = { t: 'if', c, th, el: null, ln: P.ln }; elseChain(s, ind); return s; }
       if (T0.k === 'kw' && T0.v === 'for') { P.i++;
@@ -5604,7 +5611,7 @@ const PN = (() => {
         X.eat('op', '='); const a = X.tern(); X.eat('kw', 'to'); const b = X.tern(); let by = null; if (X.is('kw', 'by')) { X.next(); by = X.tern(); } done(); return { t: 'for', v, a, b, by, body: block2(ind), ln: P.ln }; }
       if (T0.k === 'kw' && T0.v === 'while') { P.i++; const c = X.tern(); done(); return { t: 'while', c, body: block2(ind), ln: P.ln }; }
       // 函式定義：name(a, b) =>
-      if (T0.k === 'id' && P.t[1] && P.t[1].v === '(') { let d = 0, j = 1; for (; j < P.t.length; j++) { if (P.t[j].v === '(') d++; if (P.t[j].v === ')') { d--; if (!d) break; } } if (P.t[j + 1] && P.t[j + 1].v === '=>') { const params = []; for (let q = 2; q < j; q++) if (P.t[q].k === 'id' && !TYPES.has(P.t[q].v) && !(P.t[q + 1] && P.t[q + 1].k === 'id')) { const nm = P.t[q].v; let def = null; if (P.t[q + 1] && P.t[q + 1].v === '=') { const Q = { t: P.t.slice(q + 2, j), i: 0, ln: P.ln }; const sub = parseExpr(Q); def = sub.tern(); q += 1 + Q.i; } params.push({ n: nm, def }); } P.i = j + 2; return { t: 'fn', n: T0.v, params, body: body(ind, P, X), ln: P.ln }; } }
+      if (T0.k === 'id' && P.t[1] && P.t[1].v === '(') { let d = 0, j = 1; for (; j < P.t.length; j++) { if (P.t[j].v === '(') d++; if (P.t[j].v === ')') { d--; if (!d) break; } } if (P.t[j + 1] && P.t[j + 1].v === '=>') { const params = []; for (let q = 2; q < j; q++) if (P.t[q].k === 'id' && !TYPES.has(P.t[q].v) && !(P.t[q + 1] && P.t[q + 1].k === 'id')) { const nm = P.t[q].v; let def = null; if (P.t[q + 1] && P.t[q + 1].v === '=') { const Q = { t: P.t.slice(q + 2, j), i: 0, ln: P.ln }; const sub = parseExpr(Q); def = sub.tern(); q += 1 + Q.i; } params.push({ n: nm, def }); } P.i = j + 2; return { t: 'fn', n: T0.v, params, method: isMeth, body: body(ind, P, X), ln: P.ln }; } }
       // 宣告：[var] [型別] 名稱 = 算式；或 [a, b] = 算式
       let isVar = false; if (T0.k === 'kw' && (T0.v === 'var' || T0.v === 'varip')) { isVar = true; P.i++; }
       while (P.t[P.i] && P.t[P.i].k === 'id' && TYPES.has(P.t[P.i].v) && P.t[P.i + 1] && (P.t[P.i + 1].k === 'id' || P.t[P.i + 1].v === '<')) { P.i++; if (P.t[P.i].v === '<') { while (P.t[P.i] && P.t[P.i].v !== '>') P.i++; P.i++; } }
@@ -5617,8 +5624,18 @@ const PN = (() => {
     }
     function rhs(ind, P, X) {                              // 等號右邊：算式，或 if／switch 當算式用
       if (X.is('kw', 'if')) { X.next(); const c = X.tern(); const s = { t: 'if', c, th: block2(ind), el: null, ln: P.ln, asExpr: true }; elseChain(s, ind); return { t: 'blk', s, id: ++NID, ln: P.ln }; }
-      if (X.is('id', 'switch')) throw new PineErr('目前不支援 switch，請改用 if／else if', P.ln);
+      if (X.is('id', 'switch')) { X.next(); return { t: 'blk', s: swParse(ind, P, X), id: ++NID, ln: P.ln }; }
       const e = X.tern(); if (P.i < P.t.length) throw new PineErr(`「${P.t[P.i].v}」前面少了東西，或多打了字`, P.ln); return e;
+    }
+    function swParse(ind, P, X) {                          // switch：有比對值（值 => 結果）或沒有（條件 => 結果），「=> 結果」是預設
+      let subj = null; if (P.i < P.t.length) subj = X.tern(); if (P.i < P.t.length) throw new PineErr(`「${P.t[P.i].v}」前面少了東西，或多打了字`, P.ln);
+      const arms = []; let def = null;
+      while (k < L.length && L[k].ind === ind + 1) { const A0 = L[k++], P2 = { t: lex(A0.text, A0.ln), i: 0, ln: A0.ln }, X2 = parseExpr(P2); let c = null;
+        if (!X2.is('op', '=>')) c = X2.tern(); X2.eat('op', '=>');
+        const b = P2.i < P2.t.length ? [{ t: 'expr', e: X2.tern(), ln: P2.ln }] : block2(ind + 1); if (P2.i < P2.t.length) throw new PineErr(`「${P2.t[P2.i].v}」前面少了東西，或多打了字`, P2.ln);
+        if (c) arms.push({ c, b }); else def = b; }
+      if (!arms.length && !def) throw new PineErr('switch 下一行要縮排寫「值 => 結果」', P.ln);
+      return { t: 'switch', subj, arms, def, ln: P.ln };
     }
     function block2(ind) { if (!(k < L.length && L[k].ind > ind)) throw new PineErr('這裡下一行要縮排寫內容', L[k - 1].ln); return block(ind + 1); }
     function elseChain(s, ind) {
@@ -5637,7 +5654,7 @@ const PN = (() => {
   /* ---- 5. 執行 ---- */
   function run(ast, B, opt) {
     const n = B.length, inputsV = opt.inputs || {}, sec = opt.sec || 60;
-    const G = {}, H = {}, isVarSet = new Set(), varInit = new Set(), fns = {}, st = {}, out = { plots: {}, shapes: [], hlines: {}, bg: [], fills: [], boxes: new Map(), lines: new Map(), labels: new Map(), meta: { title: '我的指標', short: '', overlay: true } };
+    const G = {}, H = {}, isVarSet = new Set(), varInit = new Set(), fns = {}, TD = {}, meths = {}, st = {}, out = { plots: {}, shapes: [], hlines: {}, bg: [], fills: [], boxes: new Map(), lines: new Map(), labels: new Map(), meta: { title: '我的指標', short: '', overlay: true } };
     let i = 0, callPath = '', objId = 0, inputIdx = 0;
     const ser = name => H[name] || (H[name] = new Array(n).fill(NA));
     const builtinSer = { open: k => B[k].o, high: k => B[k].h, low: k => B[k].l, close: k => B[k].c, volume: k => B[k].v, time: k => B[k].t, time_close: k => B[k].t + sec * 1000, hl2: k => (B[k].h + B[k].l) / 2, hlc3: k => (B[k].h + B[k].l + B[k].c) / 3, ohlc4: k => (B[k].o + B[k].h + B[k].l + B[k].c) / 4, hlcc4: k => (B[k].h + B[k].l + 2 * B[k].c) / 4, bar_index: k => k };
@@ -5667,7 +5684,7 @@ const PN = (() => {
       if (name in G) return G[name];
       if (builtinSer[name]) return builtinSer[name](i);
       if (consts[name]) return consts[name]();
-      { const dp = name.indexOf('.'); if (dp > 0) { const pre = name.slice(0, dp); if ((sc && pre in sc) || pre in G) { const o = sc && pre in sc ? sc[pre] : G[pre]; return o && typeof o === 'object' ? o[name.slice(dp + 1)] ?? NA : NA; } } }
+      { const dp = name.indexOf('.'); if (dp > 0) { const pre = name.slice(0, dp); if ((sc && pre in sc) || pre in G) { let o = sc && pre in sc ? sc[pre] : G[pre]; for (const f of name.slice(dp + 1).split('.')) { if (!o || typeof o !== 'object') return NA; o = o[f]; } return o ?? NA; } } }
       if (/^color\./.test(name)) return NA;
       throw new PineErr(`找不到「${name}」（還沒宣告，或目前不支援）`, ln);
     }
@@ -5682,7 +5699,7 @@ const PN = (() => {
         case 'id': return getVar(e.n, sc, e.ln);
         case 'tup': return e.items.map(x => ev(x, sc));
         case 'idx': return index(e.e, num(ev(e.i, sc)), sc);
-        case 'fld': { const o = ev(e.e, sc); return o && typeof o === 'object' ? o[e.n] : NA; }
+        case 'fld': { let o = ev(e.e, sc); for (const f of e.n.split('.')) { if (!o || typeof o !== 'object') return NA; o = o[f]; } return o ?? NA; }
         case 'un': { const v = ev(e.e, sc); return e.op === '-' ? -num(v) : !truthy(v); }
         case 'tern': return truthy(ev(e.c, sc)) ? ev(e.a, sc) : ev(e.b, sc);
         case 'bin': {
@@ -5712,10 +5729,14 @@ const PN = (() => {
       return last;
     }
     const BRK = { brk: 1 }, CNT = { cnt: 1 };
-    function setVar(name, v, sc) { if (sc && name in sc) { sc[name] = v; return; } G[name] = v; }
+    function setVar(name, v, sc) {
+      const dp = name.indexOf('.'); if (dp > 0 && !(sc && name in sc) && !(name in G)) { const pre = name.slice(0, dp), path = name.slice(dp + 1).split('.'); let o = sc && pre in sc ? sc[pre] : G[pre];
+        for (let z = 0; z < path.length - 1; z++) { if (!o || typeof o !== 'object') return; o = o[path[z]]; } if (o && typeof o === 'object') o[path[path.length - 1]] = v; return; }   // 物件欄位：obj.price := 1
+      if (sc && name in sc) { sc[name] = v; return; } G[name] = v; }
     function exec(s, sc) {
       switch (s.t) {
-        case 'nop': case 'fn': return NA;
+        case 'nop': case 'fn': case 'type': return NA;
+        case 'switch': { const sv = s.subj ? ev(s.subj, sc) : null; for (const a of s.arms) { const cv = ev(a.c, sc); if (s.subj ? (cv === sv || (typeof cv === 'number' && typeof sv === 'number' && cv === sv)) : truthy(cv)) return execBlock(a.b, sc, true); } return s.def ? execBlock(s.def, sc, true) : NA; }
         case 'meta': return NA;
         case 'decl': {
           const key = callPath + '|' + s.ln + '|' + s.names.join(','); if (s.isVar && varInit.has(key)) return NA;
@@ -5748,7 +5769,10 @@ const PN = (() => {
     function call(e, sc) {
       const f = e.f, args = e.args, a = k => args.filter(x => !x.name)[k], named = nm => args.find(x => x.name === nm), arg = (nm, k, d) => { const x = named(nm) || (k != null ? a(k) : null); return x ? ev(x.e, sc) : d; };
       if (fns[f]) return callUser(fns[f], e, sc);
-      { const dp = f.indexOf('.'); if (dp > 0) { const pre = f.slice(0, dp); if ((sc && pre in sc) || pre in G) return method(f.slice(dp + 1), getVar(pre, sc, e.ln), args, sc, e); } }   // 變數的方法：arr.push(x)、b.set_right(x)
+      { const dp = f.indexOf('.'); if (dp > 0) { const pre = f.slice(0, dp), rest = f.slice(dp + 1);
+        if (TD[pre] && !((sc && pre in sc) || pre in G)) { if (rest === 'new') return udtNew(pre, args, sc); if (rest === 'copy') { const o = arg('object', 0); return o && typeof o === 'object' ? { ...o } : NA; } }
+        if ((sc && pre in sc) || pre in G) { const ps = rest.split('.'), m = ps.pop(); let o = getVar(pre, sc, e.ln); for (const q of ps) o = o && typeof o === 'object' ? o[q] ?? NA : NA; return method(m, o, args, sc, e); } } }   // 變數的方法：arr.push(x)、obj.arr.push(x)、b.set_right(x)
+      if (f.startsWith('.') && f.indexOf('.', 1) > 0) { const ps = f.slice(1).split('.'), m = ps.pop(); let o = ev(args[0].e, sc); for (const q of ps) o = o && typeof o === 'object' ? o[q] ?? NA : NA; return method(m, o, args.slice(1), sc, e); }
       if (f.startsWith('.')) return method(f.slice(1), ev(args[0].e, sc), args.slice(1), sc, e);
       switch (f) {
         case 'na': return isNa(arg('x', 0));
@@ -5837,8 +5861,14 @@ const PN = (() => {
       throw new PineErr(`目前不支援函式「${f}」`, e.ln);
     }
     function lim(M, max) { while (M.size > max) M.delete(M.keys().next().value); }
+    function udtNew(tn, args, sc) {                        // 自訂型別.new(...)：照欄位順序或名稱給值，沒給的用預設值
+      const F = TD[tn], o = { __t: tn }, pos = args.filter(x => !x.name);
+      F.forEach((f, k) => { const a = args.find(x => x.name === f.n) || pos[k]; o[f.n] = a ? ev(a.e, sc) : f.def ? ev(f.def, sc) : NA; }); return o;
+    }
     function method(m, o, args, sc, e) {                   // 陣列和物件的方法（arr.push、box.set_right…）
       const v = k => args[k] ? ev(args[k].e, sc) : undefined;
+      if (meths[m]) { const ln = e.ln; return callUser(meths[m], { id: e.id, ln, args: [{ name: null, e: { t: 'lit', v: o } }, ...args] }, sc); }   // 自己寫的 method
+      if (o && o.__t && m === 'copy') return { ...o };
       if (o && o.__arr) { const A0 = o.__arr;
         switch (m) { case 'push': A0.push(v(0)); return NA; case 'unshift': A0.unshift(v(0)); return NA; case 'pop': return A0.pop(); case 'shift': return A0.shift(); case 'get': return A0[num(v(0)) < 0 ? A0.length + num(v(0)) : num(v(0))]; case 'set': A0[num(v(0))] = v(1); return NA;
           case 'size': return A0.length; case 'clear': A0.length = 0; return NA; case 'remove': return A0.splice(num(v(0)), 1)[0]; case 'insert': A0.splice(num(v(0)), 0, v(1)); return NA; case 'includes': return A0.includes(v(0)); case 'indexof': return A0.indexOf(v(0));
@@ -5856,7 +5886,7 @@ const PN = (() => {
     }
     const xi = (x, xloc) => xloc === 'bt' ? x : num(x);
     // 先把函式定義和 indicator() 找出來
-    const walk = S0 => { for (const s of S0) { if (s.t === 'fn') fns[s.n] = s; } }; walk(ast.prog);
+    const walk = S0 => { for (const s of S0) { if (s.t === 'fn') { if (s.method) meths[s.n] = s; if (!s.method || !fns[s.n]) fns[s.n] = s; } if (s.t === 'type') TD[s.n] = s.fields; } }; walk(ast.prog);
     if (ast.meta && ast.meta.t === 'call') { const ma = ast.meta.args, g = (nm, k) => { const x = ma.find(q => q.name === nm) || ma.filter(q => !q.name)[k]; return x ? ev(x.e, null) : undefined; }; out.meta = { title: g('title', 0) || '我的指標', short: g('shorttitle', 1) || '', overlay: g('overlay', 2) === true, maxBox: g('max_boxes_count') || 500 }; opt.maxBox = out.meta.maxBox; }
     const t0 = Date.now();
     for (i = 0; i < n; i++) {
@@ -5990,7 +6020,7 @@ function kpDo(a) {
   if (a === 'new') { const nm = prompt('新腳本的名稱：', '我的指標 ' + (KP.scripts.length + 1)); if (!nm) return; const s = { id: Date.now().toString(36), name: nm.slice(0, 40), code: KP_TPL.replace('我的指標', nm.slice(0, 40)), at: Date.now() }; KP.scripts.push(s); kpSave(); kpReg(s); KP.cur = s.id; kpLoad(); return; }
   if (a === 'ren') { const nm = prompt('重新命名：', sc.name); if (!nm) return; sc.name = nm.slice(0, 40); kpSave(); kpReg(sc); kpLoad(); kiLegend(); return; }
   if (a === 'del') { if (!confirm(`刪除腳本「${sc.name}」？圖上的這個指標也會移除。`)) return; KP.scripts = KP.scripts.filter(s => s !== sc); kpSave(); KI.list = KI.list.filter(it => it.id !== 'pine:' + sc.id); delete KI_DEF['pine:' + sc.id]; for (const k of Object.keys(KP.res)) if (k.endsWith('|' + sc.id)) delete KP.res[k]; kiSave(); kpApply(); if (!KP.scripts.length) return kpDo('x'); KP.cur = KP.scripts[0].id; kpLoad(); return; }
-  if (a === 'help') { kpConsole('支援：變數（var、:=、+=）、if／else if／else、for、while、自訂函式（=>）、[a, b] = 多個回傳值、x[1] 歷史值；input.int／float／bool／color／string／source；ta.sma／ema／rma／wma／hma／vwma／rsi／atr／tr／highest／lowest／stdev／change／crossover／crossunder／pivothigh／pivotlow／macd／bb／stoch／cci／vwap／supertrend／barssince／valuewhen；math.*、str.tostring／format、color.new／rgb；plot、plotshape、plotchar、hline、bgcolor、fill、box.new／line.new／label.new（含 set_*、delete）、array.*。還不支援：request.security、strategy、table、switch、type／method。', true); return; }
+  if (a === 'help') { kpConsole('支援：變數（var、:=、+=）、if／else if／else、for、while、自訂函式（=>）、[a, b] = 多個回傳值、x[1] 歷史值；input.int／float／bool／color／string／source；ta.sma／ema／rma／wma／hma／vwma／rsi／atr／tr／highest／lowest／stdev／change／crossover／crossunder／pivothigh／pivotlow／macd／bb／stoch／cci／vwap／supertrend／barssince／valuewhen；math.*、str.tostring／format、color.new／rgb；plot、plotshape、plotchar、hline、bgcolor、fill、box.new／line.new／label.new（含 set_*、delete）、array.*、for…in、switch、自訂 type／method。還不支援：request.security、strategy、table、map、enum、import。', true); return; }
   if (a === 'save' || a === 'add') {
     const code = $('kpCode').value; try { PN.parse(code); } catch (e) { KP.err = KP.err || {}; KP.err[sc.id] = { msg: e.message, line: e.line }; kpConsole(); if (a === 'add') return; }
     sc.code = code; sc.at = Date.now(); kpSave(); kpReg(sc); kpDirty(false);
@@ -7054,6 +7084,9 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-08h', title: '2026/11/08 更新（Pine 支援 type、method、switch）', items: [
+    { ic: '📝', t: 'Pine 編輯器支援自訂型別 type（欄位預設值、型別.new()、obj.欄位 讀寫、copy）、method（obj.方法() 呼叫）、switch（有比對值和沒有比對值兩種），export 會自動略過。' }
+  ] },
   { id: '2026-11-08g', title: '2026/11/08 更新（Pine 支援 box[] 這種陣列寫法）', items: [
     { ic: '📝', t: 'Pine 編輯器支援 float[]、box[]、line[] 這種陣列型別寫法（例如 var box[] liveBoxes = array.new_box()）。' }
   ] },
