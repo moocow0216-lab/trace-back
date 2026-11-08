@@ -1308,7 +1308,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-08f</div>
+      <div class="qver" id="qVer">網站版本 2026-11-08g</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3768,7 +3768,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-08f・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-08g・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -5608,6 +5608,7 @@ const PN = (() => {
       // 宣告：[var] [型別] 名稱 = 算式；或 [a, b] = 算式
       let isVar = false; if (T0.k === 'kw' && (T0.v === 'var' || T0.v === 'varip')) { isVar = true; P.i++; }
       while (P.t[P.i] && P.t[P.i].k === 'id' && TYPES.has(P.t[P.i].v) && P.t[P.i + 1] && (P.t[P.i + 1].k === 'id' || P.t[P.i + 1].v === '<')) { P.i++; if (P.t[P.i].v === '<') { while (P.t[P.i] && P.t[P.i].v !== '>') P.i++; P.i++; } }
+      if (P.t[P.i] && P.t[P.i].k === 'id' && TYPES.has(P.t[P.i].v) && P.t[P.i + 1] && P.t[P.i + 1].v === '[' && P.t[P.i + 2] && P.t[P.i + 2].v === ']' && P.t[P.i + 3] && P.t[P.i + 3].k === 'id') P.i += 3;   // 舊寫法的陣列型別：box[] x、float[] x
       if (X.is('op', '[')) { const save = P.i; P.i++; const names = []; while (X.is('id')) { names.push(X.next().v); if (X.is('op', ',')) X.next(); else break; } if (X.is('op', ']') && P.t[P.i + 1] && P.t[P.i + 1].v === '=') { P.i += 2; const e = rhs(ind, P, X); return { t: 'decl', names, isVar, e, ln: P.ln }; } P.i = save; }
       if (X.is('id') && P.t[P.i + 1] && P.t[P.i + 1].k === 'op' && ['=', ':=', '+=', '-=', '*=', '/=', '%='].includes(P.t[P.i + 1].v)) {
         const n = X.next().v, op = X.next().v, e = rhs(ind, P, X); return op === '=' ? { t: 'decl', names: [n], isVar, e, ln: P.ln } : { t: 'assign', n, op, e, ln: P.ln };
@@ -7053,6 +7054,9 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-08g', title: '2026/11/08 更新（Pine 支援 box[] 這種陣列寫法）', items: [
+    { ic: '📝', t: 'Pine 編輯器支援 float[]、box[]、line[] 這種陣列型別寫法（例如 var box[] liveBoxes = array.new_box()）。' }
+  ] },
   { id: '2026-11-08f', title: '2026/11/08 更新（Pine 支援 for...in）', items: [
     { ic: '📝', t: 'Pine 編輯器支援 for x in 陣列、for [i, x] in 陣列，另外新增 str.split、str.substring、str.startswith、str.endswith、str.pos、str.trim、str.replace；str.tonumber 遇到不是數字的文字會回傳 na（跟 TradingView 一樣）。' }
   ] },
