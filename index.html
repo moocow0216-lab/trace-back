@@ -1308,7 +1308,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-08e</div>
+      <div class="qver" id="qVer">網站版本 2026-11-08f</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3768,7 +3768,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-08e・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-08f・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -5598,7 +5598,10 @@ const PN = (() => {
       if (T0.k === 'id' && /^(import|export|type|method|enum)$/.test(T0.v)) throw new PineErr(`目前不支援「${T0.v}」`, P.ln);
       if (T0.k === 'kw' && (T0.v === 'break' || T0.v === 'continue')) { P.i++; done(); return { t: T0.v, ln: P.ln }; }
       if (T0.k === 'kw' && T0.v === 'if') { P.i++; const c = X.tern(); done(); const th = block2(ind), s = { t: 'if', c, th, el: null, ln: P.ln }; elseChain(s, ind); return s; }
-      if (T0.k === 'kw' && T0.v === 'for') { P.i++; const v = X.eat('id').v; if (X.is('kw', 'in')) throw new PineErr('目前不支援 for...in，請用 for i = 0 to n', P.ln); X.eat('op', '='); const a = X.tern(); X.eat('kw', 'to'); const b = X.tern(); let by = null; if (X.is('kw', 'by')) { X.next(); by = X.tern(); } done(); return { t: 'for', v, a, b, by, body: block2(ind), ln: P.ln }; }
+      if (T0.k === 'kw' && T0.v === 'for') { P.i++;
+        if (X.is('op', '[')) { X.next(); const vi = X.eat('id').v; X.eat('op', ','); const vx = X.eat('id').v; X.eat('op', ']'); X.eat('kw', 'in'); const e = X.tern(); done(); return { t: 'forin', vi, vx, e, body: block2(ind), ln: P.ln }; }   // for [i, x] in 陣列
+        const v = X.eat('id').v; if (X.is('kw', 'in')) { X.next(); const e = X.tern(); done(); return { t: 'forin', vi: null, vx: v, e, body: block2(ind), ln: P.ln }; }   // for x in 陣列
+        X.eat('op', '='); const a = X.tern(); X.eat('kw', 'to'); const b = X.tern(); let by = null; if (X.is('kw', 'by')) { X.next(); by = X.tern(); } done(); return { t: 'for', v, a, b, by, body: block2(ind), ln: P.ln }; }
       if (T0.k === 'kw' && T0.v === 'while') { P.i++; const c = X.tern(); done(); return { t: 'while', c, body: block2(ind), ln: P.ln }; }
       // 函式定義：name(a, b) =>
       if (T0.k === 'id' && P.t[1] && P.t[1].v === '(') { let d = 0, j = 1; for (; j < P.t.length; j++) { if (P.t[j].v === '(') d++; if (P.t[j].v === ')') { d--; if (!d) break; } } if (P.t[j + 1] && P.t[j + 1].v === '=>') { const params = []; for (let q = 2; q < j; q++) if (P.t[q].k === 'id' && !TYPES.has(P.t[q].v) && !(P.t[q + 1] && P.t[q + 1].k === 'id')) { const nm = P.t[q].v; let def = null; if (P.t[q + 1] && P.t[q + 1].v === '=') { const Q = { t: P.t.slice(q + 2, j), i: 0, ln: P.ln }; const sub = parseExpr(Q); def = sub.tern(); q += 1 + Q.i; } params.push({ n: nm, def }); } P.i = j + 2; return { t: 'fn', n: T0.v, params, body: body(ind, P, X), ln: P.ln }; } }
@@ -5722,6 +5725,8 @@ const PN = (() => {
         case 'assign': { const cur = getVar(s.n, sc, s.ln), v = ev(s.e, sc); let r = v; if (s.op === '+=') r = typeof cur === 'string' ? cur + v : num(cur) + num(v); if (s.op === '-=') r = num(cur) - num(v); if (s.op === '*=') r = num(cur) * num(v); if (s.op === '/=') r = num(cur) / num(v); if (s.op === '%=') r = num(cur) % num(v); setVar(s.n, r, sc); return r; }
         case 'for': { const a = num(ev(s.a, sc)), b = num(ev(s.b, sc)); let by = s.by ? Math.abs(num(ev(s.by, sc))) : 1; if (!(by > 0)) by = 1; const up = b >= a; let guard = 0, last = NA;
           for (let x = a; up ? x <= b : x >= b; x += up ? by : -by) { if (++guard > 5000) throw new PineErr('for 迴圈跑太多次（超過 5000 次）', s.ln); setDecl(s.v, x, sc); const r = execBlock(s.body, sc, true); if (r === BRK) break; if (r !== CNT) last = r; } return last; }
+        case 'forin': { const A = ev(s.e, sc), L = A && A.__arr ? A.__arr.slice() : Array.isArray(A) ? A.slice() : []; let last = NA; if (L.length > 5000) throw new PineErr('for...in 的陣列太大（超過 5000 個）', s.ln);
+          for (let k = 0; k < L.length; k++) { if (s.vi) setDecl(s.vi, k, sc); setDecl(s.vx, L[k], sc); const r = execBlock(s.body, sc, true); if (r === BRK) break; if (r !== CNT) last = r; } return last; }
         case 'while': { let guard = 0, last = NA; while (truthy(ev(s.c, sc))) { if (++guard > 5000) throw new PineErr('while 迴圈跑太多次（超過 5000 次）', s.ln); const r = execBlock(s.body, sc, true); if (r === BRK) break; if (r !== CNT) last = r; } return last; }
       }
       return NA;
@@ -5751,7 +5756,14 @@ const PN = (() => {
         case 'int': { const v = num(arg('x', 0)); return isNa(v) ? NA : Math.trunc(v); }
         case 'float': return num(arg('x', 0)); case 'bool': return truthy(arg('x', 0)); case 'string': case 'str.tostring': { const v = arg('value', 0), fm = arg('format', 1); if (isNa(v)) return 'NaN'; if (typeof v === 'number' && fm === 'percent') return (v).toFixed(2) + '%'; if (typeof v === 'number' && typeof fm === 'string' && /^#/.test(fm)) { const d = (fm.split('.')[1] || '').length; return v.toFixed(d); } if (typeof v === 'number') return String(+v.toFixed(8)); return String(v); }
         case 'str.format': { let t = String(arg('formatString', 0, '')); args.slice(1).forEach((x, k) => { const v = ev(x.e, sc); t = t.replace(new RegExp('\\{' + k + '(,[^}]*)?\\}', 'g'), isNa(v) ? 'NaN' : typeof v === 'number' ? String(+v.toFixed(8)) : String(v)); }); return t; }
-        case 'str.length': return String(arg('string', 0, '')).length; case 'str.contains': return String(arg('source', 0, '')).includes(String(arg('str', 1, ''))); case 'str.upper': return String(arg('source', 0, '')).toUpperCase(); case 'str.lower': return String(arg('source', 0, '')).toLowerCase(); case 'str.replace_all': return String(arg('source', 0, '')).split(String(arg('target', 1, ''))).join(String(arg('replacement', 2, ''))); case 'str.tonumber': return +arg('string', 0);
+        case 'str.length': return String(arg('string', 0, '')).length; case 'str.contains': return String(arg('source', 0, '')).includes(String(arg('str', 1, ''))); case 'str.upper': return String(arg('source', 0, '')).toUpperCase(); case 'str.lower': return String(arg('source', 0, '')).toLowerCase(); case 'str.replace_all': return String(arg('source', 0, '')).split(String(arg('target', 1, ''))).join(String(arg('replacement', 2, ''))); case 'str.tonumber': { const t = String(arg('string', 0, '')).trim(), n = t === '' ? NaN : +t; return isFinite(n) ? n : NA; }
+        case 'str.split': { const t = arg('string', 0, ''), sep = String(arg('separator', 1, '')); return { __arr: (t === NA || t == null) ? [] : String(t).split(sep) }; }
+        case 'str.substring': { const t = String(arg('source', 0, '')), b0 = num(arg('begin_pos', 1, 0)), e0 = arg('end_pos', 2, NA); return e0 === NA ? t.substring(b0) : t.substring(b0, num(e0)); }
+        case 'str.startswith': return String(arg('source', 0, '')).startsWith(String(arg('str', 1, '')));
+        case 'str.endswith': return String(arg('source', 0, '')).endsWith(String(arg('str', 1, '')));
+        case 'str.pos': { const i = String(arg('source', 0, '')).indexOf(String(arg('str', 1, ''))); return i < 0 ? NA : i; }
+        case 'str.trim': return String(arg('source', 0, '')).trim();
+        case 'str.replace': return String(arg('source', 0, '')).replace(String(arg('target', 1, '')), String(arg('replacement', 2, '')));
         case 'color.new': return colNew(arg('color', 0), num(arg('transp', 1, 0)));
         case 'color.rgb': return `rgba(${num(arg('red', 0))},${num(arg('green', 1))},${num(arg('blue', 2))},${+(1 - num(arg('transp', 3, 0)) / 100).toFixed(3)})`;
         case 'color.from_gradient': { const v = num(arg('value', 0)), lo = num(arg('bottom_value', 1)), hi = num(arg('top_value', 2)), c1 = String(arg('bottom_color', 3)), c2 = String(arg('top_color', 4)), t = Math.max(0, Math.min(1, (v - lo) / ((hi - lo) || 1))), p = c => (/rgba?\(([^)]+)\)/.exec(c) || [0, '0,0,0,1'])[1].split(',').map(Number), x = p(c1), y = p(c2); return `rgba(${x.map((q, k) => k < 3 ? Math.round(q + (y[k] - q) * t) : +((q ?? 1) + ((y[k] ?? 1) - (q ?? 1)) * t).toFixed(3)).join(',')})`; }
@@ -7041,6 +7053,9 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-08f', title: '2026/11/08 更新（Pine 支援 for...in）', items: [
+    { ic: '📝', t: 'Pine 編輯器支援 for x in 陣列、for [i, x] in 陣列，另外新增 str.split、str.substring、str.startswith、str.endswith、str.pos、str.trim、str.replace；str.tonumber 遇到不是數字的文字會回傳 na（跟 TradingView 一樣）。' }
+  ] },
   { id: '2026-11-08e', title: '2026/11/08 更新（改名 QEVRAX、Ctrl 吸附 K 棒）', items: [
     { ic: '✨', t: '網站改名為「QEVRAX」：網頁標題、登入頁、左上角、作戰室的名稱都換成新的字標，主畫面圖示也換成新 logo。' },
     { ic: '🧲', t: 'K 線圖畫圖時按住 Ctrl：自動吸附到最近的 K 棒，靠近燭芯就吸在燭芯尖端，靠近實體就吸在實體的上緣或下緣，吸附點會用黃色小圈標出來。' }
