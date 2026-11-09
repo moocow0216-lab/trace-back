@@ -1308,7 +1308,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-09a</div>
+      <div class="qver" id="qVer">網站版本 2026-11-09c</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3768,7 +3768,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-09a・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-09c・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -4645,16 +4645,23 @@ function ksImg(file) {                                 // 讀圖片 → 縮小�
 /* ---------- ▦ 多重圖表：一次看 1～6 個圖（第 1 格是主圖，有畫圖、指標、Pine；其他格是簡易圖：K 線、成交量、即時更新） ---------- */
 const KM_LAY = [['1', '▢', '1 格'], ['2h', '◫', '2 格（左右）'], ['2v', '⊟', '2 格（上下）'], ['3', '◧', '3 格（左大右二）'], ['4', '⊞', '4 格（2×2）'], ['6', '▦', '6 格（3×2）']];
 const KM_N = { 1: 1, '2h': 2, '2v': 2, 3: 3, 4: 4, 6: 6 };
-const KM = { lay: LS.get('klLayout', '1'), cfg: LS.get('klPanes', []), syncSym: LS.get('klSyncSym', false), panes: [] };
+const KM = { lay: LS.get('klLayout', '1'), cfg: LS.get('klPanes', []), syncSym: LS.get('klSyncSym', false), syncInd: LS.get('klSyncInd', true), panes: [] };
+function kmSyncInd(force) {                              // 同步指標：其他格用主圖的指標（某一格自己改過指標，那一格就不再跟）
+  if (!KM.syncInd) return; const sig = JSON.stringify(KI.list.map(({ id, on, p, g, vis, pine }) => ({ id, on, p, g, vis, pine })));
+  const own = L => JSON.stringify(L.map(({ id, on, p, g, vis }) => ({ id, on, p, g, vis })));   // 判斷「自己改過」只看使用者會改的欄位
+  for (const P of KM.panes) { if (P.cust) continue; if (P.indSig !== undefined && !force && own(P.ind) !== P.ownSig) { P.cust = true; kmSave(); continue; }
+    if (P.indSig === sig) continue; P.ind = JSON.parse(sig); P.indSig = sig; P.ownSig = own(P.ind); P.key = ''; P.res = {}; P.hadInd = true; try { kmLegendInd(P); } catch (e) {} }
+}
 const KM_DEF = [['ETHUSDT', '15m'], ['BTCUSDT', '1h'], ['SOLUSDT', '15m'], ['BTCUSDT', '4h'], ['BNBUSDT', '15m']];
-function kmCfg(i) { const c = KM.cfg[i] || {}; return { sym: c.sym || KM_DEF[i][0], tf: c.tf || KM_DEF[i][1], ind: c.ind || [] }; }
-function kmSave() { KM.cfg = KM.panes.map(p => ({ sym: p.sym, tf: p.tf, ind: p.ind.map(({ id, on, p: pp, g, vis, pine }) => ({ id, on, p: pp, g, vis, pine: pine ? { inputs: pine.inputs, vals: pine.vals, pv: pine.pv } : undefined })) })).concat(KM.cfg.slice(KM.panes.length)); LS.set('klPanes', KM.cfg); }
+function kmCfg(i) { const c = KM.cfg[i] || {}; return { sym: c.sym || KM_DEF[i][0], tf: c.tf || KM_DEF[i][1], ind: c.ind || [], cust: !!c.cust }; }
+function kmSave() { KM.cfg = KM.panes.map(p => ({ sym: p.sym, tf: p.tf, cust: !!p.cust, ind: p.ind.map(({ id, on, p: pp, g, vis, pine }) => ({ id, on, p: pp, g, vis, pine: pine ? { inputs: pine.inputs, vals: pine.vals, pv: pine.pv } : undefined })) })).concat(KM.cfg.slice(KM.panes.length)); LS.set('klPanes', KM.cfg); }
 function kmLayout(lay) {                                // 換版面：重建簡易圖
   if (lay) { KM.lay = lay; LS.set('klLayout', lay); }
   const grid = $('klGrid'); if (!grid || !window.LightweightCharts) return; grid.dataset.l = KM.lay;
   const need = (KM_N[KM.lay] || 1) - 1;
   while (KM.panes.length > need) kmKill(KM.panes.pop());
   for (let i = KM.panes.length; i < need; i++) KM.panes.push(kmMake(i, kmCfg(i)));
+  kmTheme(); kmSyncInd(true);   // 新開的格子：背景、樣式、指標跟主圖一樣
   if (need > 0 && !KL.list.length) try { klList(); } catch (e) {}   // 幣種清單（輸入框的提示）
   const b = $('klLayBtn'); if (b) b.textContent = (KM_LAY.find(x => x[0] === KM.lay) || KM_LAY[0])[1] + ' ' + (KM_N[KM.lay] || 1) + ' 格';
 }
@@ -4668,7 +4675,7 @@ function kmMake(i, c) {
   ch.timeScale().applyOptions({ tickMarkFormatter: ksTick });
   const cs = ch.addCandlestickSeries({ ...ksSeries(), lastValueVisible: true, priceLineStyle: 1, priceFormat: { type: 'custom', formatter: klFmt, minMove: 1e-8 } }), vs = ch.addHistogramSeries({ priceScaleId: 'vol', priceFormat: { type: 'volume' }, lastValueVisible: false, priceLineVisible: false });
   ch.priceScale('vol').applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } }); cs.priceScale().applyOptions({ scaleMargins: { top: 0.08, bottom: 0.2 } });
-  const P = { i, el, ch, cs, vs, sym: c.sym, tf: c.tf, data: [], ind: (c.ind || []).map(x => ({ ...x })), key: '', res: null }; P.ax = { ch, cs }; kaxBind(el.querySelector('.kmc'), P.ax);
+  const P = { i, el, ch, cs, vs, sym: c.sym, tf: c.tf, data: [], ind: (c.ind || []).map(x => ({ ...x })), key: '', res: null, cust: !!c.cust }; P.ax = { ch, cs }; kaxBind(el.querySelector('.kmc'), P.ax);
   for (const it of P.ind) if (/^pine:/.test(it.id) && !it.pine) { const sc = KP.scripts.find(x => 'pine:' + x.id === it.id); if (sc) it.pine = { inputs: pineParse(sc.code), vals: {}, pv: 2, src: '' }; }
   el.querySelector('.kmind').addEventListener('click', e => { e.stopPropagation(); kiAddMenu(e.currentTarget, 'p' + i); });
   ch.subscribeCrosshairMove(p => kmLegend(P, p && p.time ? P.data.find(x => x.time === p.time) : null));
@@ -4695,6 +4702,10 @@ function kmWs(P) {                                       // 即時更新（推�
     ws.onclose = () => { if (!P.dead && KL.open) setTimeout(() => kmWs(P), 3000); }; } catch (e) {}
   P.poll = setInterval(async () => { if (P.dead || !KL.open || document.hidden || Date.now() - P.last < 5000) return; try { const D = await klFetch(P.sym, P.tf, 0, 2); D.forEach(b => kmPut(P, b)); } catch (e) {} }, 2000);
 }
+function kmAlive() {                                    // 其他格的即時更新斷了（例如離開 K 線圖再回來）就補資料、重新連線
+  for (const P of KM.panes) { if (P.dead || !P.data.length || P.rp || P.reviving) continue; if (P.ws && P.ws.readyState <= 1) continue;   // 連線中或已連上：交給原本的推播／備援輪詢 P.reviving = true;
+    klFetch(P.sym, P.tf, 0, 300).then(D => { D.forEach(b => kmPut(P, b)); }).catch(() => {}).finally(() => { P.reviving = false; if (!P.ws || P.ws.readyState > 1) kmWs(P); }); }
+}
 function kmLegend(P, b) {
   const D = P.data; P.hover = !!b; if (!b) b = D[D.length - 1]; const el = P.el.querySelector('.kmlg'); if (!b) { el.textContent = ''; return; }
   const i = D.indexOf(b), prev = i > 0 ? D[i - 1].close : b.open, pc = prev ? (b.close - prev) / prev * 100 : 0, up = ksUp(b, D[i - 1]);
@@ -4703,24 +4714,29 @@ function kmLegend(P, b) {
 function kmLegendInd(P) { if (!P) return; kiLegendFor(P.el.querySelector('.kilg'), P.ind, 'p' + P.i); }
 function kmDrawInd(P) {                                  // 把這一格的指標畫上去（借用主圖的畫法：暫時把「目前的圖」換成這一格）
   const cvT = P.el.querySelector('.kmtop'), cvB = P.el.querySelector('.kmbg'); if (!cvT || !P.data.length) return;
-  if (!P.ind.length && !P.hadInd) return; P.hadInd = P.ind.length > 0;
+  const DR = KD.hide ? [] : kdAllFor(P.sym, KR.on ? null : KL.sym);
+  if (!P.ind.length && !P.hadInd && !DR.length && !P.hadDr) return; P.hadInd = P.ind.length > 0; P.hadDr = DR.length > 0;
   const sv = { data: KL.data, tf: KL.tf, sym: KL.sym, ch: KL.ch, cs: KL.cs, list: KI.list, res: KI.res, key: KI.key, atr: KI.atr };
   KL.data = P.data; KL.tf = P.tf; KL.sym = P.sym; KL.ch = P.ch; KL.cs = P.cs; KI.list = P.ind; KI.res = P.res; KI.key = P.key; KVID = 'p' + P.i;
-  try { const [g, w, h] = kdCanvas(cvT), [gb] = kdCanvas(cvB), pw = P.ch.priceScale('right').width() || 50; g.save(); g.beginPath(); g.rect(0, 0, w - pw, h); g.clip(); gb.save(); gb.beginPath(); gb.rect(0, 0, w - pw, h); gb.clip(); kiDraw(g, w - pw, h, gb); g.restore(); gb.restore(); if (!P.ind.length) try { P.cs.setMarkers([]); } catch (e) {} }
+  try { const [g, w, h] = kdCanvas(cvT), [gb] = kdCanvas(cvB), pw = P.ch.priceScale('right').width() || 50; g.save(); g.beginPath(); g.rect(0, 0, w - pw, h); g.clip(); gb.save(); gb.beginPath(); gb.rect(0, 0, w - pw, h); gb.clip(); if (P.ind.length || P.hadIndDrawn) { kiDraw(g, w - pw, h, gb); P.hadIndDrawn = P.ind.length > 0; } for (const d of DR) try { kdShape(g, d, false, w - pw, h); } catch (e) {} g.restore(); gb.restore(); if (!P.ind.length) try { P.cs.setMarkers([]); } catch (e) {} }   // 同一個幣種的繪圖也畫上來
   catch (e) {} finally { P.res = KI.res; P.key = KI.key; KL.data = sv.data; KL.tf = sv.tf; KL.sym = sv.sym; KL.ch = sv.ch; KL.cs = sv.cs; KI.list = sv.list; KI.res = sv.res; KI.key = sv.key; KI.atr = sv.atr; KVID = 'm0'; }
 }
-function kmTheme() {                                     // 簡易圖跟主圖用同一套顏色、背景
-  const box = document.querySelector('.klbox'), mn = $('klMain'); if (box && mn) { mn.style.backgroundColor = box.style.backgroundColor; mn.style.backgroundImage = box.style.backgroundImage; mn.style.backgroundSize = box.style.backgroundSize; }
-  for (const P of KM.panes) { if (box) { P.el.style.backgroundColor = box.style.backgroundColor; P.el.style.backgroundImage = box.style.backgroundImage; P.el.style.backgroundSize = box.style.backgroundSize; }
+function kmTheme() {                                     // 其他格跟主圖用同一套：背景、K 棒顏色、格線、文字、十字線、浮水印
+  const box = document.querySelector('.klbox'), mn = $('klMain'), cp = el => { for (const k of ['backgroundColor', 'backgroundImage', 'backgroundSize', 'backgroundRepeat', 'backgroundPosition']) el.style[k] = box.style[k]; };
+  if (box && mn) cp(mn);
+  for (const P of KM.panes) { if (box) { cp(P.el); const kc = P.el.querySelector('.kmc'); if (kc) kc.style.background = 'transparent'; P.el.classList.toggle('kllight', box.classList.contains('kllight')); }
+    try { const sv = [KL.sym, KL.tf]; KL.sym = P.sym; KL.tf = P.tf; let o; try { o = ksBg(); } finally { [KL.sym, KL.tf] = sv; } P.ch.applyOptions({ ...o, layout: { ...o.layout, fontSize: Math.min(12, o.layout.fontSize || 11) }, watermark: { ...o.watermark, fontSize: 40 } }); } catch (e) {}
     try { P.cs.applyOptions(ksSeries()); P.ch.applyOptions({ layout: { textColor: box && box.classList.contains('kllight') ? '#131722' : '#d1d4dc' } }); if (P.data.length) { P.cs.setData(klCdAll(P.data)); P.vs.setData(P.data.map((b, i) => klVolBar(b, P.data[i - 1]))); } } catch (e) {} }
 }
 function kmMenu(anchor) {
   kdMenuClose(); const m = document.createElement('div'); m.className = 'kdmenu'; m.id = 'kdMenu'; m.setAttribute('role', 'menu');
   m.innerHTML = '<p class="kdmh">選擇要看幾個圖表（第 1 格是主圖）</p>' + KM_LAY.map(([k, ic, n]) => `<button role="menuitemradio" aria-checked="${KM.lay === k}" data-kmlay="${k}"${KM.lay === k ? ' class="on"' : ''}><i>${ic}</i>${n}</button>`).join('') +
-    `<label class="kmopt"><input type="checkbox" id="kmSyncSym"${KM.syncSym ? ' checked' : ''}> 同步幣種（主圖換幣，其他格一起換）</label>`;
+    `<label class="kmopt"><input type="checkbox" id="kmSyncSym"${KM.syncSym ? ' checked' : ''}> 同步幣種（主圖換幣，其他格一起換）</label>` +
+    `<label class="kmopt"><input type="checkbox" id="kmSyncInd"${KM.syncInd ? ' checked' : ''}> 同步指標（其他格用主圖的指標；某一格自己改過就各自獨立，重新勾選會全部再對齊）</label>`;
   const r = anchor.getBoundingClientRect(), box = $('mnpKline').getBoundingClientRect(); m.style.left = (r.left - box.left) + 'px'; m.style.top = (r.bottom - box.top + 4) + 'px';
   $('mnpKline').querySelector('.kl').appendChild(m);
   m.addEventListener('click', e => { const b = e.target.closest('[data-kmlay]'); if (b) { kmLayout(b.dataset.kmlay); kdMenuClose(); } e.stopPropagation(); });
+  m.querySelector('#kmSyncInd').addEventListener('change', e => { KM.syncInd = e.target.checked; LS.set('klSyncInd', KM.syncInd); if (KM.syncInd) { KM.panes.forEach(P => { P.cust = false; P.indSig = undefined; }); kmSyncInd(true); kmSave(); } });
   m.querySelector('#kmSyncSym').addEventListener('change', e => { KM.syncSym = e.target.checked; LS.set('klSyncSym', KM.syncSym); if (KM.syncSym) KM.panes.forEach(P => kmSet(P, KL.sym, P.tf)); });
 }
 /* ---------- ✏️ K 線圖的繪圖工具（照 TradingView 左邊的工具列）＋ ⏪ K 線回放 ---------- */
@@ -4738,8 +4754,9 @@ const KD_EMO = ['🚀', '🔥', '⭐', '✅', '❌', '⚠️', '💰', '🎯', '
 const KD_COLS = ['#2962ff', '#f23645', '#089981', '#ff9800', '#e91e63', '#9c27b0', '#ffffff', '#787b86'];
 const KD_FIB = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1];
 const kdKey = () => 'klDraw';
-function kdLoad() { const all = LS.get(kdKey(), {}); KD.list = all[KL.sym] || []; KD.sel = null; }
-function kdSave() { const all = LS.get(kdKey(), {}); if (KD.list.length) all[KL.sym] = KD.list; else delete all[KL.sym]; LS.set(kdKey(), all); }
+function kdLoad() { const all = LS.get(kdKey(), {}); KD.list = all[KL.sym] || []; KD.sel = null; KD.allC = null; }
+function kdSave() { const all = LS.get(kdKey(), {}); if (KD.list.length) all[KL.sym] = KD.list; else delete all[KL.sym]; LS.set(kdKey(), all); KD.allC = null; }
+function kdAllFor(sym, mainSym) { if (sym === mainSym) return KD.list; if (!KD.allC) KD.allC = LS.get(kdKey(), {}); return KD.allC[sym] || []; }   // 這個幣種的繪圖（其他格顯示用）
 /* ---- 座標換算：時間 ↔ 邏輯位置 ↔ 畫面 x；價格 ↔ 畫面 y（未來的時間用週期往後推） ---- */
 function kdT2L(t) {
   const D = KL.data, n = D.length; if (!n) return 0; const sec = KL_SEC[KL.tf] || 60;
@@ -4762,9 +4779,14 @@ function kdPt(x, y) {                                   // 畫面座標 → {時
     if (KD.ctrl || c[1] < 40) { p = c[0]; t = b.time; KD.snapAt = { t, p }; } }
   return { t, p };
 }
-addEventListener('keydown', e => { if (e.key === 'Control' || e.key === 'Meta') KD.ctrl = true; });
-addEventListener('keyup', e => { if (e.key === 'Control' || e.key === 'Meta') KD.ctrl = false; });
-addEventListener('blur', () => { KD.ctrl = false; });
+function kdLock(q, a, m) {                              // 按住 Shift：跟前一個點保持水平或垂直（看滑鼠往哪個方向拉得多）
+  if (!KD.shift || !a || !m) return q; const ax = kdX(a.t), ay = kdY(a.p); if (ax == null || ay == null) return q;
+  return Math.abs(m.x - ax) >= Math.abs(m.y - ay) ? { t: q.t, p: a.p } : { t: a.t, p: q.p };
+}
+const kdTmpLock = () => { if (KD.tmp && KD.tool && KD.tmp.type !== 'brush' && KD.mouse && KD.tmp.pts.length > 1) { const P = KD.tmp.pts; P[P.length - 1] = kdLock(kdPt(KD.mouse.x, KD.mouse.y), P[P.length - 2], KD.mouse); } };
+addEventListener('keydown', e => { if (e.key === 'Control' || e.key === 'Meta') KD.ctrl = true; if (e.key === 'Shift' && !KD.shift) { KD.shift = true; kdTmpLock(); } });
+addEventListener('keyup', e => { if (e.key === 'Control' || e.key === 'Meta') KD.ctrl = false; if (e.key === 'Shift') { KD.shift = false; kdTmpLock(); } });
+addEventListener('blur', () => { KD.ctrl = false; KD.shift = false; });
 /* ---- 工具列 ---- */
 function kdToolbar() {
   const el = $('klTools'); if (!el) return;
@@ -4773,7 +4795,7 @@ function kdToolbar() {
   el.innerHTML = grp + '<i class="kdsep"></i>' +
     `<button class="kdb${KD.tool === 'ruler' ? ' on' : ''}" data-kdt="ruler" title="測量（拖曳量價差、K 棒數、時間）" aria-label="測量">📏</button>
      <button class="kdb${KD.tool === 'zoom' ? ' on' : ''}" data-kdt="zoom" title="放大（拖曳一段範圍）" aria-label="放大">🔍</button><i class="kdsep"></i>
-     <button class="kdb${KD.magnet ? ' on' : ''}" data-kda="magnet" title="磁鐵模式（吸附開高低收）；畫圖時按住 Ctrl 也會吸附" aria-label="磁鐵模式" aria-pressed="${KD.magnet}">🧲</button>
+     <button class="kdb${KD.magnet ? ' on' : ''}" data-kda="magnet" title="磁鐵模式（吸附開高低收）；畫圖時按住 Ctrl 也會吸附，按住 Shift 會保持水平或垂直" aria-label="磁鐵模式" aria-pressed="${KD.magnet}">🧲</button>
      <button class="kdb${KD.stay ? ' on' : ''}" data-kda="stay" title="保持繪圖模式（畫完不會切回游標）" aria-label="保持繪圖模式" aria-pressed="${KD.stay}">✏️</button>
      <button class="kdb${KD.lock ? ' on' : ''}" data-kda="lock" title="鎖定所有繪圖" aria-label="鎖定所有繪圖" aria-pressed="${KD.lock}">${KD.lock ? '🔒' : '🔓'}</button>
      <button class="kdb${KD.hide ? ' on' : ''}" data-kda="hide" title="隱藏所有繪圖" aria-label="隱藏所有繪圖" aria-pressed="${KD.hide}">👁</button><i class="kdsep"></i>
@@ -4895,6 +4917,7 @@ function kdNew(type, q) {                               // 新的繪圖（部位
   if (type === 'text') { const tx = prompt('輸入文字：', ''); if (!tx) return null; d.text = tx.slice(0, 120); }
   if (type === 'emoji') d.text = KD.emo || '🚀';
   const tp = LS.get('kdTpl', {})[type]; if (tp) Object.assign(d, JSON.parse(JSON.stringify(tp)));   // 套用自己存的預設樣式
+  const la = LS.get('kdLast', {})[type]; if (la) Object.assign(d, JSON.parse(JSON.stringify(la)));   // 跟 TradingView 一樣：沿用這種工具上一次用的樣式（顏色、粗細、線型…）
   return d;
 }
 function kdFinish(d) {
@@ -4906,13 +4929,14 @@ function kdEdit() {                                     // 選到繪圖時的小
   const el = $('kdEditBar'); if (!el) return; const d = KD.sel; el.hidden = !d || KD.lock; if (!d) return;
   el.innerHTML = KD_COLS.map(c => `<button class="kdc${d.color === c ? ' on' : ''}" data-kdc="${c}" style="--c:${c}" aria-label="顏色 ${c}"></button>`).join('') + '<i class="kdsep v"></i>' +
     [1, 2, 3, 4].map(w => `<button class="kdw${d.width === w ? ' on' : ''}" data-kdw="${w}" aria-label="粗細 ${w}"><i style="height:${w}px"></i></button>`).join('') +
-    `<button class="kdw" data-kdprop="1" aria-label="設定" title="設定（也可以在繪圖上點兩下）">⚙</button><button class="kdw${d.dash || d.lineSt === 2 ? ' on' : ''}" data-kdd="1" aria-label="虛線">┄</button>${d.type === 'text' ? '<button class="kdw" data-kdtx="1" aria-label="改文字">✎</button>' : ''}${d.type === 'emoji' ? KD_EMO.map(e => `<button class="kdw" data-kdemo="${e}">${e}</button>`).join('') : ''}<i class="kdsep v"></i><button class="kdw" data-kddel="sel" aria-label="刪除">🗑</button>`;
+    `<button class="kdw" data-kdprop="1" aria-label="設定" title="設定（也可以在繪圖上點兩下）">⚙</button><button class="kdw${d.dash || d.lineSt === 2 ? ' on' : ''}" data-kdd="1" aria-label="虛線">┄</button>${d.type === 'text' ? '<button class="kdw" data-kdtx="1" aria-label="改文字">✎</button>' : ''}${d.type === 'emoji' ? KD_EMO.map(e => `<button class="kdw" data-kdemo="${e}">${e}</button>`).join('') : ''}<i class="kdsep v"></i><select class="kdtplq" data-kdtplq="1" aria-label="範本" title="範本：存成有名字的樣式、套用">${kdTplOpts(d.type).replace('<option value="">範本</option>', '<option value="">📑 範本</option>')}</select><button class="kdw" data-kddel="sel" aria-label="刪除">🗑</button>`;
+  const q = el.querySelector('[data-kdtplq]'); if (q) q.onchange = () => { const v = q.value; q.value = ''; kdTplDo(KD.sel, v); kdSave(); kdEdit(); };
 }
 function kdBind() {
   const box = document.querySelector('.klbox'); if (!box || box.dataset.kd) return; box.dataset.kd = '1';
   const pos = e => { const r = $('klChart').getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
   const inChart = m => m.x < $('klChart').clientWidth - (KL.ch.priceScale('right').width() || 60) && m.y < $('klChart').clientHeight - 28;
-  const ctl = e => { KD.ctrl = e.ctrlKey || e.metaKey; }; box.addEventListener('pointerdown', ctl, true); box.addEventListener('pointermove', ctl, true);
+  const ctl = e => { KD.ctrl = e.ctrlKey || e.metaKey; KD.shift = e.shiftKey; }; box.addEventListener('pointerdown', ctl, true); box.addEventListener('pointermove', ctl, true);
   box.addEventListener('pointerdown', e => {               // 攔在圖表前面：畫圖、選繪圖、拖曳時，不讓圖表跟著捲動
     if (!KL.ch || e.button > 0 || e.target.closest('.kdedit,.klrp,.kdfav')) return; const m = pos(e); if (!inChart(m)) return;
     if (KR.pick) { e.stopPropagation(); e.preventDefault(); krStart(Math.round(KL.ch.timeScale().coordinateToLogical(m.x))); return; }
@@ -4921,7 +4945,7 @@ function kdBind() {
       e.stopPropagation(); e.preventDefault(); box.setPointerCapture(e.pointerId); const q = kdPt(m.x, m.y), T = KD.tool, need = KD_TOOLS[T][2];
       if (T === 'brush') { KD.tmp = { ...kdNew('brush', q) }; KD.drag = { brush: true }; return; }
       if (!KD.tmp) { const d = T === 'ruler' || T === 'zoom' ? { type: T, pts: [q], color: '#2962ff', width: 1 } : kdNew(T, q); if (!d) return; if (need === 1 || T === 'long' || T === 'short') return kdFinish(d); d.pts.push({ ...q }); KD.tmp = d; KD.drag = { draw: true }; return; }
-      KD.tmp.pts[KD.tmp.pts.length - 1] = q; if (KD.tmp.pts.length >= need) return kdFinish(KD.tmp); KD.tmp.pts.push({ ...q }); return;
+      { const P = KD.tmp.pts, q2 = kdLock(q, P[P.length - 2], m); P[P.length - 1] = q2; if (P.length >= need) return kdFinish(KD.tmp); P.push({ ...q2 }); } return;
     }
     const h = kdHit(m);
     if (h) { e.stopPropagation(); e.preventDefault(); box.setPointerCapture(e.pointerId); KD.sel = h[0]; KD.drag = { d: h[0], k: h[1], m0: m, p0: JSON.parse(JSON.stringify(h[0].pts)) }; kdEdit(); }
@@ -4929,12 +4953,12 @@ function kdBind() {
   }, true);
   box.addEventListener('pointermove', e => {
     if (!KL.ch) return; const m = pos(e); KD.mouse = m;
-    if (KD.tmp && KD.tool && KD.tmp.type !== 'brush') { KD.tmp.pts[KD.tmp.pts.length - 1] = kdPt(m.x, m.y); e.stopPropagation(); }
+    if (KD.tmp && KD.tool && KD.tmp.type !== 'brush') { const P = KD.tmp.pts; P[P.length - 1] = kdLock(kdPt(m.x, m.y), P[P.length - 2], m); e.stopPropagation(); }
     if (KD.drag && KD.drag.brush) { KD.tmp.pts.push(kdPt(m.x, m.y)); e.stopPropagation(); }
     else if (KD.drag && KD.drag.d) {                     // 拖曳整個繪圖或某一個點
       e.stopPropagation(); const D = KD.drag, d = D.d, q = kdPt(m.x, m.y);
-      if (D.k >= 0) { if ((d.type === 'long' || d.type === 'short') && D.k === 0) { const dt = q.t - D.p0[0].t, dp = q.p - D.p0[0].p; d.pts = D.p0.map(x => ({ t: x.t + dt, p: x.p + dp })); } else { d.pts[D.k] = (d.type === 'long' || d.type === 'short') ? (D.k === 3 ? { t: q.t, p: D.p0[3].p } : { t: D.p0[D.k].t, p: q.p }) : q; } }
-      else { const a = kdPt(D.m0.x, D.m0.y), dt = q.t - a.t, dp = q.p - a.p; d.pts = D.p0.map(x => ({ t: x.t + dt, p: x.p + dp })); }
+      if (D.k >= 0) { if ((d.type === 'long' || d.type === 'short') && D.k === 0) { const dt = q.t - D.p0[0].t, dp = q.p - D.p0[0].p; d.pts = D.p0.map(x => ({ t: x.t + dt, p: x.p + dp })); } else { d.pts[D.k] = (d.type === 'long' || d.type === 'short') ? (D.k === 3 ? { t: q.t, p: D.p0[3].p } : { t: D.p0[D.k].t, p: q.p }) : kdLock(q, D.p0.length > 1 ? D.p0[D.k === 0 ? 1 : D.k - 1] : null, m); } }
+      else { const a = kdPt(D.m0.x, D.m0.y); let dt = q.t - a.t, dp = q.p - a.p; if (KD.shift) { if (Math.abs(m.x - D.m0.x) >= Math.abs(m.y - D.m0.y)) dp = 0; else dt = 0; } d.pts = D.p0.map(x => ({ t: x.t + dt, p: x.p + dp })); }   // 按住 Shift 整個拖：只左右或只上下
     }
   }, true);
   box.addEventListener('pointerup', e => {
@@ -4977,11 +5001,12 @@ function kdBind() {
     const d = KD.sel; if (!d || !b.closest('#kdEditBar')) return;
     if (b.dataset.kdprop) return kdProps(d);
     if (b.dataset.kdc) d.color = b.dataset.kdc; if (b.dataset.kdw) d.width = +b.dataset.kdw; if (b.dataset.kdd) { const on = !(d.dash || d.lineSt === 2); d.dash = false; d.lineSt = on ? 2 : 0; }
+    if (b.dataset.kdc || b.dataset.kdw || b.dataset.kdd) kdRemember(d);
     if (b.dataset.kdemo) { d.text = b.dataset.kdemo; KD.emo = d.text; }
     if (b.dataset.kdtx) { const tx = prompt('修改文字：', d.text || ''); if (tx != null) d.text = tx.slice(0, 120); }
     kdSave(); kdEdit();
   });
-  let fr = 0; const loop = () => { if (KL.open) { if (fr++ % 20 === 0) klSnap(); kdDraw(); for (const P of KM.panes) kmDrawInd(P); } KD.raf = requestAnimationFrame(loop); }; cancelAnimationFrame(KD.raf); loop();
+  let fr = 0; const loop = () => { if (KL.open) { if (fr % 20 === 0) { klSnap(); kmSyncInd(); } if (fr % 120 === 0) kmAlive(); fr++; kdDraw(); for (const P of KM.panes) kmDrawInd(P); } KD.raf = requestAnimationFrame(loop); }; cancelAnimationFrame(KD.raf); loop();
 }
 /* ---------- ✏️ 繪圖的屬性視窗（照 TradingView：樣式／文字／坐標／可見性，範本） ---------- */
 const KD_DASH = [[], [2, 3], [6, 4]];
@@ -5024,7 +5049,7 @@ function kdProps(d) {
   let dl = $('kdDlg'); if (!dl) { dl = document.createElement('dialog'); dl.id = 'kdDlg'; dl.className = 'kldlg kddlg'; dl.setAttribute('aria-labelledby', 'kdDlgT'); document.body.appendChild(dl);
     dl.addEventListener('cancel', e => { e.preventDefault(); kdPropsCancel(); }); dl.addEventListener('input', kdPropsIn); dl.addEventListener('change', kdPropsIn);
     dl.addEventListener('click', e => { const b = e.target.closest('[data-kpt],[data-kpa],[data-kp-emo]'); if (!b) return; if (b.dataset.kpt) { KDP.tab = b.dataset.kpt; return kdPropsDraw(); }
-      const a = b.dataset.kpa, d0 = KDP.d; if (a === 'cancel') kdPropsCancel(); if (a === 'ok') { kdSave(); dl.close(); kdEdit(); }
+      const a = b.dataset.kpa, d0 = KDP.d; if (a === 'cancel') kdPropsCancel(); if (a === 'ok') { kdRemember(d0); kdSave(); dl.close(); kdEdit(); }
       if (a === 'b' || a === 'i') { d0.tx = kdTx(d0); d0.tx[a] = !d0.tx[a]; kdPropsDraw(); }
       if (a === 'es' || a === 'ee') { const k = a === 'es' ? 'endS' : 'endE'; d0[k] = (d0[k] || (k === 'endE' && d0.type === 'arrow' ? 'arrow' : 'none')) === 'arrow' ? 'none' : 'arrow'; kdPropsDraw(); } }); }
   kdPropsDraw(); dl.showModal();
@@ -5060,9 +5085,23 @@ function kdPropsDraw() {
   dl.innerHTML = `<div class="kshead"><h3 id="kdDlgT">${esc(KD_TOOLS[T] ? KD_TOOLS[T][0] : T)}</h3><button class="ksx" data-kpa="cancel" aria-label="關閉">✕</button></div>
     <div class="kitabs" role="tablist">${tabs.map(([k, n]) => `<button role="tab" data-kpt="${k}" aria-selected="${KDP.tab === k}" class="${KDP.tab === k ? 'on' : ''}">${n}</button>`).join('')}</div>
     <div class="ksmain kimain" role="tabpanel">${body}</div>
-    <div class="ksfoot"><select id="kdTplSel" aria-label="範本"><option value="">範本</option><option value="save">儲存為預設樣式</option><option value="apply">套用預設樣式</option><option value="reset">恢復原始樣式</option></select><span class="spacer"></span><button class="btn" data-kpa="cancel">取消</button><button class="btn ksok" data-kpa="ok">確認</button></div>`;
+    <div class="ksfoot"><select id="kdTplSel" aria-label="範本">${kdTplOpts(d.type)}</select><span class="spacer"></span><button class="btn" data-kpa="cancel">取消</button><button class="btn ksok" data-kpa="ok">確認</button></div>`;
 }
 const KD_STYLEK = ['color', 'width', 'lineSt', 'dash', 'ext', 'endS', 'endE', 'mid', 'plab', 'stats', 'statPos', 'statAlw', 'tx', 'vis'];
+function kdStyleOf(d) { const o = {}; for (const k of KD_STYLEK) if (d[k] != null && k !== 'vis') o[k] = JSON.parse(JSON.stringify(d[k])); if (o.tx) o.tx = { ...o.tx, txt: '' }; return o; }
+function kdRemember(d) { if (!d || !KD_TOOLS[d.type] || d.type === 'ruler' || d.type === 'zoom') return; const all = LS.get('kdLast', {}); all[d.type] = kdStyleOf(d); LS.set('kdLast', all); }   // 記住這種工具最後用的樣式
+function kdTplApply(d, st) { const txt = d.tx && d.tx.txt; Object.assign(d, JSON.parse(JSON.stringify(st))); if (txt) d.tx = { ...(d.tx || {}), txt }; kdRemember(d); }
+function kdTplOpts(T) { const N = Object.keys((LS.get('kdTplN', {})[T]) || {}); return `<option value="">範本</option><option value="savename">💾 儲存為新範本…</option>${N.length ? `<optgroup label="我的範本">${N.map(n => `<option value="n:${esc(n)}">📑 ${esc(n)}</option>`).join('')}</optgroup><option value="delname">🗑 刪除範本…</option>` : ''}<option value="save">儲存為預設樣式</option><option value="apply">套用預設樣式</option><option value="reset">恢復原始樣式</option>`; }
+function kdTplDo(d, v) {                                // 範本選單：存成有名字的範本、套用、刪除（跟 TradingView 的「範本」一樣）
+  if (!d || !v) return; const T = d.type, AN = LS.get('kdTplN', {}), mine = AN[T] || {};
+  if (v === 'savename') { const nm = (prompt(`幫這個「${KD_TOOLS[T][0]}」樣式取個名字：`, '') || '').trim().slice(0, 30); if (!nm) return; if (mine[nm] && !confirm(`已經有「${nm}」了，要覆蓋嗎？`)) return; mine[nm] = kdStyleOf(d); AN[T] = mine; LS.set('kdTplN', AN); return; }
+  if (v === 'delname') { const L = Object.keys(mine); const nm = (prompt(`要刪除哪一個範本？\n${L.map((x, k) => `${k + 1}. ${x}`).join('\n')}\n（輸入名字或號碼）`, '') || '').trim(); const key = L[+nm - 1] || nm; if (!mine[key]) return; delete mine[key]; AN[T] = mine; LS.set('kdTplN', AN); return; }
+  if (v.startsWith('n:') && mine[v.slice(2)]) return kdTplApply(d, mine[v.slice(2)]);
+  const all = LS.get('kdTpl', {});
+  if (v === 'save') { all[T] = kdStyleOf(d); LS.set('kdTpl', all); alert(`已經存成「${KD_TOOLS[T][0]}」的預設樣式`); }
+  if (v === 'apply' && all[T]) kdTplApply(d, all[T]);
+  if (v === 'reset') { for (const k of KD_STYLEK) if (k !== 'tx') delete d[k]; d.color = T === 'fib' ? '#787b86' : KD.color; d.width = 2; const la = LS.get('kdLast', {}); delete la[T]; LS.set('kdLast', la); }
+}
 function kdTzParse(str) {                               // 「年/月/日 時:分」→ 秒（用目前設定的時區）
   const m = /^(\d{4})[/-](\d{1,2})[/-](\d{1,2})\s+(\d{1,2}):(\d{2})/.exec(String(str).trim()); if (!m) return null;
   const want = Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]) / 1000; let t = want;
@@ -5070,7 +5109,7 @@ function kdTzParse(str) {                               // 「年/月/日 時:�
 }
 function kdPropsIn(e) {
   const t = e.target, d = KDP.d; if (!d) return;
-  if (t.id === 'kdTplSel') { const v = t.value; t.value = ''; const all = LS.get('kdTpl', {});
+  if (t.id === 'kdTplSel') { const v = t.value; t.value = ''; kdTplDo(d, v); kdPropsDraw(); return; const all = LS.get('kdTpl', {});
     if (v === 'save') { const o = {}; for (const k of KD_STYLEK) if (d[k] != null) o[k] = JSON.parse(JSON.stringify(d[k])); if (o.tx) o.tx = { ...o.tx, txt: '' }; all[d.type] = o; LS.set('kdTpl', all); alert(`已經存成「${KD_TOOLS[d.type][0]}」的預設樣式，之後新畫的都會用這個樣式`); }
     if (v === 'apply' && all[d.type]) Object.assign(d, JSON.parse(JSON.stringify(all[d.type])), d.tx && d.tx.txt ? { tx: { ...(all[d.type].tx || {}), txt: d.tx.txt } } : {});
     if (v === 'reset') { for (const k of KD_STYLEK) if (k !== 'tx') delete d[k]; d.color = d.type === 'fib' ? '#787b86' : KD.color; d.width = 2; }
@@ -6401,7 +6440,7 @@ function kpDo(a) {
   }
 }
 /* ---------- 🔄 K 線圖跨裝置同步（同一個帳號：設定、指標、繪圖、Pine 腳本、收藏），🔒 圖表鎖 ---------- */
-const KSY_KEYS = ['klSet', 'klInd', 'klDraw', 'klPine', 'klFav', 'kdTpl', 'kiMyDef', 'klCur', 'klMag', 'klStay', 'klTplMine', 'klLayout', 'klPanes', 'klSyncSym'];
+const KSY_KEYS = ['klSet', 'klInd', 'klDraw', 'klPine', 'klFav', 'kdTpl', 'kdTplN', 'kdLast', 'klSyncInd', 'kiMyDef', 'klCur', 'klMag', 'klStay', 'klTplMine', 'klLayout', 'klPanes', 'klSyncSym'];
 const KSY = { applying: false, t: 0, poll: 0, dev: (LS.get('klDev', null) || (() => { const d = (/iPhone|Android|iPad/.test(navigator.userAgent) ? '手機' : '電腦') + '-' + Math.random().toString(36).slice(2, 6); LS.set('klDev', d); return d; })()) };
 { const _set = LS.set.bind(LS); LS.set = (k, v) => { _set(k, v); if (KSY_KEYS.includes(k) && !KSY.applying) ksyMark(); }; }
 function ksyMark() { try { localStorage.setItem('klSyncAt', String(Date.now())); } catch (e) {} clearTimeout(KSY.t); KSY.t = setTimeout(ksyPush, 1500); }
@@ -7454,6 +7493,16 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-09c', title: '2026/11/09 更新（多格跟主圖一致、繪圖範本）', items: [
+    { ic: '🖼', t: 'K 線圖的其他格跟主圖用同一套樣式：背景、桌布、K 棒顏色、格線、文字、十字線、浮水印，新開的格子也會馬上套用。' },
+    { ic: 'ƒx', t: '其他格會自動用主圖的指標（「格數」選單裡的「同步指標」，預設開啟）；某一格自己改過指標就各自獨立。' },
+    { ic: '✏️', t: '在主圖畫的線，其他格只要是同一個幣種也會顯示（任何週期都對得上）。' },
+    { ic: '📑', t: '繪圖範本：選取繪圖後的小工具列和設定視窗都有「範本」，可以存成有名字的樣式、之後一鍵套用；新畫的線會沿用這種工具上一次用的顏色、粗細、線型，跟 TradingView 一樣。' },
+    { ic: '🔧', t: '修正其他格的價格不會即時跳動：離開 K 線圖再回來後，其他格的即時連線沒有重新接上；現在斷線會自動補資料並重新連線。' }
+  ] },
+  { id: '2026-11-09b', title: '2026/11/09 更新（Shift 畫水平／垂直）', items: [
+    { ic: '📐', t: 'K 線圖畫圖時按住 Shift：線會跟前一個點保持水平或垂直（看滑鼠往哪邊拉得多），跟 TradingView 一樣；拖曳端點或整個繪圖時按住 Shift 也一樣，只會水平或垂直移動。' }
+  ] },
   { id: '2026-11-09a', title: '2026/11/09 大更新（Pine 支援幾乎全部語法）', items: [
     { ic: '📝', t: '對照 TradingView 官方 Pine v6 的函式清單一次補齊：enum、map、matrix、table（會畫在圖上）、polyline、linefill、chart.point，以及 ta.alma／dmi／kc／sar／tsi／mfi／linreg／correlation／percentrank／pivot_point_levels 等 24 個指標函式、ta.obv／vwap 等成交量變數，還有 str.format_time、timeframe.change 等。' },
     { ic: '⏱', t: 'request.security 可以用了：同一個幣種、同週期或更大週期（例如在 1 小時圖上取日線），計算方式跟 TradingView 一樣（lookahead 預設關閉）。也支援 ticker.heikinashi。' },
