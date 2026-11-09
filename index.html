@@ -1308,7 +1308,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-08h</div>
+      <div class="qver" id="qVer">網站版本 2026-11-08i</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3768,7 +3768,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-08h・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-08i・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -5518,7 +5518,7 @@ const PN = (() => {
       if (c === '/' && line[i + 1] === '/') break;
       if (c === '"' || c === "'") { let j = i + 1, s = ''; while (j < line.length && line[j] !== c) { if (line[j] === '\\' && j + 1 < line.length) { const n = line[j + 1]; s += n === 'n' ? '\n' : n === 't' ? '\t' : n; j += 2; continue; } s += line[j++]; } if (j >= line.length) throw new PineErr('字串少了結尾的引號', ln); T.push({ k: 'str', v: s }); i = j + 1; continue; }
       if (c === '#' && /[0-9a-fA-F]/.test(line[i + 1] || '')) { let j = i + 1; while (/[0-9a-fA-F]/.test(line[j] || '')) j++; T.push({ k: 'col', v: line.slice(i, j) }); i = j; continue; }
-      if (/[0-9]/.test(c) || (c === '.' && /[0-9]/.test(line[i + 1] || ''))) { const m = /^(\d*\.?\d+(?:[eE][-+]?\d+)?|\d+\.)/.exec(line.slice(i)); T.push({ k: 'num', v: +m[0] }); i += m[0].length; continue; }
+      if (/[0-9]/.test(c) || (c === '.' && /[0-9]/.test(line[i + 1] || ''))) { const m = /^(\d+\.\d*(?:[eE][-+]?\d+)?|\.\d+(?:[eE][-+]?\d+)?|\d+(?:[eE][-+]?\d+)?)/.exec(line.slice(i)); T.push({ k: 'num', v: +m[0] }); i += m[0].length; continue; }
       if (/[A-Za-z_]/.test(c)) { let j = i; while (/[A-Za-z0-9_]/.test(line[j] || '')) j++; let w = line.slice(i, j);
         while (line[j] === '.' && /[A-Za-z_]/.test(line[j + 1] || '')) { let k = j + 1; while (/[A-Za-z0-9_]/.test(line[k] || '')) k++; w += '.' + line.slice(j + 1, k); j = k; }   // 點號名稱（ta.sma、color.red）當成一個名字
         T.push(KW.has(w) ? { k: 'kw', v: w } : { k: 'id', v: w }); i = j; continue; }
@@ -5540,11 +5540,18 @@ const PN = (() => {
       const d = [...l].reduce((a, c) => a + ('([{'.includes(c) ? 1 : ')]}'.includes(c) ? -1 : 0), 0);
       const cont = buf && (depth > 0 || (ind % 4 !== 0 && ind > buf.ind) || /(,|\+|-|\*|\/|\band|\bor|\?|[^=:!<>]=|:=|\bnot|[^=]:)\s*$/.test(buf.text.trim()) && ind > buf.ind);
       if (cont) { buf.text += ' ' + l.trim(); depth += d; return; }
-      if (buf) out.push(buf);
+      if (buf) pushMulti(buf);
       buf = { text: l.trim(), ind: Math.round(ind / 4), ln: n + 1 }; depth = d;
     });
-    if (buf) out.push(buf);
+    if (buf) pushMulti(buf);
     return out;
+    function pushMulti(b) {                               // 一行寫好幾個宣告：a = 0., b = 0.（逗號分開）
+      const parts = []; let q = '', d = 0, st = 0, t = b.text;
+      for (let i = 0; i < t.length; i++) { const c = t[i]; if (q) { if (c === q && t[i - 1] !== '\\') q = ''; continue; } if (c === '"' || c === "'") { q = c; continue; } if ('([{'.includes(c)) d++; else if (')]}'.includes(c)) d--; else if (c === ',' && d === 0) { parts.push(t.slice(st, i)); st = i + 1; } }
+      parts.push(t.slice(st));
+      const isAsg = x => /^\s*((var|varip)\s+)?([A-Za-z_][\w.]*(<[^>]*>|\[\])?\s+)?[A-Za-z_][\w.]*\s*(:=|\+=|-=|\*=|\/=|%=|=(?![=>]))/.test(x);
+      if (parts.length > 1 && parts.every(isAsg)) parts.forEach(x => out.push({ text: x.trim(), ind: b.ind, ln: b.ln })); else out.push(b);
+    }
   }
   /* ---- 3. 語法分析 ---- */
   let NID = 0;
@@ -5654,7 +5661,7 @@ const PN = (() => {
   /* ---- 5. 執行 ---- */
   function run(ast, B, opt) {
     const n = B.length, inputsV = opt.inputs || {}, sec = opt.sec || 60;
-    const G = {}, H = {}, isVarSet = new Set(), varInit = new Set(), fns = {}, TD = {}, meths = {}, st = {}, out = { plots: {}, shapes: [], hlines: {}, bg: [], fills: [], boxes: new Map(), lines: new Map(), labels: new Map(), meta: { title: '我的指標', short: '', overlay: true } };
+    const G = {}, H = {}, isVarSet = new Set(), varInit = new Set(), VS = {}, fns = {}, TD = {}, meths = {}, st = {}, out = { plots: {}, shapes: [], hlines: {}, bg: [], fills: [], boxes: new Map(), lines: new Map(), labels: new Map(), meta: { title: '我的指標', short: '', overlay: true } };
     let i = 0, callPath = '', objId = 0, inputIdx = 0;
     const ser = name => H[name] || (H[name] = new Array(n).fill(NA));
     const builtinSer = { open: k => B[k].o, high: k => B[k].h, low: k => B[k].l, close: k => B[k].c, volume: k => B[k].v, time: k => B[k].t, time_close: k => B[k].t + sec * 1000, hl2: k => (B[k].h + B[k].l) / 2, hlc3: k => (B[k].h + B[k].l + B[k].c) / 3, ohlc4: k => (B[k].o + B[k].h + B[k].l + B[k].c) / 4, hlcc4: k => (B[k].h + B[k].l + 2 * B[k].c) / 4, bar_index: k => k };
@@ -5739,8 +5746,9 @@ const PN = (() => {
         case 'switch': { const sv = s.subj ? ev(s.subj, sc) : null; for (const a of s.arms) { const cv = ev(a.c, sc); if (s.subj ? (cv === sv || (typeof cv === 'number' && typeof sv === 'number' && cv === sv)) : truthy(cv)) return execBlock(a.b, sc, true); } return s.def ? execBlock(s.def, sc, true) : NA; }
         case 'meta': return NA;
         case 'decl': {
-          const key = callPath + '|' + s.ln + '|' + s.names.join(','); if (s.isVar && varInit.has(key)) return NA;
-          const v = ev(s.e, sc); if (s.isVar) varInit.add(key);
+          const key = callPath + '|' + s.ln + '|' + s.names.join(',');
+          if (s.isVar && varInit.has(key)) { if (sc && VS[key]) { for (const nm of s.names) sc[nm] = VS[key][nm]; (sc.__vars || (sc.__vars = [])).push([key, s.names]); } return NA; }   // 函式裡的 var：拿回上一根留下來的值
+          const v = ev(s.e, sc); if (s.isVar) { varInit.add(key); if (sc) { VS[key] = {}; (sc.__vars || (sc.__vars = [])).push([key, s.names]); } }
           if (s.names.length > 1) { const arr = Array.isArray(v) ? v : []; s.names.forEach((nm, k) => { if (nm !== '_') setDecl(nm, arr[k], sc); }); } else setDecl(s.names[0], Array.isArray(v) && s.e.t !== 'tup' && !(v && v.__arr) ? v : v, sc);
           return v;
         }
@@ -5760,6 +5768,7 @@ const PN = (() => {
       const s = S(e); s.locH = s.locH || {}; local.__h = s.locH;
       f.params.forEach((p, k) => { const a = e.args.find(x => x.name === p.n) || e.args.filter(x => !x.name)[k]; local[p.n] = a ? ev(a.e, sc) : p.def ? ev(p.def, sc) : NA; });
       let r; try { r = execBlock(f.body, local, true); } finally { callPath = prevPath; }
+      if (local.__vars) { for (const [key, names] of local.__vars) for (const nm of names) VS[key][nm] = local[nm]; delete local.__vars; }   // 存起來給下一根
       for (const k in local) if (k !== '__h') { (s.locH[k] || (s.locH[k] = []))[i] = local[k]; }
       return r;
     }
@@ -7084,6 +7093,10 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-08i', title: '2026/11/08 更新（Pine 一行多個宣告）', items: [
+    { ic: '📝', t: 'Pine 編輯器支援一行寫好幾個宣告，用逗號分開（例如 sumBigBuy = 0., sumBigSell = 0.）；也看得懂 0. 這種結尾帶點的數字。' },
+    { ic: '🔧', t: '修正 Pine 函式裡用 var 宣告的變數不會留到下一根 K 棒（例如在函式裡累加的計數器、陣列）。' }
+  ] },
   { id: '2026-11-08h', title: '2026/11/08 更新（Pine 支援 type、method、switch）', items: [
     { ic: '📝', t: 'Pine 編輯器支援自訂型別 type（欄位預設值、型別.new()、obj.欄位 讀寫、copy）、method（obj.方法() 呼叫）、switch（有比對值和沒有比對值兩種），export 會自動略過。' }
   ] },
