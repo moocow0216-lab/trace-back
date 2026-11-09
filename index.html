@@ -1308,7 +1308,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-09d</div>
+      <div class="qver" id="qVer">網站版本 2026-11-09e</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3768,7 +3768,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-09d・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-09e・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -5037,15 +5037,26 @@ function kdExtras(g, d, P, sel, c) {                     // 每種繪圖共用�
     const isBox = ['rect', 'ellipse', 'prange', 'drange', 'fib', 'channel'].includes(d.type), x0 = Math.min(a.x, b.x), x1 = Math.max(a.x, b.x), y0 = Math.min(a.y, b.y), y1 = Math.max(a.y, b.y);
     let x = X.ha === 'left' ? x0 : X.ha === 'right' ? x1 : (a.x + b.x) / 2, y = X.va === 'top' ? y0 - 6 : X.va === 'bottom' ? y1 + X.s + 4 : (a.y + b.y) / 2 + X.s / 3;
     if (isBox) { x = X.ha === 'left' ? x0 + 6 : X.ha === 'right' ? x1 - 6 : (x0 + x1) / 2; y = X.va === 'top' ? y0 + X.s + 4 : X.va === 'bottom' ? y1 - 6 : (y0 + y1) / 2 + X.s / 3; }
-    else if (two && X.va === 'middle') { const an = Math.atan2(b.y - a.y, b.x - a.x); g.translate(x, (a.y + b.y) / 2); g.rotate(Math.abs(an) > Math.PI / 2 ? an + Math.PI : an); x = 0; y = -6; }
+    else { const LT = two ? kdLineTxt(g, d, a, b) : null; if (LT) { g.translate(LT.cx, LT.cy); g.rotate(LT.an); g.textAlign = 'center'; g.textBaseline = 'middle'; LT.L.forEach((ln, i) => g.fillText(ln, 0, -LT.th / 2 + LT.lh / 2 - 1.5 + i * LT.lh + 0.5)); g.restore(); return; } }   // 線條：沿著線的角度放文字
     String(X.txt).split('\n').forEach((ln, i) => g.fillText(ln, x, y + i * (X.s + 3))); g.restore(); }
+}
+function kdLineTxt(g, d, a, b) {                        // 線上文字的位置（照 TradingView）：沿著線的角度；「中間」＝文字在線上、線在文字那段斷開
+  const X = kdTx(d), T = d.type; if (!X.txt || !KD_LINEISH.includes(T) || ['hline', 'hray', 'vline'].includes(T) || !b || (Math.abs(a.x - b.x) < 0.5 && Math.abs(a.y - b.y) < 0.5)) return null;
+  const font = `${X.i ? 'italic ' : ''}${X.b ? 'bold ' : ''}${X.s}px sans-serif`, L = String(X.txt).split('\n'); g.save(); g.font = font; const tw = Math.max(...L.map(t => g.measureText(t).width)); g.restore();
+  const lh = X.s + 3, th = L.length * lh - 3, lw = d.width || 2, [p, q] = a.x <= b.x ? [a, b] : [b, a], len = Math.hypot(q.x - p.x, q.y - p.y), an = Math.atan2(q.y - p.y, q.x - p.x), ux = Math.cos(an), uy = Math.sin(an);
+  const pad = 6, sAt = X.ha === 'left' ? tw / 2 + pad : X.ha === 'right' ? len - tw / 2 - pad : len / 2, mid = !X.va || X.va === 'middle';
+  const off = mid ? 0 : X.va === 'top' ? -(th / 2 + 4 + lw / 2) : th / 2 + 4 + lw / 2;   // 垂直於線的位移（上方／下方）
+  return { X, L, font, tw, th, lh, an, cx: p.x + ux * sAt - uy * off, cy: p.y + uy * sAt + ux * off, gap: mid ? [Math.max(0, sAt - tw / 2 - 4), Math.min(len, sAt + tw / 2 + 4)] : null, p, ux, uy, aIsP: p === a };
 }
 function kdLine(g, d, P, W, H, lw) {                     // 線條類：延伸（左／右／兩邊）、兩端樣式（箭頭）
   const T = d.type, a = P[0], b = P[1] || P[0], ext = d.ext || (T === 'ray' ? 'right' : T === 'ext' ? 'both' : 'none');
   let s0 = a, s1 = b;
   if (T === 'hline') { const y = kSn(a.y, lw); s0 = { x: 0, y }; s1 = { x: W, y }; } else if (T === 'hray') { const y = kSn(a.y, lw); s0 = { x: a.x, y }; s1 = { x: W, y }; } else if (T === 'vline') { const x = kSn(a.x, lw); s0 = { x, y: 0 }; s1 = { x, y: H }; }
   else { const dx = b.x - a.x, dy = b.y - a.y, k = 1e4; if (ext === 'left' || ext === 'both') s0 = { x: a.x - dx * k, y: a.y - dy * k }; if (ext === 'right' || ext === 'both') s1 = { x: b.x + dx * k, y: b.y + dy * k }; }
-  g.beginPath(); g.moveTo(s0.x, s0.y); g.lineTo(s1.x, s1.y); g.stroke();
+  const LT = kdLineTxt(g, d, a, b);
+  if (LT && LT.gap && LT.gap[1] > LT.gap[0]) { const ga = { x: LT.p.x + LT.ux * LT.gap[0], y: LT.p.y + LT.uy * LT.gap[0] }, gb2 = { x: LT.p.x + LT.ux * LT.gap[1], y: LT.p.y + LT.uy * LT.gap[1] }, pe = LT.aIsP ? s0 : s1, qe = LT.aIsP ? s1 : s0;   // 文字那段不畫線
+    g.beginPath(); g.moveTo(pe.x, pe.y); g.lineTo(ga.x, ga.y); g.moveTo(gb2.x, gb2.y); g.lineTo(qe.x, qe.y); g.stroke(); }
+  else { g.beginPath(); g.moveTo(s0.x, s0.y); g.lineTo(s1.x, s1.y); g.stroke(); }
   const head = (p, q) => { const an = Math.atan2(p.y - q.y, p.x - q.x), s = 10 + lw * 2; g.save(); g.setLineDash([]); g.beginPath(); g.moveTo(p.x, p.y); g.lineTo(p.x - s * Math.cos(an - 0.45), p.y - s * Math.sin(an - 0.45)); g.lineTo(p.x - s * Math.cos(an + 0.45), p.y - s * Math.sin(an + 0.45)); g.closePath(); g.fill(); g.restore(); };
   if (P.length > 1 && !['hline', 'hray', 'vline'].includes(T)) { if ((d.endE || (T === 'arrow' ? 'arrow' : 'none')) === 'arrow') head(b, a); if (d.endS === 'arrow') head(a, b); }
   if (T === 'hline' || T === 'hray') { g.save(); g.setLineDash([]); g.font = '11px sans-serif'; const t = klFmt(d.pts[0].p), w = g.measureText(t).width + 10; g.fillStyle = d.color || KD.color; g.fillRect(W - w - 4, a.y - 9, w, 18); g.fillStyle = ksLum(d.color || KD.color) > 0.6 ? '#131722' : '#fff'; g.fillText(t, W - w + 1, a.y + 4); g.restore(); }
@@ -7501,6 +7512,9 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-09e', title: '2026/11/09 修正（線上文字的位置）', items: [
+    { ic: '✏️', t: '趨勢線等線條的文字改成跟 TradingView 一樣：「中間」會把文字放在線上、線在文字那段斷開；「上方／下方」貼著線的上下；「左／中／右」沿著線的方向，文字跟著線的角度傾斜。' }
+  ] },
   { id: '2026-11-09d', title: '2026/11/09 更新（多格跟主圖一致、繪圖範本）', items: [
     { ic: '🖼', t: 'K 線圖的其他格跟主圖用同一套樣式：背景、桌布、K 棒顏色、格線、文字、十字線、浮水印，新開的格子也會馬上套用。' },
     { ic: 'ƒx', t: '其他格會自動用主圖的指標（「格數」選單裡的「同步指標」，預設開啟）；某一格自己改過指標就各自獨立。' },
