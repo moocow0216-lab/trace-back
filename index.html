@@ -1308,7 +1308,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-09c</div>
+      <div class="qver" id="qVer">網站版本 2026-11-09d</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3768,7 +3768,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-09c・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-09d・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -4455,8 +4455,8 @@ function klPut(b) {                                   // 把最新的 K 棒放�
   const pv = D[D.length - 2]; KL.cs.update(klCd(b, pv)); KL.vs.update(klVolBar(b, pv)); klLegend(); klTagDraw();
 }
 const KL_SEC = { '1m': 60, '5m': 300, '15m': 900, '1h': 3600, '4h': 14400, '1d': 86400, '1w': 604800 };
-function klLeft(b) {                                   // 這根 K 棒還有多久收盤（週線從週一 08:00 台北時間算起，跟幣安一樣）
-  const end = (b.time + KL_SEC[KL.tf]) * 1000, s = Math.max(0, Math.floor((end - Date.now()) / 1000)), d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60), x = s % 60, p = v => String(v).padStart(2, '0');
+function klLeft(b, tf) {                               // 這根 K 棒還有多久收盤（週線從週一 08:00 台北時間算起，跟幣安一樣）
+  const end = (b.time + KL_SEC[tf || KL.tf]) * 1000, s = Math.max(0, Math.floor((end - Date.now()) / 1000)), d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60), x = s % 60, p = v => String(v).padStart(2, '0');
   return d ? `${d}天 ${p(h)}:${p(m)}` : h ? `${p(h)}:${p(m)}:${p(x)}` : `${p(m)}:${p(x)}`;
 }
 function klTagDraw() {                                 // 右邊價格軸上的標籤：最新價＋收盤倒數（跟 TradingView 一樣跟著價格上下移動）
@@ -4468,8 +4468,14 @@ function klTagDraw() {                                 // 右邊價格軸上的�
   tag.hidden = !S.priceLab; $('klTagT').hidden = !S.cd; tag.style.left = (cw - w) + 'px'; tag.style.width = w + 'px'; tag.style.top = Math.round(y - 11) + 'px'; const tc = ksUp(b, KL.data[KL.data.length - 2]) ? KS.upBorder : KS.dnBorder; tag.style.background = tc; tag.style.color = ksLum(tc) > 0.6 ? '#131722' : '#fff';   // 淺色底用深色字
   $('klTagP').textContent = klFmt(b.close); $('klTagT').textContent = KR.on && KR.sel.has('m0') && !KR.choose ? '回放' : klLeft(b);
 }
+function kmTagDraw(P) {                                // 其他格也有：最新價＋收盤倒數的標籤（跟主圖一樣）
+  const tag = P.el.querySelector('.kmtag'), D = P.data; if (!tag || !D.length) return; const b = D[D.length - 1], y = P.cs.priceToCoordinate(b.close), w = P.ch.priceScale('right').width(), cw = P.el.querySelector('.kmc').clientWidth, S = KS.sc || KS_SC;
+  if (y == null || !w || !S.priceLab) { tag.hidden = true; return; } tag.hidden = false; tag.style.left = (cw - w) + 'px'; tag.style.width = w + 'px'; tag.style.top = Math.round(y - 11) + 'px';
+  const tc = ksUp(b, D[D.length - 2]) ? KS.upBorder : KS.dnBorder; tag.style.background = tc; tag.style.color = ksLum(tc) > 0.6 ? '#131722' : '#fff';
+  tag.querySelector('b').textContent = klFmt(b.close); const sm = tag.querySelector('small'); sm.hidden = !S.cd; sm.textContent = P.rp ? '回放' : klLeft(b, P.tf);
+}
 setInterval(async () => {                              // ⏱ 每秒：更新倒數；推播 3 秒沒動靜就改用每秒抓一次（確保 K 棒每秒都在跑）
-  if (!KL.open || !KL.cs || document.hidden) return; klTagDraw();
+  if (!KL.open || !KL.cs || document.hidden) return; klTagDraw(); for (const P of KM.panes) try { kmTagDraw(P); } catch (e) {}
   if (Date.now() - (KL.lastMsg || 0) > 3000 && !KL.polling && KL.data.length) {
     KL.polling = true; const my = KL.sym + KL.tf;
     try { const D = await klFetch(KL.sym, KL.tf, 0, 2); if (KL.sym + KL.tf === my) D.forEach(klPut); } catch (e) {} finally { KL.polling = false; }
@@ -4668,12 +4674,12 @@ function kmLayout(lay) {                                // 換版面：重建簡
 function kmKill(P) { if (!P) return; P.dead = true; for (const k of Object.keys(KP.series)) if (k.startsWith('p' + P.i + '|')) delete KP.series[k]; for (const k of Object.keys(KP.pls)) if (k.startsWith('p' + P.i + '|')) delete KP.pls[k]; clearInterval(P.poll); if (P.ws) { P.ws.onclose = null; try { P.ws.close(); } catch (e) {} } try { P.ch.remove(); } catch (e) {} P.el.remove(); }
 function kmMake(i, c) {
   const el = document.createElement('div'); el.className = 'klmini'; el.dataset.i = i;
-  el.innerHTML = `<div class="kmh"><button class="kmind" title="這一格的指標" aria-label="第 ${i + 2} 格的指標">ƒx</button><button class="kmsym" aria-haspopup="dialog" aria-label="第 ${i + 2} 格的幣種"><b>${esc(c.sym.replace(/USDT$/, ''))}</b><span>▾</span></button><select class="kmtf" aria-label="第 ${i + 2} 格的週期">${KL_TF.map(([v, n]) => `<option value="${v}"${v === c.tf ? ' selected' : ''}>${n}</option>`).join('')}</select><span class="kmlg"></span><button class="kmmax" title="換到主圖（可以畫圖）" aria-label="換到主圖">⤢</button></div><div class="kmc"><canvas class="kmbg" aria-hidden="true"></canvas><canvas class="kmtop" aria-hidden="true"></canvas><div class="kmlgw"><div class="kilg" data-kvid="p${i}"></div></div></div>`;
+  el.innerHTML = `<div class="kmh"><button class="kmind" title="這一格的指標" aria-label="第 ${i + 2} 格的指標">ƒx</button><button class="kmsym" aria-haspopup="dialog" aria-label="第 ${i + 2} 格的幣種"><b>${esc(c.sym.replace(/USDT$/, ''))}</b><span>▾</span></button><select class="kmtf" aria-label="第 ${i + 2} 格的週期">${KL_TF.map(([v, n]) => `<option value="${v}"${v === c.tf ? ' selected' : ''}>${n}</option>`).join('')}</select><span class="kmlg"></span><button class="kmmax" title="換到主圖（可以畫圖）" aria-label="換到主圖">⤢</button></div><div class="kmc"><canvas class="kmbg" aria-hidden="true"></canvas><canvas class="kmtop" aria-hidden="true"></canvas><div class="kltag kmtag" hidden aria-live="off"><b></b><small></small></div><div class="kmlgw"><div class="kilg" data-kvid="p${i}"></div></div></div>`;
   $('klGrid').appendChild(el);
   const T = klTheme(), ch = LightweightCharts.createChart(el.querySelector('.kmc'), { autoSize: true, layout: { background: { type: 'solid', color: 'rgba(0,0,0,0)' }, textColor: klDark() ? '#d1d4dc' : '#131722', fontSize: 11 }, grid: { vertLines: { color: 'rgba(127,127,127,.07)' }, horzLines: { color: 'rgba(127,127,127,.07)' } },
     rightPriceScale: { borderColor: T.bd }, timeScale: { borderColor: T.bd, timeVisible: true, secondsVisible: false, rightOffset: 5 }, crosshair: { mode: 0 }, localization: { locale: 'zh-TW', timeFormatter: ksTime } });
   ch.timeScale().applyOptions({ tickMarkFormatter: ksTick });
-  const cs = ch.addCandlestickSeries({ ...ksSeries(), lastValueVisible: true, priceLineStyle: 1, priceFormat: { type: 'custom', formatter: klFmt, minMove: 1e-8 } }), vs = ch.addHistogramSeries({ priceScaleId: 'vol', priceFormat: { type: 'volume' }, lastValueVisible: false, priceLineVisible: false });
+  const cs = ch.addCandlestickSeries({ ...ksSeries(), lastValueVisible: false, priceLineStyle: 1, priceFormat: { type: 'custom', formatter: klFmt, minMove: 1e-8 } }), vs = ch.addHistogramSeries({ priceScaleId: 'vol', priceFormat: { type: 'volume' }, lastValueVisible: false, priceLineVisible: false });
   ch.priceScale('vol').applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } }); cs.priceScale().applyOptions({ scaleMargins: { top: 0.08, bottom: 0.2 } });
   const P = { i, el, ch, cs, vs, sym: c.sym, tf: c.tf, data: [], ind: (c.ind || []).map(x => ({ ...x })), key: '', res: null, cust: !!c.cust }; P.ax = { ch, cs }; kaxBind(el.querySelector('.kmc'), P.ax);
   for (const it of P.ind) if (/^pine:/.test(it.id) && !it.pine) { const sc = KP.scripts.find(x => 'pine:' + x.id === it.id); if (sc) it.pine = { inputs: pineParse(sc.code), vals: {}, pv: 2, src: '' }; }
@@ -4689,11 +4695,11 @@ async function kmSet(P, sym, tf, force) {
   if (!force && P.sym === sym && P.tf === tf && P.data.length) return; P.sym = sym; P.tf = tf; kmSave();
   P.el.querySelector('.kmsym b').textContent = sym.replace(/USDT$/, ''); P.el.querySelector('.kmtf').value = tf; const my = sym + tf; P.want = my;
   try { const D = (await klFetch(sym, tf, 0, 500)).filter(b => [b.open, b.high, b.low, b.close].every(isFinite)); if (P.dead || P.want !== my) return;
-    P.data = D; P.cs.setData(klCdAll(D)); P.vs.setData(D.map((b, i) => klVolBar(b, D[i - 1]))); P.ch.timeScale().setVisibleLogicalRange({ from: Math.max(0, D.length - 90), to: D.length + 5 }); kaxFit(P.ax); kmLegend(P); kmWs(P);
+    P.data = D; P.cs.setData(klCdAll(D)); P.vs.setData(D.map((b, i) => klVolBar(b, D[i - 1]))); P.ch.timeScale().setVisibleLogicalRange({ from: Math.max(0, D.length - 90), to: D.length + 5 }); kaxFit(P.ax); kmLegend(P); kmWs(P); kmTheme(); kmTagDraw(P);
   } catch (e) { P.el.querySelector('.kmlg').textContent = '讀取失敗：' + e.message; }
 }
 function kmPut(P, b) { if (P.rp) { const F = P.full, l = F[F.length - 1]; if (l && b.time === l.time) F[F.length - 1] = b; else if (l && b.time > l.time) F.push(b); return; }   // 回放中：先存起來
-  const D = P.data, last = D[D.length - 1]; if (!last || b.time < last.time) return; if (b.time === last.time) D[D.length - 1] = b; else D.push(b); const pv = D[D.length - 2]; P.cs.update(klCd(b, pv)); P.vs.update(klVolBar(b, pv)); if (!P.hover) kmLegend(P); }
+  const D = P.data, last = D[D.length - 1]; if (!last || b.time < last.time) return; if (b.time === last.time) D[D.length - 1] = b; else D.push(b); const pv = D[D.length - 2]; P.cs.update(klCd(b, pv)); P.vs.update(klVolBar(b, pv)); if (!P.hover) kmLegend(P); kmTagDraw(P); }
 function kmWs(P) {                                       // 即時更新（推播斷掉時每 2 秒抓一次）
   if (P.ws) { P.ws.onclose = null; try { P.ws.close(); } catch (e) {} } clearInterval(P.poll); if (P.dead || !KL.open) return;
   const key = P.sym.toLowerCase() + '@kline_' + P.tf; P.last = Date.now();
@@ -4771,7 +4777,9 @@ function kdL2T(l) {
   if (l <= 0) return Math.round(D[0].time + l * sec);
   const i = Math.floor(l); return Math.round(D[i].time + (l - i) * (D[i + 1].time - D[i].time));
 }
-const kdX = t => { const v = KL.ch.timeScale().logicalToCoordinate(kdT2L(t)); return v == null ? null : v; };
+const kdX = t => {                                      // 時間 → 畫面 x。圖表套件只會換算「整數根」，落在兩根 K 棒中間（例如 5 分畫的線放到 1 小時圖）要自己內插，不然會被丟到最左邊
+  const ts = KL.ch.timeScale(), l = kdT2L(t), l0 = Math.floor(l), f = l - l0; const x0 = ts.logicalToCoordinate(l0); if (x0 == null) return null; if (f < 1e-9) return x0;
+  const x1 = ts.logicalToCoordinate(l0 + 1); return x1 == null ? null : x0 + (x1 - x0) * f; };
 const kdY = p => KL.cs.priceToCoordinate(p);
 function kdPt(x, y) {                                   // 畫面座標 → {時間, 價格}；磁鐵模式或按住 Ctrl：吸到最近那根 K 棒——靠近燭芯就吸燭芯尖端（高／低），靠近實體就吸實體上緣／下緣（開／收）
   const l = KL.ch.timeScale().coordinateToLogical(x); let t = kdL2T(l), p = KL.cs.coordinateToPrice(y); KD.snapAt = null;
@@ -7493,11 +7501,12 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
-  { id: '2026-11-09c', title: '2026/11/09 更新（多格跟主圖一致、繪圖範本）', items: [
+  { id: '2026-11-09d', title: '2026/11/09 更新（多格跟主圖一致、繪圖範本）', items: [
     { ic: '🖼', t: 'K 線圖的其他格跟主圖用同一套樣式：背景、桌布、K 棒顏色、格線、文字、十字線、浮水印，新開的格子也會馬上套用。' },
     { ic: 'ƒx', t: '其他格會自動用主圖的指標（「格數」選單裡的「同步指標」，預設開啟）；某一格自己改過指標就各自獨立。' },
     { ic: '✏️', t: '在主圖畫的線，其他格只要是同一個幣種也會顯示（任何週期都對得上）。' },
     { ic: '📑', t: '繪圖範本：選取繪圖後的小工具列和設定視窗都有「範本」，可以存成有名字的樣式、之後一鍵套用；新畫的線會沿用這種工具上一次用的顏色、粗細、線型，跟 TradingView 一樣。' },
+    { ic: '🔧', t: '修正在小週期畫的線（例如 5 分），放到大週期（例如 1 小時）的格子會跑到最左邊看不到；其他格的價格標籤也加上收盤倒數秒數，跟主圖一樣，浮水印也會跟著那一格的幣種。' },
     { ic: '🔧', t: '修正其他格的價格不會即時跳動：離開 K 線圖再回來後，其他格的即時連線沒有重新接上；現在斷線會自動補資料並重新連線。' }
   ] },
   { id: '2026-11-09b', title: '2026/11/09 更新（Shift 畫水平／垂直）', items: [
