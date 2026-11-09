@@ -1308,7 +1308,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-09e</div>
+      <div class="qver" id="qVer">網站版本 2026-11-09f</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3768,7 +3768,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-09e・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-09f・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -4938,7 +4938,7 @@ function kdEdit() {                                     // 選到繪圖時的小
   el.innerHTML = KD_COLS.map(c => `<button class="kdc${d.color === c ? ' on' : ''}" data-kdc="${c}" style="--c:${c}" aria-label="顏色 ${c}"></button>`).join('') + '<i class="kdsep v"></i>' +
     [1, 2, 3, 4].map(w => `<button class="kdw${d.width === w ? ' on' : ''}" data-kdw="${w}" aria-label="粗細 ${w}"><i style="height:${w}px"></i></button>`).join('') +
     `<button class="kdw" data-kdprop="1" aria-label="設定" title="設定（也可以在繪圖上點兩下）">⚙</button><button class="kdw${d.dash || d.lineSt === 2 ? ' on' : ''}" data-kdd="1" aria-label="虛線">┄</button>${d.type === 'text' ? '<button class="kdw" data-kdtx="1" aria-label="改文字">✎</button>' : ''}${d.type === 'emoji' ? KD_EMO.map(e => `<button class="kdw" data-kdemo="${e}">${e}</button>`).join('') : ''}<i class="kdsep v"></i><select class="kdtplq" data-kdtplq="1" aria-label="範本" title="範本：存成有名字的樣式、套用">${kdTplOpts(d.type).replace('<option value="">範本</option>', '<option value="">📑 範本</option>')}</select><button class="kdw" data-kddel="sel" aria-label="刪除">🗑</button>`;
-  const q = el.querySelector('[data-kdtplq]'); if (q) q.onchange = () => { const v = q.value; q.value = ''; kdTplDo(KD.sel, v); kdSave(); kdEdit(); };
+  const q = el.querySelector('[data-kdtplq]'); if (q) q.onchange = () => { const v = q.value; q.value = ''; const d0 = KD.sel; const msg = kdTplDo(d0, v); kdSave(); KD.sel = d0; kdEdit(); kdToast(msg); };
 }
 function kdBind() {
   const box = document.querySelector('.klbox'); if (!box || box.dataset.kd) return; box.dataset.kd = '1';
@@ -5109,17 +5109,20 @@ function kdPropsDraw() {
 const KD_STYLEK = ['color', 'width', 'lineSt', 'dash', 'ext', 'endS', 'endE', 'mid', 'plab', 'stats', 'statPos', 'statAlw', 'tx', 'vis'];
 function kdStyleOf(d) { const o = {}; for (const k of KD_STYLEK) if (d[k] != null && k !== 'vis') o[k] = JSON.parse(JSON.stringify(d[k])); if (o.tx) o.tx = { ...o.tx, txt: '' }; return o; }
 function kdRemember(d) { if (!d || !KD_TOOLS[d.type] || d.type === 'ruler' || d.type === 'zoom') return; const all = LS.get('kdLast', {}); all[d.type] = kdStyleOf(d); LS.set('kdLast', all); }   // 記住這種工具最後用的樣式
-function kdTplApply(d, st) { const txt = d.tx && d.tx.txt; Object.assign(d, JSON.parse(JSON.stringify(st))); if (txt) d.tx = { ...(d.tx || {}), txt }; kdRemember(d); }
+function kdTplApply(d, st) { const txt = d.tx && d.tx.txt; for (const k of KD_STYLEK) if (k !== 'vis') delete d[k]; d.color = d.type === 'fib' ? '#787b86' : KD.color; d.width = 2; Object.assign(d, JSON.parse(JSON.stringify(st))); if (txt) d.tx = { ...(d.tx || {}), txt }; kdRemember(d); }
 function kdTplOpts(T) { const N = Object.keys((LS.get('kdTplN', {})[T]) || {}); return `<option value="">範本</option><option value="savename">💾 儲存為新範本…</option>${N.length ? `<optgroup label="我的範本">${N.map(n => `<option value="n:${esc(n)}">📑 ${esc(n)}</option>`).join('')}</optgroup><option value="delname">🗑 刪除範本…</option>` : ''}<option value="save">儲存為預設樣式</option><option value="apply">套用預設樣式</option><option value="reset">恢復原始樣式</option>`; }
 function kdTplDo(d, v) {                                // 範本選單：存成有名字的範本、套用、刪除（跟 TradingView 的「範本」一樣）
   if (!d || !v) return; const T = d.type, AN = LS.get('kdTplN', {}), mine = AN[T] || {};
   if (v === 'savename') { const nm = (prompt(`幫這個「${KD_TOOLS[T][0]}」樣式取個名字：`, '') || '').trim().slice(0, 30); if (!nm) return; if (mine[nm] && !confirm(`已經有「${nm}」了，要覆蓋嗎？`)) return; mine[nm] = kdStyleOf(d); AN[T] = mine; LS.set('kdTplN', AN); return; }
   if (v === 'delname') { const L = Object.keys(mine); const nm = (prompt(`要刪除哪一個範本？\n${L.map((x, k) => `${k + 1}. ${x}`).join('\n')}\n（輸入名字或號碼）`, '') || '').trim(); const key = L[+nm - 1] || nm; if (!mine[key]) return; delete mine[key]; AN[T] = mine; LS.set('kdTplN', AN); return; }
-  if (v.startsWith('n:') && mine[v.slice(2)]) return kdTplApply(d, mine[v.slice(2)]);
+  if (v.startsWith('n:') && mine[v.slice(2)]) { kdTplApply(d, mine[v.slice(2)]); return `已套用範本「${v.slice(2)}」`; }
   const all = LS.get('kdTpl', {});
   if (v === 'save') { all[T] = kdStyleOf(d); LS.set('kdTpl', all); alert(`已經存成「${KD_TOOLS[T][0]}」的預設樣式`); }
-  if (v === 'apply' && all[T]) kdTplApply(d, all[T]);
-  if (v === 'reset') { for (const k of KD_STYLEK) if (k !== 'tx') delete d[k]; d.color = T === 'fib' ? '#787b86' : KD.color; d.width = 2; const la = LS.get('kdLast', {}); delete la[T]; LS.set('kdLast', la); }
+  if (v === 'apply' && all[T]) { kdTplApply(d, all[T]); return '已套用預設樣式'; }
+  if (v === 'reset') { for (const k of KD_STYLEK) if (k !== 'tx') delete d[k]; d.color = T === 'fib' ? '#787b86' : KD.color; d.width = 2; const la = LS.get('kdLast', {}); delete la[T]; LS.set('kdLast', la); return '已恢復原始樣式'; }
+}
+function kdToast(t) {                                    // 圖表上方的小提示（例如「已套用範本」）
+  const el = $('klSync'); if (!el || !t) return; el.textContent = '✓ ' + t; el.className = 'klsync'; clearTimeout(KSY.bt); KSY.bt = setTimeout(() => { el.textContent = ''; }, 2500);
 }
 function kdTzParse(str) {                               // 「年/月/日 時:分」→ 秒（用目前設定的時區）
   const m = /^(\d{4})[/-](\d{1,2})[/-](\d{1,2})\s+(\d{1,2}):(\d{2})/.exec(String(str).trim()); if (!m) return null;
@@ -5128,7 +5131,7 @@ function kdTzParse(str) {                               // 「年/月/日 時:�
 }
 function kdPropsIn(e) {
   const t = e.target, d = KDP.d; if (!d) return;
-  if (t.id === 'kdTplSel') { const v = t.value; t.value = ''; kdTplDo(d, v); kdPropsDraw(); return; const all = LS.get('kdTpl', {});
+  if (t.id === 'kdTplSel') { const v = t.value; t.value = ''; if (!v || KDP.tplBusy) return; KDP.tplBusy = true; try { const msg = kdTplDo(d, v); if (msg) { kdSave(); KDP.saved = JSON.stringify(d); kdToast(msg); } kdPropsDraw(); } finally { KDP.tplBusy = false; } return; const all = LS.get('kdTpl', {});
     if (v === 'save') { const o = {}; for (const k of KD_STYLEK) if (d[k] != null) o[k] = JSON.parse(JSON.stringify(d[k])); if (o.tx) o.tx = { ...o.tx, txt: '' }; all[d.type] = o; LS.set('kdTpl', all); alert(`已經存成「${KD_TOOLS[d.type][0]}」的預設樣式，之後新畫的都會用這個樣式`); }
     if (v === 'apply' && all[d.type]) Object.assign(d, JSON.parse(JSON.stringify(all[d.type])), d.tx && d.tx.txt ? { tx: { ...(all[d.type].tx || {}), txt: d.tx.txt } } : {});
     if (v === 'reset') { for (const k of KD_STYLEK) if (k !== 'tx') delete d[k]; d.color = d.type === 'fib' ? '#787b86' : KD.color; d.width = 2; }
@@ -6485,7 +6488,8 @@ function ksyReload() {                                   // 重新讀取設定�
     for (const it of KI.list) if (/^pine:/.test(it.id) && !it.pine) { const sc = KP.scripts.find(s => 'pine:' + s.id === it.id); if (sc) it.pine = { inputs: pineParse(sc.code), vals: {}, pv: 2, src: '' }; }
     KI.list = KI.list.filter(it => !/^pine:/.test(it.id) || KP.scripts.some(s => 'pine:' + s.id === it.id));
     KD.fav = LS.get('klFav', []); KD.cursor = LS.get('klCur', 'cross'); KD.magnet = LS.get('klMag', false); KD.stay = LS.get('klStay', false);
-    if (KL.ch) { kdLoad(); kdEdit(); kdToolbar(); kdFavBar(); kdCursor(); kiTouch(); ksApply(); KM.cfg = LS.get('klPanes', []); KM.syncSym = LS.get('klSyncSym', false); const nl = LS.get('klLayout', '1'); if (nl !== KM.lay) kmLayout(nl); else KM.panes.forEach((P, i) => { const c = kmCfg(i); kmSet(P, c.sym, c.tf); }); }
+    if (KL.ch) { const dlg = $('kdDlg'), busy = (dlg && dlg.open) || ($('kdEditBar') && $('kdEditBar').contains(document.activeElement));   // 正在改繪圖：先不要把繪圖整個換掉
+      if (!busy) { const selId = KD.sel && KD.sel.id; kdLoad(); if (selId) KD.sel = KD.list.find(x => x.id === selId) || null; kdEdit(); } kdToolbar(); kdFavBar(); kdCursor(); kiTouch(); ksApply(); KM.cfg = LS.get('klPanes', []); KM.syncSym = LS.get('klSyncSym', false); const nl = LS.get('klLayout', '1'); if (nl !== KM.lay) kmLayout(nl); else KM.panes.forEach((P, i) => { const c = kmCfg(i); kmSet(P, c.sym, c.tf); }); }
   } catch (e) { console.error('同步套用失敗', e); }
 }
 function ksyBadge(t, bad) { const el = $('klSync'); if (!el) return; el.textContent = (bad ? '⚠ ' : '🔄 ') + t; el.className = 'klsync' + (bad ? ' bad' : ''); clearTimeout(KSY.bt); KSY.bt = setTimeout(() => { el.textContent = ''; }, 4000); }
@@ -7512,6 +7516,10 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-09f', title: '2026/11/09 修正（套用繪圖範本）', items: [
+    { ic: '📑', t: '選了範本，選取中的線馬上變成那個樣式，上方會出現「已套用範本」的提示；在設定視窗裡選範本也是立刻生效，之後按 ✕ 或取消不會被還原。' },
+    { ic: '🔧', t: '修正跨裝置同步剛好在你改繪圖時更新，會把選取取消、讓剛套用的樣式看起來沒變。' }
+  ] },
   { id: '2026-11-09e', title: '2026/11/09 修正（線上文字的位置）', items: [
     { ic: '✏️', t: '趨勢線等線條的文字改成跟 TradingView 一樣：「中間」會把文字放在線上、線在文字那段斷開；「上方／下方」貼著線的上下；「左／中／右」沿著線的方向，文字跟著線的角度傾斜。' }
   ] },
