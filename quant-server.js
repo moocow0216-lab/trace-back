@@ -941,7 +941,7 @@ setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(fa
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-11-08a';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-11-10a';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1894,10 +1894,127 @@ setInterval(async () => {                              // 每根 5 分／15 分 
    自動確認：每張付款單的金額帶專屬 2 位小數尾數（例如 200.38），伺服器每分鐘查收款地址收到的 USDT，金額一樣的那筆就是那張單。
    金額不對：用尾數或「之前付過款的錢包地址」認出是誰 → 全額退回（由擁有者用收款錢包轉回，系統確認）。 */
 const USDT_TRC20 = 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', TRONGRID = process.env.TRONGRID || 'https://api.trongrid.io', GRACE = 24 * HOUR;
-const DEF_TERMS = '1. 本服務提供交易訊號與自動下單工具，不保證獲利，交易虧損由使用者自行負擔。\n2. 系統可能因網路、交易所或程式問題延遲或出錯。\n3. 付款金額必須與付款單完全相同；金額不對會全額退回，需重新付款。\n4. 方案到期後有 24 小時寬限；之後停止開新單，已開的單照原本的止損、止盈管理到結束。\n5. 到期超過設定天數未續費，帳號與 API 金鑰會刪除。已付款項不退費（金額不對的退款除外）。';
+/* ---------- 📜 購買前須知、服務條款（定型化契約）、個人資料告知事項：2026-11-10 正式版 ----------
+   條款有版本號：下單時要勾選 5 項確認，並且送出「看到的版本」；版本不同（剛好改版）就請他重新閱讀。每個版本的全文都留在 B.termsHist，誰同意哪一版記在付款單和帳號上。 */
+const TERMS_VER = '2026-11-10';
+const LEGAL = {
+  notice: [
+    ['這是什麼服務', 'QEVRAX 是一套交易訊號偵測和自動下單的軟體工具。它用你自己提供的 Bitunix API 金鑰，在你自己的帳戶裡下單。我們不保管你的資金，也不是代客操作。'],
+    ['不保證獲利', '加密貨幣合約價格波動很大，用槓桿可能在短時間內虧損，甚至被強制平倉。過去的績效不代表未來，所有交易的盈虧都由你自己承擔。'],
+    ['系統可能出錯', '網路、交易所或程式問題，都可能造成訊號延遲、下單失敗或成交價跟預期不同。'],
+    ['Bitunix 是境外平台', '它不是經台灣金管會核准的機構。在上面交易發生糾紛時，可能不受台灣金融消費者保護相關法規保障。'],
+    ['付款方式', '只收 TRON（TRC20）網路的 USDT。到帳金額必須跟付款單完全一樣（包含小數）；金額不對會全額退回，需要重新付款。付款單在 2 小時內有效。'],
+    ['退款', '付款後 7 天內，不需要理由，可以申請全額退款。超過 7 天的退款規則請看服務條款第 7 條。交易虧損不在退款範圍內。'],
+    ['到期以後', '方案到期後有 24 小時寬限期。寬限期過了就停止開新單，已經開的單照原本的止損和止盈管理到結束。到期 30 天還沒續費，帳號和 API 金鑰會被刪除。'],
+    ['個人資料', '我們會收集 Bitunix UID、Email、電話、付款錢包地址和 API 金鑰，只用在提供服務、收款、退款和通知。詳細內容請看「個人資料告知事項」。'],
+    ['條款版本', '你勾選同意的是付款頁上顯示的那一版，系統會記錄版本和時間。如果在你付款前條款剛好更新，只要在付款單 2 小時有效期間內付款，就照你同意的版本；付款單過期後重新產生，就要重新同意新版本。'],
+    ['付費期間的改版', '服務會持續更新，付費期間的更新不另外收費。會影響交易的更新至少提前 24 小時通知，你自己的設定和已經開的單不會被更新改掉；如果更新拿掉主要功能，可以按剩下的天數退款或延長期間。']],
+  acks: [
+    '我了解 QEVRAX 是在我自己帳戶下單的工具，不保管我的資金，也不是代客操作。',
+    '我了解本服務不保證獲利，交易虧損由我自己承擔，也可能因為系統或交易所問題造成損失。',
+    '我了解 Bitunix 是境外交易平台，在上面交易可能不受台灣相關法規保障。',
+    '我了解只能用 TRC20 USDT 付款，到帳金額必須跟付款單完全一樣。',
+    '我已閱讀並同意服務條款（版本：{ver}）和個人資料告知事項。'],
+  privacy: `依照個人資料保護法第 8 條，QEVRAX（創辦人鄭宏原）告知你：我們只在提供 QEVRAX 服務需要的範圍內，收集和使用以下資料。
+
+・Bitunix UID、登入密碼（加密保存）：登入、辨識帳號。保存到帳號刪除為止（到期 30 天後刪除）。
+・Bitunix API 金鑰（加密保存）：依你的設定自動下單、讀取持倉。保存到你刪除金鑰或帳號刪除為止。
+・Email、電話：驗證身分、寄收據、到期提醒、服務通知。保存到帳號刪除為止。
+・付款錢包地址、交易編號、金額：確認付款、退款、會計紀錄。依法保存 5 年。
+・交易紀錄、設定、Discord Webhook 網址：提供服務、顯示紀錄、傳送通知。保存到帳號刪除為止。
+
+1. 使用地區和對象：資料存在我們租用的 Amazon Web Services（AWS）雲端主機，主機位於澳洲雪梨（AWS 亞太－雪梨區域）。為了提供服務，會傳給 Bitunix（下單）、TronGrid（查詢付款）、Discord 和 Email 寄送服務（通知）。除非法律要求，我們不會把資料賣給或提供給其他人。
+2. 你的權利：你可以向我們要求查詢、閱覽、取得複本、補充或更正、停止收集或使用、刪除你的資料。請寄信到 moocow0216@gmail.com 聯絡我們。依法必須保存的付款紀錄，在保存期限內沒辦法刪除。
+3. 不提供的影響：你可以不提供這些資料，但沒有 UID、API 金鑰和付款資料的話，就無法使用本服務。`
+};
+const DEF_TERMS = `在付款頁勾選「我已閱讀並同意」，就代表你同意以下條款。付款前可以隨時閱讀全文；另外還有 7 天免費試用，付款後也有 7 天可以無條件退款。
+
+第 1 條　服務提供者
+本服務由 QEVRAX 系統創辦人鄭宏原（以下稱「我們」）提供。聯絡方式：Email moocow0216@gmail.com、Instagram @_7hzynn。我們會在 3 個工作天內回覆。
+
+第 2 條　服務內容
+1. QEVRAX 提供：加密貨幣合約的訊號偵測、依照你設定的條件自動下單、Discord 和 Email 通知、K 線圖與分析工具。實際功能以網站上的說明為準。
+2. 本服務是一套軟體工具，在你自己的 Bitunix 帳戶裡，依照你設定的規則執行。我們不保管你的資金，不代客操作，也不針對你個人提供投資建議。
+3. 要不要開啟自動交易、每筆用多少資金、槓桿多大、止損止盈怎麼設，都由你自己決定和設定。
+
+第 3 條　帳號與 API 金鑰
+1. 你必須自己申請 Bitunix 帳號，並提供該帳號的 API 金鑰。
+2. API 金鑰請只開啟交易權限，不要開啟提幣權限。如果你開了提幣權限，造成的損失由你自己負責。
+3. 我們會把 API 金鑰加密保存，只用來執行你設定的交易。你可以隨時在網站上刪除金鑰，刪除後就會停止自動下單。
+4. 帳號只限本人使用，不能轉讓、出借或和別人共用。請自己保管好密碼。
+
+第 4 條　費用與付款
+1. 價格、方案長度（1 個月、3 個月、12 個月等）和折扣，以付款頁顯示的為準。使用邀請碼的折扣，以產生付款單當下顯示的金額為準。
+2. 只接受 TRON（TRC20）網路的 USDT。付款單在 2 小時內有效。
+3. 到帳金額必須和付款單完全一樣（包含小數）。從交易所提領的話，請把提領手續費加上去，讓到帳金額剛好相同。
+4. 到帳金額不足：全額退回原付款地址，需要重新付款。到帳金額超過：照常開通，多出來的部分退回原付款地址。
+5. 付款在區塊鏈上確認後，系統會自動開通。試用期間付款的話，付費期間接在試用結束之後；提早續費的話，接在目前到期日之後。
+
+第 5 條　免費試用
+新帳號可以免費試用 7 天，所有功能都能使用。試用結束沒有付費的話，就會停止開新單，已經開的單照原本的止損和止盈管理到結束。
+
+第 6 條　付款後 7 天內退款
+1. 付款確認後 7 天內，你可以不說明理由，用 Email 或網站上的退款功能通知我們解約。
+2. 我們會在收到通知後 15 天內，把你付的 USDT 全額退回原付款地址。退款的網路手續費由我們負擔。
+3. 這 7 天內你帳戶裡產生的交易盈虧，跟退款無關：不會從退款中扣除，也不由我們承擔。
+4. 退款完成後，付費服務隨即停止。
+
+第 7 條　超過 7 天的退款
+超過 7 天，原則上不退還剩下期間的費用。但有下列情形時，我們會依照剩下的天數按比例退款，或者延長使用期間，由你選擇：
+1. 因為我們的原因（例如我們的伺服器或程式故障），服務連續無法使用超過 72 小時。
+2. 我們決定停止提供本服務，或因為法規變動而無法繼續提供。
+3. 我們因為法律修改或主管機關要求而修改條款（第 13 條第 5 款），你不同意並通知我們解約。
+你違反第 11 條而被停止服務的話，不予退款。
+
+第 8 條　到期、寬限與資料刪除
+1. 方案到期後有 24 小時寬限期，寬限期內服務照常。
+2. 寬限期過後停止開新單，已經開的單照原本的止損和止盈管理到結束。
+3. 到期超過 30 天沒有續費，帳號、設定和 API 金鑰會被刪除，無法復原。付款紀錄依法保存。
+
+第 9 條　風險揭露
+1. 加密貨幣和合約交易風險很高。使用槓桿可能在短時間內虧光保證金，甚至被強制平倉。
+2. 訊號和自動下單的結果不保證獲利。網站上的任何績效、回測或範例，都不代表未來的結果。
+3. Bitunix 是境外交易平台，不是經中華民國金融監督管理委員會核准設立的機構。在上面交易發生糾紛時，可能不受台灣相關金融消費者保護法規的保障。
+4. 網路中斷、交易所維護或 API 變更、價格劇烈跳動等情況，都可能讓下單延遲、失敗，或成交價和預期不同。
+
+第 10 條　責任範圍
+1. 你自己帳戶的交易盈虧，由你自己承擔。
+2. 交易所本身的問題（停機、拒絕下單、強制平倉、倒閉等）、網路業者的問題，以及天災等不可抗力造成的損失，我們不負責。
+3. 因為我們的故意或重大過失造成你損害的，我們依法負責。其他情形，在法律允許的範圍內，我們的賠償總額以你過去 12 個月實際付給我們的費用為上限。
+
+第 11 條　禁止行為
+你不能：轉售或分享帳號；用別人的帳戶或資金使用本服務；攻擊、破解或反向工程本服務；利用本服務洗錢或從事其他違法行為。違反的話，我們可以停止你的服務。
+
+第 12 條　服務版本更新與維護
+本服務會持續改版。付費期間內的所有更新都不另外收費，也不影響你的到期日。
+1. 一般更新：修正錯誤、調整介面、新增功能等，會直接上線，並在網站的「更新紀錄」公告。
+2. 會影響交易的更新：例如訊號條件、下單方式、止損止盈的計算方式、預設參數有變動時，至少提前 24 小時在網站公告並通知你。你可以在更新前先暫停自動交易。
+3. 你自己的設定不會被改：更新不會在沒通知你的情況下更動你自己設定的金額、槓桿、止損止盈等參數。
+4. 已經開的單：更新當下已經開的單，照原本的止損和止盈管理到結束，不會因為更新而被改掉。
+5. 不保證舊版本和績效：我們不保證會保留舊版本，也不保證更新後的訊號或績效跟更新前一樣。
+6. 主要功能被拿掉或大幅縮減：如果更新拿掉或大幅縮減你付費時已有的主要功能（自動下單、訊號偵測、通知），導致服務無法照原本的方式使用，你可以選擇依剩下的天數按比例退款，或延長使用期間。
+7. 維護停機：更新需要暫停服務時，盡量安排在台灣時間凌晨 4 點到 6 點，並提前公告；連續停機超過第 7 條第 1 款的時數，依第 7 條處理。
+
+第 13 條　條款版本與修改
+1. 版本紀錄：每一版條款都有版本日期，付款頁和網站都會顯示目前的版本。所有舊版本都會保留，你可以隨時在網站上查看。
+2. 你同意的版本：你勾選同意時，系統會記錄你同意的版本、當時的條款全文和時間。
+3. 購買過程中條款更新了：你已經勾選同意並產生付款單，只要在付款單有效期間（2 小時）內付款，就適用你勾選時的版本；付款單過期或取消後重新產生時，要重新閱讀並同意最新版本；條款有新版本時，付款頁會提示你。
+4. 已經付費的人：修改會在生效前至少 7 天在網站公告並寄 Email 通知。對你不利的修改，在你目前已付費的期間內不適用；續費時才適用新版本，並要重新同意。
+5. 法律要求的修改：因為法律修改或主管機關要求而必須改的部分，依法律規定的時間生效，我們會盡快通知你。你不同意的話，可以通知我們解約，依第 7 條第 3 款按比例退款。
+6. 對你有利的修改：例如延長退款期間、降低價格，公告後立即生效。
+
+第 14 條　爭議處理與準據法
+1. 有任何問題，請先聯絡我們，我們會在 3 個工作天內回覆。
+2. 你也可以向消費者保護官申訴（全國消費者服務專線 1950）。
+3. 本條款以中華民國法律為準據法。發生訴訟時，以臺灣臺北地方法院為第一審管轄法院；但這不影響消費者保護法第 47 條、民事訴訟法小額程序等法律賦予你的管轄權利。`;
 const DEF_BILL = { on: false, onAt: 0, price: 200, days: 30, addr: '', plans: [{ m: 1, pct: 0 }, { m: 3, pct: 10 }, { m: 12, pct: 20 }], terms: DEF_TERMS, codes: [], free: [], delDays: 30, graceDays: 3, orderHours: 2,
   orders: [], unmatched: [], refunds: [], payers: {}, seen: {}, seenOut: {}, scan: { at: 0, err: '', n: 0 } };
 ST.bill = { ...DEF_BILL, ...(ST.bill || {}) };
+{ const B0 = ST.bill; if (!Array.isArray(B0.termsHist)) B0.termsHist = [];   // 📜 條款版本：第一次換上正式版時，舊的簡短條款留在歷史
+  if (!B0.termsVer) { if (B0.terms && B0.terms !== DEF_TERMS) B0.termsHist.push({ ver: '舊版', at: B0.onAt || 0, text: B0.terms }); B0.terms = DEF_TERMS; B0.termsVer = TERMS_VER; }
+  if (!B0.termsHist.some(h => h.ver === B0.termsVer)) B0.termsHist.push({ ver: B0.termsVer, at: Date.now(), text: B0.terms }); }
+function legalOut(B) { return { termsVer: B.termsVer, notice: LEGAL.notice, acks: LEGAL.acks.map(x => x.replace('{ver}', B.termsVer)), privacy: LEGAL.privacy, hist: (B.termsHist || []).map(h => ({ ver: h.ver, at: h.at })) }; }
+function legalCheck(B, b) { if (b.agree !== true) return '請先閱讀並勾選同意服務條款'; if (+b.acks !== LEGAL.acks.length) return '請逐項勾選付款前的確認事項'; if (String(b.termsVer || '') !== B.termsVer) return 'TERMS_CHANGED'; return ''; }
 for (const k of ['refunds', 'plans', 'codes', 'free', 'orders', 'unmatched']) if (!Array.isArray(ST.bill[k])) ST.bill[k] = DEF_BILL[k];
 for (const k of ['payers', 'seen', 'seenOut']) if (!ST.bill[k] || typeof ST.bill[k] !== 'object') ST.bill[k] = {};
 for (const o of ST.bill.orders) if (!o.addr) o.addr = ST.bill.addr;   // 舊的付款單補上收款地址
@@ -1939,7 +2056,7 @@ function billApply(o, tx, how, from) {                 // 收到錢：延長天�
   if (o.code) { const c = B.codes.find(x => x.code === o.code); if (c) c.n = (c.n || 0) + 1; }
   let usr2 = usr0;
   if (!usr2 && o.newAcct) {                            // 🆕 直接購買的新用戶：付款成功才建立帳號（密碼是他下單時自己設的）
-    const n = o.newAcct; usr2 = { uid: o.uid, role: 'viewer', salt: n.salt, hash: n.hash, created: now, bind: { email: n.email, phone: n.phone, google: false, at: now }, buyId: o.id };
+    const n = o.newAcct; usr2 = { uid: o.uid, role: 'viewer', salt: n.salt, hash: n.hash, created: now, bind: { email: n.email, phone: n.phone, google: false, at: now }, buyId: o.id, termsAt: o.agreeAt || now, termsVer: o.termsVer || '' };
     if (!ST.tool.grants.includes(o.uid)) ST.tool.grants.push(o.uid); ST.users.push(usr2);
     for (const r of ST.trials) if (r.uid === o.uid && r.status === 'pending') { r.status = 'converted'; r.convertedAt = now; r.note = '直接購買'; }
     log('購買建立帳號', o.uid); dcX(ctx(ownerUid()), `🆕 **新用戶直接購買**：${o.uid}（${maskMail(n.email)}），帳號已自動建立`);
@@ -2805,7 +2922,8 @@ http.createServer(async (req, res) => {
       }
       if (u.pathname === '/api/buy') {                   // 💳 獨立繳費頁（不用登入）：看方案、寄信箱驗證碼、下單、查付款、認領
         const B = BL(), op = String(b.op || 'info');
-        if (op === 'info') return send(res, 200, { on: B.on && !!B.addr, price: B.price, days: B.days, plans: B.plans.map(p => ({ ...p, price: billPrice('', p.m).price })), terms: B.terms, orderHours: B.orderHours, mail: mailOn() });
+        if (op === 'info') return send(res, 200, { on: B.on && !!B.addr, price: B.price, days: B.days, plans: B.plans.map(p => ({ ...p, price: billPrice('', p.m).price })), terms: B.terms, orderHours: B.orderHours, mail: mailOn(), ...legalOut(B) });
+        if (op === 'terms') { const h = (B.termsHist || []).find(x => x.ver === String(b.ver || B.termsVer)); return h ? send(res, 200, { ver: h.ver, at: h.at, text: h.text, cur: B.termsVer }) : send(res, 404, { error: '找不到這個版本' }); }   // 📜 看某一版的條款全文
         if (op === 'quote') { const q = billPrice(b.code, b.m); if (b.code && !q.code) return send(res, 400, { error: '邀請碼不對' }); return send(res, 200, q); }
         if (op === 'code') {                             // 📧 寄信箱驗證碼（10 分鐘內有效）
           const email = String(b.email || '').trim().toLowerCase();
@@ -2818,7 +2936,7 @@ http.createServer(async (req, res) => {
         }
         if (op === 'order') {                            // 🆕 新用戶下單：UID、密碼、信箱（驗證碼）、手機都對才開付款單；付款成功才建立帳號
           if (!B.on || !B.addr) return send(res, 400, { error: '目前沒有開放購買' });
-          if (b.agree !== true) return send(res, 400, { error: '請先閱讀並勾選同意服務條款' });
+          { const le = legalCheck(B, b); if (le === 'TERMS_CHANGED') return send(res, 409, { error: '服務條款剛更新了，請重新閱讀並勾選後再產生付款單', termsChanged: true }); if (le) return send(res, 400, { error: le }); }
           const uid = String(b.uid || '').trim(), email = String(b.email || '').trim().toLowerCase(), phone = normPhone(b.phone);
           if (!validUid(uid)) return send(res, 400, { error: 'UID 應該是 4～20 位數字（Bitunix 的 UID）' });
           if (ST.users.some(x => x.uid === uid)) return send(res, 400, { error: '這個 UID 已經有帳號了，請先登入，再到「💳 方案與繳費」續費', needLogin: true });
@@ -2830,7 +2948,7 @@ http.createServer(async (req, res) => {
           if (c) return send(res, 400, { error: `這個${c.bind.email === email ? '信箱' : '手機號碼'}已經綁定其他帳號了，請直接登入那個帳號續費` });
           if (b.code && !billPrice(b.code, b.m).code) return send(res, 400, { error: '邀請碼不對' });
           const o = billOrder(uid, b.code, b.m), otok = crypto.randomBytes(16).toString('hex');
-          o.newAcct = { ...hashPw(String(b.password)), email, phone }; o.otok = sha(otok); o.agreeAt = Date.now(); o.ip = ip; BUYC.delete(email); dirty = true;
+          o.newAcct = { ...hashPw(String(b.password)), email, phone }; o.otok = sha(otok); o.agreeAt = Date.now(); o.termsVer = B.termsVer; o.acks = LEGAL.acks.length; o.ip = ip; BUYC.delete(email); dirty = true;
           dcX(ctx(ownerUid()), `🛒 **有人要直接購買**：UID ${uid}・${maskMail(email)}・${o.amount} USDT（${o.m} 個月），等他付款`);
           return send(res, 200, { order: { id: o.id, amount: o.amount, addr: o.addr, exp: o.exp, m: o.m, pct: o.pct, code: o.code, uid }, otok });
         }
@@ -3051,9 +3169,9 @@ http.createServer(async (req, res) => {
         if (op === 'order') {
           if (!B.on) return send(res, 400, { error: '目前沒有開放收費' }); if (!B.addr) return send(res, 400, { error: '擁有者還沒設定收款地址' });
           if (billFree(usr.uid)) return send(res, 400, { error: '你是免費帳號，不用付費' });
-          if (b.agree !== true) return send(res, 400, { error: '請先閱讀並勾選同意服務條款' });
+          { const le = legalCheck(B, b); if (le === 'TERMS_CHANGED') return send(res, 409, { error: '服務條款剛更新了，請重新閱讀並勾選後再產生付款單', termsChanged: true }); if (le) return send(res, 400, { error: le }); }
           if (b.code && !billPrice(b.code, b.m).code) return send(res, 400, { error: '邀請碼不對' });
-          usr.termsAt = Date.now(); const o = billOrder(usr.uid, b.code, b.m); o.agreeAt = usr.termsAt; return send(res, 200, { order: o });
+          usr.termsAt = Date.now(); usr.termsVer = B.termsVer; const o = billOrder(usr.uid, b.code, b.m); o.agreeAt = usr.termsAt; o.termsVer = B.termsVer; o.acks = LEGAL.acks.length; return send(res, 200, { order: o });
         }
         if (op === 'cancel') { const o = B.orders.find(x => x.id === String(b.id) && x.uid === usr.uid && x.status === 'pending'); if (o) { o.status = 'cancel'; dirty = true; } return send(res, 200, { ok: true }); }
         if (op === 'claim') {
@@ -3064,7 +3182,7 @@ http.createServer(async (req, res) => {
         }
         if (op === 'poll' && Date.now() - B.scan.at > 20000) await billScan(false).catch(() => {});
         const st = billState(usr);
-        return send(res, 200, { on: B.on, price: B.price, days: B.days, addr: B.addr, orderHours: B.orderHours, plans: B.plans.map(p => ({ ...p, price: billPrice('', p.m).price })), terms: B.terms, termsAt: usr.termsAt || 0,
+        return send(res, 200, { on: B.on, price: B.price, days: B.days, addr: B.addr, orderHours: B.orderHours, plans: B.plans.map(p => ({ ...p, price: billPrice('', p.m).price })), terms: B.terms, termsAt: usr.termsAt || 0, termsVerMine: usr.termsVer || '', ...legalOut(B),
           state: { ...st, paidUntil: usr.paidUntil || 0, trialEnd: usr.trialEnd || 0 }, orders: B.orders.filter(o => o.uid === usr.uid).slice(0, 20).map(o => { const { newAcct, otok, ...r } = o; return r; }), refunds: B.refunds.filter(r => r.uid === usr.uid).slice(0, 20),
           scan: { at: B.scan.at, err: B.scan.err ? '查詢區塊鏈失敗，稍後會再試' : '' }, owner: !!owner });
       }
@@ -3076,7 +3194,7 @@ http.createServer(async (req, res) => {
           if (v.addr !== undefined) { const a = String(v.addr).trim(); if (a && !/^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(a)) return send(res, 400, { error: '這不是 TRON（TRC20）地址，應該是 T 開頭、34 個字' }); B.addr = a; }
           if (v.price !== undefined) { const x = +v.price; if (!(x > 0 && x <= 100000)) return send(res, 400, { error: '月費要大於 0' }); B.price = Math.round(x * 100) / 100; }
           if (Array.isArray(v.plans)) { const P = v.plans.map(p => ({ m: Math.round(+p.m), pct: Math.max(0, Math.min(90, Math.round(+p.pct * 10) / 10 || 0)) })).filter(p => [1, 3, 6, 12].includes(p.m)); if (!P.some(p => p.m === 1)) P.unshift({ m: 1, pct: 0 }); B.plans = [...new Map(P.map(p => [p.m, p])).values()].sort((a, c) => a.m - c.m); }
-          if (typeof v.terms === 'string') B.terms = v.terms.slice(0, 4000) || DEF_TERMS;
+          if (typeof v.terms === 'string') { const t = v.terms.slice(0, 20000) || DEF_TERMS; if (t !== B.terms) { const d = new Date(Date.now() + 8 * HOUR).toISOString().slice(0, 10); let ver = d, k = 2; while ((B.termsHist || []).some(h => h.ver === ver)) ver = `${d}-${k++}`; B.terms = t; B.termsVer = ver; (B.termsHist = B.termsHist || []).push({ ver, at: Date.now(), text: t }); } }   // 改條款＝新版本，舊版留著
           for (const k of ['delDays', 'graceDays']) if (v[k] !== undefined) { const x = Math.round(+v[k]); if (!(x >= 0 && x <= 365)) return send(res, 400, { error: '天數要在 0～365' }); B[k] = x; }
           if (typeof v.on === 'boolean' && v.on !== B.on) {
             if (v.on && !B.addr) return send(res, 400, { error: '請先設定收款地址，再打開收費' });
@@ -3108,7 +3226,7 @@ http.createServer(async (req, res) => {
         for (const r of B.refunds.filter(x => !B.orders.some(o => o.status === 'paid' && (o.id === x.orderId || (o.tx && o.tx === x.tx))))) ledger.push({ type: 'refund', at: r.at, uid: r.uid || '', from: r.from, amount: r.amount, m: 0, code: '', pct: 0, how: '', tx: r.tx, isNew: false, refunds: [{ amount: r.amount, to: r.from, status: r.status, outTx: r.outTx || '', why: r.why || '' }], ...(r.uid ? who(r.uid) : { email: '', phone: '' }) });
         ledger.sort((x, y) => y.at - x.at);
         let baks = []; try { baks = fs.readdirSync(BAK_DIR).filter(f => f.startsWith('state-')).sort().reverse().slice(0, 5); } catch (e) {}
-        return send(res, 200, { cfg: { on: B.on, onAt: B.onAt, price: B.price, days: B.days, addr: B.addr, delDays: B.delDays, graceDays: B.graceDays, orderHours: B.orderHours, plans: B.plans, terms: B.terms, tgKey: !!process.env.TRONGRID_KEY, mail: mailOn(), baks }, codes: B.codes, free: B.free, users, ledger, orders: B.orders.slice(0, 200).map(o => { const { newAcct, otok, ...r } = o; return { ...r, isNew: !!newAcct, email: newAcct ? maskMail(newAcct.email) : '' }; }), unmatched: B.unmatched, refunds: B.refunds.slice(0, 200), gone: (B.gone || []).slice(0, 100), scan: B.scan,
+        return send(res, 200, { cfg: { on: B.on, onAt: B.onAt, price: B.price, days: B.days, addr: B.addr, delDays: B.delDays, graceDays: B.graceDays, orderHours: B.orderHours, plans: B.plans, terms: B.terms, termsVer: B.termsVer, termsN: (B.termsHist || []).length, tgKey: !!process.env.TRONGRID_KEY, mail: mailOn(), baks }, codes: B.codes, free: B.free, users, ledger, orders: B.orders.slice(0, 200).map(o => { const { newAcct, otok, ...r } = o; return { ...r, isNew: !!newAcct, email: newAcct ? maskMail(newAcct.email) : '' }; }), unmatched: B.unmatched, refunds: B.refunds.slice(0, 200), gone: (B.gone || []).slice(0, 100), scan: B.scan,
           income: { all: +B.orders.filter(o => o.status === 'paid').reduce((a, o) => a + +o.amount, 0).toFixed(2), m30: +B.orders.filter(o => o.status === 'paid' && now - o.paidAt < 30 * DAYMS).reduce((a, o) => a + +o.amount, 0).toFixed(2) } });
       }
       if (u.pathname === '/api/trial') {                 // 🧪 後台：試用申請（擁有者、管理員）
