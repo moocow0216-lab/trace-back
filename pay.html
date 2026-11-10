@@ -85,7 +85,7 @@ async function boot() {
   if (saved && saved.exp > Date.now() - 48 * 3600000 && saved.mode === S.mode) { S.order = saved; return payView(); }
   formView();
 }
-function done0(ic, t, d) { step(4); $('app').innerHTML = `<div class="card big"><div class="ic">${ic}</div><h2>${t}</h2><p class="mute">${d}</p><a class="btn" href="./">回網站</a></div>`; }
+function done0(ic, t, d) { step(0); $('app').innerHTML = `<div class="card big"><div class="ic">${ic}</div><h2>${t}</h2><p class="mute">${d}</p><a class="btn" href="./">回網站</a></div>`; }
 function legalCard(I) {                                  // 📜 購買前須知＋逐項勾選＋條款全文＋個資告知＋歷史版本
   const n = I.notice || [], A = I.acks || [], H = (I.hist || []).slice().reverse();
   return `<div class="card" id="legal"><h2>購買前須知</h2>
