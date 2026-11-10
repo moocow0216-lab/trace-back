@@ -949,6 +949,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
 .biplans{display:flex;gap:8px;flex-wrap:wrap}.biplanopt{flex:1;min-width:120px;display:flex;flex-direction:column;gap:2px;border:1.5px solid var(--line,#2a3140);border-radius:12px;padding:10px 12px;cursor:pointer;position:relative}
 .biplanopt input{position:absolute;opacity:0}.biplanopt.on{border-color:#10b981;background:rgba(16,185,129,.08)}.biplanopt b{font-size:15px}.biplanopt span{font-size:18px;font-weight:800;color:#10b981}.biplanopt em{font-style:normal;font-size:12px;color:#f59e0b;font-weight:700}
 .biplanopt:focus-within{outline:2px solid #10b981;outline-offset:2px}
+.bilegal{border-top:1px dashed var(--line,#2a2e39);margin-top:12px;padding-top:4px}.binotice{margin:4px 0 8px;padding-left:20px;font-size:13.5px;line-height:1.7}.binotice li{margin:5px 0}.bilegal .biagree{display:flex;gap:8px;align-items:flex-start;margin:7px 0;font-size:14px}.bilegal .biagree input{flex:none;margin-top:3px;width:18px;height:18px}
 .biterms pre{white-space:pre-wrap;font-size:12.5px;line-height:1.6;background:rgba(0,0,0,.04);padding:10px;border-radius:8px;max-height:220px;overflow:auto}.biagree{font-weight:700}
 .biclaim summary{cursor:pointer;font-weight:700;font-size:13.5px}.biclaim .xeadd{margin-top:6px}.biterm{width:100%;font-size:12.5px}
 .qgbuy{display:block;text-align:center;margin-top:6px;border:1px solid #10b981!important;color:#059669!important;background:transparent!important;font-weight:700;text-decoration:none}
@@ -1017,7 +1018,9 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
 .kdedit{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:3px;background:var(--panel,#1e222d);border:1px solid var(--line,#2a2e39);border-radius:8px;padding:4px 6px;box-shadow:0 6px 20px rgba(0,0,0,.35);flex-wrap:wrap;max-width:94%}
 .kdc{width:20px;height:20px;border-radius:50%;border:2px solid transparent;background:var(--c);cursor:pointer}.kdc.on{border-color:#fff;box-shadow:0 0 0 2px #2962ff}
 .kdw{min-width:28px;height:26px;border:0;background:transparent;color:inherit;border-radius:5px;cursor:pointer;display:grid;place-items:center}.kdw i{display:block;width:16px;background:currentColor}.kdw.on,.kdw:hover{background:rgba(41,98,255,.18)}
-.kdfav{position:absolute;top:8px;left:8px;z-index:6;display:flex;gap:2px;background:var(--panel,#1e222d);border:1px solid var(--line,#2a2e39);border-radius:8px;padding:2px}
+.kdfav{position:absolute;top:8px;left:8px;z-index:6;display:flex;align-items:center;gap:2px;background:rgba(30,34,45,.96);border:1px solid #363a45;border-radius:8px;padding:3px 4px 3px 2px;box-shadow:0 4px 16px rgba(0,0,0,.45);max-width:calc(100% - 16px);flex-wrap:wrap;user-select:none;-webkit-user-select:none}
+.kdfav .kdb{width:32px;height:32px;display:grid;place-items:center;font-size:16px;border-radius:5px}
+.kdfgrip{width:14px;height:32px;display:grid;place-items:center;color:#6a6d78;cursor:grab;touch-action:none;font-size:14px;letter-spacing:-2px;border-radius:4px;flex:none}.kdfgrip:hover,.kdfgrip:focus-visible{color:#d1d4dc;background:rgba(255,255,255,.06);outline:0}.kdfav.drag{opacity:.92;box-shadow:0 8px 24px rgba(0,0,0,.6)}.kdfav.drag .kdfgrip{cursor:grabbing}
 .klrpb{border:1px solid var(--line,#2a2e39);background:transparent;color:inherit;border-radius:8px;padding:6px 12px;font-size:13.5px;cursor:pointer}.klrpb.on{background:#2962ff;border-color:#2962ff;color:#fff}
 .klrp{flex:0 1 auto;display:flex;align-items:center;gap:4px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;padding:2px 4px;border:1px solid rgba(41,98,255,.55);border-radius:8px;font-size:12.5px;min-width:0}
 .klrp .btn{padding:3px 8px;min-height:0;font-size:12.5px;line-height:1.4;flex:none!important;width:auto!important}.klrp select{padding:2px 4px;border-radius:6px;font-size:12px}.klrp>b,.klrp>span{padding:0 4px;white-space:nowrap}.krt{color:var(--muted);font-size:11.5px}.klrp .krsel{padding:2px 6px;font-size:12px;white-space:nowrap;flex:none}.kltop{flex-wrap:nowrap}.kltop>*{flex-shrink:0}.kltop>.klrp{flex-shrink:1;min-width:0}
@@ -1308,7 +1311,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-09f</div>
+      <div class="qver" id="qVer">網站版本 2026-11-10a</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3768,7 +3771,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-09f・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-10a・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -4671,7 +4674,7 @@ function kmLayout(lay) {                                // 換版面：重建簡
   if (need > 0 && !KL.list.length) try { klList(); } catch (e) {}   // 幣種清單（輸入框的提示）
   const b = $('klLayBtn'); if (b) b.textContent = (KM_LAY.find(x => x[0] === KM.lay) || KM_LAY[0])[1] + ' ' + (KM_N[KM.lay] || 1) + ' 格';
 }
-function kmKill(P) { if (!P) return; P.dead = true; for (const k of Object.keys(KP.series)) if (k.startsWith('p' + P.i + '|')) delete KP.series[k]; for (const k of Object.keys(KP.pls)) if (k.startsWith('p' + P.i + '|')) delete KP.pls[k]; clearInterval(P.poll); if (P.ws) { P.ws.onclose = null; try { P.ws.close(); } catch (e) {} } try { P.ch.remove(); } catch (e) {} P.el.remove(); }
+function kmKill(P) { if (!P) return; P.dead = true; if (KD.act === P) kdAct(null); for (const k of Object.keys(KP.series)) if (k.startsWith('p' + P.i + '|')) delete KP.series[k]; for (const k of Object.keys(KP.pls)) if (k.startsWith('p' + P.i + '|')) delete KP.pls[k]; clearInterval(P.poll); if (P.ws) { P.ws.onclose = null; try { P.ws.close(); } catch (e) {} } try { P.ch.remove(); } catch (e) {} P.el.remove(); }
 function kmMake(i, c) {
   const el = document.createElement('div'); el.className = 'klmini'; el.dataset.i = i;
   el.innerHTML = `<div class="kmh"><button class="kmind" title="這一格的指標" aria-label="第 ${i + 2} 格的指標">ƒx</button><button class="kmsym" aria-haspopup="dialog" aria-label="第 ${i + 2} 格的幣種"><b>${esc(c.sym.replace(/USDT$/, ''))}</b><span>▾</span></button><select class="kmtf" aria-label="第 ${i + 2} 格的週期">${KL_TF.map(([v, n]) => `<option value="${v}"${v === c.tf ? ' selected' : ''}>${n}</option>`).join('')}</select><span class="kmlg"></span><button class="kmmax" title="換到主圖（可以畫圖）" aria-label="換到主圖">⤢</button></div><div class="kmc"><canvas class="kmbg" aria-hidden="true"></canvas><canvas class="kmtop" aria-hidden="true"></canvas><div class="kltag kmtag" hidden aria-live="off"><b></b><small></small></div><div class="kmlgw"><div class="kilg" data-kvid="p${i}"></div></div></div>`;
@@ -4681,7 +4684,7 @@ function kmMake(i, c) {
   ch.timeScale().applyOptions({ tickMarkFormatter: ksTick });
   const cs = ch.addCandlestickSeries({ ...ksSeries(), lastValueVisible: false, priceLineStyle: 1, priceFormat: { type: 'custom', formatter: klFmt, minMove: 1e-8 } }), vs = ch.addHistogramSeries({ priceScaleId: 'vol', priceFormat: { type: 'volume' }, lastValueVisible: false, priceLineVisible: false });
   ch.priceScale('vol').applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } }); cs.priceScale().applyOptions({ scaleMargins: { top: 0.08, bottom: 0.2 } });
-  const P = { i, el, ch, cs, vs, sym: c.sym, tf: c.tf, data: [], ind: (c.ind || []).map(x => ({ ...x })), key: '', res: null, cust: !!c.cust }; P.ax = { ch, cs }; kaxBind(el.querySelector('.kmc'), P.ax);
+  const P = { i, el, ch, cs, vs, sym: c.sym, tf: c.tf, data: [], ind: (c.ind || []).map(x => ({ ...x })), key: '', res: null, cust: !!c.cust }; P.ax = { ch, cs }; kaxBind(el.querySelector('.kmc'), P.ax); kdBindPane(P);
   for (const it of P.ind) if (/^pine:/.test(it.id) && !it.pine) { const sc = KP.scripts.find(x => 'pine:' + x.id === it.id); if (sc) it.pine = { inputs: pineParse(sc.code), vals: {}, pv: 2, src: '' }; }
   el.querySelector('.kmind').addEventListener('click', e => { e.stopPropagation(); kiAddMenu(e.currentTarget, 'p' + i); });
   ch.subscribeCrosshairMove(p => kmLegend(P, p && p.time ? P.data.find(x => x.time === p.time) : null));
@@ -4720,11 +4723,11 @@ function kmLegend(P, b) {
 function kmLegendInd(P) { if (!P) return; kiLegendFor(P.el.querySelector('.kilg'), P.ind, 'p' + P.i); }
 function kmDrawInd(P) {                                  // 把這一格的指標畫上去（借用主圖的畫法：暫時把「目前的圖」換成這一格）
   const cvT = P.el.querySelector('.kmtop'), cvB = P.el.querySelector('.kmbg'); if (!cvT || !P.data.length) return;
-  const DR = KD.hide ? [] : kdAllFor(P.sym, KR.on ? null : KL.sym);
-  if (!P.ind.length && !P.hadInd && !DR.length && !P.hadDr) return; P.hadInd = P.ind.length > 0; P.hadDr = DR.length > 0;
+  const DR = KD.hide ? [] : kdAllFor(P.sym, KR.on ? null : KL.sym), mine = KD.act === P;
+  if (!P.ind.length && !P.hadInd && !DR.length && !P.hadDr && !mine && !P.hadAct) return; P.hadAct = mine; P.hadInd = P.ind.length > 0; P.hadDr = DR.length > 0;
   const sv = { data: KL.data, tf: KL.tf, sym: KL.sym, ch: KL.ch, cs: KL.cs, list: KI.list, res: KI.res, key: KI.key, atr: KI.atr };
   KL.data = P.data; KL.tf = P.tf; KL.sym = P.sym; KL.ch = P.ch; KL.cs = P.cs; KI.list = P.ind; KI.res = P.res; KI.key = P.key; KVID = 'p' + P.i;
-  try { const [g, w, h] = kdCanvas(cvT), [gb] = kdCanvas(cvB), pw = P.ch.priceScale('right').width() || 50; g.save(); g.beginPath(); g.rect(0, 0, w - pw, h); g.clip(); gb.save(); gb.beginPath(); gb.rect(0, 0, w - pw, h); gb.clip(); if (P.ind.length || P.hadIndDrawn) { kiDraw(g, w - pw, h, gb); P.hadIndDrawn = P.ind.length > 0; } for (const d of DR) try { kdShape(g, d, false, w - pw, h); } catch (e) {} g.restore(); gb.restore(); if (!P.ind.length) try { P.cs.setMarkers([]); } catch (e) {} }   // 同一個幣種的繪圖也畫上來
+  try { const [g, w, h] = kdCanvas(cvT), [gb] = kdCanvas(cvB), pw = P.ch.priceScale('right').width() || 50; g.save(); g.beginPath(); g.rect(0, 0, w - pw, h); g.clip(); gb.save(); gb.beginPath(); gb.rect(0, 0, w - pw, h); gb.clip(); if (P.ind.length || P.hadIndDrawn) { kiDraw(g, w - pw, h, gb); P.hadIndDrawn = P.ind.length > 0; } for (const d of DR) try { kdShape(g, d, mine && d === KD.sel, w - pw, h); } catch (e) {} if (mine) try { kdOverlay(g, w - pw, h); } catch (e) {} g.restore(); gb.restore(); if (!P.ind.length) try { P.cs.setMarkers([]); } catch (e) {} }   // 同一個幣種的繪圖也畫上來
   catch (e) {} finally { P.res = KI.res; P.key = KI.key; KL.data = sv.data; KL.tf = sv.tf; KL.sym = sv.sym; KL.ch = sv.ch; KL.cs = sv.cs; KI.list = sv.list; KI.res = sv.res; KI.key = sv.key; KI.atr = sv.atr; KVID = 'm0'; }
 }
 function kmTheme() {                                     // 其他格跟主圖用同一套：背景、K 棒顏色、格線、文字、十字線、浮水印
@@ -4760,9 +4763,10 @@ const KD_EMO = ['🚀', '🔥', '⭐', '✅', '❌', '⚠️', '💰', '🎯', '
 const KD_COLS = ['#2962ff', '#f23645', '#089981', '#ff9800', '#e91e63', '#9c27b0', '#ffffff', '#787b86'];
 const KD_FIB = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1];
 const kdKey = () => 'klDraw';
-function kdLoad() { const all = LS.get(kdKey(), {}); KD.list = all[KL.sym] || []; KD.sel = null; KD.allC = null; }
-function kdSave() { const all = LS.get(kdKey(), {}); if (KD.list.length) all[KL.sym] = KD.list; else delete all[KL.sym]; LS.set(kdKey(), all); KD.allC = null; }
-function kdAllFor(sym, mainSym) { if (sym === mainSym) return KD.list; if (!KD.allC) KD.allC = LS.get(kdKey(), {}); return KD.allC[sym] || []; }   // 這個幣種的繪圖（其他格顯示用）
+function kdLoad() { const all = LS.get(kdKey(), {}); KD.list = all[KL.sym] || []; KD.sel = null; KD.allC = null; KD.act = null; KD.tmp = null; }
+function kdSave() { if (KD.act && !KD.swapped) return kdWith(KD.act, kdSave);   // 在其他格選取的繪圖：存到那一格的幣種
+  const all = LS.get(kdKey(), {}); if (KD.list.length) all[KL.sym] = KD.list; else delete all[KL.sym]; LS.set(kdKey(), all); if (KD.allC) KD.allC[KL.sym] = KD.list; }
+function kdAllFor(sym, mainSym) { if (sym === mainSym) return KD.list; if (!KD.allC) KD.allC = LS.get(kdKey(), {}); return KD.allC[sym] || (KD.allC[sym] = []); }   // 這個幣種的繪圖（其他格用）
 /* ---- 座標換算：時間 ↔ 邏輯位置 ↔ 畫面 x；價格 ↔ 畫面 y（未來的時間用週期往後推） ---- */
 function kdT2L(t) {
   const D = KL.data, n = D.length; if (!n) return 0; const sec = KL_SEC[KL.tf] || 60;
@@ -4820,9 +4824,25 @@ function kdMenu(kind, anchor) {                          // 群組的下拉選�
   $('mnpKline').querySelector('.kl').appendChild(m); const f = m.querySelector('button:not([disabled])'); if (f) f.focus();
 }
 function kdMenuClose() { const m = $('kdMenu'); if (m) m.remove(); }
-function kdFavBar() {                                    // 收藏的工具：浮在圖表上方的小工具列
+function kdFavBar() {                                    // 收藏的工具：浮在圖表上的橫向工具列（跟 TradingView 一樣，左邊的 ⠿ 可以拖到任何位置）
   const el = $('kdFav'); if (!el) return; el.hidden = !KD.fav.length || !KD.favShow;
-  el.innerHTML = KD.fav.map(k => `<button class="kdb${KD.tool === k ? ' on' : ''}" data-kdt="${k}" title="${KD_TOOLS[k][0]}" aria-label="${KD_TOOLS[k][0]}">${KD_TOOLS[k][1]}</button>`).join('');
+  el.innerHTML = `<span class="kdfgrip" role="button" tabindex="0" title="拖曳移動（點兩下回到左上角）" aria-label="移動收藏工具列，可用方向鍵">⠿</span>` + KD.fav.map(k => `<button class="kdb${KD.tool === k ? ' on' : ''}" data-kdt="${k}" title="${KD_TOOLS[k][0]}" aria-label="${KD_TOOLS[k][0]}">${KD_TOOLS[k][1]}</button>`).join('');
+  if (!el.dataset.drag) kdFavDrag(el); kdFavPlace(el);
+}
+function kdFavPlace(el, x, y) {                          // 放到記住的位置（不會超出圖表）
+  const box = el.parentElement; if (!box || el.hidden) return; const P = x == null ? LS.get('klFavPos', null) : { x, y };
+  const bw = box.clientWidth, bh = box.clientHeight, w = el.offsetWidth, h = el.offsetHeight, px = P ? P.x : 8, py = P ? P.y : 8;
+  el.style.left = Math.round(Math.max(0, Math.min(bw - w, px))) + 'px'; el.style.top = Math.round(Math.max(0, Math.min(bh - h, py))) + 'px';
+}
+function kdFavDrag(el) {
+  el.dataset.drag = '1'; let st = null;
+  el.addEventListener('pointerdown', e => { const g = e.target.closest('.kdfgrip'); if (!g) return; e.preventDefault(); e.stopPropagation(); g.setPointerCapture(e.pointerId); st = { x: e.clientX, y: e.clientY, l: el.offsetLeft, t: el.offsetTop }; el.classList.add('drag'); });
+  el.addEventListener('pointermove', e => { if (!st) return; e.preventDefault(); e.stopPropagation(); kdFavPlace(el, st.l + e.clientX - st.x, st.t + e.clientY - st.y); });
+  const end = e => { if (!st) return; st = null; el.classList.remove('drag'); LS.set('klFavPos', { x: el.offsetLeft, y: el.offsetTop }); };
+  el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+  el.addEventListener('dblclick', e => { if (!e.target.closest('.kdfgrip')) return; LS.set('klFavPos', null); kdFavPlace(el); });
+  el.addEventListener('keydown', e => { if (!e.target.closest('.kdfgrip')) return; const d = { ArrowLeft: [-10, 0], ArrowRight: [10, 0], ArrowUp: [0, -10], ArrowDown: [0, 10] }[e.key]; if (!d) return; e.preventDefault(); e.stopPropagation(); kdFavPlace(el, el.offsetLeft + d[0], el.offsetTop + d[1]); LS.set('klFavPos', { x: el.offsetLeft, y: el.offsetTop }); });
+  if (window.ResizeObserver) new ResizeObserver(() => kdFavPlace(el)).observe(el.parentElement);
 }
 function kdUse(t) { KD.tool = KD.tool === t && !['ruler', 'zoom'].includes(t) ? null : t; KD.tmp = null; kdMenuClose(); kdToolbar(); kdFavBar(); kdCursor(); if (t === 'emoji' && KD.tool) KD.emo = KD.emo || KD_EMO[0]; }
 function kdCursor() {                                   // 游標樣式：十字／點／箭頭（畫圖時一律十字）
@@ -4853,11 +4873,15 @@ function kdDraw() {
   try { kiDraw(g, w - pw, h, gb || g); } catch (e) {}   // ƒx 指標：方框畫在 K 線後面，線和標籤畫在前面
   if (gb) gb.restore();
   if (!KD.hide) for (const d of KD.list) kdShape(g, d, d === KD.sel, w - pw, h);
+  if (!KD.act) kdOverlay(g, w - pw, h);
+  g.restore();
+}
+function kdOverlay(g, W, h) {                            // 畫到一半的線、提示、吸附點（畫在正在畫圖的那一格）
+  const w = W, pw = 0;
   if (KD.tmp) { kdShape(g, KD.tmp, true, w - pw, h); if (KD.tool && KD.tmp.type !== 'brush' && KD.mouse) { const need = KD_TOOLS[KD.tmp.type] ? KD_TOOLS[KD.tmp.type][2] : 2, left = need - KD.tmp.pts.length + 1; g.font = '11px sans-serif'; g.fillStyle = 'rgba(30,34,45,.9)'; const t = left > 1 ? `再點 ${left} 下完成（Esc 取消）` : '點一下固定（Esc 取消）', tw = g.measureText(t).width + 10; g.fillRect(Math.round(KD.mouse.x + 12), Math.round(KD.mouse.y + 14), tw, 18); g.fillStyle = '#e0e3eb'; g.fillText(t, Math.round(KD.mouse.x + 17), Math.round(KD.mouse.y + 27)); } }   // 畫到一半：提示還要點幾下
   if (KD.tool && KD.tool !== 'brush' && KD.mouse && (KD.ctrl || KD.magnet)) { kdPt(KD.mouse.x, KD.mouse.y); const sp = KD.snapAt, sx = sp && kdX(sp.t), sy = sp && kdY(sp.p);
     if (sx != null && sy != null) { g.save(); g.setLineDash([]); g.lineWidth = 1.5; g.strokeStyle = '#ffd54f'; g.fillStyle = 'rgba(255,213,79,.25)'; g.beginPath(); g.arc(sx, sy, 5, 0, Math.PI * 2); g.fill(); g.stroke(); g.restore(); } }
-  if (KR.pick && KD.mouse) { g.strokeStyle = '#2962ff'; g.setLineDash([5, 4]); g.lineWidth = 1.5; g.beginPath(); g.moveTo(KD.mouse.x, 0); g.lineTo(KD.mouse.x, h); g.stroke(); g.setLineDash([]); g.fillStyle = '#2962ff'; g.font = 'bold 12px sans-serif'; g.fillText('點一下從這裡開始回放', KD.mouse.x + 8, 20); }
-  g.restore();
+  if (KR.pick && KD.mouse && !KD.act) { g.strokeStyle = '#2962ff'; g.setLineDash([5, 4]); g.lineWidth = 1.5; g.beginPath(); g.moveTo(KD.mouse.x, 0); g.lineTo(KD.mouse.x, h); g.stroke(); g.setLineDash([]); g.fillStyle = '#2962ff'; g.font = 'bold 12px sans-serif'; g.fillText('點一下從這裡開始回放', KD.mouse.x + 8, 20); }
 }
 function kdShape(g, d, sel, W, H) {
   const P = d.pts.map(q => ({ x: kdX(q.t), y: kdY(q.p) })); if (P.some(q => q.x == null || q.y == null)) return;
@@ -4938,7 +4962,55 @@ function kdEdit() {                                     // 選到繪圖時的小
   el.innerHTML = KD_COLS.map(c => `<button class="kdc${d.color === c ? ' on' : ''}" data-kdc="${c}" style="--c:${c}" aria-label="顏色 ${c}"></button>`).join('') + '<i class="kdsep v"></i>' +
     [1, 2, 3, 4].map(w => `<button class="kdw${d.width === w ? ' on' : ''}" data-kdw="${w}" aria-label="粗細 ${w}"><i style="height:${w}px"></i></button>`).join('') +
     `<button class="kdw" data-kdprop="1" aria-label="設定" title="設定（也可以在繪圖上點兩下）">⚙</button><button class="kdw${d.dash || d.lineSt === 2 ? ' on' : ''}" data-kdd="1" aria-label="虛線">┄</button>${d.type === 'text' ? '<button class="kdw" data-kdtx="1" aria-label="改文字">✎</button>' : ''}${d.type === 'emoji' ? KD_EMO.map(e => `<button class="kdw" data-kdemo="${e}">${e}</button>`).join('') : ''}<i class="kdsep v"></i><select class="kdtplq" data-kdtplq="1" aria-label="範本" title="範本：存成有名字的樣式、套用">${kdTplOpts(d.type).replace('<option value="">範本</option>', '<option value="">📑 範本</option>')}</select><button class="kdw" data-kddel="sel" aria-label="刪除">🗑</button>`;
-  const q = el.querySelector('[data-kdtplq]'); if (q) q.onchange = () => { const v = q.value; q.value = ''; const d0 = KD.sel; const msg = kdTplDo(d0, v); kdSave(); KD.sel = d0; kdEdit(); kdToast(msg); };
+  const q = el.querySelector('[data-kdtplq]'); if (q) q.onchange = () => { const v = q.value; q.value = ''; const d0 = KD.sel; const msg = kdTplDo(d0, v); kdSave(); KD.sel = d0; kdEdit(); kdToast(msg); };   // 套用「我的範本」：樣式＋當初存的文字一起出現
+}
+function kdDown(e, m, host) {                            // 按下：畫圖、選取、開始拖曳（主圖或其他格，座標已經換成那一格）
+  if (KD.ruler && !KD.tool) { KD.ruler = null; KD.tmp = null; }
+  if (KD.tool) {
+    e.stopPropagation(); e.preventDefault(); host.setPointerCapture(e.pointerId); const q = kdPt(m.x, m.y), T = KD.tool, need = KD_TOOLS[T][2];
+    if (T === 'brush') { KD.tmp = { ...kdNew('brush', q) }; KD.drag = { brush: true }; return; }
+    if (!KD.tmp) { const d = T === 'ruler' || T === 'zoom' ? { type: T, pts: [q], color: '#2962ff', width: 1 } : kdNew(T, q); if (!d) return; if (need === 1 || T === 'long' || T === 'short') return kdFinish(d); d.pts.push({ ...q }); KD.tmp = d; KD.drag = { draw: true }; return; }
+    { const P = KD.tmp.pts, q2 = kdLock(q, P[P.length - 2], m); P[P.length - 1] = q2; if (P.length >= need) return kdFinish(KD.tmp); P.push({ ...q2 }); } return;
+  }
+  const h = kdHit(m);
+  if (h) { e.stopPropagation(); e.preventDefault(); host.setPointerCapture(e.pointerId); KD.sel = h[0]; KD.drag = { d: h[0], k: h[1], m0: m, p0: JSON.parse(JSON.stringify(h[0].pts)) }; kdEdit(); }
+  else if (KD.sel) { KD.sel = null; kdEdit(); }
+}
+function kdMove(e, m) {
+  if (KD.tmp && KD.tool && KD.tmp.type !== 'brush') { const P = KD.tmp.pts; P[P.length - 1] = kdLock(kdPt(m.x, m.y), P[P.length - 2], m); e.stopPropagation(); }
+  if (KD.drag && KD.drag.brush) { KD.tmp.pts.push(kdPt(m.x, m.y)); e.stopPropagation(); }
+  else if (KD.drag && KD.drag.d) {                     // 拖曳整個繪圖或某一個點
+    e.stopPropagation(); const D = KD.drag, d = D.d, q = kdPt(m.x, m.y);
+    if (D.k >= 0) { if ((d.type === 'long' || d.type === 'short') && D.k === 0) { const dt = q.t - D.p0[0].t, dp = q.p - D.p0[0].p; d.pts = D.p0.map(x => ({ t: x.t + dt, p: x.p + dp })); } else { d.pts[D.k] = (d.type === 'long' || d.type === 'short') ? (D.k === 3 ? { t: q.t, p: D.p0[3].p } : { t: D.p0[D.k].t, p: q.p }) : kdLock(q, D.p0.length > 1 ? D.p0[D.k === 0 ? 1 : D.k - 1] : null, m); } }
+    else { const a = kdPt(D.m0.x, D.m0.y); let dt = q.t - a.t, dp = q.p - a.p; if (KD.shift) { if (Math.abs(m.x - D.m0.x) >= Math.abs(m.y - D.m0.y)) dp = 0; else dt = 0; } d.pts = D.p0.map(x => ({ t: x.t + dt, p: x.p + dp })); }   // 按住 Shift 整個拖：只左右或只上下
+  }
+}
+function kdUp(e) {
+  if (!KD.drag) return; const D = KD.drag; KD.drag = null;
+  if (D.brush && KD.tmp) { if (KD.tmp.pts.length > 1) kdFinish(KD.tmp); else KD.tmp = null; return; }
+  if (D.draw) return;   // 畫法跟 TradingView 一樣：點第一下固定第一個點，滑鼠移到哪線就跟到哪，點第二下才固定（放開滑鼠不會結束）
+  if (D.d) kdSave();
+}
+function kdAct(P) {                                      // 換到另一格畫圖：畫到一半的、選取的都放掉（每一格的繪圖清單不同）
+  if (KD.act === P) return; KD.act = P || null; KD.tmp = null; KD.drag = null; KD.ruler = null; if (KD.sel) { KD.sel = null; kdEdit(); }
+}
+function kdWith(P, fn) {                                 // 暫時把「目前的圖」換成這一格（座標、資料、這個幣種的繪圖清單），做完換回來
+  if (!P || KD.swapped) return fn();
+  const sv = { data: KL.data, tf: KL.tf, sym: KL.sym, ch: KL.ch, cs: KL.cs, list: KD.list }, same = P.sym === KL.sym;
+  KL.data = P.data; KL.tf = P.tf; KL.sym = P.sym; KL.ch = P.ch; KL.cs = P.cs; KD.list = kdAllFor(P.sym, sv.sym); KD.swapped = true;
+  try { return fn(); } finally { const L = KD.list; KD.swapped = false; KL.data = sv.data; KL.tf = sv.tf; KL.sym = sv.sym; KL.ch = sv.ch; KL.cs = sv.cs; if (same) KD.list = L; else { KD.list = sv.list; (KD.allC || (KD.allC = LS.get(kdKey(), {})))[P.sym] = L; } }
+}
+function kdBindPane(P) {                                 // 其他格也能畫圖、選取、拖曳、點兩下開設定
+  const el = P.el.querySelector('.kmc'); if (!el || el.dataset.kd) return; el.dataset.kd = '1';
+  const pos = e => { const r = el.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+  const inChart = m => m.x < el.clientWidth - (P.ch.priceScale('right').width() || 50) && m.y < el.clientHeight - (P.ch.timeScale().height() || 26);
+  const ctl = e => { KD.ctrl = e.ctrlKey || e.metaKey; KD.shift = e.shiftKey; }; el.addEventListener('pointerdown', ctl, true); el.addEventListener('pointermove', ctl, true);
+  el.addEventListener('pointerdown', e => { if (P.dead || !P.data.length || e.button > 0 || KR.pick || KD.lock) return; const m = pos(e); if (!inChart(m)) return; kdAct(P); kdWith(P, () => kdDown(e, m, el)); }, true);
+  el.addEventListener('pointermove', e => { if (P.dead || !P.data.length) return; const m = pos(e);
+    if (KD.act !== P) { if (KD.tool && !KD.tmp && !KD.drag && inChart(m)) kdAct(P); else return; }
+    KD.mouse = m; kdWith(P, () => kdMove(e, m)); }, true);
+  el.addEventListener('pointerup', e => { if (KD.act === P) kdWith(P, () => kdUp(e)); }, true);
+  el.addEventListener('dblclick', e => { if (KD.act === P && KD.sel && !KD.lock) { e.stopPropagation(); kdProps(KD.sel); } }, true);
 }
 function kdBind() {
   const box = document.querySelector('.klbox'); if (!box || box.dataset.kd) return; box.dataset.kd = '1';
@@ -4948,37 +5020,18 @@ function kdBind() {
   box.addEventListener('pointerdown', e => {               // 攔在圖表前面：畫圖、選繪圖、拖曳時，不讓圖表跟著捲動
     if (!KL.ch || e.button > 0 || e.target.closest('.kdedit,.klrp,.kdfav')) return; const m = pos(e); if (!inChart(m)) return;
     if (KR.pick) { e.stopPropagation(); e.preventDefault(); krStart(Math.round(KL.ch.timeScale().coordinateToLogical(m.x))); return; }
-    if (KD.ruler && !KD.tool) { KD.ruler = null; KD.tmp = null; }
-    if (KD.tool) {
-      e.stopPropagation(); e.preventDefault(); box.setPointerCapture(e.pointerId); const q = kdPt(m.x, m.y), T = KD.tool, need = KD_TOOLS[T][2];
-      if (T === 'brush') { KD.tmp = { ...kdNew('brush', q) }; KD.drag = { brush: true }; return; }
-      if (!KD.tmp) { const d = T === 'ruler' || T === 'zoom' ? { type: T, pts: [q], color: '#2962ff', width: 1 } : kdNew(T, q); if (!d) return; if (need === 1 || T === 'long' || T === 'short') return kdFinish(d); d.pts.push({ ...q }); KD.tmp = d; KD.drag = { draw: true }; return; }
-      { const P = KD.tmp.pts, q2 = kdLock(q, P[P.length - 2], m); P[P.length - 1] = q2; if (P.length >= need) return kdFinish(KD.tmp); P.push({ ...q2 }); } return;
-    }
-    const h = kdHit(m);
-    if (h) { e.stopPropagation(); e.preventDefault(); box.setPointerCapture(e.pointerId); KD.sel = h[0]; KD.drag = { d: h[0], k: h[1], m0: m, p0: JSON.parse(JSON.stringify(h[0].pts)) }; kdEdit(); }
-    else if (KD.sel) { KD.sel = null; kdEdit(); }
+    kdAct(null); kdDown(e, m, box);
   }, true);
   box.addEventListener('pointermove', e => {
-    if (!KL.ch) return; const m = pos(e); KD.mouse = m;
-    if (KD.tmp && KD.tool && KD.tmp.type !== 'brush') { const P = KD.tmp.pts; P[P.length - 1] = kdLock(kdPt(m.x, m.y), P[P.length - 2], m); e.stopPropagation(); }
-    if (KD.drag && KD.drag.brush) { KD.tmp.pts.push(kdPt(m.x, m.y)); e.stopPropagation(); }
-    else if (KD.drag && KD.drag.d) {                     // 拖曳整個繪圖或某一個點
-      e.stopPropagation(); const D = KD.drag, d = D.d, q = kdPt(m.x, m.y);
-      if (D.k >= 0) { if ((d.type === 'long' || d.type === 'short') && D.k === 0) { const dt = q.t - D.p0[0].t, dp = q.p - D.p0[0].p; d.pts = D.p0.map(x => ({ t: x.t + dt, p: x.p + dp })); } else { d.pts[D.k] = (d.type === 'long' || d.type === 'short') ? (D.k === 3 ? { t: q.t, p: D.p0[3].p } : { t: D.p0[D.k].t, p: q.p }) : kdLock(q, D.p0.length > 1 ? D.p0[D.k === 0 ? 1 : D.k - 1] : null, m); } }
-      else { const a = kdPt(D.m0.x, D.m0.y); let dt = q.t - a.t, dp = q.p - a.p; if (KD.shift) { if (Math.abs(m.x - D.m0.x) >= Math.abs(m.y - D.m0.y)) dp = 0; else dt = 0; } d.pts = D.p0.map(x => ({ t: x.t + dt, p: x.p + dp })); }   // 按住 Shift 整個拖：只左右或只上下
-    }
+    if (!KL.ch) return; const m = pos(e);
+    if (KD.act) { if (KD.tool && !KD.tmp && !KD.drag) kdAct(null); else return; }   // 正在其他格畫：主圖不要搶
+    KD.mouse = m; kdMove(e, m);
   }, true);
-  box.addEventListener('pointerup', e => {
-    if (!KD.drag) return; const D = KD.drag; KD.drag = null;
-    if (D.brush && KD.tmp) { if (KD.tmp.pts.length > 1) kdFinish(KD.tmp); else KD.tmp = null; return; }
-    if (D.draw) return;   // 畫法跟 TradingView 一樣：點第一下固定第一個點，滑鼠移到哪線就跟到哪，點第二下才固定（放開滑鼠不會結束）
-    if (D.d) kdSave();
-  }, true);
+  box.addEventListener('pointerup', e => { if (!KD.act) kdUp(e); }, true);
   box.addEventListener('dblclick', e => { if (KD.sel && !KD.lock) { e.stopPropagation(); kdProps(KD.sel); } }, true);   // 在繪圖上點兩下：打開屬性視窗
   document.addEventListener('keydown', e => {
     if (!KL.open || /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return;
-    if ((e.key === 'Delete' || e.key === 'Backspace') && KD.sel) { KD.list = KD.list.filter(x => x !== KD.sel); KD.sel = null; kdSave(); kdEdit(); e.preventDefault(); }
+    if ((e.key === 'Delete' || e.key === 'Backspace') && KD.sel) { kdWith(KD.act, () => { KD.list = KD.list.filter(x => x !== KD.sel); KD.sel = null; kdSave(); }); kdEdit(); e.preventDefault(); }
     if (e.key === 'Escape') { KD.tmp = null; KD.ruler = null; KR.pick = false; kdUse(null); kdMenuClose(); }
     if (KR.on && !KR.pick && e.key === 'ArrowRight' && e.shiftKey) { krStep(); e.preventDefault(); }
   });
@@ -5004,7 +5057,7 @@ function kdBind() {
       if (b.dataset.kdcur) { KD.cursor = b.dataset.kdcur; LS.set('klCur', KD.cursor); kdUse(null); return; }
       if (b.dataset.kdt) { const g = KD_GROUPS.find(x => x[3] && x[3].includes(b.dataset.kdt)); if (g) (KD.last = KD.last || {})[g[0]] = b.dataset.kdt; kdUse(b.dataset.kdt); return; }
     }
-    if (b.dataset.kddel) { if (b.dataset.kddel === 'all') { if (!confirm(`刪除 ${KL.sym} 的全部 ${KD.list.length} 個繪圖？`)) return; KD.list = []; } else KD.list = KD.list.filter(x => x !== KD.sel); KD.sel = null; kdSave(); kdEdit(); kdMenuClose(); kdToolbar(); return; }
+    if (b.dataset.kddel) { if (b.dataset.kddel === 'all') { if (!confirm(`刪除 ${KL.sym} 的全部 ${KD.list.length} 個繪圖？`)) return; kdAct(null); KD.list = []; kdSave(); } else kdWith(KD.act, () => { KD.list = KD.list.filter(x => x !== KD.sel); kdSave(); }); KD.sel = null; kdEdit(); kdMenuClose(); kdToolbar(); return; }
     if (b.closest('#kdFav') && b.dataset.kdt) return kdUse(b.dataset.kdt);
     const d = KD.sel; if (!d || !b.closest('#kdEditBar')) return;
     if (b.dataset.kdprop) return kdProps(d);
@@ -5107,13 +5160,13 @@ function kdPropsDraw() {
     <div class="ksfoot"><select id="kdTplSel" aria-label="範本">${kdTplOpts(d.type)}</select><span class="spacer"></span><button class="btn" data-kpa="cancel">取消</button><button class="btn ksok" data-kpa="ok">確認</button></div>`;
 }
 const KD_STYLEK = ['color', 'width', 'lineSt', 'dash', 'ext', 'endS', 'endE', 'mid', 'plab', 'stats', 'statPos', 'statAlw', 'tx', 'vis'];
-function kdStyleOf(d) { const o = {}; for (const k of KD_STYLEK) if (d[k] != null && k !== 'vis') o[k] = JSON.parse(JSON.stringify(d[k])); if (o.tx) o.tx = { ...o.tx, txt: '' }; return o; }
+function kdStyleOf(d, withText) { const o = {}; for (const k of KD_STYLEK) if (d[k] != null && k !== 'vis') o[k] = JSON.parse(JSON.stringify(d[k])); if (o.tx && !withText) o.tx = { ...o.tx, txt: '' }; if (withText && (d.type === 'text' || d.type === 'emoji') && d.text) o.text = d.text; return o; }   // withText：「我的範本」連線上的文字一起存
 function kdRemember(d) { if (!d || !KD_TOOLS[d.type] || d.type === 'ruler' || d.type === 'zoom') return; const all = LS.get('kdLast', {}); all[d.type] = kdStyleOf(d); LS.set('kdLast', all); }   // 記住這種工具最後用的樣式
-function kdTplApply(d, st) { const txt = d.tx && d.tx.txt; for (const k of KD_STYLEK) if (k !== 'vis') delete d[k]; d.color = d.type === 'fib' ? '#787b86' : KD.color; d.width = 2; Object.assign(d, JSON.parse(JSON.stringify(st))); if (txt) d.tx = { ...(d.tx || {}), txt }; kdRemember(d); }
+function kdTplApply(d, st) { const txt = d.tx && d.tx.txt, hasTxt = !!(st.tx && st.tx.txt); for (const k of KD_STYLEK) if (k !== 'vis') delete d[k]; d.color = d.type === 'fib' ? '#787b86' : KD.color; d.width = 2; Object.assign(d, JSON.parse(JSON.stringify(st))); if (txt && !hasTxt) d.tx = { ...(d.tx || {}), txt }; kdRemember(d); }
 function kdTplOpts(T) { const N = Object.keys((LS.get('kdTplN', {})[T]) || {}); return `<option value="">範本</option><option value="savename">💾 儲存為新範本…</option>${N.length ? `<optgroup label="我的範本">${N.map(n => `<option value="n:${esc(n)}">📑 ${esc(n)}</option>`).join('')}</optgroup><option value="delname">🗑 刪除範本…</option>` : ''}<option value="save">儲存為預設樣式</option><option value="apply">套用預設樣式</option><option value="reset">恢復原始樣式</option>`; }
 function kdTplDo(d, v) {                                // 範本選單：存成有名字的範本、套用、刪除（跟 TradingView 的「範本」一樣）
   if (!d || !v) return; const T = d.type, AN = LS.get('kdTplN', {}), mine = AN[T] || {};
-  if (v === 'savename') { const nm = (prompt(`幫這個「${KD_TOOLS[T][0]}」樣式取個名字：`, '') || '').trim().slice(0, 30); if (!nm) return; if (mine[nm] && !confirm(`已經有「${nm}」了，要覆蓋嗎？`)) return; mine[nm] = kdStyleOf(d); AN[T] = mine; LS.set('kdTplN', AN); return; }
+  if (v === 'savename') { const nm = (prompt(`幫這個「${KD_TOOLS[T][0]}」樣式取個名字：`, '') || '').trim().slice(0, 30); if (!nm) return; if (mine[nm] && !confirm(`已經有「${nm}」了，要覆蓋嗎？`)) return; mine[nm] = kdStyleOf(d, true); AN[T] = mine; LS.set('kdTplN', AN); const tx2 = (d.tx && d.tx.txt) || (d.type === 'text' ? d.text : ''); return `已儲存範本「${nm}」${tx2 ? `（含文字「${String(tx2).slice(0, 12)}」）` : ''}`; }
   if (v === 'delname') { const L = Object.keys(mine); const nm = (prompt(`要刪除哪一個範本？\n${L.map((x, k) => `${k + 1}. ${x}`).join('\n')}\n（輸入名字或號碼）`, '') || '').trim(); const key = L[+nm - 1] || nm; if (!mine[key]) return; delete mine[key]; AN[T] = mine; LS.set('kdTplN', AN); return; }
   if (v.startsWith('n:') && mine[v.slice(2)]) { kdTplApply(d, mine[v.slice(2)]); return `已套用範本「${v.slice(2)}」`; }
   const all = LS.get('kdTpl', {});
@@ -6462,7 +6515,7 @@ function kpDo(a) {
   }
 }
 /* ---------- 🔄 K 線圖跨裝置同步（同一個帳號：設定、指標、繪圖、Pine 腳本、收藏），🔒 圖表鎖 ---------- */
-const KSY_KEYS = ['klSet', 'klInd', 'klDraw', 'klPine', 'klFav', 'kdTpl', 'kdTplN', 'kdLast', 'klSyncInd', 'kiMyDef', 'klCur', 'klMag', 'klStay', 'klTplMine', 'klLayout', 'klPanes', 'klSyncSym'];
+const KSY_KEYS = ['klSet', 'klInd', 'klDraw', 'klPine', 'klFav', 'klFavPos', 'kdTpl', 'kdTplN', 'kdLast', 'klSyncInd', 'kiMyDef', 'klCur', 'klMag', 'klStay', 'klTplMine', 'klLayout', 'klPanes', 'klSyncSym'];
 const KSY = { applying: false, t: 0, poll: 0, dev: (LS.get('klDev', null) || (() => { const d = (/iPhone|Android|iPad/.test(navigator.userAgent) ? '手機' : '電腦') + '-' + Math.random().toString(36).slice(2, 6); LS.set('klDev', d); return d; })()) };
 { const _set = LS.set.bind(LS); LS.set = (k, v) => { _set(k, v); if (KSY_KEYS.includes(k) && !KSY.applying) ksyMark(); }; }
 function ksyMark() { try { localStorage.setItem('klSyncAt', String(Date.now())); } catch (e) {} clearTimeout(KSY.t); KSY.t = setTimeout(ksyPush, 1500); }
@@ -6572,8 +6625,7 @@ function biRender() {
         <div class="qbt"><button class="btn" id="biCancel">取消這張付款單</button></div></div>`;
     } else { const p0 = d.plans.find(p => p.m === BI.m) || d.plans[0];
       html += `<div class="bicode"><label class="field">邀請碼（選填）<input id="biCode" value="${esc(BI.code)}" placeholder="有的話輸入可以打折" autocomplete="off"></label><button class="btn" id="biQuote">套用</button><span id="biQ" class="tlsub"></span></div>
-        <details class="biterms"><summary>服務條款</summary><pre>${esc(d.terms)}</pre></details>
-        <label class="lvck biagree"><input type="checkbox" id="biAgree"> 我已閱讀並同意服務條款</label>
+        ${biLegal(d)}
         <div class="qbt"><button class="btn primary" id="biGo">💳 產生付款單（${p0.price} USDT）</button><a class="btn" href="pay.html">🧾 用獨立繳費頁付款（手機比較好用）</a></div>`; }
     html += `<details class="biclaim"${BI.claimOpen ? ' open' : ''}><summary>🙋 我已經轉帳，但沒有自動確認</summary><p class="tlsub">貼上這筆轉帳的<b>交易編號</b>（或 Tronscan 連結），系統會到區塊鏈確認是不是轉給我們的 USDT。</p>
         <div class="xeadd"><input id="biTx" placeholder="交易編號（64 個英數字）" autocomplete="off" spellcheck="false"><button class="btn primary" id="biClaim">查詢</button></div><p class="tlsub" id="biClaimMsg" role="status"></p></details>`;
@@ -6586,11 +6638,26 @@ function biRender() {
   if (BI.a) html += biAdmin(BI.a);
   host.innerHTML = html + '</div>';
   if (pend) biQR(pend.addr || d.addr);
-  if ($('biGo')) $('biGo').onclick = async () => { if (!$('biAgree').checked) return alert('請先閱讀並勾選同意服務條款'); try { await srvFetch('/api/bill', { op: 'order', code: $('biCode').value.trim(), m: BI.m, agree: true }); BI.code = $('biCode').value.trim(); biLoad(); } catch (e) { alert(e.message); } };
+  const biAcks = () => [...document.querySelectorAll('.biack')].filter(x => x.checked).length;
+  document.querySelectorAll('.biack').forEach(c => c.onchange = () => { $('biAckN').textContent = `已勾選 ${biAcks()}／${(d.acks || []).length}`; });
+  document.querySelectorAll('[data-biver]').forEach(b => b.onclick = async () => { const pre = $('biHistTx'); pre.hidden = false; pre.textContent = '讀取中…'; try { const r = await srvFetch('/api/buy', { op: 'terms', ver: b.dataset.biver }); pre.textContent = `【${r.ver}${/^\d/.test(r.ver) ? ' 版' : ''}】\n\n${r.text}`; } catch (e) { pre.textContent = e.message; } });
+  if ($('biGo')) $('biGo').onclick = async () => { const n = biAcks(), need = (d.acks || []).length; if (n < need) { alert(`請先逐項勾選付款前的確認事項（還差 ${need - n} 項）`); $('biLegal').scrollIntoView({ behavior: 'smooth' }); return; }
+    try { await srvFetch('/api/bill', { op: 'order', code: $('biCode').value.trim(), m: BI.m, agree: true, acks: n, termsVer: d.termsVer }); BI.code = $('biCode').value.trim(); BI.changed = ''; biLoad(); }
+    catch (e) { if (/條款剛更新/.test(e.message)) { BI.code = $('biCode').value.trim(); BI.changed = '1'; return biLoad(); } alert(e.message); } };   // 條款剛好改版：重新讀取，請他再看一次
   document.querySelectorAll('input[name="biM"]').forEach(r => r.onchange = () => { BI.m = +r.value; BI.code = $('biCode') ? $('biCode').value.trim() : BI.code; biRender(); });
   if ($('biClaim')) $('biClaim').onclick = async () => { const m = $('biClaimMsg'); BI.claimOpen = true; m.textContent = '查詢中…（最多 30 秒）'; try { const r = await srvFetch('/api/bill', { op: 'claim', tx: $('biTx').value }); m.innerHTML = `<span class="qg">${esc(r.msg)}</span>`; setTimeout(() => biLoad(), 1500); } catch (e) { m.innerHTML = `<span class="qr">${esc(e.message)}</span>`; } };
   if ($('biQuote')) $('biQuote').onclick = async () => { const c = $('biCode').value.trim(); try { const q = await srvFetch('/api/bill', { op: 'quote', code: c, m: BI.m }); BI.code = c; $('biQ').innerHTML = q.code ? `<span class="qg">✓ ${esc(q.code)} 折 ${q.pct}%：<b>${q.price} USDT</b></span>` : `原價 ${q.price} USDT`; $('biGo').textContent = `💳 產生付款單（${q.price} USDT）`; } catch (e) { $('biQ').innerHTML = `<span class="qr">${esc(e.message)}</span>`; } };
   if ($('biCancel')) $('biCancel').onclick = async () => { if (!confirm('取消這張付款單？已經轉帳的話不要取消。')) return; await srvFetch('/api/bill', { op: 'cancel', id: pend.id }); biLoad(); };
+}
+function biLegal(d) {                                  // 📜 購買前須知＋5 項逐項勾選＋條款全文（版本）＋個資告知＋歷史版本
+  const H = (d.hist || []).slice().reverse();
+  return `<section class="bilegal" id="biLegal"><h4>購買前須知</h4>
+    ${BI.changed ? `<p class="biwarn">📜 服務條款剛更新為 <b>${esc(d.termsVer)}</b> 版，請重新閱讀並勾選。</p>` : d.termsVerMine && d.termsVerMine !== d.termsVer ? `<p class="biwarn">📜 你上次同意的是 ${esc(/^\d/.test(d.termsVerMine) ? d.termsVerMine + ' 版' : d.termsVerMine)}，現在是 ${esc(d.termsVer)} 版，續費前請重新閱讀並勾選。</p>` : ''}
+    <ol class="binotice">${(d.notice || []).map(([t, x]) => `<li><b>${esc(t)}</b>：${esc(x)}</li>`).join('')}</ol>
+    <details class="biterms"><summary>📄 服務條款全文（版本 ${esc(d.termsVer || '')}）</summary><pre>${esc(d.terms)}</pre></details>
+    <details class="biterms"><summary>🔒 個人資料告知事項</summary><pre>${esc(d.privacy || '')}</pre></details>
+    ${H.length > 1 ? `<details class="biterms"><summary>🗂 條款的歷史版本（${H.length} 版）</summary><div class="qbt">${H.map(h => `<button class="btn" data-biver="${esc(h.ver)}">${esc(h.ver)}${h.ver === d.termsVer ? '（目前）' : ''}</button>`).join('')}</div><pre id="biHistTx" hidden></pre></details>` : ''}
+    <h4>付款前必須逐項勾選</h4>${(d.acks || []).map(t => `<label class="lvck biagree"><input type="checkbox" class="biack"> ${esc(t)}</label>`).join('')}<p class="tlsub" id="biAckN" aria-live="polite">已勾選 0／${(d.acks || []).length}</p></section>`;
 }
 function biAdmin(a) {                                  // 👑 繳費後台
   const c = a.cfg, now = Date.now(), SN = { free: '<span class="qg">免費</span>', trial: '<b class="qy">試用</b>', paid: '<b class="qg">有效</b>', grace: '<b class="qy">寬限中</b>', locked: '<b class="qr">到期</b>' };
@@ -6603,7 +6670,7 @@ function biAdmin(a) {                                  // 👑 繳費後台
       <label class="field">開始收費時的寬限天數<input id="ba_grace" type="number" min="0" max="365" value="${c.graceDays}"></label>
       <label class="field">收費開關<select id="ba_on"><option value="0"${c.on ? '' : ' selected'}>關閉（大家免費用）</option><option value="1"${c.on ? ' selected' : ''}>開啟</option></select></label></div>
     <h5>多月方案折扣</h5><div class="params">${[3, 6, 12].map(m => { const p = (c.plans || []).find(x => x.m === m); return `<label class="field">${m} 個月折扣 %（空白＝不提供）<input class="ba_plan" data-m="${m}" type="number" min="0" max="90" step="1" value="${p ? p.pct : ''}"></label>`; }).join('')}</div>
-    <h5>服務條款（用戶付款前要勾選同意）</h5><textarea id="ba_terms" rows="6" class="biterm">${esc(c.terms || '')}</textarea>
+    <h5>服務條款（用戶付款前要勾選同意）・目前版本 ${esc(c.termsVer || '—')}（共 ${c.termsN || 1} 版）</h5><p class="tlsub">修改文字並儲存，就會變成新的版本（舊版本會保留，用戶看得到）。已付費的人：對他不利的修改，要在生效前 7 天公告並寄信通知（條款第 13 條）。</p><textarea id="ba_terms" rows="6" class="biterm">${esc(c.terms || '')}</textarea>
     <p class="tlsub">${c.tgKey ? '✅ 已設定 TronGrid API 金鑰' : '⚠️ 還沒設定 TronGrid API 金鑰（人多時查詢可能被限制，設定方法見說明）'}・${c.mail ? '✅ 會寄 Email 提醒和收據' : '⚠️ 還沒設定寄信，只會用 Discord 提醒'}・💾 每日備份：${(c.baks || []).length ? esc(c.baks[0].replace('state-', '').replace('.json', '')) + ' 最新' : '還沒有'}</p>
     <div class="qbt"><button class="btn primary" id="ba_save">儲存方案設定</button><button class="btn" id="ba_scan">立即查詢區塊鏈</button></div>
     <h5>邀請碼（輸入就打折）</h5><div id="ba_codes">${(a.codes.length ? a.codes : []).map(x => biCodeRow(x)).join('')}</div>
@@ -7516,6 +7583,19 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-10a', title: '2026/11/10 更新（正式版服務條款）', items: [
+    { ic: '📜', t: '付款頁換上正式版的「購買前須知」和「服務條款」（2026-11-10 版），付款前要逐項勾選 5 個確認事項，也看得到個人資料告知事項和條款的歷史版本。' },
+    { ic: '🧾', t: '系統會記錄每個人同意的是哪一版條款；如果剛好在你付款前改版，付款頁會提示你重新閱讀。' }
+  ] },
+  { id: '2026-11-09i', title: '2026/11/09 更新（每一格都能畫圖）', items: [
+    { ic: '✏️', t: 'K 線圖的其他格也能畫圖了：選好工具直接在任何一格畫，也能選取、拖曳、改樣式、點兩下開設定、按 Delete 刪除。繪圖照幣種存，同一個幣種的每一格都看得到。' }
+  ] },
+  { id: '2026-11-09h', title: '2026/11/09 更新（收藏工具列可以拖曳）', items: [
+    { ic: '⭐', t: '收藏的繪圖工具改成跟 TradingView 一樣的橫向浮動工具列，按住左邊的 ⠿ 可以拖到圖表上任何位置，會記住位置；點兩下 ⠿ 回到左上角。' }
+  ] },
+  { id: '2026-11-09g', title: '2026/11/09 更新（我的範本連文字一起存）', items: [
+    { ic: '📑', t: '「儲存為新範本」會連線上的文字一起存（例如 CISD），之後選這個範本，選取中的線就會變成當初存的樣子：顏色、粗細、線型和文字都一起出現。舊的範本存的時候還沒有文字，要重新存一次。' }
+  ] },
   { id: '2026-11-09f', title: '2026/11/09 修正（套用繪圖範本）', items: [
     { ic: '📑', t: '選了範本，選取中的線馬上變成那個樣式，上方會出現「已套用範本」的提示；在設定視窗裡選範本也是立刻生效，之後按 ✕ 或取消不會被還原。' },
     { ic: '🔧', t: '修正跨裝置同步剛好在你改繪圖時更新，會把選取取消、讓剛套用的樣式看起來沒變。' }
