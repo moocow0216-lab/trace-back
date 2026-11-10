@@ -1313,7 +1313,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-10c</div>
+      <div class="qver" id="qVer">網站版本 2026-11-10d</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3773,7 +3773,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-10c・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-10d・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -7701,6 +7701,9 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-10d', title: '2026/11/10 更新（使用說明書）', items: [
+    { ic: '📖', t: '使用說明書全面更新：新增作戰室、K 線圖基本操作、畫圖、Pine 編輯器、方案與繳費（擁有者另外有繳費後台）的介紹，選單那一頁也照最新的選單重寫。' }
+  ] },
   { id: '2026-11-10c', title: '2026/11/10 更新（黑金作戰室）', items: [
     { ic: '🜲', t: '作戰室中間的動畫換成全新的黑金駭客風格「QEVRAX VAULT」：火柴人交易室和星系都拿掉了。中間是旋轉的金色核心（刻度環、雷達掃描、六角框；自動交易開著顯示 ARMED），8 個角色是金邊終端機模組，用電路走線接到核心，每次接力是一顆金色資料封包從一個角色經過核心傳到下一個；左下 3 個菱形哨兵是額外進場，有訊號時會亮起來送封包給總指揮。四個角顯示台北時間、上線的角色數、接力次數。' }
   ] },
@@ -8012,7 +8015,7 @@ function nwAuto() {                                   // 登入後第一次進�
 $('nwOk').onclick = () => $('nwDlg').close();
 $('nwAll').onclick = () => { $('nwDlg').close(); GD.news = true; GD.newsNext = true; gdOpen(0); };
 /* ---------- 📖 使用說明書：功能介紹（頁數依權限：有特級咒具權限多一頁） ---------- */
-const gdPages = () => ['api', 'dc', 'fund', 'tp', 'f1', 'f2', 'f3', 'f4', 'f5', ...(SRVLT.toolOk ? ['f6'] : []), 'done'];
+const gdPages = () => ['api', 'dc', 'fund', 'tp', 'f1', 'war', 'f2', 'f3', 'f4', 'f5', 'kl1', 'kl2', 'kl3', 'bill', ...(OWN() ? ['own'] : []), ...(SRVLT.toolOk ? ['f6'] : []), 'done'];
 function gdPage2(p) {
   if (p === 'fund') return gdPage('fund') + gdTip('投入資金就是起始本金：之後改投入資金，過去的盈虧會照算進去。帳戶的錢不夠時會提醒「資金不足」；不想讓自動交易用了，可以在設定裡「收回資金」。');
   if (p === 'f1') return `<div class="gdmock"><div class="gd2"><span class="gdbtn pri fake">▶ 開始交易</span><span class="gdbtn red fake">一鍵平倉（自動單）</span></div>
@@ -8027,8 +8030,9 @@ function gdPage2(p) {
     ${gdPt('<path d="M3 17l6-6 4 4 8-8"></path><path d="M15 7h6v6"></path>', '主畫面下方：<b>實盤</b>看你帳戶真正的賺賠、成功率、做多做空、資金曲線；<b>訊號模擬</b>看所有訊號照規則跑的成績。')}
     ${gdPt('<rect x="4" y="4" width="16" height="16" rx="2"></rect><path d="M4 10h16"></path><path d="M10 10v10"></path>', '<b>「☰ 選單 → 歷史紀錄」</b>：每一筆的進場價、最大浮盈浮虧、出場原因，點一行看圖表，也能匯出 CSV。')}
     ${gdPt('<circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path>', '<b>「☰ 選單 → 回測數據」</b>：用過去的資料看這套規則以前會賺還是賠。')}`;
-  if (p === 'f3') return `<h2>右上角「☰ 選單」</h2><p class="gdsub">主畫面只放持倉和成功率，其他功能都在右上角的選單裡，每一項用不同顏色框起來。</p>
-    ${[['👤', '設定', 'Bitunix API、Discord 通知、我的交易設定、收回資金、改密碼'], ['🔥', '熱力圖', '市場漲跌、資金費率、清算地圖'], ['📡', '訊號卡片', '系統找到的進場機會'], ['📈', '歷史走勢', '畫出走勢，找歷史上相似的段落'], ['📰', '加密新聞', '新聞列表和新聞星圖'], ['📊', '回測數據', '回測、回測報告、BTC 急漲急跌統計'], ['📋', '歷史紀錄', '每一筆交易的紀錄'], ['🐋', '幣安鯨魚大單', '即時大單'], ['📖', '使用說明', '就是這份說明書，還有更新紀錄'], ['🗡', '特級咒具', SRVLT.toolOk ? 'FVG／OB 回踩策略的卡片和特級交易（下一頁介紹）' : '開發中的新功能，需要擁有者給的密碼']].map(([i, t, d]) => `<div class="gdfeat"><span class="gdic" style="font-size:20px;text-align:center" aria-hidden="true">${i}</span><div><b>${t}</b><p>${d}</p></div></div>`).join('')}`;
+  if (p === 'f3') { const DS = { pos: '持倉、開始／暫停交易、一鍵平倉', tool: SRVLT.toolOk ? 'FVG／OB 回踩策略的卡片和特級交易（後面有一頁介紹）' : '開發中的新功能，需要擁有者給的密碼', xent: '暗流、折返、伏擊三種額外進場訊號，可以設定自己的 Discord 頻道', cards: '系統找到的進場機會', stats: '實盤和訊號模擬的成功率', eq: '資金曲線（一般、特級、綜合）', hist: '每一筆交易的紀錄，可以匯出 CSV', bt: '回測、回測報告、BTC 急漲急跌統計', kline: '多格 K 線圖、畫圖、指標、Pine 編輯器、回放（後面有三頁介紹）', heat: '市場漲跌、資金費率、清算地圖', pat: '畫出走勢，找歷史上相似的段落', news: '新聞列表和新聞星圖', whale: '幣安的即時大單', bill: '方案、付款、付款紀錄、退款（後面有一頁介紹）', set: 'Bitunix API、Discord 通知、交易設定、收回資金、改密碼', guide: '就是這份說明書，還有更新紀錄' };
+    return `<h2>右上角「☰ 選單」</h2><p class="gdsub">主畫面只放作戰室、持倉和成功率，其他功能都在右上角的選單裡，依「交易、數據、市場、其他」分類。</p>
+    ${MN_ITEMS.map(([k, i, t]) => `<div class="gdfeat"><span class="gdic" style="font-size:20px;text-align:center" aria-hidden="true">${i}</span><div><b>${t}</b><p>${DS[k] || ''}</p></div></div>`).join('')}`; }
   if (p === 'f4') return gdPage('f1').replace('每 10 秒掃描幣安', '<b>「☰ 選單 → 訊號卡片」</b>：每 10 秒掃描幣安');
   if (p === 'f5') return gdPage('f4').replace('<h2>熱力圖：一眼看懂整個市場</h2>', '<h2>熱力圖：一眼看懂整個市場</h2><p class="gdsub">在「☰ 選單 → 熱力圖」。</p>') + gdTip('最上方的黃框是美國重要經濟數據，有高影響數據時，自動交易在<b>公布前後各 4 小時不開新單</b>，其他時間照常。Discord 會通知自動單的開倉、鎖利、平倉、快爆倉，手動單不通知。');
   if (p === 'f6') return `<div class="gdmock" style="border-color:#7f1d1d"><div class="gdmrow"><b>🗡 特級咒具</b><span class="gdchip" style="border-color:#f5c542;color:#f5c542">FVG／OB 回踩</span><span class="gdchip">4H→15M</span><span class="gdchip">1H→5M</span></div></div>
@@ -8038,6 +8042,45 @@ function gdPage2(p) {
     ${gdPt('<circle cx="12" cy="12" r="3"></circle><path d="M12 2v3"></path><path d="M12 19v3"></path><path d="M2 12h3"></path><path d="M19 12h3"></path>', '<b>「☰ 選單 → 設定 → 🗡 特級交易設定」</b>：自己的投入資金、每筆保證金、槓桿、持有天數、單日虧損上限，還有收回資金。止損、止盈由策略決定（4H／1H FVG／OB 低點、1:1）。')}
     ${gdPt('<path d="M3 17l6-6 4 4 8-8"></path>', '主畫面的紅框「特級持倉」「特級交易」是特級自己的成績；資金曲線三條線：<b style="color:#60a5fa">一般藍</b>、<b style="color:#f87171">特級紅</b>、<b style="color:#c084fc">綜合紫</b>（都用報酬率）。')}
     ${gdTip('Bitunix 是「雙向持倉」時，一般單和特級單可以多空雙開；單向持倉會自動跳過。「☰ 選單 → 回測數據」可以做特級咒具的回測。')}`;
+  if (p === 'war') return `<div class="gdmock" style="background:#070604;border-color:#5c4a1a"><div class="gdmrow"><b style="color:#f5e6a8;letter-spacing:.2em">QEVRAX VAULT</b><span class="gdchip" style="border-color:#d4af37;color:#d4af37">● ARMED</span><span class="gdchip">NODES 8/8 ONLINE</span><span class="gdchip">RELAY #012</span></div></div>
+    <h2>作戰室（主畫面上方）</h2><p class="gdsub">一眼看出整套系統現在在做什麼。動畫裡的每個數字都是真的資料。</p>
+    ${gdPt('<circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="4"></circle>', '中間的<b>金色核心</b>：自動交易開著顯示 <b style="color:#d4af37">● ARMED</b>，關著顯示 <b>○ STANDBY</b>。')}
+    ${gdPt('<rect x="3" y="6" width="8" height="5" rx="1"></rect><rect x="13" y="13" width="8" height="5" rx="1"></rect><path d="M7 11v4h6"></path>', '外圍 8 個<b>金邊模組</b>是 8 個角色（總指揮、偵察、鑑定、情報、軍需、執行、守護、資料）。左邊的直條是狀態：<b style="color:#d4af37">金＝運作中</b>、<b style="color:#f59e0b">橘＝等待中</b>、<b style="color:#ef4444">紅＝有問題</b>、灰＝沒開；右邊是它現在的數字，下面是進度。')}
+    ${gdPt('<path d="M4 12h6l2-4 2 8 2-4h4"></path>', '每次<b>接力</b>，一顆金色資料封包會沿著電路從一個角色經過核心傳到下一個；最後一棒會發出脈衝。電腦上還會跳出那個角色的小視窗，一個字一個字打出它在做的事。')}
+    ${gdPt('<path d="M12 3l4 9-4 9-4-9z"></path>', '左下 3 個<b>菱形哨兵</b>是額外進場（暗流 FLOW、折返 PIVOT、伏擊 AMBUSH）：有訊號時亮起來顯示 ALERT，並送封包給總指揮；IDLE＝監聽中、OFF＝沒開。')}
+    ${gdTip('動畫下面是 8 張角色卡和 BALANCE 資金曲線。總指揮卡片上的「⏸ 一般」「🗡 特級」可以直接開關兩條交易線，開特級時會跳出確認視窗，要按「確定」才會開始。')}`;
+  if (p === 'kl1') return `<div class="gdmock"><div class="gdmrow sm"><span>1分 5分 15分 <b style="color:#60a5fa">1小時</b> 4小時 日 週</span><span><span class="gdchip">◧ 3 格</span> <span class="gdchip">ƒx 指標</span> <span class="gdchip">📝 Pine</span> <span class="gdchip">⏪ 回放</span></span></div><div class="gdmrow sm"><span><span class="gdchip">ƒx</span> <b>BTC ▾</b> <span class="gdchip">1小時 ▾</span> 75,821</span><span class="gdchip or">75,821 · 42:17</span></div></div>
+    <h2>🕯 K 線圖：基本操作</h2><p class="gdsub">在「☰ 選單 → K 線圖」，會填滿整個視窗。</p>
+    ${gdPt('<rect x="3" y="3" width="8" height="8"></rect><rect x="13" y="3" width="8" height="8"></rect><rect x="3" y="13" width="8" height="8"></rect><rect x="13" y="13" width="8" height="8"></rect>', '<b>格數</b>：1～4 格。每一格左上角都有一樣的<b>幣種按鈕</b>（點了跳出搜尋清單，有價格和漲跌）和週期選單；⤢ 可以跟主圖交換。「格數」選單裡有<b>同步幣種</b>和<b>同步指標</b>（其他格自動用主圖的指標；某一格自己改過就各自獨立）。')}
+    ${gdPt('<path d="M12 3v18"></path><path d="M8 7l4-4 4 4"></path><path d="M8 17l4 4 4-4"></path>', '<b>縮放</b>：滑鼠在右邊<b>價格軸</b>上滾滾輪，只拉長或壓扁 K 棒；在下面<b>時間軸</b>上滾，只縮放時間。圖表可以上下左右自由拖曳；想重新對齊，在價格軸上<b>點兩下</b>。')}
+    ${gdPt('<circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path>', '每一格右邊的價格標籤都有<b>收盤倒數</b>，價格即時跳動。右上角 ⚙ 的背景、K 棒顏色、格線等設定，每一格都一樣。')}
+    ${gdPt('<path d="M11 5L4 12l7 7"></path><path d="M20 5l-7 7 7 7"></path>', '<b>⏪ 回放</b>：先勾要回放哪幾格，按「選起點」後在主圖點一下，就能一根一根播放（可以調速度）；控制列在上排，不會擋住圖。')}`;
+  if (p === 'kl2') return `<div class="gdmock"><div class="gdmrow"><span class="gdchip">⠿</span><span class="gdchip">／</span><span class="gdchip">—</span><span class="gdchip">→</span><span class="gdchip">▭</span><span class="gdchip">F</span><span class="gdchip">T</span><span class="gdchip">📈</span><span class="dim" style="font-size:12px">← 收藏工具列，按住 ⠿ 拖到任何位置</span></div></div>
+    <h2>✏️ K 線圖：畫圖</h2>
+    ${gdPt('<path d="M4 20L20 4"></path><circle cx="4" cy="20" r="2"></circle><circle cx="20" cy="4" r="2"></circle>', '左邊選工具，<b>點第一下</b>固定起點、<b>點第二下</b>固定終點（跟 TradingView 一樣）。按住 <b>Ctrl</b>（Mac 用 ⌘）會吸附 K 棒：靠近燭芯吸尖端、靠近實體吸上下緣；按住 <b>Shift</b> 會保持水平或垂直，整個拖曳時也只會左右或上下移動。')}
+    ${gdPt('<path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"></path>', '工具旁邊按 ☆ 加入<b>收藏</b>，收藏的工具會變成浮在圖上的橫向工具列，按住左邊 <b>⠿</b> 可以拖到任何位置（會記住位置，點兩下 ⠿ 回左上角）。')}
+    ${gdPt('<rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M7 12h10"></path>', '點一下線就能選取：小工具列可以改顏色、粗細、線型；⚙ 打開完整設定（文字、座標、可見週期）。線上的文字選「中間」會放在線上、線在文字那段斷開。點兩下線也能打開設定，Delete 刪除。')}
+    ${gdPt('<path d="M4 4h16v16H4z"></path><path d="M4 9h16"></path><path d="M9 9v11"></path>', '<b>📑 範本</b>：「儲存為新範本…」會把整條線的樣子（顏色、粗細、線型、線上的文字）存起來，之後選取任何一條線，點範本就變成那個樣子。新畫的線會沿用這種工具<b>上一次用的樣式</b>；「恢復原始樣式」回到預設。')}
+    ${gdTip('每一格都能畫圖。繪圖照幣種存：在任何一格畫 BTC，所有開著 BTC 的格子都看得到，不同週期也對得上（5 分鐘畫的線放到 1 小時也在對的位置），而且會同步到你的其他裝置。')}`;
+  if (p === 'kl3') return `<div class="gdmock"><div class="gdmrow sm"><span>📝 <b>Pine 編輯器</b></span><span><span class="gdchip">💾 儲存</span> <span class="gdchip gr">▶ 加到圖表</span> <span class="gdchip">？語法</span></span></div><div class="gdmrow sm" style="font-family:ui-monospace,monospace;color:#86efac">✅ 執行成功（36 毫秒）・3 條線、2 個表格・策略 10 筆交易，淨利 760</div></div>
+    <h2>📝 Pine 編輯器：自己的指標和策略</h2><p class="gdsub">按 K 線圖上排的「📝 Pine」，把 TradingView 的 Pine v5／v6 程式碼貼進去，按「▶ 加到圖表」（Ctrl＋Enter）。</p>
+    ${gdPt('<path d="M8 6l-6 6 6 6"></path><path d="M16 6l6 6-6 6"></path>', '支援幾乎全部語法：變數、if／for／while／switch、for…in、自訂函式、type／method、enum、map、matrix，以及大部分 ta.*、math.*、str.*、array.* 函式。plot、plotshape、bgcolor、fill、box、line、label、polyline、linefill、<b>table</b>（會畫在圖上）都能用。')}
+    ${gdPt('<path d="M3 3v18h18"></path><path d="M7 15l4-4 3 3 5-6"></path>', '<b>request.security</b>：可以取同一個幣種、同週期或更大週期的資料（例如在 1 小時圖上取日線），計算方式跟 TradingView 一樣。')}
+    ${gdPt('<path d="M4 19h16"></path><path d="M7 15V9"></path><path d="M12 15V5"></path><path d="M17 15v-3"></path>', '<b>strategy() 策略</b>：可以跑簡化版回測，圖上標出進出場，右上角顯示淨利、交易次數、勝率、獲利因子、最大回撤。')}
+    ${gdTip('還不支援：import 別人的函式庫（請把用到的函式直接貼進來）、別的幣種、比圖表更小的週期、股票財報資料；策略的移動停利和 OCA 群組還沒做。程式有錯時，下方紅字會寫第幾行出問題，截圖給擁有者就能補上。按「？語法」看完整清單。', true)}`;
+  if (p === 'bill') return `<div class="gdmock"><div class="gdmrow"><b>💳 方案與繳費</b><span class="gdchip gr">✅ 方案有效</span><span class="gdchip">TRC20 USDT</span><span class="gdchip or">7 天內可退款</span></div></div>
+    <h2>💳 方案與繳費</h2><p class="gdsub">在「☰ 選單 → 方案與繳費」。還沒有帳號的人，可以直接在購買頁（pay.html）買，付款成功會自動建立帳號。</p>
+    ${gdPt('<path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>', '<b>付款前</b>：選方案（1、3、12 個月有折扣）、有邀請碼可以打折。要先看完「購買前須知」並<b>逐項勾選 5 個確認事項</b>，條款和個人資料告知事項都可以展開閱讀，也看得到歷史版本；條款剛好改版時會提示你重新閱讀。')}
+    ${gdPt('<rect x="2" y="5" width="20" height="14" rx="2"></rect><path d="M2 10h20"></path>', '<b>付款</b>：只收 <b>TRON（TRC20）網路的 USDT</b>，到帳金額要跟付款單<b>完全一樣（包含小數）</b>，從交易所提領要把手續費加上去。付款單 2 小時有效，48 小時內轉帳仍會確認。付不夠會全額退回、多轉照常開通並退回多的；一直沒確認的話，可以貼上交易編號查詢。收據會寄到你的信箱。')}
+    ${gdPt('<circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path>', '<b>到期</b>：到期前 3 天、1 天會提醒；到期後有 24 小時寬限，之後停止開新單（已開的單照原本的止損止盈管理到結束）；30 天沒續費帳號會被刪除。續費後記得到「設定」<b>重新打開自動交易</b>。')}
+    ${gdPt('<path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v5h5"></path>', '<b>退款</b>：付款後 <b>7 天內</b>可以不說明理由，在付款紀錄按「<b>申請退款</b>」（或寄信），15 天內全額退回你的付款錢包；退款完成後，那筆付款的使用期間會取消。超過 7 天請看服務條款第 7 條。')}`;
+  if (p === 'own') return `<div class="gdmock" style="border-color:#6b5422"><div class="gdmrow"><b>👑 繳費後台</b><span class="gdchip">只有擁有者看得到這一頁</span></div></div>
+    <h2>👑 繳費後台（擁有者）</h2><p class="gdsub">在「☰ 選單 → 方案與繳費」的下半部。</p>
+    ${gdPt('<path d="M12 2v20"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>', '<b>開始收費</b>前要先填<b>收款地址</b>（TRC20）。收款錢包要先存一些 <b>TRX</b>：第一次收到 TRX 錢包才會激活，之後退款的手續費也是扣 TRX（收到的 USDT 不能拿來付手續費）。')}
+    ${gdPt('<path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v5h5"></path>', '<b>↩️ 待退款</b>：付錯金額、多轉的部分、7 天內解約都會列在這裡。用收款錢包把「金額」原樣轉回「退回地址」，系統每分鐘查一次區塊鏈，轉出去後自動標成已退款並通知對方；解約的退款完成後，自動取消那筆付款的天數。')}
+    ${gdPt('<path d="M9 14l-4-4 4-4"></path><path d="M5 10h11a4 4 0 0 1 0 8h-1"></path>', '<b>辦理退款</b>：付款單上的按鈕，用戶寄信申請、或依條款第 7 條按比例退款時用，可以填退款金額。「手動確認已付」的單系統不知道付款錢包，要自己跟用戶確認地址再轉。<b>對不上的轉帳</b>可以指定給某個帳號或退款。')}
+    ${gdPt('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path>', '<b>服務條款</b>：改了文字並儲存，就會變成新的版本（用當天日期），舊版本保留，每個人同意的是哪一版都有紀錄。對已付費的人不利的修改，要在生效前 7 天公告並寄信通知。')}
+    ${gdTip('伺服器要設定好寄信（Gmail 應用程式密碼）：新用戶購買要收信箱驗證碼，沒設定的話沒有人能買。打開收費後，自己在購買頁用一個 Gmail 按「寄驗證碼」試一次。', true)}`;
   if (p === 'done') return gdPage('done').replace('<p class="gdsub">之後想再看說明', '<button class="gdbtn" id="gd_news2" style="align-self:center">📰 看更新紀錄</button><p class="gdsub">之後想再看說明');
   return gdPage(p);
 }
