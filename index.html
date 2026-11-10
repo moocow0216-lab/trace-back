@@ -1311,7 +1311,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-10a</div>
+      <div class="qver" id="qVer">網站版本 2026-11-10b</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3771,7 +3771,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-10a・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-10b・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
@@ -6605,7 +6605,7 @@ function biQR(addr) {                                  // 收款地址的 QR cod
 function biRender() {
   const d = BI.d, s = d.state, now = Date.now(), host = $('mnpBill');
   const ST = { free: ['🎁 免費帳號', '不用付費，所有功能都能用', 'ok'], trial: ['🧪 試用中', `試用到 ${bDate(s.until)}。現在付費會接在試用後面，<b>所有設定、紀錄都保留</b>。`, 'trial'],
-    paid: ['✅ 方案有效', `到期 ${bDate(s.until)}（還有 ${Math.max(0, Math.ceil((s.until - now) / 86400000))} 天）。提早續費會接著往後加。`, 'ok'], grace: ['⚠️ 方案已到期（寬限中）', `${bDate(s.graceEnd)} 前續費，交易都不會中斷；之後會停止開新單。`, 'trial'], locked: ['⛔ 方案已到期', '已停止開新單（已開的單照常管理到結束）。付款後馬上恢復，設定和紀錄都還在。', 'bad'] };
+    paid: ['✅ 方案有效', `到期 ${bDate(s.until)}（還有 ${Math.max(0, Math.ceil((s.until - now) / 86400000))} 天）。提早續費會接著往後加。`, 'ok'], grace: ['⚠️ 方案已到期（寬限中）', `${bDate(s.graceEnd)} 前續費，交易都不會中斷；之後會停止開新單。`, 'trial'], locked: ['⛔ 方案已到期', '已停止開新單（已開的單照常管理到結束）。付款後到「設定」重新打開自動交易就能繼續，設定和紀錄都還在。', 'bad'] };
   const [t1, t2, cls] = ST[s.st] || ST.free, pend = (d.orders || []).find(o => o.status === 'pending' && o.exp > now);
   let html = `<div class="bi"><section class="bistat ${cls}"><b>${t1}</b><span>${t2}</span></section>`;
   if (!d.on) html += `<section class="bibox"><p class="tlsub">目前網站沒有開放收費，所有功能都可以直接使用。</p></section>`;
@@ -6631,8 +6631,9 @@ function biRender() {
         <div class="xeadd"><input id="biTx" placeholder="交易編號（64 個英數字）" autocomplete="off" spellcheck="false"><button class="btn primary" id="biClaim">查詢</button></div><p class="tlsub" id="biClaimMsg" role="status"></p></details>`;
     html += `</section>`;
   }
-  const my = (d.orders || []).filter(o => o.status === 'paid');
-  if (my.length) html += `<section class="bibox"><h4>付款紀錄</h4><div class="tablewrap"><table class="tltab"><tr><th>付款時間</th><th>金額</th><th>邀請碼</th><th>交易編號</th></tr>${my.map(o => `<tr><td>${bDate(o.paidAt)}</td><td>${o.amount} USDT</td><td>${o.code ? `${esc(o.code)} −${o.pct}%` : '—'}</td><td class="tlmut">${o.tx ? `<a href="https://tronscan.org/#/transaction/${esc(o.tx)}" target="_blank" rel="noopener">${esc(o.tx.slice(0, 10))}…</a>` : '手動確認'}</td></tr>`).join('')}</table></div></section>`;
+  const my = (d.orders || []).filter(o => o.status === 'paid' || o.status === 'refunded');
+  const rfCell = o => o.status === 'refunded' ? '<span class="tlmut">已退款</span>' : o.cancelAt ? '<b class="qy">退款處理中</b>' : now - (o.paidAt || o.at) < 7 * 864e5 && o.from ? `<button class="btn" data-bicancel="${esc(o.id)}" data-amt="${esc(o.amount)}" data-from="${esc(o.from)}">申請退款</button><br><small class="tlmut">${bDate((o.paidAt || o.at) + 7 * 864e5)} 前</small>` : '—';   // 付款後 7 天內可以無條件全額退款（服務條款第 6 條）
+  if (my.length) html += `<section class="bibox"><h4>付款紀錄</h4><p class="tlsub">付款後 7 天內可以不說明理由申請全額退款；退款完成後，那筆付款的使用期間會取消。</p><div class="tablewrap"><table class="tltab"><tr><th>付款時間</th><th>金額</th><th>邀請碼</th><th>交易編號</th><th>退款</th></tr>${my.map(o => `<tr><td>${bDate(o.paidAt)}</td><td>${o.amount} USDT</td><td>${o.code ? `${esc(o.code)} −${o.pct}%` : '—'}</td><td class="tlmut">${o.tx ? `<a href="https://tronscan.org/#/transaction/${esc(o.tx)}" target="_blank" rel="noopener">${esc(o.tx.slice(0, 10))}…</a>` : '手動確認'}</td><td>${rfCell(o)}</td></tr>`).join('')}</table></div></section>`;
   const rf = d.refunds || [];
   if (rf.length) html += `<section class="bibox"><h4>↩️ 退款</h4><div class="tablewrap"><table class="tltab"><tr><th>收到時間</th><th>金額</th><th>退回到</th><th>狀態</th></tr>${rf.map(r => `<tr><td>${bDate(r.at)}</td><td>${r.amount} USDT</td><td class="tlmut">${esc(r.from)}</td><td>${r.status === 'done' ? `<span class="qg">已退款</span>${r.outTx ? ` <a href="https://tronscan.org/#/transaction/${esc(r.outTx)}" target="_blank" rel="noopener">查看</a>` : ''}` : r.status === 'skip' ? '不退款' : '<b class="qy">退款處理中</b>'}<br><small class="tlmut">${esc(r.why || '')}</small></td></tr>`).join('')}</table></div></section>`;
   if (BI.a) html += biAdmin(BI.a);
@@ -6641,6 +6642,9 @@ function biRender() {
   const biAcks = () => [...document.querySelectorAll('.biack')].filter(x => x.checked).length;
   document.querySelectorAll('.biack').forEach(c => c.onchange = () => { $('biAckN').textContent = `已勾選 ${biAcks()}／${(d.acks || []).length}`; });
   document.querySelectorAll('[data-biver]').forEach(b => b.onclick = async () => { const pre = $('biHistTx'); pre.hidden = false; pre.textContent = '讀取中…'; try { const r = await srvFetch('/api/buy', { op: 'terms', ver: b.dataset.biver }); pre.textContent = `【${r.ver}${/^\d/.test(r.ver) ? ' 版' : ''}】\n\n${r.text}`; } catch (e) { pre.textContent = e.message; } });
+  document.querySelectorAll('[data-bicancel]').forEach(b => b.onclick = async () => {   // ↩️ 7 天內申請退款
+    if (!confirm(`確定要申請退款嗎？\n\n${b.dataset.amt} USDT 會在 15 天內全額退回到：\n${b.dataset.from}\n\n退款完成後，這筆付款的使用期間會取消。`)) return;
+    try { const r = await srvFetch('/api/bill', { op: 'cancelReq', id: b.dataset.bicancel }); alert(r.msg || '已收到退款申請'); biLoad(); } catch (e) { alert(e.message); } });
   if ($('biGo')) $('biGo').onclick = async () => { const n = biAcks(), need = (d.acks || []).length; if (n < need) { alert(`請先逐項勾選付款前的確認事項（還差 ${need - n} 項）`); $('biLegal').scrollIntoView({ behavior: 'smooth' }); return; }
     try { await srvFetch('/api/bill', { op: 'order', code: $('biCode').value.trim(), m: BI.m, agree: true, acks: n, termsVer: d.termsVer }); BI.code = $('biCode').value.trim(); BI.changed = ''; biLoad(); }
     catch (e) { if (/條款剛更新/.test(e.message)) { BI.code = $('biCode').value.trim(); BI.changed = '1'; return biLoad(); } alert(e.message); } };   // 條款剛好改版：重新讀取，請他再看一次
@@ -6680,14 +6684,14 @@ function biAdmin(a) {                                  // 👑 繳費後台
     <h5>帳號狀態</h5><div class="tablewrap"><table class="tltab"><tr><th>UID</th><th>狀態</th><th>到期</th><th>已付</th><th>操作</th></tr>${a.users.map(u => `<tr><td>${esc(u.uid)}${u.owner ? ' 👑' : ''}</td><td>${SN[u.st] || u.st}</td><td>${u.st === 'trial' ? `試用到 ${bDate(u.trialEnd)}` : u.paidUntil ? bDate(u.paidUntil) : '—'}</td><td>${u.n ? `${u.total} U（${u.n} 次）` : '—'}</td>
       <td class="trops">${u.owner ? '' : `<button class="btn" data-days="${esc(u.uid)}">±天數</button><button class="btn" data-free-add="${esc(u.uid)}"${u.free ? ' disabled' : ''}>設成免費</button>`}</td></tr>`).join('')}</table></div>
     ${(() => { const R = a.refunds || [], todo = R.filter(r => r.status === 'todo'), done = R.filter(r => r.status !== 'todo').slice(0, 20);
-      return `<h5 class="${todo.length ? 'qr' : ''}">↩️ 待退款（${todo.length}）</h5><p class="tlsub">付款金額不對的會列在這裡。請用<b>收款錢包</b>把「金額」轉回「退回地址」，金額要一樣；系統每分鐘查一次區塊鏈，轉出去後會自動標成已退款並通知對方。</p>
+      return `<h5 class="${todo.length ? 'qr' : ''}">↩️ 待退款（${todo.length}）</h5><p class="tlsub">付款金額不對、多轉的部分、7 天內解約（用戶在網站申請，或你在上面的付款單按「辦理退款」）都會列在這裡；解約的退款轉出去後，系統會自動取消那筆付款的使用期間。請用<b>收款錢包</b>把「金額」轉回「退回地址」，金額要一樣；系統每分鐘查一次區塊鏈，轉出去後會自動標成已退款並通知對方。</p>
       ${todo.length ? `<div class="tablewrap"><table class="tltab"><tr><th>收到時間</th><th>UID</th><th>金額</th><th>退回地址</th><th>原因</th><th>操作</th></tr>${todo.map(r => `<tr><td>${bDate(r.at)}</td><td>${esc(r.uid || '—')}</td><td><b>${r.amount}</b> <button class="btn" data-copy="${r.amount}">複製</button></td><td class="tlmut">${esc(r.from)} <button class="btn" data-copy="${esc(r.from)}">複製</button></td><td class="tlmut">${esc(r.why || '')}</td><td class="trops"><button class="btn primary" data-rdone="${r.id}">我已退款</button><button class="btn" data-rskip="${r.id}">不退</button></td></tr>`).join('')}</table></div>` : '<p class="tlmut">沒有待退款</p>'}
       ${done.length ? `<details><summary class="tlsub">退款紀錄（${done.length}）</summary><div class="tablewrap"><table class="tltab"><tr><th>收到</th><th>UID</th><th>金額</th><th>退回地址</th><th>狀態</th></tr>${done.map(r => `<tr><td>${bDate(r.at)}</td><td>${esc(r.uid || '—')}</td><td>${r.amount}</td><td class="tlmut">${esc(r.from)}</td><td>${r.status === 'done' ? `已退款${r.how === 'manual' ? '（手動）' : ''}${r.outTx ? ` <a href="https://tronscan.org/#/transaction/${esc(r.outTx)}" target="_blank" rel="noopener">查看</a>` : ''}` : `不退${r.note ? '：' + esc(r.note) : ''}`}</td></tr>`).join('')}</table></div></details>` : ''}`; })()}
     ${a.unmatched.length ? `<h5 class="qr">⚠ 對不上的轉帳（金額跟任何付款單都不同）</h5><div class="tablewrap"><table class="tltab"><tr><th>時間</th><th>金額</th><th>付款地址</th><th>操作</th></tr>${a.unmatched.map(m => `<tr><td>${bDate(m.at)}</td><td>${m.amount} USDT</td><td class="tlmut">${esc(m.from)}</td><td class="trops"><button class="btn" data-assign="${esc(m.tx)}">指定給 UID</button><button class="btn" data-refund="${esc(m.tx)}">退款</button><button class="btn" data-dismiss="${esc(m.tx)}">忽略</button></td></tr>`).join('')}</table></div>` : ''}
     <h5>📒 收款紀錄（每一筆收到的錢）</h5><div class="xeadd"><input id="ba_lq" placeholder="搜尋 UID、錢包地址、信箱、電話" value="${esc(BI.lq || '')}" autocomplete="off"><button class="btn" id="ba_csv">⬇ 匯出 CSV</button></div>
     <div class="tablewrap" id="ba_ledger">${biLedger(a.ledger || [], BI.lq)}</div>
-    <h5>付款單</h5><div class="tablewrap"><table class="tltab"><tr><th>建立</th><th>UID</th><th>金額</th><th>方案／邀請碼</th><th>狀態</th><th>操作</th></tr>${a.orders.slice(0, 60).map(o => `<tr><td>${bDate(o.at)}</td><td>${esc(o.uid)}${o.isNew ? ' <small class="qy">🆕 新購買</small>' : ''}</td><td>${o.amount}</td><td>${o.m || 1} 個月${o.code ? `・${esc(o.code)} −${o.pct}%` : ''}</td><td>${{ pending: '<b class="qy">等付款</b>', paid: `<span class="qg">已付 ${o.how === 'manual' ? '（手動）' : ''}</span>`, expired: '過期', cancel: '取消' }[o.status] || o.status}</td>
-      <td class="trops">${o.status !== 'paid' ? `<button class="btn" data-pay="${o.id}">手動確認已付</button>` : o.tx ? `<a class="tlmut" href="https://tronscan.org/#/transaction/${esc(o.tx)}" target="_blank" rel="noopener">查看</a>` : ''}</td></tr>`).join('')}</table></div></section>`;
+    <h5>付款單</h5><div class="tablewrap"><table class="tltab"><tr><th>建立</th><th>UID</th><th>金額</th><th>方案／邀請碼</th><th>狀態</th><th>操作</th></tr>${a.orders.slice(0, 60).map(o => `<tr><td>${bDate(o.at)}</td><td>${esc(o.uid)}${o.isNew ? ' <small class="qy">🆕 新購買</small>' : ''}</td><td>${o.amount}</td><td>${o.m || 1} 個月${o.code ? `・${esc(o.code)} −${o.pct}%` : ''}</td><td>${{ pending: '<b class="qy">等付款</b>', paid: `<span class="qg">已付 ${o.how === 'manual' ? '（手動）' : ''}</span>${o.cancelAt ? ' <b class="qy">退款中</b>' : ''}`, refunded: '<span class="tlmut">已退款</span>', expired: '過期', cancel: '取消' }[o.status] || o.status}</td>
+      <td class="trops">${o.status === 'paid' && !o.cancelAt && o.from ? `<button class="btn" data-bacancel="${o.id}" data-amt="${o.amount}" data-uid="${esc(o.uid)}">辦理退款</button>` : ''}${o.status !== 'paid' && o.status !== 'refunded' ? `<button class="btn" data-pay="${o.id}">手動確認已付</button>` : o.tx ? `<a class="tlmut" href="https://tronscan.org/#/transaction/${esc(o.tx)}" target="_blank" rel="noopener">查看</a>` : ''}</td></tr>`).join('')}</table></div></section>`;
 }
 function biLedgerRows(L, q) {
   q = String(q || '').trim().toLowerCase();
@@ -6731,6 +6735,7 @@ $('mnpBill').addEventListener('click', async e => {
     if (t.dataset.freeAdd) { if (!confirm(`把 ${t.dataset.freeAdd} 設成免費帳號？`)) return; await A('free', { free: [...free, t.dataset.freeAdd] }); return biLoad(); }
     if (t.dataset.days) { const v = prompt(`幫 ${t.dataset.days} 調整方案天數（例如 30 或 -7）：`, '30'); if (v === null) return; await A('days', { uid: t.dataset.days, days: +v }); return biLoad(); }
     if (t.dataset.pay) { const tx = prompt('手動確認已付款。可以貼上交易編號（選填）：', ''); if (tx === null) return; await A('pay', { id: t.dataset.pay, tx }); return biLoad(); }
+    if (t.dataset.bacancel) { const v = prompt(`辦理退款：${t.dataset.uid} 付了 ${t.dataset.amt} USDT。\n要退多少？（7 天內解約退全額；超過 7 天依服務條款第 7 條按剩下的天數計算）\n\n退款轉出去後，系統會自動取消這筆付款的使用期間。`, t.dataset.amt); if (v === null) return; const n = +v; if (!(n > 0 && n <= +t.dataset.amt)) return alert(`金額要大於 0、不超過 ${t.dataset.amt}`); await A('cancelPaid', { id: t.dataset.bacancel, amount: n }); return biLoad(); }
     if (t.dataset.assign) { const uid = prompt('這筆轉帳是誰付的？輸入 UID：'); if (!uid) return; const days = prompt('要加幾天？', '30'); if (days === null) return; await A('assign', { tx: t.dataset.assign, uid: uid.trim(), days: +days }); return biLoad(); }
     if (t.dataset.dismiss) { if (!confirm('忽略這筆轉帳？')) return; await A('dismiss', { tx: t.dataset.dismiss }); return biLoad(); }
     if (t.dataset.refund) { const uid = prompt('要全額退回這筆轉帳。知道是哪個 UID 的話可以填（會通知他），不知道就留空：', ''); if (uid === null) return; await A('refund', { tx: t.dataset.refund, uid: uid.trim() }); return biLoad(); }
@@ -7583,6 +7588,12 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-10b', title: '2026/11/10 更新（繳費流程檢查與修正）', items: [
+    { ic: '↩️', t: '付款後 7 天內可以在「💳 方案與繳費」的付款紀錄按「申請退款」，全額退回付款錢包；擁有者也可以在繳費後台「辦理退款」。退款真的轉出去後，系統自動取消那筆付款的使用期間。' },
+    { ic: '🔧', t: '修正：用邀請碼折扣出現小數的價格時，付款金額可能比價格還低。' },
+    { ic: '🔧', t: '修正：付不夠、而且尾數被交易所手續費改掉時，系統認不出是誰付的；現在只要同時間只有一張付款單對得上，就會自動列進待退款。' },
+    { ic: '🔔', t: '到期被停止開新單的人續費後，訊息和收據會提醒他重新打開自動交易。' }
+  ] },
   { id: '2026-11-10a', title: '2026/11/10 更新（正式版服務條款）', items: [
     { ic: '📜', t: '付款頁換上正式版的「購買前須知」和「服務條款」（2026-11-10 版），付款前要逐項勾選 5 個確認事項，也看得到個人資料告知事項和條款的歷史版本。' },
     { ic: '🧾', t: '系統會記錄每個人同意的是哪一版條款；如果剛好在你付款前改版，付款頁會提示你重新閱讀。' }
