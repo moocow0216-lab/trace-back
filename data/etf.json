@@ -2,10 +2,6 @@
  "source": "Farside Investors",
  "daily": [
   {
-   "date": "2026-10-23",
-   "net": -137900000.0
-  },
-  {
    "date": "2026-10-26",
    "net": 110300000.0
   },
@@ -55,10 +51,46 @@
   },
   {
    "date": "2026-11-11",
-   "net": 0.0,
-   "cum": 55470000000.0
+   "net": -30100000.0,
+   "cum": 55440000000.0
   }
  ],
- "funds": null,
- "updated": "2026-11-11T17:12:08+00:00"
+ "funds": {
+  "date": "2026-11-11",
+  "rows": [
+   {
+    "ticker": "BITB",
+    "net": 0.0
+   },
+   {
+    "ticker": "ARKB",
+    "net": 0.0
+   },
+   {
+    "ticker": "EZBC",
+    "net": 0.0
+   },
+   {
+    "ticker": "BRRR",
+    "net": 0.0
+   },
+   {
+    "ticker": "BTCW",
+    "net": 0.0
+   },
+   {
+    "ticker": "MSBT",
+    "net": 9000000.0
+   },
+   {
+    "ticker": "GBTC",
+    "net": -39100000.0
+   },
+   {
+    "ticker": "BTC",
+    "net": 0.0
+   }
+  ]
+ },
+ "updated": "2026-11-12T00:47:02+00:00"
 }
