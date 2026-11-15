@@ -1328,7 +1328,7 @@ body.sponly #qSrc,body.sponly #qAuto,body.sponly #qScan,body.sponly #qStat,body.
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-16l</div>
+      <div class="qver" id="qVer">網站版本 2026-11-16m</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3804,7 +3804,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.man = j.lt.man || []; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-16l・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-16m・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     if (j.notice) ntShow(j.notice);                     // 📢 擁有者發的更新通知
     $('qAnnBox').hidden = !OWN(); if (OWN() && !$('ann_t').value && !$('ann_x').value) annFill();
@@ -7879,6 +7879,9 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-16m', title: '2026/11/16 更新（數據公布讀取失敗）', items: [
+    { ic: '📅', t: '修正「數據公布 讀取失敗」：資料源每 5 分鐘只准抓 2 次，以前一次抓好幾個網址、伺服器重啟又馬上重抓，就被擋住。現在每次至少隔 3 分鐘、平常 1 小時更新一次（公布前後每 6 分鐘等實際值），被擋會自動等 20 分鐘；抓到的資料存在伺服器硬碟，重啟或暫時抓不到也會照樣顯示上次的資料。' }
+  ] },
   { id: '2026-11-16l', title: '2026/11/16 更新（邀請人個人檔案）', items: [
     { ic: '🪪', t: '註冊頁新增第一步「選擇你的邀請人」：每位管理員有自己的個人檔案（大頭貼、名字、IG、自我介紹、Bitunix 邀請碼），點開會看到邀請連結的 QR code、Instagram 和「邀請碼註冊 Bitunix」兩個按鈕，選好就帶到第二步用他的邀請碼註冊。' },
     { ic: '⚙️', t: '「🎟 審核註冊」可以編輯個人檔案：擁有者可以改每個人的，管理員可以改自己的；大頭貼直接上傳，會自動裁成正方形縮小。' }
@@ -10449,7 +10452,7 @@ function renderEco(d) {
   $('qEco').hidden = false;
   const now = Date.now(), nx = d.list.find(e => e.imp !== 'M' && e.t > now - 10 * 60000);
   const btn = $('qEcoBtn');
-  if (!nx) { $('qEcoNext').textContent = d.err ? '讀取失敗' : '這週沒有高影響數據了'; btn.classList.remove('soon'); }
+  if (!nx) { $('qEcoNext').textContent = d.err && !d.list.length ? '資料源忙碌，稍後自動重試' : !d.list.length ? '讀取中…' : '這週沒有高影響數據了'; btn.title = d.err || ''; btn.classList.remove('soon'); }
   else {
     const live = nx.t <= now;
     $('qEcoNext').textContent = `${fmtT(nx.t)} ${nx.zh}${live ? '・公布中' : '・還有 ' + ecoLeft(nx.t - now)}`;
