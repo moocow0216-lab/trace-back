@@ -952,7 +952,7 @@ setInterval(() => { if (!SP_ONLY && !REP.busy && Date.now() >= (ST.rep.next || 0
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-11-16j';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-11-16k';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -2157,6 +2157,8 @@ function refSync() {                                  // 🎟 邀請人清單＝
   const n0 = R.refs.length; R.refs = R.refs.filter(r => !r.auto || staff.includes(r.uid)); if (R.refs.length !== n0) ch = true;
   if (ch) dirty = true; return R.refs;
 }
+const refUnnamed = r => !!(r && r.auto && r.uid !== ownerUid() && r.name === `管理員 ${String(r.uid).slice(-4)}`);   // 管理員還沒取名字（預設名）
+const refShown = r => !refUnnamed(r);
 const refVia = usr => { const r = usr && usr.ref && REF().refs.find(x => x.id === usr.ref.via); return r || null; };
 function refNotifyNew(usr, olds, tag) {               // 🔔 有人申請：通知擁有者，也通知他選的那個邀請人（管理員）；tag＝催審核的提醒
   const via = refVia(usr), st = usr.ref.st, L = REF().list, inL = L.includes(usr.uid);
@@ -3124,7 +3126,8 @@ http.createServer(async (req, res) => {
       if (u.pathname === '/api/ref') {                   // 🎟 免費申請（不用登入）：看邀請人清單、送出申請（建立帳號，審核通過才能自動交易）
         const R = REF(), op = String(b.op || 'info'); refSync();
         const tm = SP_ONLY ? { terms: FREE_TERMS.split('{min}').join((+R.minVol || 0).toLocaleString()), termsVer: FREE_VER, privacy: FREE_PRIVACY } : { terms: REF_TERMS.replace('{min}', (+R.minVol || 0).toLocaleString()) + '\n\n────────────\n\n' + BL().terms, termsVer: BL().termsVer, privacy: LEGAL.privacy };
-        if (op === 'info') return send(res, 200, { on: R.on, minVol: R.minVol, refs: R.refs.map(r => ({ id: r.id, name: r.name, code: r.code || '', link: r.link || '' })), mail: mailOn(), ...tm });
+        const shown = R.refs.filter(refShown);           // 註冊頁只顯示已經取好名字的管理員
+        if (op === 'info') return send(res, 200, { on: R.on, minVol: R.minVol, refs: shown.map(r => ({ id: r.id, name: r.name, code: r.code || '', link: r.link || '' })), mail: mailOn(), ...tm });
         if (op === 'apply') {
           if (!R.on) return send(res, 400, { error: '目前沒有開放免費申請' });
           if (!mailAllow('refip:' + ip, 10)) return send(res, 429, { error: '申請太多次了，請一小時後再試' });
@@ -3138,7 +3141,7 @@ http.createServer(async (req, res) => {
           if (!validPw(b.password)) return send(res, 400, { error: '密碼至少 8 個字' });
           { const w = pwWeak(b.password, uid); if (w) return send(res, 400, { error: w }); }
           if (!phone) return send(res, 400, { error: '手機號碼格式不對（台灣手機請填 09 開頭的 10 碼）' });
-          if (R.refs.length && !R.refs.some(r => r.id === via)) return send(res, 400, { error: '請選是誰邀請你的（你用誰的邀請碼註冊 Bitunix）' });
+          if (shown.length && !shown.some(r => r.id === via)) return send(res, 400, { error: '請選擇邀請你的管理員（你用誰的邀請碼註冊 Bitunix）' });
           const C = BUYC.get(email); if (!C || C.exp < Date.now() || C.n >= 5) return send(res, 400, { error: '請先寄驗證碼到信箱，再輸入信裡的 6 位數字' });
           if (C.h !== sha(String(b.emailCode || '').trim())) { C.n++; return send(res, 400, { error: '信箱驗證碼不對' }); }
           const cs = ST.users.filter(x => x.bind && (x.bind.email === email || x.bind.phone === phone)), bad = cs.find(x => !redo(x));
@@ -3389,7 +3392,7 @@ http.createServer(async (req, res) => {
         const inL = new Set(R.list);                     // list：所有帳號的審核狀態、邀請人、近 30 天交易量（跟代理商後台對帳用）
         const users = ST.users.filter(x => !refExempt(x)).map(x => { const r = x.ref || { st: 'pending' }, v = refVia(x), A = ST.accts[x.uid];
           return { uid: x.uid, email: x.bind ? x.bind.email : '', phone: x.bind ? x.bind.phone : '', created: x.created || 0, st: r.st, at: r.at || 0, doneAt: r.doneAt || 0, by: r.by || '', note: r.note || '', via: v ? v.name : '', viaId: r.via || '', auto: !!r.auto, inList: inL.has(x.uid), vol: Math.round(refVol(x.uid)), low: !!r.low, api: !!(A && A.bx && A.bx.key), sp: !!(A && A.lt && A.lt.sp) }; });
-        return send(res, 200, { owner: !!owner, meUid: me ? me.uid : '', cfg: { on: R.on, minVol: R.minVol, refs: R.refs, listN: R.list.length, listAt: R.listAt }, users });
+        return send(res, 200, { owner: !!owner, meUid: me ? me.uid : '', cfg: { on: R.on, minVol: R.minVol, refs: R.refs.map(r => ({ ...r, ...(refUnnamed(r) ? { unnamed: true } : {}) })), listN: R.list.length, listAt: R.listAt }, users });
       }
       if (u.pathname === '/api/xent') {                  // 🔔 額外進場：自己的關注清單、通知頻道
         const uid = meU ? meU.uid : ownerUid(), c = xCfg(uid), op = String(b.op || 'get');
