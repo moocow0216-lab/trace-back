@@ -82,7 +82,7 @@ async function loadInfo() {                              // 方案、條款、�
 async function boot() {
   let R = null; try { R = await api('/api/ref', { op: 'info' }); } catch (e) {}   // 🎟 邀請碼制（免費）開著：顯示免費申請
   if (R && R.on) {
-    if (SRVC.token) { try { const r = await fetch(URL0 + '/api/me', { headers: { Authorization: 'Bearer ' + SRVC.token } }); if (r.ok) return done0('🎟', '你已經有帳號了', '目前是免費使用（邀請碼制），到網站「☰ 選單 → 方案與繳費」可以看審核狀態。'); } catch (e) {} }
+    if (SRVC.token) { try { const r = await fetch(URL0 + '/api/me', { headers: { Authorization: 'Bearer ' + SRVC.token } }); if (r.ok) return done0('🎟', '你已經有帳號了', '目前是免費使用（邀請碼制），登入網站後，持倉區上方會顯示審核狀態。'); } catch (e) {} }
     return refView(R);
   }
   if (SRVC.token) { try { const r = await fetch(URL0 + '/api/me', { headers: { Authorization: 'Bearer ' + SRVC.token } }); if (r.ok) { S.me = await r.json(); S.mode = 'renew'; } } catch (e) {} }
@@ -93,42 +93,69 @@ async function boot() {
   if (saved && saved.exp > Date.now() - 48 * 3600000 && saved.mode === S.mode) { S.order = saved; return payView(); }
   formView();
 }
+/* 🔐 密碼安全：跟伺服器一樣擋太弱的密碼；再用 Have I Been Pwned 查是不是外洩過（只送 SHA-1 的前 5 碼，密碼本身不會離開瀏覽器）。查不到（離線）就略過 */
+const PW_COMMON = new Set(['password', 'password1', 'passw0rd', 'p@ssw0rd', 'qwertyui', 'qwerty123', 'qwertyuiop', '1qaz2wsx', '1q2w3e4r', '1q2w3e4r5t', 'abcd1234', 'abc12345', 'a1234567', 'aa123456', 'a12345678', 'zxcvbnm1', 'iloveyou', 'asdfghjk', 'asdf1234', 'qwer1234', '12341234', '11223344', '12344321', '5201314a', 'woaini1314', 'admin123', 'test1234', '12qwaszx', 'qazwsxedc', '1qaz2wsx3edc', 'qwe12345', 'aaaa1111', 'abc123456', 'q1w2e3r4', 'zaq12wsx', 'bitunix123', 'qevrax123']);
+function pwWeak(pw, uid) {
+  const p = String(pw || ''), l = p.toLowerCase(); if (p.length < 8) return '';
+  if (/^(.)\1+$/.test(p)) return '密碼不能全部是同一個字';
+  let up = true, dn = true; for (let i = 1; i < l.length; i++) { const d = l.charCodeAt(i) - l.charCodeAt(i - 1); if (d !== 1) up = false; if (d !== -1) dn = false; }
+  if (up || dn) return '密碼不能是連續的數字或字母（例如 12345678、abcdefgh）';
+  if (PW_COMMON.has(l)) return '這組密碼太常見了（在外洩資料裡很常出現），請換一組';
+  if (uid && String(uid).length >= 4 && l.includes(String(uid))) return '密碼不能包含你的 UID';
+  if (/^\d+$/.test(p) && p.length < 10) return '只有數字的密碼至少要 10 碼，建議英文加數字';
+  return '';
+}
+async function pwPwned(pw) {
+  try {
+    if (!(window.crypto && crypto.subtle)) return 0;
+    const h = [...new Uint8Array(await crypto.subtle.digest('SHA-1', new TextEncoder().encode(pw)))].map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+    const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 5000);
+    const r = await fetch('https://api.pwnedpasswords.com/range/' + h.slice(0, 5), { signal: ctl.signal, headers: { 'Add-Padding': 'true' } }); clearTimeout(tm); if (!r.ok) return 0;
+    const line = (await r.text()).split('\n').find(x => x.slice(0, 35) === h.slice(5)); return line ? (+line.split(':')[1] || 0) : 0;
+  } catch (e) { return 0; }
+}
 function refView(R) {                                  // 🎟 免費申請：① 用邀請碼註冊 Bitunix → ② 填資料 → ③ 審核
   $('steps').innerHTML = '<span>① 註冊 Bitunix</span><span>② 填資料</span><span>③ 審核</span><span>④ 完成</span>'; step(1);
   document.title = '免費註冊｜QEVRAX';
   const refs = R.refs || [];
   $('app').innerHTML = `<div class="card"><h2>① 先用邀請碼註冊 Bitunix</h2>
     <p class="mute">QEVRAX <b>免費使用</b>，條件是你的 Bitunix 帳號要用我們的邀請碼註冊，並且開著自動交易（近 30 天交易量 ${(+R.minVol || 0).toLocaleString()} USDT 以上，保證金 × 槓桿，小資金也很容易達到）。</p>
-    ${refs.length ? `<label class="f" for="via">誰邀請你的？（你用誰的邀請碼註冊 Bitunix）<b style="color:var(--bad)">＊必填</b></label><select id="via"><option value="">請選擇</option>${refs.map(r => `<option value="${esc(r.id)}">${esc(r.name)}</option>`).join('')}</select><div id="viaBox"></div>` : ''}
+    ${refs.length ? `<label class="f" for="via">選擇邀請你的管理員（你用誰的邀請碼註冊 Bitunix）<b style="color:var(--bad)">＊必填</b></label><select id="via"><option value="">請選擇</option>${refs.map(r => `<option value="${esc(r.id)}">${esc(r.name)}</option>`).join('')}</select><p class="mute" style="font-size:12.5px;margin:6px 0 0">送出後，系統會通知你選的這位管理員來審核，請選對人，審核會比較快。</p><div id="viaBox"></div>` : ''}
     <p class="mute" style="font-size:12.5px;margin-top:10px">已經有 Bitunix 帳號、但不是用我們的邀請碼註冊的，要用邀請連結<b>重新註冊一個新帳號</b>才能免費使用。<br>申請被拒絕過、或填錯 UID？用<b>同一個信箱</b>重新申請就好，舊的申請會自動作廢。</p></div>
   <div class="card"><h2>② 填資料</h2><p class="mute">送出後會<b>馬上建立帳號</b>，用這組 UID 和密碼登入。審核通過前可以先設定，但還不能開始自動交易。</p>
     <label class="f" for="uid">Bitunix UID（用邀請碼註冊的那個帳號）</label><input id="uid" inputmode="numeric" autocomplete="username" autocapitalize="off">
-    <label class="f" for="pw">設定密碼（至少 8 個字）</label><input id="pw" type="password" autocomplete="new-password">
+    <label class="f" for="pw">設定密碼（至少 8 個字，建議英文＋數字）</label><input id="pw" type="password" autocomplete="new-password"><p class="msg" id="pwMsg" role="status"></p>
     <label class="f" for="pw2">再輸入一次密碼</label><input id="pw2" type="password" autocomplete="new-password">
+    <p class="mute" style="font-size:12.5px;margin:4px 0 0">🔐 請用<b>沒在其他網站用過</b>的新密碼。太常見或外洩過的密碼會被擋下來（不然 Chrome 會跳「密碼已外洩」的警告）。</p>
     <label class="f" for="em">Google 信箱（收驗證碼、通知、忘記密碼用）</label><div class="row"><input id="em" type="email" autocomplete="email" autocapitalize="off" placeholder="example@gmail.com"><button class="btn" id="sendCode" type="button">寄驗證碼</button></div>
     <label class="f" for="ec">信箱驗證碼（6 位數字）</label><input id="ec" inputmode="numeric" autocomplete="one-time-code" maxlength="6"><p class="msg" id="codeMsg" role="status"></p>
     <label class="f" for="ph">手機號碼</label><input id="ph" type="tel" inputmode="tel" autocomplete="tel" placeholder="0912345678">
     <details><summary>📄 服務條款全文<span class="ver">版本 ${esc(R.termsVer || '')}</span></summary><pre>${esc(R.terms || '')}</pre></details>
-    <label class="agree"><input type="checkbox" id="agree"> 我已閱讀並同意服務條款</label>
+    ${R.privacy ? `<details><summary>🔒 個人資料告知事項</summary><pre>${esc(R.privacy)}</pre></details>` : ''}
+    <label class="agree"><input type="checkbox" id="agree"> 我已閱讀並同意服務條款（版本 ${esc(R.termsVer || '')}）和個人資料告知事項</label>
     <button class="btn pri" id="apply" type="button">送出申請</button><p class="msg" id="aMsg" role="alert"></p></div>`;
   if ($('via')) $('via').onchange = () => { const r = refs.find(x => x.id === $('via').value), box = $('viaBox'); step(1);
     box.innerHTML = r && (r.code || r.link) ? `<div class="kv">${r.code ? `<span>邀請碼</span><code>${esc(r.code)}</code><button class="btn" data-copy="${esc(r.code)}" type="button">複製</button>` : ''}</div>${r.link ? `<p style="margin:8px 0 0"><a class="btn" href="${esc(r.link)}" target="_blank" rel="noopener">👉 用 ${esc(r.name)} 的邀請連結註冊 Bitunix</a></p>` : ''}` : '';
     box.querySelectorAll('[data-copy]').forEach(b => b.onclick = async () => { try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = '已複製'; } catch (e) { prompt('複製這段：', b.dataset.copy); } }); };
   $('uid').onfocus = () => step(2);
+  $('pw').onblur = async () => { const pw = $('pw').value; if (pw.length < 8) return msg('pwMsg', pw ? '密碼至少 8 個字' : '', !pw); const w = pwWeak(pw, $('uid').value.trim()); if (w) return msg('pwMsg', w); const n = await pwPwned(pw); if (pw !== $('pw').value) return; msg('pwMsg', n > 0 ? `這組密碼外洩過 ${n.toLocaleString()} 次，請換一組` : '✅ 這組密碼可以用', !(n > 0)); };
   $('sendCode').onclick = async () => { const b = $('sendCode'); b.disabled = true; try { const r = await api('/api/buy', { op: 'code', email: $('em').value.trim().toLowerCase() }); msg('codeMsg', r.msg, true); let n = 60; const t = setInterval(() => { b.textContent = `${--n} 秒後可重寄`; if (n <= 0) { clearInterval(t); b.disabled = false; b.textContent = '重寄驗證碼'; } }, 1000); } catch (e) { msg('codeMsg', e.message); b.disabled = false; } };
   $('apply').onclick = async () => {
     const b = $('apply'), uid = $('uid').value.normalize('NFKC').replace(/\s+/g, ''), pw = $('pw').value;
     try {
-      if (refs.length && !$('via').value) { $('via').focus(); throw new Error('請選是誰邀請你的'); }
+      if (refs.length && !$('via').value) { $('via').focus(); throw new Error('請選擇邀請你的管理員'); }
       if (!/^\d{4,20}$/.test(uid)) throw new Error('UID 應該是 4～20 位數字（Bitunix 的 UID）'); if (pw.length < 8) throw new Error('密碼至少 8 個字'); if (pw !== $('pw2').value) throw new Error('兩次輸入的密碼不一樣');
+      { const w = pwWeak(pw, uid); if (w) { $('pw').focus(); throw new Error(w); } }
       if (!$('agree').checked) throw new Error('請先閱讀並勾選同意服務條款');
-      b.disabled = true; msg('aMsg', '送出中…', true);
+      b.disabled = true; msg('aMsg', '檢查密碼安全…', true);
+      { const n = await pwPwned(pw); if (n > 0) { b.disabled = false; $('pw').focus(); throw new Error(`這組密碼在網路外洩資料裡出現過 ${n.toLocaleString()} 次（Chrome 會跳「密碼已外洩」就是這個原因），請換一組沒用過的密碼`); } }
+      msg('aMsg', '送出中…', true);
       const r = await api('/api/ref', { op: 'apply', uid, password: pw, email: $('em').value.trim().toLowerCase(), emailCode: $('ec').value.trim(), phone: $('ph').value.trim(), via: $('via') ? $('via').value : '', agree: true });
       LS.set('quantSrv', { ...SRVC, url: URL0, on: true, token: r.token, uid: r.uid, role: r.role });   // 申請完直接登入
       step(r.st === 'ok' ? 5 : 3);
       $('app').innerHTML = `<div class="card big"><div class="ic">${r.st === 'ok' ? '✅' : '⏳'}</div><h2>${r.st === 'ok' ? '已通過，可以開始使用！' : '申請已送出，審核中'}</h2>
         <p>帳號 <b>${esc(r.uid)}</b> 已經建立，已幫你登入。</p>
-        <p class="mute">${r.st === 'ok' ? '你的 UID 在我們的邀請名單裡，已經自動通過。' : '我們會確認你是用我們的邀請碼註冊 Bitunix，通過後會寄信通知你。'}接下來請到網站「☰ 選單 → 設定」設定 Bitunix API（要開交易權限）和特級交易${r.st === 'ok' ? '，再按「開始特級交易」' : '，審核通過就能開始'}。</p>
+        <p class="mute">${r.st === 'ok' ? '' : `已經通知${$('via') && $('via').selectedIndex > 0 ? ` <b>${esc($('via').options[$('via').selectedIndex].text)}</b> ` : '管理員'}審核，通過後會寄信通知你。`}接下來請到網站「☰ 選單 → 設定」設定 Bitunix API（要開交易權限）和特級交易${r.st === 'ok' ? '，再按「開始特級交易」' : '，審核通過就能開始'}。</p>
         <a class="btn pri" href="./" style="display:block;text-decoration:none">前往網站</a></div>`;
     } catch (e) { msg('aMsg', e.message); b.disabled = false; if (e.j && e.j.needLogin) $('aMsg').innerHTML += ' <a href="./">前往登入</a>'; }
   };
