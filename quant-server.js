@@ -952,7 +952,7 @@ setInterval(() => { if (!SP_ONLY && !REP.busy && Date.now() >= (ST.rep.next || 0
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-11-16h';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-11-16j';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -2022,6 +2022,91 @@ const DEF_TERMS = `在付款頁勾選「我已閱讀並同意」，就代表你�
 1. 有任何問題，請先聯絡我們，我們會在 3 個工作天內回覆。
 2. 你也可以向消費者保護官申訴（全國消費者服務專線 1950）。
 3. 本條款以中華民國法律為準據法。發生訴訟時，以臺灣臺北地方法院為第一審管轄法院；但這不影響消費者保護法第 47 條、民事訴訟法小額程序等法律賦予你的管轄權利。`;
+/* ---------- 📜 特級專用版（免費、邀請碼制）的服務條款和個人資料告知事項：2026-11-16 版（沒有付款、試用、退款）---------- */
+const FREE_VER = '2026-11-16';
+const FREE_TERMS = `送出註冊申請時勾選「我已閱讀並同意」，就代表你同意以下條款。QEVRAX 免費使用，不收任何月費。
+
+第 1 條　服務提供者
+${DEF_TERMS.split('\n').find(l => l.startsWith('本服務由 QEVRAX')) || '本服務由 QEVRAX 系統創辦人鄭宏原（以下稱「我們」）提供。'}
+
+第 2 條　服務內容
+1. QEVRAX 提供：特級交易（依系統訊號在你的 Bitunix 帳戶自動下單）、Discord 和 Email 通知、K 線圖與分析工具。實際功能以網站上的說明為準。
+2. 本服務是一套軟體工具，在你自己的 Bitunix 帳戶裡，依照你設定的規則執行。我們不保管你的資金，不代客操作，也不針對你個人提供投資建議。
+3. 要不要開啟特級交易、投入多少資金，都由你自己決定和設定。
+
+第 3 條　帳號與 API 金鑰
+1. 你必須自己申請 Bitunix 帳號，並提供該帳號的 API 金鑰。
+2. API 金鑰請只開啟交易權限，不要開啟提幣權限。如果你開了提幣權限，造成的損失由你自己負責。
+3. 我們會把 API 金鑰加密保存，只用來執行你設定的交易。你可以隨時在網站上刪除金鑰，刪除後就會停止自動下單。
+4. 帳號只限本人使用，不能轉讓、出借或和別人共用。請自己保管好密碼，不要用在其他網站用過的密碼。
+
+第 4 條　免費使用的資格
+1. 你的 Bitunix 帳號必須是用我們（擁有者或管理員）提供的邀請碼或邀請連結註冊的。
+2. 註冊時要選擇邀請你的人，並填寫該 Bitunix 帳號的 UID。一個人只能用一個 UID 申請。
+3. 已經有 Bitunix 帳號、但不是用我們的邀請碼註冊的，要用邀請連結重新註冊一個新帳號，才能申請。
+
+第 5 條　審核
+1. 送出申請後會馬上建立帳號。邀請你的人會到 Bitunix 代理商後台確認你的 UID，一律由擁有者或管理員人工審核，不會自動通過。
+2. 審核通過前，你可以登入、設定 API 和通知，但不能開始自動交易。
+3. 審核結果會用 Email 通知你（有設定 Discord 的話也會通知）。審核結果以我們的判斷為準。
+4. 沒通過或填錯 UID，可以用同一個信箱重新申請，舊的申請會自動作廢。
+
+第 6 條　活躍條件與資格撤銷
+1. 免費使用的條件是：近 30 天自動交易的名目交易量（保證金 × 槓桿）達到 {min} USDT 以上。門檻如果調整，會在網站公告。
+2. 審核通過後的前 30 天不檢查。之後如果未達門檻，系統每 7 天會用 Email 和 Discord 提醒你；長期未達門檻，我們可以撤銷你的使用資格。
+3. 有下列情形，我們可以直接撤銷你的使用資格：用別人的 UID、或不是用我們邀請碼註冊的 UID 申請；冒用他人帳戶；違反第 11 條。
+4. 資格撤銷後，系統不會再開新單，已經開的單照原本的止損和止盈管理到結束。
+
+第 7 條　費用與我們的收益
+1. 本服務不向你收取任何費用，也沒有付費方案。
+2. 你在 Bitunix 交易時，Bitunix 會依它的規定收取交易手續費。自動交易會產生手續費，請自行評估。
+3. 我們的收益來自 Bitunix 依你的交易手續費，撥給邀請人的推薦返佣。這是 Bitunix 從它收的手續費中撥出的，不會讓你多付任何費用。
+
+第 8 條　停止使用與服務終止
+1. 你可以隨時停止特級交易、刪除 API 金鑰，或寄信要求刪除帳號。
+2. 我們決定停止提供本服務時，會至少提前 30 天在網站公告並寄 Email 通知。
+3. 服務停止前已經開的單，照原本的止損和止盈管理到結束，你也可以自己到 Bitunix 平倉。
+
+第 9 條　風險揭露
+1. 加密貨幣和合約交易風險很高。使用槓桿可能在短時間內虧光保證金，甚至被強制平倉。
+2. 訊號和自動下單的結果不保證獲利。網站上的任何績效、回測或範例，都不代表未來的結果。
+3. Bitunix 是境外交易平台，不是經中華民國金融監督管理委員會核准設立的機構。在上面交易發生糾紛時，可能不受台灣相關金融消費者保護法規的保障。
+4. 網路中斷、交易所維護或 API 變更、價格劇烈跳動等情況，都可能讓下單延遲、失敗，或成交價和預期不同。
+
+第 10 條　責任範圍
+1. 你自己帳戶的交易盈虧，由你自己承擔。
+2. 交易所本身的問題（停機、拒絕下單、強制平倉、倒閉等）、網路業者的問題，以及天災等不可抗力造成的損失，我們不負責。
+3. 因為我們的故意或重大過失造成你損害的，我們依法負責。本服務是免費提供，其他情形在法律允許的範圍內，我們不負賠償責任。
+
+第 11 條　禁止行為
+你不能：轉售、出借或和別人共用帳號；用別人的帳戶、UID 或資金使用本服務；用不是你本人的 UID 申請；攻擊、破解或反向工程本服務；利用本服務洗錢或從事其他違法行為。違反的話，我們可以撤銷你的使用資格。
+
+第 12 條　服務版本更新與維護
+本服務會持續改版，所有更新都不收費。
+1. 一般更新：修正錯誤、調整介面、新增功能等，會直接上線，並在網站的「更新紀錄」公告。
+2. 會影響交易的更新：例如訊號條件、下單方式、止損止盈的計算方式有變動時，至少提前 24 小時在網站公告並通知你。你可以在更新前先暫停特級交易。
+3. 你自己的設定不會被改：更新不會在沒通知你的情況下更動你自己設定的投入資金等參數。
+4. 已經開的單：更新當下已經開的單，照原本的止損和止盈管理到結束。
+5. 不保證舊版本和績效：我們不保證會保留舊版本，也不保證更新後的訊號或績效跟更新前一樣。
+6. 維護停機：更新需要暫停服務時，盡量安排在台灣時間凌晨 4 點到 6 點，並提前公告。
+
+第 13 條　條款版本與修改
+1. 每一版條款都有版本日期，註冊頁會顯示目前的版本。你勾選同意時，系統會記錄你同意的版本和時間。
+2. 條款修改會在生效前至少 7 天在網站公告並寄 Email 通知；對你有利的修改，公告後立即生效。你不同意新版本的話，可以停止使用並要求刪除帳號。
+3. 因為法律修改或主管機關要求而必須改的部分，依法律規定的時間生效，我們會盡快通知你。
+
+第 14 條　個人資料
+我們依照「個人資料告知事項」收集和使用你的資料，註冊頁可以展開閱讀全文。
+
+第 15 條　爭議處理與準據法
+1. 有任何問題，請先聯絡邀請你的人或我們，我們會在 3 個工作天內回覆。
+2. 你也可以向消費者保護官申訴（全國消費者服務專線 1950）。
+3. 本條款以中華民國法律為準據法。發生訴訟時，以臺灣臺北地方法院為第一審管轄法院；但這不影響消費者保護法第 47 條、民事訴訟法小額程序等法律賦予你的管轄權利。`;
+const FREE_PRIVACY = LEGAL.privacy.split('\n').filter(l => !/付款錢包地址/.test(l)).join('\n')
+  .replace('保存到帳號刪除為止（到期 30 天後刪除）', '保存到帳號刪除為止')
+  .replace('TronGrid（查詢付款）、', '')
+  .replace('沒有 UID、API 金鑰和付款資料的話', '沒有 UID 和 API 金鑰的話')
+  .replace('・交易紀錄、設定、Discord Webhook 網址', '・邀請人、審核紀錄、近 30 天交易量：審核免費使用資格、確認活躍條件。保存到帳號刪除為止。\n・交易紀錄、設定、Discord Webhook 網址');
 const DEF_BILL = { on: false, onAt: 0, price: 200, days: 30, addr: '', plans: [{ m: 1, pct: 0 }, { m: 3, pct: 10 }, { m: 12, pct: 20 }], terms: DEF_TERMS, codes: [], free: [], delDays: 30, graceDays: 3, orderHours: 2,
   orders: [], unmatched: [], refunds: [], payers: {}, seen: {}, seenOut: {}, scan: { at: 0, err: '', n: 0 } };
 ST.bill = { ...DEF_BILL, ...(ST.bill || {}) };
@@ -2066,9 +2151,17 @@ function refVol(uid) {                                 // 近 30 天自動交易
   const A = ST.accts[uid]; if (!A) return 0; const t0 = Date.now() - 30 * DAYMS;
   return (A.ltTrades || []).filter(t => (t.et || 0) >= t0).reduce((a, t) => a + Math.abs((+t.entry || 0) * (+t.qty0 || +t.qty || 0)), 0);
 }
+function refSync() {                                  // 🎟 邀請人清單＝擁有者＋所有管理員（自動加進來，名字和邀請碼可以改）；手動加的保留
+  const R = REF(), own = ownerUid(), staff = ST.users.filter(x => x.uid && (x.uid === own || x.role === 'admin')).map(x => x.uid); let ch = false;
+  for (const uid of staff) if (!R.refs.some(r => r.uid === uid)) { R.refs.push({ id: 'u' + uid, name: uid === own ? '7hzynn' : `管理員 ${uid.slice(-4)}`, uid, code: '', link: '', auto: true }); ch = true; }
+  const n0 = R.refs.length; R.refs = R.refs.filter(r => !r.auto || staff.includes(r.uid)); if (R.refs.length !== n0) ch = true;
+  if (ch) dirty = true; return R.refs;
+}
 const refVia = usr => { const r = usr && usr.ref && REF().refs.find(x => x.id === usr.ref.via); return r || null; };
 function refNotifyNew(usr, olds, tag) {               // 🔔 有人申請：通知擁有者，也通知他選的那個邀請人（管理員）；tag＝催審核的提醒
-  const via = refVia(usr), st = usr.ref.st, msg = `${tag || ''}🎟 **${via ? via.name + ' 的用戶' : '新用戶'}需要審核**：UID ${usr.uid}・${maskMail(usr.bind.email)}・${usr.bind.phone || ''}${olds && olds.length ? `（重新申請，舊的 UID ${olds.join('、')} 已作廢）` : ''}${REF().list.includes(usr.uid) ? '・✅ 在邀請名單裡' : '・名單裡沒有'}${st === 'ok' ? '' : `\n請到 Bitunix 代理商後台查這個 UID，再到網站「☰ 選單 → 🎟 審核註冊」按通過或拒絕：${SITE}`}`;
+  const via = refVia(usr), st = usr.ref.st, L = REF().list, inL = L.includes(usr.uid);
+  const msg = `${tag || ''}🎟 **${via ? via.name + ' 的用戶' : '新用戶'}需要審核**：UID ${usr.uid}・${maskMail(usr.bind.email)}・${usr.bind.phone || ''}${olds && olds.length ? `（重新申請，舊的 UID ${olds.join('、')} 已作廢）` : ''}
+👉 **邀請人：${via ? via.name : '⚠️ 沒有選'}**${via ? `，請 ${via.name} 到自己的 Bitunix 代理商後台查這個 UID` : '，請到代理商後台查這個 UID'}${L.length ? `（代理商名單：${inL ? '✅ 有' : '❌ 沒有'}）` : ''}${st === 'ok' ? '' : `\n查完到網站「☰ 選單 → 🎟 審核註冊」按通過或拒絕：${SITE}`}`;
   dcX(ctx(ownerUid()), msg);
   if (via && via.uid && via.uid !== ownerUid() && ST.users.some(x => x.uid === via.uid)) dcX(ctx(via.uid), msg);
 }
@@ -2083,7 +2176,7 @@ function refSet(usr, st, by, note) {                   // 通過／拒絕／撤�
   if (via && via.uid && via.uid !== by && ST.users.some(x => x.uid === via.uid)) dcX(ctx(via.uid), `🎟 ${via.name} 的用戶 UID ${usr.uid}：${st === 'ok' ? '✅ 已通過' : st === 'no' ? '❌ 未通過' : '⛔ 已撤銷'}（${by}）${usr.ref.note ? '・' + usr.ref.note : ''}`);
 }
 setInterval(() => {                                    // ⏰ 催審核：待審核超過 6 小時提醒邀請人和擁有者；超過 24 小時提醒所有管理員
-  const R = REF(); if (!R.on) return; const now = Date.now();
+  const R = REF(); if (!R.on) return; const now = Date.now(); refSync();
   for (const u of ST.users) {
     if (refExempt(u) || !u.ref || u.ref.st !== 'pending') continue; const age = now - (u.ref.at || u.created || now);
     if (age > 24 * HOUR && !u.ref.rem24) { u.ref.rem24 = now; dirty = true; refNotifyNew(u, null, `⏰ **已經等 ${Math.floor(age / HOUR)} 小時還沒審核**\n`); for (const a of ST.users) if (a.role === 'admin' && a.uid !== ownerUid() && (!refVia(u) || refVia(u).uid !== a.uid)) dcX(ctx(a.uid), `⏰ 有申請等了 ${Math.floor(age / HOUR)} 小時還沒審核：UID ${u.uid}${refVia(u) ? `（${refVia(u).name} 的用戶）` : ''}，請到網站「☰ 選單 → 🎟 審核註冊」處理：${SITE}`); }
@@ -2895,6 +2988,18 @@ function who(req) {                                   // 回傳登入的使用�
 }
 const validUid = x => /^\d{4,20}$/.test(String(x || ''));
 const validPw = x => typeof x === 'string' && x.length >= 8 && x.length <= 128;
+/* 🔐 太弱／常見的密碼不給設（Chrome 會跳「密碼已在資料侵害事件中外洩」就是這種）：同一個字、連續數字字母、常見密碼、含 UID、短的純數字 */
+const PW_COMMON = new Set(['password', 'password1', 'passw0rd', 'p@ssw0rd', 'qwertyui', 'qwerty123', 'qwertyuiop', '1qaz2wsx', '1q2w3e4r', '1q2w3e4r5t', 'abcd1234', 'abc12345', 'a1234567', 'aa123456', 'a12345678', 'zxcvbnm1', 'iloveyou', 'asdfghjk', 'asdf1234', 'qwer1234', '12341234', '11223344', '12344321', '5201314a', 'woaini1314', 'admin123', 'test1234', '12qwaszx', 'qazwsxedc', '1qaz2wsx3edc', 'qwe12345', 'aaaa1111', 'abc123456', 'q1w2e3r4', 'zaq12wsx', 'bitunix123', 'qevrax123']);
+function pwWeak(pw, uid) {
+  const p = String(pw || ''), l = p.toLowerCase();
+  if (/^(.)\1+$/.test(p)) return '密碼不能全部是同一個字';
+  let up = true, dn = true; for (let i = 1; i < l.length; i++) { const d = l.charCodeAt(i) - l.charCodeAt(i - 1); if (d !== 1) up = false; if (d !== -1) dn = false; }
+  if (up || dn) return '密碼不能是連續的數字或字母（例如 12345678、abcdefgh）';
+  if (PW_COMMON.has(l)) return '這組密碼太常見了（在外洩資料裡很常出現），請換一組';
+  if (uid && String(uid).length >= 4 && l.includes(String(uid))) return '密碼不能包含你的 UID';
+  if (/^\d+$/.test(p) && p.length < 10) return '只有數字的密碼至少要 10 碼，建議英文加數字';
+  return '';
+}
 function keyOk(req) {
   if (!ADMIN_KEY) return false;
   const k = Buffer.from(String(req.headers['x-key'] || '')), a = Buffer.from(ADMIN_KEY);
@@ -3017,8 +3122,9 @@ http.createServer(async (req, res) => {
       }
       if (u.pathname === '/api/trial/apply' && REF().on) return send(res, 400, { error: '試用已經取消，現在改成用邀請碼免費申請：請到「免費申請」頁面申請' });
       if (u.pathname === '/api/ref') {                   // 🎟 免費申請（不用登入）：看邀請人清單、送出申請（建立帳號，審核通過才能自動交易）
-        const R = REF(), op = String(b.op || 'info');
-        if (op === 'info') return send(res, 200, { on: R.on, minVol: R.minVol, refs: R.refs.map(r => ({ id: r.id, name: r.name, code: r.code || '', link: r.link || '' })), mail: mailOn(), terms: REF_TERMS.replace('{min}', (+R.minVol || 0).toLocaleString()) + '\n\n────────────\n\n' + BL().terms, termsVer: BL().termsVer });
+        const R = REF(), op = String(b.op || 'info'); refSync();
+        const tm = SP_ONLY ? { terms: FREE_TERMS.split('{min}').join((+R.minVol || 0).toLocaleString()), termsVer: FREE_VER, privacy: FREE_PRIVACY } : { terms: REF_TERMS.replace('{min}', (+R.minVol || 0).toLocaleString()) + '\n\n────────────\n\n' + BL().terms, termsVer: BL().termsVer, privacy: LEGAL.privacy };
+        if (op === 'info') return send(res, 200, { on: R.on, minVol: R.minVol, refs: R.refs.map(r => ({ id: r.id, name: r.name, code: r.code || '', link: r.link || '' })), mail: mailOn(), ...tm });
         if (op === 'apply') {
           if (!R.on) return send(res, 400, { error: '目前沒有開放免費申請' });
           if (!mailAllow('refip:' + ip, 10)) return send(res, 429, { error: '申請太多次了，請一小時後再試' });
@@ -3030,6 +3136,7 @@ http.createServer(async (req, res) => {
           const same = ST.users.find(x => x.uid === uid);
           if (same && !redo(same)) return send(res, 400, { error: '這個 UID 已經有帳號了，請直接登入', needLogin: true });
           if (!validPw(b.password)) return send(res, 400, { error: '密碼至少 8 個字' });
+          { const w = pwWeak(b.password, uid); if (w) return send(res, 400, { error: w }); }
           if (!phone) return send(res, 400, { error: '手機號碼格式不對（台灣手機請填 09 開頭的 10 碼）' });
           if (R.refs.length && !R.refs.some(r => r.id === via)) return send(res, 400, { error: '請選是誰邀請你的（你用誰的邀請碼註冊 Bitunix）' });
           const C = BUYC.get(email); if (!C || C.exp < Date.now() || C.n >= 5) return send(res, 400, { error: '請先寄驗證碼到信箱，再輸入信裡的 6 位數字' });
@@ -3039,7 +3146,7 @@ http.createServer(async (req, res) => {
           const old = [...new Set([same, ...cs].filter(Boolean))];
           for (const x of old) { log('重新申請，舊申請作廢', x.uid, '→', uid); trialRemove(x.uid); }
           const now = Date.now(), inList = R.list.includes(uid);
-          const usr = { uid, role: 'viewer', ...hashPw(String(b.password)), created: now, bind: { email, phone, google: false, at: now }, termsAt: now, termsVer: BL().termsVer || '', ref: { st: 'pending', at: now, via } };   // 一律人工審核（在邀請名單裡只是標示給審核的人看）
+          const usr = { uid, role: 'viewer', ...hashPw(String(b.password)), created: now, bind: { email, phone, google: false, at: now }, termsAt: now, termsVer: tm.termsVer || '', ref: { st: 'pending', at: now, via } };   // 一律人工審核（在邀請名單裡只是標示給審核的人看）
           if (!ST.tool.grants.includes(uid)) ST.tool.grants.push(uid); ST.users.push(usr); BUYC.delete(email); dirty = true;
           log('免費申請', uid, inList ? '待審核（在邀請名單裡）' : '待審核'); refNotifyNew(usr, old.map(x => x.uid));
           billMail(usr, '帳號已建立（審核中）', `帳號已經建立！\n\nUID：${uid}\n密碼：你申請時設定的那組\n登入網址：${SITE}\n\n我們會確認你是用我們的邀請碼註冊 Bitunix，通過後會寄信通知你。審核前可以先登入、設定 Bitunix API 和 Discord，但還不能開始自動交易。`);
@@ -3145,6 +3252,7 @@ http.createServer(async (req, res) => {
         const R = RESETS.get(sha(String(b.token || '')));
         if (!R || R.exp < Date.now()) { failed(ip); return send(res, 400, { error: '連結已經失效（超過 30 分鐘或已經用過），請重新按「忘記密碼」' }); }
         if (!validPw(b.password)) return send(res, 400, { error: '新密碼至少 8 個字' });
+        { const w = pwWeak(b.password, R.uid); if (w) return send(res, 400, { error: w }); }
         const usr = ST.users.find(x => x.uid === R.uid); if (!usr) return send(res, 400, { error: '找不到這個帳號' });
         RESETS.delete(sha(String(b.token)));
         Object.assign(usr, hashPw(b.password)); ST.sessions = ST.sessions.filter(x => x.uid !== usr.uid); dirty = true;
@@ -3248,11 +3356,18 @@ http.createServer(async (req, res) => {
       if (!PERSONAL.includes(u.pathname) && !ADMIN.includes(u.pathname) && !owner) return send(res, 403, { error: '這個設定只有擁有者可以改' });
       const b = await readBody(req);
       if (u.pathname === '/api/ref/admin') {             // 🎟 邀請碼審核（擁有者＋管理員）；設定只有擁有者能改
-        const R = REF(), op = String(b.op || 'list'), by = me ? me.uid : '管理金鑰';
+        const R = REF(), op = String(b.op || 'list'), by = me ? me.uid : '管理金鑰'; refSync();
+        if (op === 'mine') {                             // 管理員改自己在註冊頁顯示的名字、邀請碼、邀請連結
+          const r = me && R.refs.find(x => x.uid === me.uid); if (!r) return send(res, 404, { error: '找不到你的邀請人資料' });
+          const nm = String(b.name || '').trim().slice(0, 30); if (!nm) return send(res, 400, { error: '名字不能空白' });
+          if (R.refs.some(x => x !== r && x.name === nm)) return send(res, 400, { error: '這個名字已經有人用了' });
+          r.name = nm; r.code = String(b.code || '').trim().slice(0, 40); r.link = String(b.link || '').trim().slice(0, 300); dirty = true; log('改邀請人資料', me.uid, nm);
+          return send(res, 200, { ok: true });
+        }
         if (op === 'cfg') {
           if (!owner) return send(res, 403, { error: '邀請碼的設定只有擁有者可以改' });
           if (b.minVol !== undefined) { const v = +b.minVol; if (!(v >= 0 && v <= 1e9)) return send(res, 400, { error: '活躍門檻要是 0 以上的數字' }); R.minVol = v; }
-          if (Array.isArray(b.refs)) R.refs = b.refs.slice(0, 50).map(r => ({ id: String(r.id || crypto.randomBytes(4).toString('hex')).slice(0, 20), name: String(r.name || '').trim().slice(0, 30), uid: String(r.uid || '').trim().slice(0, 20), code: String(r.code || '').trim().slice(0, 40), link: String(r.link || '').trim().slice(0, 300) })).filter(r => r.name);
+          if (Array.isArray(b.refs)) R.refs = b.refs.slice(0, 50).map(r => ({ id: String(r.id || crypto.randomBytes(4).toString('hex')).slice(0, 20), name: String(r.name || '').trim().slice(0, 30), uid: String(r.uid || '').trim().slice(0, 20), code: String(r.code || '').trim().slice(0, 40), link: String(r.link || '').trim().slice(0, 300), ...(r.auto ? { auto: true } : {}) })).filter(r => r.name); refSync();
           if (typeof b.on === 'boolean' && b.on !== R.on && !SP_ONLY) {   // 特級專用版一律開著
             R.on = b.on;
             if (b.on) { let n = 0; for (const x of ST.users) if (!x.ref) { x.ref = { st: 'ok', at: Date.now(), by: '開啟前的帳號', doneAt: Date.now() }; n++; } log('開啟邀請碼制', `現有 ${n} 個帳號自動通過`); }
@@ -3274,7 +3389,7 @@ http.createServer(async (req, res) => {
         const inL = new Set(R.list);                     // list：所有帳號的審核狀態、邀請人、近 30 天交易量（跟代理商後台對帳用）
         const users = ST.users.filter(x => !refExempt(x)).map(x => { const r = x.ref || { st: 'pending' }, v = refVia(x), A = ST.accts[x.uid];
           return { uid: x.uid, email: x.bind ? x.bind.email : '', phone: x.bind ? x.bind.phone : '', created: x.created || 0, st: r.st, at: r.at || 0, doneAt: r.doneAt || 0, by: r.by || '', note: r.note || '', via: v ? v.name : '', viaId: r.via || '', auto: !!r.auto, inList: inL.has(x.uid), vol: Math.round(refVol(x.uid)), low: !!r.low, api: !!(A && A.bx && A.bx.key), sp: !!(A && A.lt && A.lt.sp) }; });
-        return send(res, 200, { owner: !!owner, cfg: { on: R.on, minVol: R.minVol, refs: R.refs, listN: R.list.length, listAt: R.listAt }, users });
+        return send(res, 200, { owner: !!owner, meUid: me ? me.uid : '', cfg: { on: R.on, minVol: R.minVol, refs: R.refs, listN: R.list.length, listAt: R.listAt }, users });
       }
       if (u.pathname === '/api/xent') {                  // 🔔 額外進場：自己的關注清單、通知頻道
         const uid = meU ? meU.uid : ownerUid(), c = xCfg(uid), op = String(b.op || 'get');
@@ -3768,6 +3883,7 @@ http.createServer(async (req, res) => {
         const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
         if (!pwOk(me, String(b.old || ''))) { failed(ip); return send(res, 400, { error: '目前的密碼不對' }); }
         if (!validPw(b.password)) return send(res, 400, { error: '新密碼至少 8 個字' });
+        { const w = pwWeak(b.password, me.uid); if (w) return send(res, 400, { error: w }); }
         if (String(b.password) === String(b.old)) return send(res, 400, { error: '新密碼跟目前的一樣' });
         Object.assign(me, hashPw(b.password));
         const m0 = String(req.headers.authorization || '').match(/^Bearer\s+([0-9a-f]{64})$/i), keep = m0 ? tokHash(m0[1]) : '';
