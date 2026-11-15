@@ -35,6 +35,7 @@ const lockAt = (peak, T = ST.trade) => (T.step > 0 && peak > T.tp ? T.tp + Math.
 const DEF_NOTIFY = { webhook: '', name: '', enabled: true, entry: true, exit: true };
 const DEF_EQ = { mode: 'fixed', amt: 0.3, fee: 0.05, max: 0 };
 const DEF_BX = { key: '', secret: '', notify: true, liq: true, liqPct: 3 };
+const SP_ONLY = true;                                    // 🗡 特級專用版：沒有一般交易（不掃 CVD、不開一般單；所有帳號都能用特級交易）
 const RESUME = [];                                       // 🔄 重開前在跑的帳號
 const DEF_LT = { on: false, sp: false, budgetAt: 0, pool: 0, allocTol: 10, budAt: 0, spBudAt: 0, wd: 0, spWd: 0, spLev: null, spMargin: null, spBudget: 0, spStartAt: 0, spDayLoss: null, spTp: null, spStep: null, spSl: null, spHold: null, margin: 0.3, lev: 100, mode: 'CROSS', maxOpen: 0, dayLoss: 20, startCap: 0, startAt: 0, budget: 0, tp: 250, sl: 250, step: 50, hold: 168, btcF: 1 };   // tp：浮盈達到幾 % 開始鎖利（每個帳號自己設）   // btcF：自己要不要用 BTC 方向過濾（預設開）   // sl：浮虧多少 % 平倉；step：鎖利線每多幾 % 上調；hold：最長持有（小時）——每個帳號自己設定   // budget：投入資金（0＝整個合約帳戶）   // startCap＝0 代表等偵測到帳戶資金再開始算   // 自動下單（預設暫停）   // Bitunix 唯讀 API 金鑰（只存在這台伺服器）            // 資金模擬：每筆保證金、手續費、最多同時持倉
 const DEF_REP = { cap: 100, btN: 50, days: 14, next: 0 };                   // 雙週結算：每期本金、回測幣數、幾天一期、下次結算時間
@@ -75,6 +76,10 @@ try {
     }
   }
 
+  if (SP_ONLY) {                                        // 🗡 特級專用版：一般交易全部關掉、投入資金歸零（之前開的一般單照原本規則管到出場）
+    for (const A of Object.values(ST.accts)) { const L = A.lt; if (L.budget > 0 && !L.nBudOld) L.nBudOld = L.budget; L.on = false; L.rsOn = false; L.budget = 0; L.wd = 0; }
+    for (const r of RESUME) r.on = false;
+  }
   log(`讀入存檔：${ST.cards.length} 張卡片、${ST.bt.trades.length} 筆回測`);
 } catch (e) { log('沒有存檔，從頭開始'); }
 let CV = Date.now(), BV = Date.now();                  // 卡片、回測各自的版本號，沒變就不用重傳
@@ -934,14 +939,14 @@ async function historyReports(periods) {
   REP.busy = false;
 }
 // 每分鐘檢查一次；第一次啟動時馬上結算一期（回測剛好就是最近 14 天），之後每 14 天一次
-setInterval(() => { if (!REP.busy && Date.now() >= (ST.rep.next || 0)) settle(false); }, 60000);
+setInterval(() => { if (!SP_ONLY && !REP.busy && Date.now() >= (ST.rep.next || 0)) settle(false); }, 60000);   // 🗡 特級專用版：不跑 CVD 雙週結算
 
 /* ---------------- 多帳號：每個登入帳號各自的 Bitunix API、自動交易、實盤紀錄、Discord ----------------
    ST.accts[uid] = { bx, lt, ltTrades, notify }（會存檔）；X = 帳號執行中的暫存（持倉、帳戶資金、下單鎖、版本號）
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-11-10b';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-11-15b';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1242,7 +1247,7 @@ function ecoDayTick() {                               // 有數據的日子早�
   else if (!B && ST.ecoUntil) { ST.ecoUntil = 0; dirty = true; dcAll('📅 **數據公布已經過 4 小時，自動交易恢復開新單**', N => N.enabled); }
 }
 setInterval(ecoDayTick, 60000); setTimeout(ecoDayTick, 90000);
-const toolOkUid = uid => { uid = String(uid).replace(/~sim$/, ''); return uid === ownerUid() || ST.tool.grants.includes(uid); };   // 模擬盤跟本人一樣   // 🗡 有特級咒具權限
+const toolOkUid = uid => { if (SP_ONLY) return true; uid = String(uid).replace(/~sim$/, ''); return uid === ownerUid() || ST.tool.grants.includes(uid); };   // 模擬盤跟本人一樣   // 🗡 有特級咒具權限
 async function ltOpen(X, c) {
   const C = X.A.lt, K = X.A.bx, LT = X.LT, BX = X.BX, sp = c.src === 'tool';
   const M = sp ? C.spMargin || C.margin : C.margin, LV = sp ? C.spLev || C.lev : C.lev, BUD = sp ? C.spBudget : C.budget, NM = sp ? '特級交易' : '自動交易';   // 🗡 特級交易用自己的設定（先替換再插入，避免這行也被換掉）   // sp：🗡 特級交易（特級咒具的訊號）
@@ -1252,6 +1257,7 @@ async function ltOpen(X, c) {
     if (once) { const d = new Date(Date.now() + TZ).toISOString().slice(0, 10); if (LT.spOnce === d + once) return; LT.spOnce = d + once; }
     dcX(X, `⏭️ **🗡 特級交易沒有下單** ${c.dir > 0 ? '🟢 做多' : '🔴 做空'} **${mdEsc(c.sym)}**：${why}`);
   };
+  if (SP_ONLY && !sp) return;                          // 🗡 特級專用版：一般交易不開單
   if (billLocked(X.uid)) return skip('方案到期，請續費');   // 💳 月費到期：不開新單
   if (!(sp ? C.sp && toolOkUid(X.uid) : C.on) || !hasKey(X)) return;
   if (LT.busy.has(c.sym)) return skip('同一個幣正在下單中（另一個訊號剛好同時出現），這次略過');
@@ -1355,6 +1361,7 @@ async function ltSyncSL(X, kind) {                     // kind：'n'＝只同步
 const rk = (t, rl) => (t.lev > 0 && rl > 0 ? t.lev / rl : 1);
 const pctK = (v, k) => { const x = v * k; return Math.abs(x - Math.round(x)) < 0.05 ? String(Math.round(x)) : x.toFixed(1); };
 async function ltFlipOpen(X, c) {
+  if (SP_ONLY && c.src !== 'tool') return;
   const sp = c.src === 'tool', LT = X.LT, opp = ltOpenTrades(X).filter(t => t.sym === c.sym && t.dir !== c.dir && t.positionId && (sp ? t.src === 'tool' : t.src !== 'tool'));   // 🗡 特級只反手特級自己的單
   if (sp && !(X.A.lt.sp && toolOkUid(X.uid))) return;
   if (!opp.length) return ltOpen(X, c);
@@ -1555,8 +1562,8 @@ if (!ST.tool.v2) {                                     // 🗡 特級咒具 v2�
 }
 let TOOLV = 1;
 const TOOL_P = { h4: { ltf: '15m', lms: 15 * 60000, htf: '4h', hms: 4 * HOUR, name: '4H→15 分', hn: '4H', ln: '15M' }, h1: { ltf: '5m', lms: 5 * 60000, htf: '1h', hms: HOUR, name: '1H→5 分', hn: '1H', ln: '5M' } };
-const toolUsers = () => [ownerUid(), ...ST.tool.grants.filter(u => ST.users.some(x => x.uid === u))];
-const toolOk = (me, owner) => owner || !!(me && ST.tool.grants.includes(me.uid));
+const toolUsers = () => SP_ONLY ? [...new Set([ownerUid(), ...ST.users.map(x => x.uid)])] : [ownerUid(), ...ST.tool.grants.filter(u => ST.users.some(x => x.uid === u))];
+const toolOk = (me, owner) => owner || (SP_ONLY && !!me) || !!(me && ST.tool.grants.includes(me.uid));
 async function toolKl(sym, iv, limit, ms) {           // 只要已經收盤的 K 棒
   const r = await getJSON(`${BF}/fapi/v1/klines?symbol=${sym}&interval=${iv}&limit=${limit}`);
   return (Array.isArray(r) ? r : []).map(x => ({ t: +x[0], o: +x[1], h: +x[2], l: +x[3], c: +x[4], qv: +x[7], tb: +x[10] })).filter(b => b.t + ms <= Date.now());
@@ -2701,7 +2708,8 @@ function healthTick() {
   const now = Date.now(), OX = ctx(ownerUid());
   // 掃描超過 10 分鐘沒成功（幣安連不到、程式卡住）→ 告訴擁有者；一小時最多一次，恢復時也說一聲
   const age = now - (SCAN.okAt || BOOT);
-  if (age > 10 * 60000) { if (now - HL.scanBad > HOUR) { HL.scanBad = now; dcX(OX, `🩺 **掃描已經 ${Math.round(age / 60000)} 分鐘沒成功**${SCAN.err ? `：${mdEsc(SCAN.err)}` : ''}\n新訊號會停住，已開的單照常管理。持續沒恢復請在 SSH 打 \`journalctl -u quant -n 50\` 看原因`); } }
+  if (SP_ONLY) {}                                     // 🗡 特級專用版沒有 CVD 掃描，不用檢查
+  else if (age > 10 * 60000) { if (now - HL.scanBad > HOUR) { HL.scanBad = now; dcX(OX, `🩺 **掃描已經 ${Math.round(age / 60000)} 分鐘沒成功**${SCAN.err ? `：${mdEsc(SCAN.err)}` : ''}\n新訊號會停住，已開的單照常管理。持續沒恢復請在 SSH 打 \`journalctl -u quant -n 50\` 看原因`); } }
   else if (HL.scanBad) { HL.scanBad = 0; dcX(OX, '🩺 **掃描恢復正常**'); }
   // 每個帳號：Bitunix 連續 5 分鐘讀不到 → 告訴那個帳號（讀不到就沒辦法管理持倉）
   for (const X of allX()) {
@@ -3085,14 +3093,15 @@ http.createServer(async (req, res) => {
       if (!usr) return send(res, 404, { error: '找不到這個帳號' });
       const out = { uid: usr.uid, role: usr.role, owner: usr.uid === ownerUid(), bind: bindOut(usr), last: usr.last || 0, created: usr.created || 0, note: usr.note || '' };
       if (!ST.accts[usr.uid]) return send(res, 200, { ...out, api: false, empty: true });
-      const V = ctx(usr.uid), L = V.A.lt, TR = V.A.ltTrades.filter(t => inStat(t, L.startAt));
+      const V = ctx(usr.uid), L = V.A.lt, TR = V.A.ltTrades.filter(t => SP_ONLY ? t.src === 'tool' && inStat(t, L.spStartAt) : inStat(t, L.startAt));   // 🗡 特級專用版：只算特級交易
       const done = TR.filter(t => t.status === 'closed'), net = done.reduce((a, t) => a + ltNet(t), 0);
       return send(res, 200, {
         ...out, api: hasKey(V), err: V.BX.err, at: V.BX.at, acctEq: bxEquity(V), bot: ltBotEq(V), dayPnl: V.LT.dayPnl || 0, msg: V.LT.msg, hook: !!V.A.notify.webhook,
-        lt: { on: L.on, tp: L.tp || ST.trade.tp, budget: L.budget, margin: L.margin, lev: L.lev, dayLoss: L.dayLoss, sl: L.sl, step: L.step, hold: L.hold, startCap: L.startCap, startAt: L.startAt },
+        lt: { on: L.on, tp: L.tp || ST.trade.tp, budget: L.budget, margin: L.margin, lev: L.lev, dayLoss: L.dayLoss, sl: L.sl, step: L.step, hold: L.hold, startCap: L.startCap, startAt: L.startAt, sp: L.sp, spBudget: L.spBudget, spMargin: L.spMargin, spLev: L.spLev, spDayLoss: L.spDayLoss, spHold: L.spHold },
+        spBot: ltSpEq(V), spDay: V.LT.spDayPnl || 0,
         pos: V.BX.pos.map(p => ({ id: p.id, sym: p.sym, dir: p.dir, lev: p.lev, qty: p.qty, entry: p.entry, px: PX.map[p.sym] || null, upnl: p.upnl, margin: p.margin, liq: p.liq, ctime: p.ctime, bot: !!V.A.ltTrades.find(t => t.status === 'open' && t.positionId === p.id) })),
         stats: { n: done.length, win: done.filter(t => ltNet(t) > 0).length, net, fee: TR.reduce((a, t) => a + Math.abs(t.fee || 0), 0) },
-        trades: V.A.ltTrades.slice(0, 30).map(t => ({ sym: t.sym, dir: t.dir, lev: t.lev, et: t.et, exitAt: t.exitAt || 0, status: t.status, reason: t.reason || '', net: ltNet(t), upnl: t.upnl || 0, m0: t.m0 || 0 }))
+        trades: V.A.ltTrades.filter(t => !SP_ONLY || t.src === 'tool').slice(0, 30).map(t => ({ sym: t.sym, dir: t.dir, lev: t.lev, et: t.et, exitAt: t.exitAt || 0, status: t.status, reason: t.reason || '', net: ltNet(t), upnl: t.upnl || 0, m0: t.m0 || 0 }))
       });
     }
     if (req.method === 'GET' && u.pathname === '/api/whale') {          // 🐋 鯨魚大單：?sym=BTCUSDT&a=上次收到的最後一筆成交編號
@@ -3103,7 +3112,7 @@ http.createServer(async (req, res) => {
     }
     if (req.method === 'GET' && u.pathname === '/api/state') {
       const out = {
-        time: Date.now(), ver: VER, cv: CV, bv: BV * 2 + (X.A.lt.btcF ? 1 : 0), set: ST.set, trade: ST.trade, canWrite: !!ADMIN_KEY,
+        time: Date.now(), ver: VER, spOnly: SP_ONLY, notice: ST.notice || null, cv: CV, bv: BV * 2 + (X.A.lt.btcF ? 1 : 0), set: ST.set, trade: ST.trade, canWrite: !!ADMIN_KEY,
         scan: { ...SCAN, pause: RL.pause }, bt: { at: ST.bt.at, coins: ST.bt.coins, n: btActive().length, cmp: btCompare() }, btp: BTP, bstat: { busy: BSTAT.busy, msg: BSTAT.msg, v: BSTAT.v || ST.bstat || null },
         notify: { enabled: X.A.notify.enabled, entry: X.A.notify.entry, exit: X.A.notify.exit, hasHook: !!X.A.notify.webhook, name: X.A.notify.name, last: dcStat(X.A.notify.webhook) },
         me: { uid: me ? me.uid : '管理金鑰', admin: !!admin, owner: !!owner },
@@ -3223,7 +3232,7 @@ http.createServer(async (req, res) => {
             if (v.on && !B.addr) return send(res, 400, { error: '請先設定收款地址，再打開收費' });
             B.on = v.on; if (v.on) {                    // 打開收費：還沒有付款紀錄的人給寬限期
               B.onAt = now;
-              for (const usr of ST.users) if (!billFree(usr.uid) && !(usr.paidUntil > now) && !(usr.trialEnd > now)) { usr.paidUntil = now + B.graceDays * DAYMS; if (ST.accts[usr.uid]) dcX(ctx(usr.uid), `💳 **網站開始收月費**：每月 ${B.price} USDT（含一般交易＋特級交易）。你有 ${B.graceDays} 天寬限期，到 ${tw(usr.paidUntil)} 前到「☰ 選單 → 💳 方案與繳費」付款，交易就不會中斷。`); }
+              for (const usr of ST.users) if (!billFree(usr.uid) && !(usr.paidUntil > now) && !(usr.trialEnd > now)) { usr.paidUntil = now + B.graceDays * DAYMS; if (ST.accts[usr.uid]) dcX(ctx(usr.uid), `💳 **網站開始收月費**：每月 ${B.price} USDT（${SP_ONLY ? '🗡 特級交易' : '含一般交易＋特級交易'}）。你有 ${B.graceDays} 天寬限期，到 ${tw(usr.paidUntil)} 前到「☰ 選單 → 💳 方案與繳費」付款，交易就不會中斷。`); }
             }
           }
           dirty = true; return send(res, 200, { ok: true });
@@ -3317,6 +3326,7 @@ http.createServer(async (req, res) => {
         const usr = ST.users.find(x => x.uid === String(b.uid || '')); if (!usr) return send(res, 404, { error: '找不到這個帳號' });
         if (typeof b.on !== 'boolean') return send(res, 400, { error: '要指定開始或暫停' });
         const XA = ctx(usr.uid);
+        if (SP_ONLY && b.on) return send(res, 400, { error: '這個版本只有 🗡 特級交易，沒有一般交易' });
         if (b.on && !hasKey(XA)) return send(res, 400, { error: `${usr.uid} 還沒設定 Bitunix API，不能開始交易` });
         XA.A.lt.allOff = false;
         if (XA.A.lt.on !== b.on) { XA.A.lt.on = b.on; if (!b.on) XA.LT.pause = { t: Date.now(), why: '擁有者幫你暫停' }; touchLT(XA); dcX(XA, b.on ? '▶️ **自動交易已開始**（擁有者幫你開啟）' : '⏸ **自動交易已暫停**（擁有者幫你暫停，已開的單照常管理）'); log(b.on ? '擁有者幫帳號開始交易' : '擁有者幫帳號暫停交易', usr.uid); }
@@ -3324,6 +3334,7 @@ http.createServer(async (req, res) => {
       }
       if (u.pathname === '/api/lt/all') {             // 👑 擁有者：一鍵全部暫停／開始。「全部開始」只恢復被「全部暫停」停掉的帳號，在那之前就暫停的維持暫停
         if (typeof b.on !== 'boolean') return send(res, 400, { error: '要指定開始或暫停' });
+        if (SP_ONLY && !b.sp && b.on) return send(res, 400, { error: '這個版本只有 🗡 特級交易，沒有一般交易' });
         const sp = !!b.sp, ON = sp ? 'sp' : 'on', MARK = sp ? 'spAllOff' : 'allOff', NM = sp ? '🗡 特級交易' : '自動交易';
         let n = 0, skip = 0, keep = 0;
         for (const XA of allX()) {
@@ -3403,6 +3414,22 @@ http.createServer(async (req, res) => {
         if (b.trade) { markSettledNotified(); touchCards(); }   // 改了浮盈／槓桿，結果會重算；已結單的不要再發一次通知
         return send(res, 200, { ok: true, set: ST.set, trade: ST.trade, eq: ST.eq, rep: ST.rep });
       }
+      if (u.pathname === '/api/announce') {             // 📢 擁有者：發更新通知給所有帳號（網站跳出公告＋每個人的 Discord，可以選擇也寄 Email）
+        const title = String(b.title || '').trim().slice(0, 80), text = String(b.text || '').trim().slice(0, 1800);
+        if (!title || !text) return send(res, 400, { error: '標題和內容都要填' });
+        if (ST.notice && Date.now() - ST.notice.t < 60000) return send(res, 429, { error: '剛剛才發過，請 1 分鐘後再發' });
+        ST.notice = { id: 'n' + Date.now().toString(36), t: Date.now(), title, text }; dirty = true;
+        const hooks = new Set(); for (const XA of allX()) { const N = XA.A.notify; if (N && N.webhook && N.enabled !== false) hooks.add(N.webhook); }
+        dcAll(`📢 **QEVRAX 更新通知：${mdEsc(title)}**\n${mdEsc(text)}\n-# ${tw(Date.now())}（台北）・詳細內容請到網站查看 ${SITE}`, N => N.enabled !== false);
+        let mails = 0;
+        if (b.email && mailOn()) {                       // 一封一封慢慢寄，避免被 Gmail 擋
+          const to = [...new Set(ST.users.map(x => x.bind && x.bind.email).filter(Boolean))]; mails = to.length;
+          (async () => { for (const m of to) { await sendMail(m, `QEVRAX 更新通知：${title}`, `${text}\n\n—— QEVRAX\n${SITE}`).catch(e => log('更新通知寄信失敗', maskMail(m), e.message)); await sleep(1500); } })();
+        }
+        log('發更新通知', title, `Discord ${hooks.size} 個頻道`, `Email ${mails} 封`);
+        return send(res, 200, { ok: true, dc: hooks.size, mail: mails, mailOff: !!b.email && !mailOn(), users: ST.users.length });
+      }
+      if (SP_ONLY && ['/api/backtest', '/api/report/history', '/api/report/settle'].includes(u.pathname)) return send(res, 400, { error: '這個版本只有 🗡 特級交易，沒有 CVD 回測、結算' });
       if (u.pathname === '/api/backtest') { backtest(Math.max(0, +b.n || 0)); return send(res, 200, { ok: true }); }
       if (u.pathname === '/api/backtest/stop') { BTP.stop = true; return send(res, 200, { ok: true }); }
       if (u.pathname === '/api/cards/delete') { ST.cards = ST.cards.filter(c => c.id !== b.id); touchCards(); return send(res, 200, { ok: true }); }
@@ -3434,6 +3461,7 @@ http.createServer(async (req, res) => {
       if (u.pathname === '/api/lt/config') {
         const C = X.A.lt;
         if ((b.on === true || b.sp === true) && me && billLocked(me.uid)) return send(res, 402, { error: '方案已到期，請到「☰ 選單 → 💳 方案與繳費」續費後再開始交易', needPay: true });
+        if (SP_ONLY && (b.on === true || b.budget !== undefined)) return send(res, 400, { error: '這個版本只有 🗡 特級交易，沒有一般交易' });
         if (typeof b.on === 'boolean') {
           if (b.on && !hasKey(X)) return send(res, 400, { error: '請先設定你自己的 Bitunix API 金鑰（要開交易權限）' });
           if (b.on && !(C.budget > 0)) return send(res, 400, { error: '請先到「☰ 選單 → 設定 → 我的交易設定」填「合約投入資金」，再開始交易' });
@@ -3595,6 +3623,7 @@ http.createServer(async (req, res) => {
         return send(res, 200, { ok: true, out: n0 - ST.sessions.length });
       }
       if (u.pathname === '/api/lt/adopt') {            // 🤖 把一筆手動單改成自動單：之後照「那個帳號自己」的規則管理（鎖利、停損、到期、一鍵平倉），交易所也補掛止損
+        if (SP_ONLY) return send(res, 400, { error: '這個版本只有 🗡 特級交易，手動單不能改成一般自動單' });
         let XA = X;                                      // 👑 擁有者可以在帳號管理後台幫別人改（對方的 Discord 會收到通知）
         if (b.uid && String(b.uid) !== X.uid) {
           if (!owner) return send(res, 403, { error: '只有擁有者可以幫別人改成自動單' });
@@ -3688,7 +3717,8 @@ http.createServer(async (req, res) => {
   try { await getJSON(BF + '/fapi/v1/ping'); log('幣安連線正常'); }
   catch (e) { log('連不到幣安：', e.message); }
   for (;;) {
-    if (!BTP.run) await scan();
+    if (!BTP.run && !SP_ONLY) await scan();             // 🗡 特級專用版不掃 CVD 異常
+    else if (SP_ONLY) { try { await btcRefresh(); SCAN.btc = btcNow(); } catch (e) {} }   // 作戰室「情報」還是要看 BTC 方向
     await sleep(Math.max(3, ST.set.everyS || 10) * 1000);
   }
 })();
