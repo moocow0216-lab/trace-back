@@ -76,6 +76,11 @@ try {
     }
   }
 
+  for (const A of Object.values(ST.accts)) {           // 🔧 2026-11-15e：以前重新設定特級投入資金會把之前的盈虧歸零，改成「加碼」之後，起點改回第一筆特級單（之前賺賠的照算）
+    const L = A.lt; if (L.spV5) continue; L.spV5 = true;
+    const first = (A.ltTrades || []).filter(t => t.src === 'tool').reduce((m, t) => Math.min(m, t.et || Infinity), Infinity), base = L.spStartAt > 0 ? L.spStartAt : first;
+    if (L.spBudAt > 0 && isFinite(base) && base > 0 && L.spBudAt > base) { log('特級投入資金起點改回', L.spBudAt, '→', base); L.spBudAt = base; }
+  }
   if (SP_ONLY) {                                        // 🗡 特級專用版：一般交易全部關掉、投入資金歸零（之前開的一般單照原本規則管到出場）
     for (const A of Object.values(ST.accts)) { const L = A.lt; if (L.budget > 0 && !L.nBudOld) L.nBudOld = L.budget; L.on = false; L.rsOn = false; L.budget = 0; L.wd = 0; }
     for (const r of RESUME) r.on = false;
@@ -946,7 +951,7 @@ setInterval(() => { if (!SP_ONLY && !REP.busy && Date.now() >= (ST.rep.next || 0
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-11-15b';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-11-15e';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -3511,7 +3516,10 @@ http.createServer(async (req, res) => {
           if (bud !== undefined && !(bud > 0)) return send(res, 400, { error: '特級交易的投入資金要填大於 0 的數字' });
           if (bud !== undefined) {                        // 網頁只在你改過投入資金時才送
             const err = ltAllocCheck(X, C.budget || 0, bud); if (err) return send(res, 400, { error: err });
-            C.spBudget = bud; C.spWd = 0; C.spBudAt = Date.now();   // 🗡 特級交易從這個金額重新開始（之前的特級盈虧不再扣著）
+            const old = +C.spBudget || 0;
+            if (!(old > 0)) { C.spBudAt = Date.now(); C.spWd = 0; C.spDeps = []; C.spV5 = true; }   // 第一次設定：從這個金額開始
+            else if (bud !== old) { (C.spDeps = C.spDeps || []).push({ t: Date.now(), amt: +(bud - old).toFixed(2) }); if (C.spDeps.length > 100) C.spDeps.shift(); }   // 💰 之後改投入資金＝加碼／減碼：之前的特級盈虧照算（500U 賺到 713U，再加 500U → 1213U）
+            C.spBudget = bud;
           }
           const slChanged = sl !== undefined && sl !== C.spSl;
           if (lev !== undefined) C.spLev = Math.round(lev); if (m !== undefined) C.spMargin = m; if (dl !== undefined) C.spDayLoss = dl;
