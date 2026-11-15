@@ -1328,7 +1328,7 @@ body.sponly #qSrc,body.sponly #qAuto,body.sponly #qScan,body.sponly #qStat,body.
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-16i</div>
+      <div class="qver" id="qVer">網站版本 2026-11-16j</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3804,7 +3804,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.man = j.lt.man || []; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-16i・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-16j・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     if (j.notice) ntShow(j.notice);                     // 📢 擁有者發的更新通知
     $('qAnnBox').hidden = !OWN(); if (OWN() && !$('ann_t').value && !$('ann_x').value) annFill();
@@ -6672,9 +6672,14 @@ function refDraw() {
     ${own ? `<details${C.refs.length ? '' : ' open'}><summary class="tlsub">⚙️ 邀請人和活躍門檻（只有擁有者能改）</summary>
       ${SPONLY ? '' : `<label class="agree"><input type="checkbox" id="ra_on"${C.on ? ' checked' : ''}> 開啟邀請碼制（開啟時，現有帳號都會自動算「已通過」）</label>`}
       <label class="field">活躍門檻：近 30 天自動交易量（USDT，0＝不檢查）<input id="ra_min" type="number" min="0" step="100" value="${C.minVol}"></label>
-      <p class="tlsub">邀請人：申請時讓用戶選「用誰的邀請碼註冊」；有人選了，會發 Discord 給那個人（填他在本網站的帳號 UID，他自己要設好 Discord 通知）和你。</p>
-      <div class="tablewrap"><table class="tltab"><tr><th>名稱</th><th>通知帳號 UID</th><th>邀請碼</th><th>邀請連結</th><th></th></tr>${refs.map((r, i) => `<tr><td><input data-rae="${i}" data-k="name" value="${esc(r.name)}" placeholder="例如 7hzynn"></td><td><input data-rae="${i}" data-k="uid" value="${esc(r.uid || '')}" placeholder="網站帳號 UID" inputmode="numeric"></td><td><input data-rae="${i}" data-k="code" value="${esc(r.code || '')}"></td><td><input data-rae="${i}" data-k="link" value="${esc(r.link || '')}" placeholder="https://"></td><td><button class="btn" data-radel="${i}">刪除</button></td></tr>`).join('')}</table></div>
-      <div class="qbt"><button class="btn" id="ra_add">＋ 新增邀請人</button><button class="btn primary" id="ra_save">儲存設定</button><span class="tlsub" id="ra_msg"></span></div></details>` : ''}
+      <p class="tlsub">邀請人：註冊時用戶要選「邀請你的管理員」；有人選了，會發 Discord 給那個管理員（他自己要設好 Discord 通知）和你。<b>你和所有管理員會自動列進來</b>（刪掉也會自動加回來），在這裡改名字、邀請碼、邀請連結就好；管理員也可以自己改。</p>
+      <div class="tablewrap"><table class="tltab"><tr><th>名稱</th><th>通知帳號 UID</th><th>邀請碼</th><th>邀請連結</th><th></th></tr>${refs.map((r, i) => `<tr><td><input data-rae="${i}" data-k="name" value="${esc(r.name)}" placeholder="例如 7hzynn"></td><td><input data-rae="${i}" data-k="uid" value="${esc(r.uid || '')}" placeholder="網站帳號 UID" inputmode="numeric"${r.auto ? ' readonly' : ''}></td><td><input data-rae="${i}" data-k="code" value="${esc(r.code || '')}"></td><td><input data-rae="${i}" data-k="link" value="${esc(r.link || '')}" placeholder="https://"></td><td>${r.auto ? '<span class="tlmut">管理員（自動）</span>' : `<button class="btn" data-radel="${i}">刪除</button>`}</td></tr>`).join('')}</table></div>
+      <div class="qbt"><button class="btn" id="ra_add">＋ 新增邀請人</button><button class="btn primary" id="ra_save">儲存設定</button><span class="tlsub" id="ra_msg"></span></div></details>` : (() => { const m = C.refs.find(r => r.uid === d.meUid); return m ? `<details${m.code || m.link ? '' : ' open'}><summary class="tlsub">🙋 我在註冊頁的資料（用戶選了你，Discord 會通知你審核）</summary>
+      <label class="field">顯示名字（用戶註冊時看到的）<input id="ra_mName" value="${esc(m.name)}" maxlength="30"></label>
+      <label class="field">我的 Bitunix 邀請碼<input id="ra_mCode" value="${esc(m.code || '')}" maxlength="40"></label>
+      <label class="field">我的邀請連結<input id="ra_mLink" value="${esc(m.link || '')}" placeholder="https://" maxlength="300"></label>
+      <p class="tlsub">記得到「☰ 選單 → 設定」設好自己的 Discord 通知，才收得到審核提醒。</p>
+      <div class="qbt"><button class="btn primary" id="ra_mSave">儲存</button><span class="tlsub" id="ra_mMsg"></span></div></details>` : ''; })()}
     <h5>📋 邀請名單（代理商後台的 UID）<small class="tlmut">　目前 ${C.listN} 個${C.listAt ? `・${bDate(C.listAt)} 更新` : ''}</small></h5>
     <p class="tlsub">到 Bitunix 代理商後台的「邀請用戶」，把 UID 清單整段複製貼上（夾雜其他文字也沒關係，系統只抓 4～20 位數字）。名單只是<b>標示</b>：待審核清單的「名單」欄會打 ✅，方便你判斷，<b>一律還是要人工按「通過」</b>。</p>
     <textarea id="ra_txt" rows="3" placeholder="貼上 UID 清單…" style="width:100%;box-sizing:border-box">${esc(RA.txt)}</textarea>
@@ -6694,6 +6699,7 @@ function refBind() {
       if (t.dataset.copy) { try { await navigator.clipboard.writeText(t.dataset.copy); t.textContent = '已複製'; } catch (er) { prompt('複製：', t.dataset.copy); } return; }
       if (t.id === 'ra_add') { RA.edit = RA.edit || RA.d.cfg.refs.map(r => ({ ...r })); RA.edit.push({ id: '', name: '', uid: '', code: '', link: '' }); return refDraw(); }
       if (t.dataset.radel) { RA.edit = RA.edit || RA.d.cfg.refs.map(r => ({ ...r })); RA.edit.splice(+t.dataset.radel, 1); return refDraw(); }
+      if (t.id === 'ra_mSave') { await A('mine', { name: $('ra_mName').value, code: $('ra_mCode').value, link: $('ra_mLink').value }); await refLoad(); const m = $('ra_mMsg'); if (m) m.textContent = '✅ 已儲存'; return; }
       if (t.id === 'ra_save') { await A('cfg', { ...($('ra_on') ? { on: $('ra_on').checked } : {}), minVol: +$('ra_min').value || 0, refs: RA.edit || RA.d.cfg.refs }); RA.edit = null; await refLoad(); const m = $('ra_msg'); if (m) m.textContent = '✅ 已儲存'; return; }
       if (t.id === 'ra_listAdd' || t.id === 'ra_listRep') {
         if (t.id === 'ra_listRep' && !confirm('用這次貼的內容「整份取代」目前的邀請名單？')) return;
@@ -7856,6 +7862,11 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-16j', title: '2026/11/16 更新（免費版條款、選管理員、密碼安全）', items: [
+    { ic: '📜', t: '註冊頁換上免費版的服務條款（2026-11-16 版）：拿掉付款、試用、退款、到期的條文，改成免費資格、人工審核、活躍門檻、撤銷資格和收益說明；個人資料告知事項也拿掉付款錢包，可以在註冊頁展開閱讀。' },
+    { ic: '🙋', t: '註冊時要「選擇邀請你的管理員」：擁有者和所有管理員會自動列在清單裡，不用另外設定。Discord 通知會寫清楚「邀請人：誰」，並通知那位管理員去審核。管理員可以在「🎟 審核註冊」改自己顯示的名字、邀請碼和邀請連結。' },
+    { ic: '🔐', t: '密碼安全：太常見、連續數字（12345678）、同一個字、含 UID 的密碼不能設定；註冊時也會檢查密碼有沒有在網路外洩資料裡出現過，避免 Chrome 跳「密碼已外洩」的警告。' }
+  ] },
   { id: '2026-11-16i', title: '2026/11/16 更新（登入畫面）', items: [
     { ic: '🔧', t: '修正：登入畫面打字時游標會一直跳回 UID 那格、打到別的欄位。原因是登入過期後，背景更新每次失敗都重新打開一次登入畫面；現在登入畫面開著時只更新提示文字，不會再搶游標。' }
   ] },
