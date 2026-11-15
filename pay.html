@@ -88,7 +88,7 @@ async function boot() {
   if (SRVC.token) { try { const r = await fetch(URL0 + '/api/me', { headers: { Authorization: 'Bearer ' + SRVC.token } }); if (r.ok) { S.me = await r.json(); S.mode = 'renew'; } } catch (e) {} }
   try { const d = await loadInfo(); if (S.mode === 'renew' && d.state.st === 'free') return done0('🎁', '你是免費帳號', '不用付費，所有功能都可以直接使用。'); }
   catch (e) { return $('app').innerHTML = `<div class="card"><p class="msg bad">連不到伺服器：${esc(e.message)}</p></div>`; }
-  if (!S.info.on) return done0('🔒', '目前沒有開放購買', '請稍後再來，或聯絡擁有者。');
+  if (!S.info.on) return done0('🔒', R ? '目前沒有開放註冊' : '連不到伺服器', R ? '請稍後再來，或聯絡邀請你的人。' : '請稍後再試。');
   const saved = LS.get('qxPay', null);                   // 重新整理也不會弄丟付款單
   if (saved && saved.exp > Date.now() - 48 * 3600000 && saved.mode === S.mode) { S.order = saved; return payView(); }
   formView();
