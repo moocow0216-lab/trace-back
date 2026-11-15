@@ -1116,7 +1116,9 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
 @media (max-width:600px){.wxmid .wxscene canvas{aspect-ratio:1/1.05;max-height:none}.wxpop{width:min(180px,52%)!important;font-size:10px!important}.wxpopc{min-height:4.6em!important}}
 </style>
 <style id="annCss">/* 📢 更新通知（擁有者發送／大家收到） */
+#qg_trial{display:none!important}   /* 🧪 試用已取消（改成邀請碼免費申請） */
 .qannwide{grid-column:1/-1}
+#refAdm input:not([type=checkbox]){min-width:90px}#refAdm .agree{display:flex;gap:8px;align-items:center;margin:8px 0}
 .qeqper{margin-left:auto}.qeqper select{max-width:100%}
 #ann_x{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:7px 9px;min-width:0;width:100%;box-sizing:border-box;font:inherit;font-size:14px;line-height:1.6;color:inherit;resize:vertical}
 .mnpage[data-p="set"] #ann_x{background:var(--gin);border:1px solid var(--gdl);color:var(--gtx);border-radius:8px}
@@ -1149,7 +1151,7 @@ body.sponly #qSrc,body.sponly #qAuto,body.sponly #qScan,body.sponly #qStat,body.
     <p class="qgerr" id="qgErr" role="alert"></p>
     <button class="btn qglink" id="qg_forgot" type="button">忘記密碼？</button>
     <button class="btn qgtrial" id="qg_trial" type="button">🧪 申請 7 天免費試用</button>
-    <a class="btn qgbuy" href="pay.html">💳 直接購買方案（不用試用）</a>
+    <a class="btn qgbuy" href="pay.html">🎟 免費申請・購買方案</a>
   </form>
   <form class="qgatebox" id="qTrialForm" onsubmit="return false" hidden>
     <h1><span class="qvx" role="img" aria-label="QEVRAX"></span></h1>
@@ -1326,7 +1328,7 @@ body.sponly #qSrc,body.sponly #qAuto,body.sponly #qScan,body.sponly #qStat,body.
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-16d</div>
+      <div class="qver" id="qVer">網站版本 2026-11-16g</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -1484,6 +1486,7 @@ body.sponly #qSrc,body.sponly #qAuto,body.sponly #qScan,body.sponly #qStat,body.
         <span class="qltmsg" id="qLtMsg"></span>
           <div class="qltmsg" id="qLtWhy" hidden style="color:#f5c46a"></div>
           <div class="qltmsg" id="qLtLow" hidden style="color:#ff7b86;font-weight:700"></div>
+          <div class="qltmsg" id="qRefMsg" hidden style="color:#fbbf24;font-weight:700"></div>
         </div>
         <div class="qcfg" id="qLtCfg" hidden>
           <div class="qcfgnote"><b>投入資金</b>：例如帳戶有 153U、這裡填 100，自動交易只會用這 100U（加上它自己賺的、扣掉它自己虧的）來下單，用完會自動暫停；實盤統計也從 100U 開始算。注意全倉模式下，交易所還是用整個帳戶當保證金，極端行情時帳戶裡其他的錢也可能被拖累。<br>保證金模式：<b>全倉</b>。出場規則用「⚙ 浮盈／槓桿設定」裡的成功線、失敗線、出場方式和最長持有時間。開倉單會同時掛交易所止損（失敗線）。伺服器重新啟動後，自動交易一律先暫停。</div>
@@ -3797,10 +3800,11 @@ async function srvPull() {
     if (OWN() && !SV.pushed) { SV.pushed = true; pushTrade(); pushEq(); }
     if (j.rep) SRVREP.rep = j.rep;
     SRV.sim = j.sim || null; simUi();
+    SRV.ref = j.me ? j.me.ref || null : null;           // 🎟 邀請碼審核狀態（沒開邀請碼制＝null）
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.man = j.lt.man || []; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-16d・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-16g・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     if (j.notice) ntShow(j.notice);                     // 📢 擁有者發的更新通知
     $('qAnnBox').hidden = !OWN(); if (OWN() && !$('ann_t').value && !$('ann_x').value) annFill();
@@ -6646,14 +6650,72 @@ function biQR(addr) {                                  // 收款地址的 QR cod
   if (!BI.qr) { BI.qr = document.createElement('script'); BI.qr.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'; document.head.appendChild(BI.qr); }
   BI.qr.addEventListener('load', draw, { once: true });
 }
+/* ---------- 🎟 邀請碼制（免費）：本人看審核狀態；擁有者＋管理員審核、貼名單自動通過；擁有者設定邀請人、活躍門檻 ---------- */
+const RA = { d: null, html: '', at: 0, busy: false, txt: '', edit: null };
+const REF_SN = { pending: ['⏳ 審核中', 'qy'], ok: ['✅ 已通過', 'qg'], no: ['❌ 未通過', 'qr'], revoked: ['⛔ 已撤銷', 'qr'] };
+function refUserHtml() {
+  const r = SRV.ref; if (!r || r.st === 'exempt') return '';
+  const [t, c] = REF_SN[r.st] || REF_SN.pending;
+  return `<section class="bibox"><h4>🎟 邀請碼審核：<b class="${c}">${t}</b>${r.via ? `<small class="tlmut">　邀請人 ${esc(r.via)}</small>` : ''}</h4>
+    <p class="tlsub">${r.st === 'pending' ? '我們正在確認你是用我們的 Bitunix 邀請碼註冊的，通過後會寄信、發 Discord 通知你。審核前可以先設定 Bitunix API、Discord 和特級交易，但還不能開始自動交易。' : r.st === 'ok' ? `可以免費使用。免費的條件是近 30 天自動交易量要達到 <b>${(+r.minVol).toLocaleString()} USDT</b>（保證金 × 槓桿，小資金開著特級交易就很容易達到）。目前近 30 天：<b class="${r.low ? 'qr' : 'qg'}">${(+r.vol).toLocaleString()} USDT</b>${r.low ? '，低於門檻，請確認特級交易有開著' : ''}。` : `${r.note ? '原因：' + esc(r.note) + '。' : ''}自動交易不會開新單，有問題請聯絡邀請你的人。`}</p></section>`;
+}
+async function refLoad() {
+  RA.busy = true;
+  try { RA.d = await srvFetch('/api/ref/admin', { op: 'list' }); RA.at = Date.now(); refDraw(); } catch (e) { RA.html = `<p class="mnmsg bad">${esc(e.message)}</p>`; const h = $('refAdm'); if (h) h.innerHTML = RA.html; }
+  RA.busy = false;
+}
+function refDraw() {
+  const d = RA.d; if (!d) return; const C = d.cfg, U = d.users, own = d.owner, refs = RA.edit || C.refs;
+  const pend = U.filter(u => u.st === 'pending').sort((a, b) => a.at - b.at), rest = U.filter(u => u.st !== 'pending').sort((a, b) => (b.doneAt || b.created) - (a.doneAt || a.created));
+  const vol = u => `<span class="${u.st === 'ok' && u.vol < C.minVol ? 'qr' : ''}">${u.vol.toLocaleString()}</span>`;
+  RA.html = `<h4>🎟 邀請碼審核 <small class="tlmut">${C.on ? '<b class="qg">開啟中</b>（免費，用邀請碼註冊的人審核通過才能自動交易）' : '<b class="qr">關閉</b>（不檢查邀請碼）'}</small></h4>
+    ${own ? `<details${C.on ? '' : ' open'}><summary class="tlsub">⚙️ 設定（只有擁有者）</summary>
+      <label class="agree"><input type="checkbox" id="ra_on"${C.on ? ' checked' : ''}> 開啟邀請碼制（開啟時，現有帳號都會自動算「已通過」）</label>
+      <label class="field">活躍門檻：近 30 天自動交易量（USDT，0＝不檢查）<input id="ra_min" type="number" min="0" step="100" value="${C.minVol}"></label>
+      <p class="tlsub">邀請人：申請時讓用戶選「用誰的邀請碼註冊」；有人選了，會發 Discord 給那個人（填他在本網站的帳號 UID，他自己要設好 Discord 通知）和你。</p>
+      <div class="tablewrap"><table class="tltab"><tr><th>名稱</th><th>通知帳號 UID</th><th>邀請碼</th><th>邀請連結</th><th></th></tr>${refs.map((r, i) => `<tr><td><input data-rae="${i}" data-k="name" value="${esc(r.name)}" placeholder="例如 7hzynn"></td><td><input data-rae="${i}" data-k="uid" value="${esc(r.uid || '')}" placeholder="網站帳號 UID" inputmode="numeric"></td><td><input data-rae="${i}" data-k="code" value="${esc(r.code || '')}"></td><td><input data-rae="${i}" data-k="link" value="${esc(r.link || '')}" placeholder="https://"></td><td><button class="btn" data-radel="${i}">刪除</button></td></tr>`).join('')}</table></div>
+      <div class="qbt"><button class="btn" id="ra_add">＋ 新增邀請人</button><button class="btn primary" id="ra_save">儲存設定</button><span class="tlsub" id="ra_msg"></span></div></details>` : ''}
+    <h5>📋 邀請名單（代理商後台的 UID）<small class="tlmut">　目前 ${C.listN} 個${C.listAt ? `・${bDate(C.listAt)} 更新` : ''}</small></h5>
+    <p class="tlsub">到 Bitunix 代理商後台的「邀請用戶」，把 UID 清單整段複製貼上（夾雜其他文字也沒關係，系統只抓 4～20 位數字）。名單只是<b>標示</b>：待審核清單的「名單」欄會打 ✅，方便你判斷，<b>一律還是要人工按「通過」</b>。</p>
+    <textarea id="ra_txt" rows="3" placeholder="貼上 UID 清單…" style="width:100%;box-sizing:border-box">${esc(RA.txt)}</textarea>
+    <div class="qbt"><button class="btn primary" id="ra_listAdd">加進名單</button>${own ? '<button class="btn" id="ra_listRep">整份取代</button>' : ''}<span class="tlsub" id="ra_lmsg"></span></div>
+    <h5 class="${pend.length ? 'qr' : ''}">⏳ 待審核（${pend.length}）</h5>
+    ${pend.length ? `<div class="tablewrap"><table class="tltab"><tr><th>申請時間</th><th>UID</th><th>邀請人</th><th>信箱／手機</th><th>名單</th><th>API</th><th>操作</th></tr>${pend.map(u => `<tr><td>${bDate(u.at || u.created)}</td><td><b>${esc(u.uid)}</b> <button class="btn" data-copy="${esc(u.uid)}">複製</button></td><td>${esc(u.via || '—')}</td><td class="tlmut">${esc(u.email)}<br>${esc(u.phone)}</td><td>${u.inList ? '✅' : '—'}</td><td>${u.api ? '✅' : '—'}</td><td class="trops"><button class="btn primary" data-raok="${esc(u.uid)}">通過</button><button class="btn" data-rano="${esc(u.uid)}">拒絕</button></td></tr>`).join('')}</table></div>` : '<p class="tlmut">沒有待審核的申請</p>'}
+    <details><summary class="tlsub">全部帳號（${rest.length}）・近 30 天交易量用來跟代理商後台對帳：系統有量、後台那個 UID 卻是 0，就是冒用</summary><div class="tablewrap"><table class="tltab"><tr><th>UID</th><th>狀態</th><th>邀請人</th><th>近 30 天交易量</th><th>特級</th><th>審核</th><th>操作</th></tr>${rest.map(u => { const [t, c] = REF_SN[u.st] || REF_SN.pending; return `<tr><td>${esc(u.uid)}</td><td><b class="${c}">${t}</b>${u.note ? `<br><small class="tlmut">${esc(u.note)}</small>` : ''}</td><td>${esc(u.via || '—')}</td><td>${vol(u)} U</td><td>${u.sp ? '▶' : '⏸'}</td><td class="tlmut">${esc(u.by || '')}${u.doneAt ? '<br>' + bDate(u.doneAt) : ''}</td><td class="trops">${u.st === 'ok' ? `<button class="btn" data-rarev="${esc(u.uid)}">撤銷</button>` : `<button class="btn" data-raok="${esc(u.uid)}">通過</button>`}</td></tr>`; }).join('')}</table></div></details>`;
+  const h = $('refAdm'); if (h) { h.innerHTML = RA.html; refBind(); }
+}
+function refBind() {
+  const h = $('refAdm'); if (!h || h.dataset.b) return; h.dataset.b = '1';
+  const A = (op, body) => srvFetch('/api/ref/admin', { op, ...body });
+  h.addEventListener('input', e => { const t = e.target; if (t.id === 'ra_txt') RA.txt = t.value; if (t.dataset.rae) { RA.edit = RA.edit || RA.d.cfg.refs.map(r => ({ ...r })); RA.edit[+t.dataset.rae][t.dataset.k] = t.value; } });
+  h.addEventListener('click', async e => {
+    const t = e.target.closest('button'); if (!t) return;
+    try {
+      if (t.dataset.copy) { try { await navigator.clipboard.writeText(t.dataset.copy); t.textContent = '已複製'; } catch (er) { prompt('複製：', t.dataset.copy); } return; }
+      if (t.id === 'ra_add') { RA.edit = RA.edit || RA.d.cfg.refs.map(r => ({ ...r })); RA.edit.push({ id: '', name: '', uid: '', code: '', link: '' }); return refDraw(); }
+      if (t.dataset.radel) { RA.edit = RA.edit || RA.d.cfg.refs.map(r => ({ ...r })); RA.edit.splice(+t.dataset.radel, 1); return refDraw(); }
+      if (t.id === 'ra_save') { await A('cfg', { on: $('ra_on').checked, minVol: +$('ra_min').value || 0, refs: RA.edit || RA.d.cfg.refs }); RA.edit = null; await refLoad(); const m = $('ra_msg'); if (m) m.textContent = '✅ 已儲存'; return; }
+      if (t.id === 'ra_listAdd' || t.id === 'ra_listRep') {
+        if (t.id === 'ra_listRep' && !confirm('用這次貼的內容「整份取代」目前的邀請名單？')) return;
+        const r = await A('listSet', { text: RA.txt, mode: t.id === 'ra_listRep' ? 'replace' : 'add' }); RA.txt = ''; await refLoad();
+        const m = $('ra_lmsg'); if (m) m.textContent = `✅ 抓到 ${r.got} 個 UID，名單共 ${r.total} 個`; return;
+      }
+      if (t.dataset.raok) { if (!confirm(`確定 ${t.dataset.raok} 是用我們的邀請碼註冊的，要通過嗎？`)) return; await A('approve', { uid: t.dataset.raok }); return refLoad(); }
+      if (t.dataset.rano) { const n = prompt(`拒絕 ${t.dataset.rano} 的申請？原因（會寄給他，選填）：`, '代理商後台查不到這個 UID，請用我們的邀請連結註冊 Bitunix'); if (n === null) return; await A('reject', { uid: t.dataset.rano, note: n }); return refLoad(); }
+      if (t.dataset.rarev) { const n = prompt(`撤銷 ${t.dataset.rarev} 的使用資格？他的特級交易會暫停（已開的單照常管理）。原因（會寄給他，選填）：`, ''); if (n === null) return; await A('revoke', { uid: t.dataset.rarev, note: n }); return refLoad(); }
+    } catch (er) { alert(er.message); }
+  });
+}
 const BI_RF = { wallet: ['TronLink', 'Trust Wallet', 'imToken', 'TokenPocket', 'OKX Wallet', 'Bitget Wallet', 'SafePal', 'Ledger', '其他'], cex: ['Bitunix', '幣安 Binance', 'OKX', 'Bybit', 'Bitget', 'MEXC', 'Gate', 'HTX（火幣）', 'KuCoin', '幣託 BitoPro', 'MAX', '派網 Pionex', '其他'] };   // 退款方式的選單
 function biRender() {
   const d = BI.d, s = d.state, now = Date.now(), host = $('mnpBill');
   const ST = { free: ['🎁 免費帳號', '不用付費，所有功能都能用', 'ok'], trial: ['🧪 試用中', `試用到 ${bDate(s.until)}。現在付費會接在試用後面，<b>所有設定、紀錄都保留</b>。`, 'trial'],
     paid: ['✅ 方案有效', `到期 ${bDate(s.until)}（還有 ${Math.max(0, Math.ceil((s.until - now) / 86400000))} 天）。提早續費會接著往後加。`, 'ok'], grace: ['⚠️ 方案已到期（寬限中）', `${bDate(s.graceEnd)} 前續費，交易都不會中斷；之後會停止開新單。`, 'trial'], locked: ['⛔ 方案已到期', '已停止開新單（已開的單照常管理到結束）。付款後到「設定」重新打開自動交易就能繼續，設定和紀錄都還在。', 'bad'] };
   const [t1, t2, cls] = ST[s.st] || ST.free, pend = (d.orders || []).find(o => o.status === 'pending' && o.exp > now);
-  let html = `<div class="bi"><section class="bistat ${cls}"><b>${t1}</b><span>${t2}</span></section>`;
-  if (!d.on) html += `<section class="bibox"><p class="tlsub">目前網站沒有開放收費，所有功能都可以直接使用。</p></section>`;
+  const RFon = !!(SRV.ref && SRV.ref.st !== 'exempt' && s.st === 'free');   // 🎟 邀請碼制：免費，但要審核通過
+  let html = RFon ? '<div class="bi">' : `<div class="bi"><section class="bistat ${cls}"><b>${t1}</b><span>${t2}</span></section>`;
+  html += refUserHtml();                                 // 🎟 邀請碼審核狀態
+  if (!d.on) html += RFon ? '' : `<section class="bibox"><p class="tlsub">目前網站沒有開放收費，所有功能都可以直接使用。</p></section>`;
   else if (s.st !== 'free') {
     BI.m = BI.m || 1;
     html += `<section class="bibox"><h4>月費方案</h4><div class="biplan"><div><b>${d.price}</b><small>USDT／${d.days} 天</small></div><ul>${SPONLY ? '' : '<li>一般交易（CVD 異常偵測、自動下單）</li>'}<li>🗡 特級咒具＋特級交易（自動下單）</li><li>🔔 額外進場通知、作戰室、模擬盤</li><li>🕯 K 線圖、熱力圖、回測</li></ul></div>
@@ -6690,7 +6752,9 @@ function biRender() {
   const rf = d.refunds || [];
   if (rf.length) html += `<section class="bibox"><h4>↩️ 退款</h4><div class="tablewrap"><table class="tltab"><tr><th>收到時間</th><th>金額</th><th>退回到</th><th>狀態</th></tr>${rf.map(r => `<tr><td>${bDate(r.at)}</td><td>${r.amount} USDT</td><td class="tlmut">${esc(r.to || r.from)}<br><small>${r.toVia ? (r.toKind === 'cex' ? esc(r.toVia) + ' 交易所充值地址' : esc(r.toVia) + ' 錢包') : r.to && r.to !== r.from ? '你指定的地址' : '你付款的錢包'}</small>${r.status === 'todo' ? `<br><button class="btn" data-birto="${esc(r.id)}">改退款地址</button>` : ''}</td><td>${r.status === 'done' ? `<span class="qg">已退款</span>${r.outTx ? ` <a href="https://tronscan.org/#/transaction/${esc(r.outTx)}" target="_blank" rel="noopener">查看</a>` : ''}` : r.status === 'skip' ? '不退款' : '<b class="qy">退款處理中</b>'}<br><small class="tlmut">${esc(r.why || '')}</small></td></tr>`).join('')}</table></div></section>`;
   if (BI.a) html += biAdmin(BI.a);
+  if (CANW()) html += `<section class="bibox" id="refAdm">${RA.html || '<p class="tlmut">讀取邀請碼審核…</p>'}</section>`;
   host.innerHTML = html + '</div>';
+  if (CANW()) { refBind(); if (!RA.busy && Date.now() - (RA.at || 0) > 15000) refLoad(); }
   if (pend) biQR(pend.addr || d.addr);
   const biAcks = () => [...document.querySelectorAll('.biack')].filter(x => x.checked).length;
   document.querySelectorAll('.biack').forEach(c => c.onchange = () => { $('biAckN').textContent = `已勾選 ${biAcks()}／${(d.acks || []).length}`; });
@@ -7787,6 +7851,20 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-16g', title: '2026/11/16 更新（一律人工審核）', items: [
+    { ic: '🎟', t: '取消「在邀請名單裡就自動通過」：所有申請一律由擁有者或管理員人工按「通過」。邀請名單還是可以貼，只用來在待審核清單和 Discord 通知上標示「✅ 在邀請名單裡」。' }
+  ] },
+  { id: '2026-11-16f', title: '2026/11/16 更新（申請流程）', items: [
+    { ic: '🔁', t: '申請被拒絕或還在審核中的人，可以用同一個信箱重新申請（例如重新用邀請連結註冊了新的 Bitunix UID），舊的申請會自動作廢。' },
+    { ic: '⏰', t: '待審核超過 6 小時，會再發 Discord 提醒邀請人和擁有者；超過 24 小時，會提醒所有管理員。' },
+    { ic: '🎟', t: '審核通過、拒絕或撤銷後，也會通知那個用戶的邀請人。' },
+    { ic: '🧪', t: '取消 7 天試用（登入頁的試用按鈕已拿掉），新用戶一律用「免費申請」。' }
+  ] },
+  { id: '2026-11-16e', title: '2026/11/16 更新（邀請碼制・免費）', items: [
+    { ic: '🎟', t: '改成邀請碼制、免費使用：用我們的 Bitunix 邀請碼註冊的人，在「免費申請」頁填 UID 和資料、選擇是誰邀請的，審核通過就能免費使用。審核前可以先登入、設定，但還不能開始自動交易。' },
+    { ic: '📈', t: '免費使用的條件：近 30 天自動交易量（保證金 × 槓桿）2,000 USDT 以上，開著特級交易小資金也很容易達到；在「☰ 選單 → 方案與繳費」看得到自己的審核狀態和交易量。' },
+    { ic: '👑', t: '擁有者和管理員：「方案與繳費 → 🎟 邀請碼審核」可以通過、拒絕、撤銷，也可以貼上代理商後台的 UID 名單（只標示，一律人工審核）；有人申請時會發 Discord 給他選的邀請人和擁有者。擁有者可以設定邀請人（名稱、通知帳號、邀請碼、邀請連結）和活躍門檻。' }
+  ] },
   { id: '2026-11-16d', title: '2026/11/16 更新（資金曲線三條線）', items: [
     { ic: '📈', t: '資金曲線改成三條線（單位 U，從起點開始累計的盈虧）：🖐 手動合約（藍，你自己在 Bitunix 下的單）、🗡 特級交易（紅）、總和（紫），下面會寫三條各賺賠多少。' },
     { ic: '🖐', t: '手動單不再扣特級交易的資金：特級交易權益只算特級單自己的盈虧，手動單另外看藍線。帳戶實際資金不夠時，系統照樣不會開新單。' }
@@ -8226,6 +8304,7 @@ function gdPage2(p) {
     ${gdPt('<path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v5h5"></path>', '<b>↩️ 待退款</b>：付錯金額、多轉的部分、7 天內解約都會列在這裡。用收款錢包把「金額」原樣轉回「退回地址」，系統每分鐘查一次區塊鏈，轉出去後自動標成已退款並通知對方；解約的退款完成後，自動取消那筆付款的天數。')}
     ${gdPt('<path d="M9 14l-4-4 4-4"></path><path d="M5 10h11a4 4 0 0 1 0 8h-1"></path>', '<b>辦理退款</b>：付款單上的按鈕，用戶寄信申請、或依條款第 7 條按比例退款時用，可以填退款金額。「手動確認已付」的單系統不知道付款錢包，要自己跟用戶確認地址再轉。<b>對不上的轉帳</b>可以指定給某個帳號或退款。')}
     ${gdPt('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path>', '<b>服務條款</b>：改了文字並儲存，就會變成新的版本（用當天日期），舊版本保留，每個人同意的是哪一版都有紀錄。對已付費的人不利的修改，要在生效前 7 天公告並寄信通知。')}
+    ${gdPt('<rect x="3" y="6" width="18" height="12" rx="2"></rect><path d="M9 6v12"></path>', '<b>🎟 邀請碼制（免費）</b>：「☰ 選單 → 方案與繳費」最下面。擁有者先在「⚙️ 設定」開啟、加邀請人（名稱、他在本網站的帳號 UID、邀請碼、邀請連結）、設活躍門檻；用戶在「免費申請」頁（pay.html）選邀請人、填 UID 申請，你和管理員會收到 Discord。到 Bitunix 代理商後台查得到這個 UID 就按「通過」，也可以把代理商後台的 UID 清單貼進「邀請名單」，待審核清單會標示誰在名單裡（一律還是人工按通過）。')}
     ${gdPt('<path d="M3 11l15-6v14L3 13z"></path><path d="M7 13v5h3"></path>', '<b>📢 更新通知</b>：在「☰ 選單 → 設定」的「更新通知」，可以帶入最新的更新紀錄，按「發送」就會發給所有帳號：每個人打開網站時跳出公告，有設 Discord 的人同時收到，也可以勾選一起寄 Email。')}
     ${gdTip('伺服器要設定好寄信（Gmail 應用程式密碼）：新用戶購買要收信箱驗證碼，沒設定的話沒有人能買。打開收費後，自己在購買頁用一個 Gmail 按「寄驗證碼」試一次。', true)}`;
   if (p === 'done') return gdPage('done').replace('<p class="gdsub">之後想再看說明', '<button class="gdbtn" id="gd_news2" style="align-self:center">📰 看更新紀錄</button><p class="gdsub">之後想再看說明');
@@ -10044,6 +10123,7 @@ function renderLt() {
   $('qLtEco').hidden = !EB;
   $('qLtEco').textContent = EB ? `📅 美國重要數據（${EB.list.map(e => `${e.zh} ${fmtT(e.t).slice(-5)}`).join('、')}）：${fmtT(EB.from).slice(-11)}～${fmtT(EB.until).slice(-11)} 不開新單、不反手${EB.on ? '（現在暫停中）' : '，其他時間照常'}；已開的單照常管理。` : '';
   $('qLtToggle').textContent = C.on ? '⏸ 暫停交易' : '▶ 開始交易';
+  { const r = SRV.ref, el = $('qRefMsg'), sh = !!(r && MINE() && !['ok', 'exempt'].includes(r.st)); el.hidden = !sh; if (sh) el.textContent = r.st === 'pending' ? '🎟 邀請碼審核中：通過後才能開始自動交易（「☰ 選單 → 方案與繳費」看狀態）' : `🎟 ${r.st === 'no' ? '邀請碼審核沒有通過' : '使用資格已撤銷'}${r.note ? '：' + r.note : ''}，自動交易不會開新單`; }   // 🎟 邀請碼制
   { const L = SRVLT.low, noB = !SPONLY && MINE() && !(C.budget > 0), noS = MINE() && SRVLT.toolOk && !(C.spBudget > 0);   // ⚠️ 還沒填投入資金
     $('qLtLow').hidden = !(L && MINE()) && !noB && !noS;
     if (!(L && MINE()) && (noB || noS)) $('qLtLow').textContent = `⚠️ 還沒填${[noB ? '一般交易' : '', noS ? '🗡 特級交易' : ''].filter(Boolean).join('和')}的投入資金：請到「☰ 選單 → 設定」填一個大於 0 的數字${noB && C.on || noS && C.sp ? '（現在照常交易，但沒有資金上限）' : '，填好才能開始交易'}`;   // ⚠️ 資金不足：一般＋特級的「目前」比帳戶的錢多
