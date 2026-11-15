@@ -16,7 +16,7 @@ header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
 .logo{font-size:22px;font-weight:600;letter-spacing:.32em;background:linear-gradient(100deg,#9aa1ad 0%,#e9edf3 35%,#8d939e 60%,#d9b46a 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
 .logo small{display:block;font-size:9.5px;letter-spacing:.24em;color:var(--mu);-webkit-text-fill-color:var(--mu);font-weight:500;margin-top:-2px}
 header a{margin-left:auto;color:var(--mu);font-size:13px}
-.steps{display:flex;gap:6px;margin:6px 0 16px}.steps span{flex:1;text-align:center;font-size:12px;padding:6px 4px;border-radius:999px;border:1px solid var(--line);color:var(--mu)}
+.steps{display:flex;gap:6px;margin:6px 0 16px}.steps span{flex:1;text-align:center;font-size:12px;padding:6px 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-radius:999px;border:1px solid var(--line);color:var(--mu)}
 .steps span.on{border-color:var(--pk);color:#fff;background:rgba(232,121,198,.15)}.steps span.done{border-color:rgba(16,185,129,.5);color:var(--ok)}
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px}
 h2{font-size:17px;margin:0 0 10px}h3{font-size:14.5px;margin:14px 0 6px}
@@ -49,6 +49,46 @@ ol.notice{margin:0;padding-left:20px;font-size:13.5px;color:#c4cad6}ol.notice li
 @media (prefers-reduced-motion:reduce){.dot{animation:none}}
 .seg{display:flex;gap:8px;margin-top:4px}.segb{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border:1.5px solid var(--line);border-radius:10px;cursor:pointer;font-weight:700;font-size:14px}
 .segb input{accent-color:var(--pk)}.segb:has(input:checked){border-color:var(--pk);background:rgba(232,121,198,.12)}
+/* 🪪 邀請人個人檔案：IG 主頁的版型＋Bitunix 的螢光綠 */
+:root{--lime:#b9f227;--ig:linear-gradient(45deg,#f9a83c,#e1306c 45%,#a23bd8)}
+.pfs{display:grid;gap:10px;margin-top:12px}
+.pf{appearance:none;display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:14px;border-radius:16px;border:1px solid var(--line);background:linear-gradient(135deg,rgba(185,242,39,.06),rgba(225,48,108,.05) 60%,transparent),#0d1220;color:var(--tx);cursor:pointer;font:inherit;transition:border-color .15s,transform .15s}
+.pf:hover{border-color:rgba(185,242,39,.55);transform:translateY(-1px)}.pf:focus-visible{outline:2px solid var(--lime);outline-offset:2px}
+.pf.on{border-color:var(--lime);box-shadow:0 0 0 1px var(--lime) inset,0 0 24px -8px rgba(185,242,39,.55)}
+.av{flex:none;width:64px;height:64px;border-radius:50%;padding:3px;background:conic-gradient(from 210deg,var(--lime),#2fd6a0,#e1306c,#f9a83c,var(--lime))}
+.av.lg{width:92px;height:92px;padding:3.5px}.av.sm{width:44px;height:44px;padding:2px}
+.avin{display:grid;place-items:center;width:100%;height:100%;border-radius:50%;overflow:hidden;background:#0a0d16;border:3px solid #0a0d16}
+.avin img{width:100%;height:100%;object-fit:cover}.avin b{font-size:1.5em;font-weight:800;background:linear-gradient(135deg,var(--lime),#e1306c);-webkit-background-clip:text;background-clip:text;color:transparent}
+.av.lg .avin b{font-size:2.2em}.av.sm .avin{border-width:2px}.av.sm .avin b{font-size:1.1em}
+.pfm{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.pfn{font-size:16px;display:flex;align-items:center;gap:5px}.pfm small{color:var(--mu);font-size:13px}
+.pfb{font-size:13px;color:#c4cad6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vf{display:inline-grid;place-items:center;width:16px;height:16px;border-radius:50%;background:var(--lime);color:#0a0d16;font-style:normal;font-size:10px;font-weight:900}
+.chip{align-self:flex-start;margin-top:6px;font-size:12px;color:var(--mu);border:1px solid rgba(185,242,39,.35);border-radius:999px;padding:2px 10px;background:rgba(185,242,39,.07)}.chip b{color:var(--lime);letter-spacing:.06em}
+.pfgo{font-size:26px;color:var(--mu);line-height:1}
+.dlg{border:0;padding:0;background:transparent;color:var(--tx);max-width:min(440px,calc(100vw - 24px));width:100%;max-height:calc(100dvh - 24px)}
+.dlg::backdrop{background:rgba(3,5,10,.72);backdrop-filter:blur(4px)}
+.pfx{position:relative;background:#0e1322;border:1px solid var(--line);border-radius:22px;padding:22px 18px 18px;overflow:auto;max-height:calc(100dvh - 24px)}
+.pfx .x{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:#151b2c;color:var(--mu);font-size:15px;cursor:pointer}
+.pfhd{display:flex;align-items:center;gap:16px}.pfid h3{margin:0;font-size:20px;display:flex;align-items:center;gap:6px}.hdl{color:var(--mu);font-size:14px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.tags span{font-size:11.5px;padding:2px 9px;border-radius:999px;background:#1a2134;color:#c4cad6}
+.bio{margin:12px 0 0;font-size:14px;white-space:pre-wrap}
+.pfst{display:grid;grid-template-columns:repeat(3,1fr);margin:14px 0 4px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:10px 0;text-align:center}
+.pfst b{display:block;font-size:16px}.pfst small{color:var(--mu);font-size:11.5px}
+.bxc{display:flex;gap:12px;align-items:center;margin-top:14px;padding:14px;border-radius:18px;background:radial-gradient(120% 90% at 0% 0%,rgba(185,242,39,.22),transparent 55%),radial-gradient(90% 80% at 100% 100%,rgba(47,214,160,.16),transparent 60%),#0b110f;border:1px solid rgba(185,242,39,.28)}
+.bxl{flex:1;min-width:0}.bxk{font-size:11px;letter-spacing:.2em;color:var(--lime);font-weight:800}
+.bxt{font-size:17px;font-weight:800;line-height:1.35;margin:6px 0 10px}.bxt em{font-style:normal;font-size:12.5px;font-weight:500;color:var(--mu)}
+.bxcode{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.bxcode span{font-size:12px;color:var(--mu)}.bxcode b{font-size:19px;letter-spacing:.08em;color:var(--lime)}
+.cp{appearance:none;border:1px solid rgba(185,242,39,.45);background:transparent;color:var(--lime);border-radius:8px;padding:3px 9px;font-size:12px;font-weight:700;cursor:pointer}
+.bxqr{flex:none;background:#fff;border-radius:14px;padding:8px;width:148px;height:148px}.bxqr img,.bxqr canvas{display:block;width:100%!important;height:100%!important}
+.qrn{text-align:center;font-size:12px;color:var(--mu);margin:8px 0 0}
+.pfbtn{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:12px}
+.pfbtn a,.bxb{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border-radius:12px;font-weight:800;font-size:14.5px;text-decoration:none}
+.pfbtn svg,.bxb svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pfbtn .ig{background:var(--ig);color:#fff}.bxb{background:var(--lime);color:#0a0d16}.bxb.wide{margin-top:10px}
+.pick{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:14px;border:1px solid rgba(185,242,39,.4);background:rgba(185,242,39,.06)}
+.pick>div{flex:1;min-width:0}.pick b{display:flex;align-items:center;gap:5px}.pick small{color:var(--mu);font-size:12px}
+@media (max-width:400px){.bxc{flex-direction:column;align-items:stretch}.bxqr{margin:0 auto}}
 select{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:#0c1120;color:var(--tx);font-size:16px}
 </style>
 </head>
@@ -115,14 +155,19 @@ async function pwPwned(pw) {
   } catch (e) { return 0; }
 }
 function refView(R) {                                  // 🎟 免費申請：① 用邀請碼註冊 Bitunix → ② 填資料 → ③ 審核
-  $('steps').innerHTML = '<span>① 註冊 Bitunix</span><span>② 填資料</span><span>③ 審核</span><span>④ 完成</span>'; step(1);
+  $('steps').innerHTML = '<span>① 邀請人</span><span>② 註冊</span><span>③ 填資料</span><span>④ 審核</span><span>⑤ 完成</span>'; step(1);
   document.title = '免費註冊｜QEVRAX';
-  const refs = R.refs || [];
-  $('app').innerHTML = `<div class="card"><h2>① 先用邀請碼註冊 Bitunix</h2>
-    <p class="mute">QEVRAX <b>免費使用</b>，條件是你的 Bitunix 帳號要用我們的邀請碼註冊，並且開著自動交易（近 30 天交易量 ${(+R.minVol || 0).toLocaleString()} USDT 以上，保證金 × 槓桿，小資金也很容易達到）。</p>
-    ${refs.length ? `<label class="f" for="via">選擇邀請你的管理員（你用誰的邀請碼註冊 Bitunix）<b style="color:var(--bad)">＊必填</b></label><select id="via"><option value="">請選擇</option>${refs.map(r => `<option value="${esc(r.id)}">${esc(r.name)}</option>`).join('')}</select><p class="mute" style="font-size:12.5px;margin:6px 0 0">送出後，系統會通知你選的這位管理員來審核，請選對人，審核會比較快。</p><div id="viaBox"></div>` : ''}
-    <p class="mute" style="font-size:12.5px;margin-top:10px">已經有 Bitunix 帳號、但不是用我們的邀請碼註冊的，要用邀請連結<b>重新註冊一個新帳號</b>才能免費使用。<br>申請被拒絕過、或填錯 UID？用<b>同一個信箱</b>重新申請就好，舊的申請會自動作廢。</p></div>
-  <div class="card"><h2>② 填資料</h2><p class="mute">送出後會<b>馬上建立帳號</b>，用這組 UID 和密碼登入。審核通過前可以先設定，但還不能開始自動交易。</p>
+  const refs = R.refs || [], minV = (+R.minVol || 0).toLocaleString(); let PICK = null;
+  const igH = u => { const m = String(u || '').match(/instagram\.com\/([A-Za-z0-9._]+)/i); return m ? m[1] : ''; };
+  const av = (r, c) => `<span class="av${c ? ' ' + c : ''}"><span class="avin">${r.avatar ? `<img src="${esc(r.avatar)}" alt="">` : `<b>${esc(String(r.name || '?').replace(/^[^A-Za-z0-9一-鿿]+/, '').slice(0, 1).toUpperCase() || '?')}</b>`}</span></span>`;
+  const vf = r => r.owner ? '<i class="vf" title="QEVRAX 創辦人" aria-label="創辦人">✓</i>' : '';
+  $('app').innerHTML = `<div class="card"><h2>① 選擇你的邀請人</h2>
+    <p class="mute">QEVRAX <b>免費使用</b>，條件是你的 Bitunix 帳號要用我們管理員的邀請碼註冊，並且開著自動交易（近 30 天交易量 ${minV} USDT 以上，保證金 × 槓桿，小資金也很容易達到）。<b>點開個人檔案</b>，選一位當你的邀請人，之後也是由他幫你審核。</p>
+    ${refs.length ? `<div class="pfs" role="list">${refs.map(r => `<button class="pf" type="button" role="listitem" data-pf="${esc(r.id)}" aria-label="查看 ${esc(r.name)} 的個人檔案">${av(r)}<span class="pfm"><b class="pfn">${esc(r.name)}${vf(r)}</b>${igH(r.ig) ? `<small>@${esc(igH(r.ig))}</small>` : ''}${r.bio ? `<span class="pfb">${esc(r.bio)}</span>` : ''}${r.code ? `<span class="chip">Bitunix 邀請碼 <b>${esc(r.code)}</b></span>` : ''}</span><span class="pfgo" aria-hidden="true">›</span></button>`).join('')}</div>` : '<p class="mute">目前沒有可以選的邀請人，請聯絡邀請你的人。</p>'}
+    <input type="hidden" id="via" value="">
+    <p class="mute" style="font-size:12.5px;margin-top:12px">已經有 Bitunix 帳號、但不是用我們的邀請碼註冊的，要用邀請連結<b>重新註冊一個新帳號</b>才能免費使用。<br>申請被拒絕過、或填錯 UID？用<b>同一個信箱</b>重新申請就好，舊的申請會自動作廢。</p></div>
+  <div class="card" id="c2"><h2>② 用邀請碼註冊 Bitunix</h2><div id="viaBox"><p class="mute">先在上面點一位邀請人，選好後這裡會出現他的邀請碼和連結。</p></div></div>
+  <div class="card"><h2>③ 填資料</h2><p class="mute">送出後會<b>馬上建立帳號</b>，用這組 UID 和密碼登入。審核通過前可以先設定，但還不能開始自動交易。</p>
     <label class="f" for="uid">Bitunix UID（用邀請碼註冊的那個帳號）</label><input id="uid" inputmode="numeric" autocomplete="username" autocapitalize="off">
     <label class="f" for="pw">設定密碼（至少 8 個字，建議英文＋數字）</label><input id="pw" type="password" autocomplete="new-password"><p class="msg" id="pwMsg" role="status"></p>
     <label class="f" for="pw2">再輸入一次密碼</label><input id="pw2" type="password" autocomplete="new-password">
@@ -134,28 +179,54 @@ function refView(R) {                                  // 🎟 免費申請：�
     ${R.privacy ? `<details><summary>🔒 個人資料告知事項</summary><pre>${esc(R.privacy)}</pre></details>` : ''}
     <label class="agree"><input type="checkbox" id="agree"> 我已閱讀並同意服務條款（版本 ${esc(R.termsVer || '')}）和個人資料告知事項</label>
     <button class="btn pri" id="apply" type="button">送出申請</button><p class="msg" id="aMsg" role="alert"></p></div>`;
-  if ($('via')) $('via').onchange = () => { const r = refs.find(x => x.id === $('via').value), box = $('viaBox'); step(1);
-    box.innerHTML = r && (r.code || r.link) ? `<div class="kv">${r.code ? `<span>邀請碼</span><code>${esc(r.code)}</code><button class="btn" data-copy="${esc(r.code)}" type="button">複製</button>` : ''}</div>${r.link ? `<p style="margin:8px 0 0"><a class="btn" href="${esc(r.link)}" target="_blank" rel="noopener">👉 用 ${esc(r.name)} 的邀請連結註冊 Bitunix</a></p>` : ''}` : '';
-    box.querySelectorAll('[data-copy]').forEach(b => b.onclick = async () => { try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = '已複製'; } catch (e) { prompt('複製這段：', b.dataset.copy); } }); };
-  $('uid').onfocus = () => step(2);
+  const copyBind = el => el.querySelectorAll('[data-copy]').forEach(b => b.onclick = async () => { try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = '已複製 ✓'; } catch (e) { prompt('複製這段：', b.dataset.copy); } });
+  let dlg = $('pfDlg'); if (!dlg) { dlg = document.createElement('dialog'); dlg.id = 'pfDlg'; dlg.className = 'dlg'; document.body.appendChild(dlg); dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); }); }
+  const openPf = r => {                                  // 🪪 個人檔案：IG 主頁＋Bitunix 邀請卡（QR、邀請碼、兩個連結）
+    const h = igH(r.ig), qrTx = r.link || r.code || '';
+    dlg.innerHTML = `<div class="pfx"><button class="x" type="button" aria-label="關閉">✕</button>
+      <div class="pfhd">${av(r, 'lg')}<div class="pfid"><h3>${esc(r.name)}${vf(r)}</h3>${h ? `<div class="hdl">@${esc(h)}</div>` : ''}<div class="tags"><span>QEVRAX ${r.owner ? '創辦人' : '管理員'}</span><span>Bitunix 邀請人</span></div></div></div>
+      ${r.bio ? `<p class="bio">${esc(r.bio)}</p>` : ''}
+      <div class="pfst"><span><b>免費</b><small>使用 QEVRAX</small></span><span><b>人工</b><small>由 ${esc(r.name)} 審核</small></span><span><b>${minV}</b><small>30 天交易量 U</small></span></div>
+      ${qrTx ? `<div class="bxc"><div class="bxl"><div class="bxk">BITUNIX 邀請</div><div class="bxt">一起加入 Bitunix<br><em>用 ${esc(r.name)} 的邀請碼註冊</em></div>${r.code ? `<div class="bxcode"><span>邀請碼</span><b>${esc(r.code)}</b><button class="cp" type="button" data-copy="${esc(r.code)}">複製</button></div>` : ''}</div><div class="bxqr" id="pfQr" aria-label="邀請連結 QR code"></div></div><p class="qrn">手機掃 QR code，或按下面的按鈕開啟邀請連結</p>` : ''}
+      <div class="pfbtn">${r.ig ? `<a class="ig" href="${esc(r.ig)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>Instagram</a>` : ''}${r.link ? `<a class="bxb" href="${esc(r.link)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>註冊 Bitunix</a>` : ''}</div>
+      <button class="btn pri" type="button" data-pick="${esc(r.id)}">選 ${esc(r.name)} 當我的邀請人 →</button></div>`;
+    dlg.querySelector('.x').onclick = () => dlg.close(); copyBind(dlg);
+    dlg.querySelector('[data-pick]').onclick = () => { dlg.close(); pick(r); };
+    if (dlg.showModal) dlg.showModal(); else dlg.setAttribute('open', '');
+    if (qrTx) qr(qrTx, 'pfQr', 132);
+  };
+  const pick = r => {                                    // 選好邀請人：第二步顯示他的邀請碼、連結、QR
+    PICK = r; $('via').value = r.id; step(2);
+    document.querySelectorAll('.pf').forEach(b => b.classList.toggle('on', b.dataset.pf === r.id));
+    $('viaBox').innerHTML = `<div class="pick">${av(r, 'sm')}<div><b>${esc(r.name)}${vf(r)}</b><small>你的邀請人・由他審核</small></div><button class="btn" type="button" id="rePick">換人</button></div>
+      ${r.code ? `<div class="kv"><span>邀請碼</span><code>${esc(r.code)}</code><button class="btn" data-copy="${esc(r.code)}" type="button">複製</button></div>` : ''}
+      ${r.link ? `<a class="bxb wide" href="${esc(r.link)}" target="_blank" rel="noopener">👉 用 ${esc(r.name)} 的邀請連結註冊 Bitunix</a>` : ''}
+      ${r.link || r.code ? `<div class="qr" id="qr2" aria-label="邀請連結 QR code"></div>` : ''}
+      <p class="mute" style="font-size:12.5px;margin:10px 0 0">在 Bitunix 註冊時，確認「邀請碼」欄位是 <b>${esc(r.code || '他的邀請碼')}</b>。註冊好之後，回來這頁到 ③ 填你的 Bitunix UID。</p>`;
+    copyBind($('viaBox')); $('rePick').onclick = () => $('app').scrollIntoView({ behavior: 'smooth' });
+    if (r.link || r.code) qr(r.link || r.code, 'qr2', 168);
+    $('c2').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  document.querySelectorAll('[data-pf]').forEach(b => b.onclick = () => openPf(refs.find(x => x.id === b.dataset.pf)));
+  $('uid').onfocus = () => step(3);
   $('pw').onblur = async () => { const pw = $('pw').value; if (pw.length < 8) return msg('pwMsg', pw ? '密碼至少 8 個字' : '', !pw); const w = pwWeak(pw, $('uid').value.trim()); if (w) return msg('pwMsg', w); const n = await pwPwned(pw); if (pw !== $('pw').value) return; msg('pwMsg', n > 0 ? `這組密碼外洩過 ${n.toLocaleString()} 次，請換一組` : '✅ 這組密碼可以用', !(n > 0)); };
   $('sendCode').onclick = async () => { const b = $('sendCode'); b.disabled = true; try { const r = await api('/api/buy', { op: 'code', email: $('em').value.trim().toLowerCase() }); msg('codeMsg', r.msg, true); let n = 60; const t = setInterval(() => { b.textContent = `${--n} 秒後可重寄`; if (n <= 0) { clearInterval(t); b.disabled = false; b.textContent = '重寄驗證碼'; } }, 1000); } catch (e) { msg('codeMsg', e.message); b.disabled = false; } };
   $('apply').onclick = async () => {
     const b = $('apply'), uid = $('uid').value.normalize('NFKC').replace(/\s+/g, ''), pw = $('pw').value;
     try {
-      if (refs.length && !$('via').value) { $('via').focus(); throw new Error('請選擇邀請你的管理員'); }
+      if (refs.length && !$('via').value) { $('app').scrollIntoView({ behavior: 'smooth' }); throw new Error('請先在 ① 選擇你的邀請人'); }
       if (!/^\d{4,20}$/.test(uid)) throw new Error('UID 應該是 4～20 位數字（Bitunix 的 UID）'); if (pw.length < 8) throw new Error('密碼至少 8 個字'); if (pw !== $('pw2').value) throw new Error('兩次輸入的密碼不一樣');
       { const w = pwWeak(pw, uid); if (w) { $('pw').focus(); throw new Error(w); } }
       if (!$('agree').checked) throw new Error('請先閱讀並勾選同意服務條款');
       b.disabled = true; msg('aMsg', '檢查密碼安全…', true);
       { const n = await pwPwned(pw); if (n > 0) { b.disabled = false; $('pw').focus(); throw new Error(`這組密碼在網路外洩資料裡出現過 ${n.toLocaleString()} 次（Chrome 會跳「密碼已外洩」就是這個原因），請換一組沒用過的密碼`); } }
       msg('aMsg', '送出中…', true);
-      const r = await api('/api/ref', { op: 'apply', uid, password: pw, email: $('em').value.trim().toLowerCase(), emailCode: $('ec').value.trim(), phone: $('ph').value.trim(), via: $('via') ? $('via').value : '', agree: true });
+      const r = await api('/api/ref', { op: 'apply', uid, password: pw, email: $('em').value.trim().toLowerCase(), emailCode: $('ec').value.trim(), phone: $('ph').value.trim(), via: $('via').value, agree: true });
       LS.set('quantSrv', { ...SRVC, url: URL0, on: true, token: r.token, uid: r.uid, role: r.role });   // 申請完直接登入
-      step(r.st === 'ok' ? 5 : 3);
+      step(r.st === 'ok' ? 6 : 4);
       $('app').innerHTML = `<div class="card big"><div class="ic">${r.st === 'ok' ? '✅' : '⏳'}</div><h2>${r.st === 'ok' ? '已通過，可以開始使用！' : '申請已送出，審核中'}</h2>
         <p>帳號 <b>${esc(r.uid)}</b> 已經建立，已幫你登入。</p>
-        <p class="mute">${r.st === 'ok' ? '' : `已經通知${$('via') && $('via').selectedIndex > 0 ? ` <b>${esc($('via').options[$('via').selectedIndex].text)}</b> ` : '管理員'}審核，通過後會寄信通知你。`}接下來請到網站「☰ 選單 → 設定」設定 Bitunix API（要開交易權限）和特級交易${r.st === 'ok' ? '，再按「開始特級交易」' : '，審核通過就能開始'}。</p>
+        <p class="mute">${r.st === 'ok' ? '' : `已經通知${PICK ? ` <b>${esc(PICK.name)}</b> ` : '管理員'}審核，通過後會寄信通知你。`}接下來請到網站「☰ 選單 → 設定」設定 Bitunix API（要開交易權限）和特級交易${r.st === 'ok' ? '，再按「開始特級交易」' : '，審核通過就能開始'}。</p>
         <a class="btn pri" href="./" style="display:block;text-decoration:none">前往網站</a></div>`;
     } catch (e) { msg('aMsg', e.message); b.disabled = false; if (e.j && e.j.needLogin) $('aMsg').innerHTML += ' <a href="./">前往登入</a>'; }
   };
@@ -312,7 +383,7 @@ function success(until) {
     <a class="btn pri" href="./" style="display:block;text-decoration:none">${isNew ? '前往登入' : '回網站'}</a></div>`;
 }
 let QRS = null;
-function qr(text) { const el = $('qr'); if (!el) return; const draw = () => { el.innerHTML = ''; try { new QRCode(el, { text, width: 168, height: 168, correctLevel: QRCode.CorrectLevel.M }); } catch (e) {} };
+function qr(text, id, size) { const el = $(id || 'qr'); if (!el) return; const draw = () => { el.innerHTML = ''; try { new QRCode(el, { text, width: size || 168, height: size || 168, correctLevel: QRCode.CorrectLevel.M }); } catch (e) {} };
   if (window.QRCode) return draw(); if (!QRS) { QRS = document.createElement('script'); QRS.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'; document.head.appendChild(QRS); } QRS.addEventListener('load', draw, { once: true }); }
 boot();
 })();
