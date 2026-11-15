@@ -951,7 +951,7 @@ setInterval(() => { if (!SP_ONLY && !REP.busy && Date.now() >= (ST.rep.next || 0
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-11-16c';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-11-16d';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1193,6 +1193,7 @@ function ltOver(X) {                                  // 💰 分配超過：兩
 // 🖐 手動單的虧損：一般、特級各扣一半（只有一邊有設投入資金就全部扣那一邊）；只算那一邊設定投入資金之後平倉的
 function ltManShare(X, sp) {
   const C = X.A.lt, M = X.A.man, n = C.budget > 0, s = C.spBudget > 0 && toolOkUid(X.uid);
+  if (SP_ONLY) return 0;                               // 🗡 特級專用版：手動單分開算（資金曲線有自己的一條線），不扣特級交易的資金；帳戶真的不夠錢時 ltOver 還是會擋
   if (!M || !M.list || !(sp ? s : n)) return 0;
   const since = sp ? C.spBudAt || C.spStartAt || 0 : C.budAt || C.startAt || 0;
   return (n && s ? 0.5 : 1) * M.list.filter(m => m.pnl < 0 && m.at >= since).reduce((v, m) => v + m.pnl, 0);
@@ -3140,7 +3141,7 @@ http.createServer(async (req, res) => {
           pos: X.BX.pos.map(p => ({ ...p, px: PX.map[p.sym] || null, tp: ((X.BX.tpsl && X.BX.tpsl.get(p.id)) || {}).tp || 0, sl: ((X.BX.tpsl && X.BX.tpsl.get(p.id)) || {}).sl || 0, sig: !!ST.cards.find(c => c.sym === p.sym && c.dir === p.dir && c.et && isLive(c)), bot: !!X.A.ltTrades.find(t => t.status === 'open' && t.positionId === p.id) })) },
         eco: { list: ECO.list.filter(e => e.t > Date.now() - 7 * 24 * HOUR), at: ECO.at, err: ECO.err, hasNext: !!ECO.hasNext, today: ecoToday().map(e => ({ t: e.t, zh: e.zh || e.title })), block: (() => { const B = ecoNext(); return B ? { on: B.from <= Date.now(), from: B.from, until: B.until, list: B.list.map(e => ({ t: e.t, zh: e.zh || e.title })) } : null; })() },
         sim: meU && (admin || trialSim(meU)) ? (() => { const L = ctx(meU.uid).A.lt, o = { on: simOn, liveOn: !!(L.on || L.sp), trial: trialSim(meU) }; if (simOn) { const a = simAcct(X.A.bx); Object.assign(o, { bal: +X.A.bx.bal.toFixed(4), eq: +a.eq.toFixed(4), avail: +a.avail.toFixed(4), open: X.A.bx.pos.length }); } return o; })() : null,
-        lt: { cfg: X.A.lt, spSkip: X.LT.spSkip || [], bud: ltBudEq(X), man: (X.A.man && X.A.man.list || []).slice(0, 20), low: (() => { const ov = ltOver(X); return ov ? { why: ov } : null; })(), pause: X.LT.pause || null, toolOk: toolOkUid(X.uid), spBot: ltSpEq(X), spDay: X.LT.spDayPnl || 0, msg: X.LT.msg, dayPnl: X.LT.dayPnl || 0, v: X.v, bot: ltBotEq(X), acctEq: bxEquity(X) },
+        lt: { cfg: X.A.lt, spSkip: X.LT.spSkip || [], bud: ltBudEq(X), man: (X.A.man && X.A.man.list || []).slice(0, SP_ONLY ? 300 : 20), low: (() => { const ov = ltOver(X); return ov ? { why: ov } : null; })(), pause: X.LT.pause || null, toolOk: toolOkUid(X.uid), spBot: ltSpEq(X), spDay: X.LT.spDayPnl || 0, msg: X.LT.msg, dayPnl: X.LT.dayPnl || 0, v: X.v, bot: ltBotEq(X), acctEq: bxEquity(X) },
         aws: !(X.base === ownerUid()) ? null : { on: ST.aws.on, created: ST.aws.created, auto: ST.aws.auto, price: ST.aws.price, detected: awsDetect(), ...awsNext() }
       };
       if (+u.searchParams.get('cv') !== CV) out.cards = ST.cards;
