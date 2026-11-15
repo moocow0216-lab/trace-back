@@ -95,7 +95,7 @@ async function boot() {
 }
 function refView(R) {                                  // 🎟 免費申請：① 用邀請碼註冊 Bitunix → ② 填資料 → ③ 審核
   $('steps').innerHTML = '<span>① 註冊 Bitunix</span><span>② 填資料</span><span>③ 審核</span><span>④ 完成</span>'; step(1);
-  document.title = '免費申請｜QEVRAX';
+  document.title = '免費註冊｜QEVRAX';
   const refs = R.refs || [];
   $('app').innerHTML = `<div class="card"><h2>① 先用邀請碼註冊 Bitunix</h2>
     <p class="mute">QEVRAX <b>免費使用</b>，條件是你的 Bitunix 帳號要用我們的邀請碼註冊，並且開著自動交易（近 30 天交易量 ${(+R.minVol || 0).toLocaleString()} USDT 以上，保證金 × 槓桿，小資金也很容易達到）。</p>
