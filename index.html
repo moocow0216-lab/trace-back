@@ -1326,7 +1326,7 @@ body.sponly #qSrc,body.sponly #qAuto,body.sponly #qScan,body.sponly #qStat,body.
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-16c</div>
+      <div class="qver" id="qVer">網站版本 2026-11-16d</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3797,10 +3797,10 @@ async function srvPull() {
     if (OWN() && !SV.pushed) { SV.pushed = true; pushTrade(); pushEq(); }
     if (j.rep) SRVREP.rep = j.rep;
     SRV.sim = j.sim || null; simUi();
-    if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
+    if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.man = j.lt.man || []; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-16c・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-16d・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     if (j.notice) ntShow(j.notice);                     // 📢 擁有者發的更新通知
     $('qAnnBox').hidden = !OWN(); if (OWN() && !$('ann_t').value && !$('ann_x').value) annFill();
@@ -7787,6 +7787,10 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-16d', title: '2026/11/16 更新（資金曲線三條線）', items: [
+    { ic: '📈', t: '資金曲線改成三條線（單位 U，從起點開始累計的盈虧）：🖐 手動合約（藍，你自己在 Bitunix 下的單）、🗡 特級交易（紅）、總和（紫），下面會寫三條各賺賠多少。' },
+    { ic: '🖐', t: '手動單不再扣特級交易的資金：特級交易權益只算特級單自己的盈虧，手動單另外看藍線。帳戶實際資金不夠時，系統照樣不會開新單。' }
+  ] },
   { id: '2026-11-16c', title: '2026/11/16 更新（特級交易重新開始）', items: [
     { ic: '🔧', t: '修正：特級交易的目前資金變成負的（含手動單虧損分攤）之後，重新輸入投入資金也沒辦法開始。現在「🗡 特級交易設定」多了「↺ 從投入資金重新開始」按鈕；資金已經虧完時改投入資金也會自動重新開始；按「開始特級交易」被擋下時，也可以直接選擇從投入資金重新開始。' }
   ] },
@@ -10222,7 +10226,7 @@ function renderEq3(list, box, col, LWC, CAP) {          // 🗡 三條資金曲�
   CAP = K.a;
   $('qEqNote').textContent = SPONLY ? (EQP ? '「本期」跟持倉區的「特級交易權益」用同一個起點，數字一樣（加碼／減碼會記在投入資金下面，手動單虧損分攤、收回的資金也算進去）；之前的單在「全部特級交易紀錄」、成功率、歷史紀錄都還看得到。' : '「全部」把所有特級單都算進來，但本金用的是「目前」的投入資金，中間重新設定過投入資金的話，會跟持倉區的「特級交易權益」對不上。') + '用「報酬率」畫，從 0% 開始，虛線 0% 就是本金：紅線＝🗡 特級交易（盈虧 ÷ 特級投入資金）。每一筆結單時用 Bitunix 的實際損益（扣手續費、加減資金費），最後一點把持有中的單用現價算進去。' : '三條線都用「報酬率」畫，從 0% 開始，虛線 0% 就是本金：藍線＝一般交易（盈虧 ÷ 一般投入資金）、紅線＝🗡 特級交易（盈虧 ÷ 特級投入資金）、紫線＝綜合（兩邊盈虧加起來 ÷ 兩個投入資金加起來）。上面的數字卡是兩邊合計的金額。每一筆結單時用 Bitunix 的實際損益（扣手續費、加減資金費），最後一點把持有中的單用現價算進去。';
   if (!EQC || !box.contains(EQC.el) || EQC.mode !== 3) {
-    box.innerHTML = `<div class="qeqleg">${SPONLY ? '' : '<span><i style="background:#3b82f6"></i>一般交易</span>'}<span><i style="background:#ef4444"></i>🗡 特級交易</span>${SPONLY ? '' : '<span><i style="background:#a855f7"></i>綜合</span>'}<span><i style="background:${col('--muted')}"></i>本金（0%）</span></div>`;
+    box.innerHTML = SPONLY ? `<div class="qeqleg"><span><i style="background:#3b82f6"></i>🖐 手動合約</span><span><i style="background:#ef4444"></i>🗡 特級交易</span><span><i style="background:#a855f7"></i>總和</span><span><i style="background:${col('--muted')}"></i>0（沒賺沒賠）</span></div>` : `<div class="qeqleg"><span><i style="background:#3b82f6"></i>一般交易</span><span><i style="background:#ef4444"></i>🗡 特級交易</span><span><i style="background:#a855f7"></i>綜合</span><span><i style="background:${col('--muted')}"></i>本金（0%）</span></div>`;
     const el = document.createElement('div'); el.style.cssText = 'position:absolute;inset:0'; box.appendChild(el);
     const ch = LWC.createChart(el, {
       layout: { background: { type: 'solid', color: col('--paper') }, textColor: col('--muted'), fontSize: 11, fontFamily: '"IBM Plex Sans","Noto Sans TC",system-ui,sans-serif' },
@@ -10231,21 +10235,40 @@ function renderEq3(list, box, col, LWC, CAP) {          // 🗡 三條資金曲�
       timeScale: { borderColor: col('--grid2'), timeVisible: true, secondsVisible: false, tickMarkFormatter: LW_TIME.tick }, crosshair: { mode: 0 },
       localization: LW_TIME.localization
     });
-    const fmt = { type: 'custom', minMove: 0.01, formatter: v => (v > 0 ? '+' : '') + v.toFixed(2) + '%' }, mk = (c, w) => ch.addLineSeries({ color: c, lineWidth: w, lineType: 0, priceFormat: fmt, lastValueVisible: true, priceLineVisible: false });
+    const fmt = { type: 'custom', minMove: 0.01, formatter: v => (v > 0 ? '+' : '') + v.toFixed(2) + (SPONLY ? 'U' : '%') }, mk = (c, w) => ch.addLineSeries({ color: c, lineWidth: w, lineType: 0, priceFormat: fmt, lastValueVisible: true, priceLineVisible: false });
     const n = mk('#3b82f6', 2), sp = mk('#ef4444', 2), a = mk('#a855f7', 3);
     new ResizeObserver(() => { if (el.clientWidth && el.clientHeight) ch.resize(el.clientWidth, el.clientHeight); }).observe(el);
-    if (SPONLY) { n.applyOptions({ visible: false }); a.applyOptions({ visible: false, lastValueVisible: false }); }   // 🗡 特級專用版：只畫紅線
-    (SPONLY ? sp : a).applyOptions({ autoscaleInfoProvider: o => { const r = o(); if (!r || !r.priceRange) return r; return { priceRange: { minValue: Math.min(r.priceRange.minValue, 0), maxValue: Math.max(r.priceRange.maxValue, 0) }, margins: r.margins }; } });   // 一定看得到 0%（本金）
+    a.applyOptions({ autoscaleInfoProvider: o => { const r = o(); if (!r || !r.priceRange) return r; return { priceRange: { minValue: Math.min(r.priceRange.minValue, 0), maxValue: Math.max(r.priceRange.maxValue, 0) }, margins: r.margins }; } });   // 一定看得到 0%（本金）
     EQC = { el, ch, n, sp, a, line: null, fitKey: '', mode: 3 };
   }
   const sec = t => Math.floor((t + tzOff(t)) / 1000), now = Date.now();
   const data = R => { const m = new Map(), c0 = R.cap > 0 ? R.cap : 1; R.pts.concat([{ t: now, v: R.eq + R.unreal }]).forEach(p => { const c = R.capAt ? Math.max(1e-9, R.capAt(p.t)) : c0; m.set(sec(p.t), (p.v / c - 1) * 100); }); return [...m].sort((x, y) => x[0] - y[0]).map(([time, value]) => ({ time, value: Math.round(value * 100) / 100 })); };   // 報酬率：各自的盈虧 ÷ 各自的本金
+  if (SPONLY) return eqSp3(Rs, sec, now, col);       // 🗡 特級專用版：手動合約、特級、總和三條線（單位 U）
   const dA = data(Ra); EQC.n.setData(data(Rn)); EQC.sp.setData(data(Rs)); EQC.a.setData(dA);
-  const L0 = SPONLY ? EQC.sp : EQC.a;
+  const L0 = EQC.a;
   if (EQC.line) L0.removePriceLine(EQC.line);
   EQC.line = L0.createPriceLine({ price: 0, color: col('--muted'), lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: '本金' });
   const dK = SPONLY ? data(Rs) : dA, key = dK.length + ':' + (dK[0] ? dK[0].time : 0);
   if (EQC.fitKey !== key) { EQC.ch.timeScale().fitContent(); EQC.fitKey = key; }
+}
+function eqSp3(Rs, sec, now, col) {                   // 🖐 手動合約（藍）／🗡 特級（紅）／總和（紫）：從起點開始累計的盈虧（U），最後一點含持有中的浮動盈虧
+  const cAt = t => Rs.capAt ? Rs.capAt(t) : Rs.cap;
+  const sp = Rs.pts.map(p => ({ t: p.t, v: p.v - cAt(p.t) })).concat([{ t: now, v: Rs.eq + Rs.unreal - Rs.cap }]);
+  const t0 = EQP ? EQP.since : Math.min(sp[0] ? sp[0].t : now, ...(SRVLT.man || []).map(m => m.at));
+  let cum = 0; const man = [{ t: t0, v: 0 }];
+  for (const m of (SRVLT.man || []).filter(m => m.at >= t0).sort((a, b) => a.at - b.at)) man.push({ t: m.at, v: (cum += +m.pnl || 0) });
+  const mOpen = ((SRVBX && SRVBX.pos) || []).filter(p => !p.bot).reduce((a, p) => a + (+p.upnl || 0), 0);
+  man.push({ t: now, v: cum + mOpen });
+  const valAt = (L, t) => { let v = 0; for (const p of L) { if (p.t <= t) v = p.v; else break; } return v; };
+  const ts = [...new Set([t0, ...sp.map(p => p.t), ...man.map(p => p.t)])].filter(t => t >= t0).sort((a, b) => a - b);
+  const tot = ts.map(t => ({ t, v: valAt(sp, t) + valAt(man, t) }));
+  const D = L => { const m = new Map(); L.filter(p => p.t >= t0).forEach(p => m.set(sec(p.t), Math.round(p.v * 100) / 100)); return [...m].sort((x, y) => x[0] - y[0]).map(([time, value]) => ({ time, value })); };
+  EQC.n.setData(D(man)); EQC.sp.setData(D(sp)); EQC.a.setData(D(tot));
+  if (EQC.line) EQC.a.removePriceLine(EQC.line);
+  EQC.line = EQC.a.createPriceLine({ price: 0, color: col('--muted'), lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: '0' });
+  const dK = D(tot), key = dK.length + ':' + (dK[0] ? dK[0].time : 0); if (EQC.fitKey !== key) { EQC.ch.timeScale().fitContent(); EQC.fitKey = key; }
+  const last = L => L.length ? L[L.length - 1].v : 0, f = v => `<b class="${v >= 0 ? 'qg' : 'qr'}">${v >= 0 ? '+' : ''}${v.toFixed(2)}U</b>`;
+  $('qEqNote').innerHTML = `從 ${fmtT(t0)} 起累計：🖐 手動合約 ${f(last(man))}・🗡 特級 ${f(last(sp))}・總和 ${f(last(tot))}（都已扣手續費、加減資金費；最後一點含持有中的浮動盈虧）。手動合約是你自己在 Bitunix 下的單，不會扣特級交易的資金；${EQP ? '「本期」跟持倉區的「特級交易權益」同一個起點，按「↺ 從投入資金重新開始」後三條線都從 0 重新畫。' : '「全部」從第一筆紀錄開始算。'}`;
 }
 var EQP = null;                                       // 🗡 資金曲線「本期」：{ since, man }，null＝全部
 function eqPeriod() {
