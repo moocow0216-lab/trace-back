@@ -6955,10 +6955,11 @@ function warRender() {
 }
 // ---------- 資金曲線 ----------
 function warBalance(D) {                                // 資金曲線：先算好資料，畫的部分在動畫迴圈裡（線會流動）
-  const cl = D.trades.filter(t => t.status !== 'open' && t.exitAt).slice().sort((a, b) => a.exitAt - b.exitAt).slice(-80);
+  const since = SPONLY && SRVLT.cfg ? SRVLT.cfg.spBudAt || SRVLT.cfg.spStartAt || 0 : 0;   // 🗡 跟「特級交易權益」同一個起點：按「重新開始」後曲線也從頭畫
+  const cl = D.trades.filter(t => t.status !== 'open' && t.exitAt && (!since || eqInPer(t, since))).slice().sort((a, b) => a.exitAt - b.exitAt).slice(-80);
   const start = D.eq - cl.reduce((a, t) => a + wNet(t), 0); let v = start; const pts = [start, ...cl.map(t => (v += wNet(t)))];
   if (D.open.length || pts.length < 2) pts.push(D.eq);
-  $('wxBalV').textContent = D.eq.toFixed(2) + 'U'; const ch = D.eq - start; $('wxBalD').innerHTML = `<b class="${ch >= 0 ? 'qg' : 'qr'}">${wU(ch)}</b>・最近 ${cl.length} 筆`;
+  $('wxBalV').textContent = D.eq.toFixed(2) + 'U'; const ch = D.eq - start; $('wxBalD').innerHTML = `<b class="${ch >= 0 ? 'qg' : 'qr'}">${wU(ch)}</b>・${since ? `${fmtT(since).slice(0, 5)} 起 ` : '最近 '}${cl.length} 筆`;
   $('wxBalSub').textContent = `${D.sim ? '模擬盤' : '實盤'}・${SPONLY ? '🗡 特級' : '一般＋特級'}`;
   const key = pts.map(x => x.toFixed(4)).join(','); if (!WAR.bal || WAR.bal.key !== key) WAR.bal = { key, pts, cl, up: ch >= 0, at: performance.now() };
 }
