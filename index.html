@@ -1328,7 +1328,7 @@ body.sponly #qSrc,body.sponly #qAuto,body.sponly #qScan,body.sponly #qStat,body.
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-16k</div>
+      <div class="qver" id="qVer">網站版本 2026-11-16l</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3804,7 +3804,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.man = j.lt.man || []; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-16k・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-16l・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     if (j.notice) ntShow(j.notice);                     // 📢 擁有者發的更新通知
     $('qAnnBox').hidden = !OWN(); if (OWN() && !$('ann_t').value && !$('ann_x').value) annFill();
@@ -6664,22 +6664,35 @@ async function refLoad() {
   try { RA.d = await srvFetch('/api/ref/admin', { op: 'list' }); RA.at = Date.now(); refDraw(); } catch (e) { RA.html = `<p class="mnmsg bad">${esc(e.message)}</p>`; const h = $('refAdm'); if (h) h.innerHTML = RA.html; }
   RA.busy = false;
 }
+function refEdInit() { const d = RA.d; return (d.owner ? d.cfg.refs : d.cfg.refs.filter(r => r.uid === d.meUid)).map(r => ({ ...r })); }
+function refAvatar(file) {                              // 大頭貼：裁成正方形、縮成 320px JPEG 再存（大約 30KB）
+  return new Promise((ok, no) => { const fr = new FileReader(); fr.onerror = () => no(new Error('讀不到這張圖')); fr.onload = () => { const im = new Image(); im.onerror = () => no(new Error('這個檔案不是圖片')); im.onload = () => {
+    const z = Math.min(im.width, im.height), c = document.createElement('canvas'); c.width = c.height = 320; const g = c.getContext('2d'); g.fillStyle = '#0a0d16'; g.fillRect(0, 0, 320, 320);
+    g.drawImage(im, (im.width - z) / 2, (im.height - z) / 2, z, z, 0, 0, 320, 320); ok(c.toDataURL('image/jpeg', .85)); }; im.src = fr.result; }; fr.readAsDataURL(file); });
+}
 function refDraw() {
-  const d = RA.d; if (!d) return; const C = d.cfg, U = d.users, own = d.owner, refs = RA.edit || C.refs;
+  const d = RA.d; if (!d) return; const C = d.cfg, U = d.users, own = d.owner, edRefs = RA.edit || refEdInit();
+  if (!document.getElementById('rfCss')) document.head.insertAdjacentHTML('beforeend', `<style id="rfCss">.rfed{border:1px solid var(--line,rgba(127,127,127,.3));border-radius:14px;padding:12px;margin:10px 0;display:flex;gap:14px;flex-wrap:wrap}.rfav{display:flex;flex-direction:column;align-items:center;gap:6px;width:110px}.rfpic{width:84px;height:84px;border-radius:50%;padding:3px;background:conic-gradient(from 210deg,#b9f227,#2fd6a0,#e1306c,#f9a83c,#b9f227);display:block}.rfpic img,.rfpic b{display:grid;place-items:center;width:100%;height:100%;border-radius:50%;object-fit:cover;background:#0a0d16;font-size:28px;color:#b9f227}.rfgrid{flex:1;min-width:240px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:4px 12px}.rfgrid .rfw{grid-column:1/-1}.rfgrid textarea{width:100%;box-sizing:border-box}</style>`);
   const pend = U.filter(u => u.st === 'pending').sort((a, b) => a.at - b.at), rest = U.filter(u => u.st !== 'pending').sort((a, b) => (b.doneAt || b.created) - (a.doneAt || a.created));
   const vol = u => `<span class="${u.st === 'ok' && u.vol < C.minVol ? 'qr' : ''}">${u.vol.toLocaleString()}</span>`;
   RA.html = `<h4>🎟 審核註冊 <small class="tlmut">${SPONLY ? '免費註冊：用邀請碼註冊 Bitunix 的人，審核通過才能自動交易' : C.on ? '<b class="qg">開啟中</b>（免費，用邀請碼註冊的人審核通過才能自動交易）' : '<b class="qr">關閉</b>（不檢查邀請碼）'}</small></h4>
-    ${own ? `<details${C.refs.some(r => r.unnamed) ? ' open' : ''}><summary class="tlsub">⚙️ 管理員名字、邀請碼和活躍門檻（只有擁有者能改）${C.refs.some(r => r.unnamed) ? ' <b class="qr">・有管理員還沒取名字</b>' : ''}</summary>
-      ${SPONLY ? '' : `<label class="agree"><input type="checkbox" id="ra_on"${C.on ? ' checked' : ''}> 開啟邀請碼制（開啟時，現有帳號都會自動算「已通過」）</label>`}
-      <label class="field">活躍門檻：近 30 天自動交易量（USDT，0＝不檢查）<input id="ra_min" type="number" min="0" step="100" value="${C.minVol}"></label>
-      <p class="tlsub">管理員名字：<b>你在這裡輸入的名字，就是用戶註冊時「選擇邀請你的管理員」看到的選項</b>，Discord 也會寫「某某的用戶需要審核」並通知那位管理員（他自己要設好 Discord 通知）。新增的管理員會自動列進來，<b>取好名字才會出現在註冊頁</b>。改完按「儲存設定」。</p>
-      <div class="tablewrap"><table class="tltab"><tr><th>名稱</th><th>通知帳號 UID</th><th>邀請碼</th><th>邀請連結</th><th></th></tr>${refs.map((r, i) => `<tr><td><input data-rae="${i}" data-k="name" value="${r.unnamed && !RA.edit ? '' : esc(r.name)}" placeholder="${r.unnamed ? '輸入管理員名字' : '例如 7hzynn'}">${r.unnamed ? '<br><small class="qr">還沒取名字，註冊頁不會顯示</small>' : ''}</td><td><input data-rae="${i}" data-k="uid" value="${esc(r.uid || '')}" placeholder="網站帳號 UID" inputmode="numeric"${r.auto ? ' readonly' : ''}></td><td><input data-rae="${i}" data-k="code" value="${esc(r.code || '')}"></td><td><input data-rae="${i}" data-k="link" value="${esc(r.link || '')}" placeholder="https://"></td><td>${r.auto ? '<span class="tlmut">管理員（自動）</span>' : `<button class="btn" data-radel="${i}">刪除</button>`}</td></tr>`).join('')}</table></div>
-      <div class="qbt"><button class="btn" id="ra_add">＋ 新增邀請人</button><button class="btn primary" id="ra_save">儲存設定</button><span class="tlsub" id="ra_msg"></span></div></details>` : (() => { const m = C.refs.find(r => r.uid === d.meUid); return m ? `<details${m.code || m.link ? '' : ' open'}><summary class="tlsub">🙋 我在註冊頁的資料（用戶選了你，Discord 會通知你審核）</summary>
-      <label class="field">顯示名字（用戶註冊時看到的）<input id="ra_mName" value="${esc(m.name)}" maxlength="30"></label>
-      <label class="field">我的 Bitunix 邀請碼<input id="ra_mCode" value="${esc(m.code || '')}" maxlength="40"></label>
-      <label class="field">我的邀請連結<input id="ra_mLink" value="${esc(m.link || '')}" placeholder="https://" maxlength="300"></label>
-      <p class="tlsub">記得到「☰ 選單 → 設定」設好自己的 Discord 通知，才收得到審核提醒。</p>
-      <div class="qbt"><button class="btn primary" id="ra_mSave">儲存</button><span class="tlsub" id="ra_mMsg"></span></div></details>` : ''; })()}
+    ${own || C.refs.some(r => r.uid === d.meUid) ? `<details id="ra_pf"${RA.open || RA.edit || edRefs.some(r => r.unnamed) || (!own && !(edRefs[0] && edRefs[0].code)) ? ' open' : ''}><summary class="tlsub">${own ? '⚙️ 管理員個人檔案和活躍門檻（擁有者可以改每個人的）' : '🙋 我的個人檔案（用戶註冊時第一步會看到）'}${edRefs.some(r => r.unnamed) ? ' <b class="qr">・有管理員還沒取名字</b>' : ''}</summary>
+      ${own && !SPONLY ? `<label class="agree"><input type="checkbox" id="ra_on"${C.on ? ' checked' : ''}> 開啟邀請碼制（開啟時，現有帳號都會自動算「已通過」）</label>` : ''}
+      ${own ? `<label class="field">活躍門檻：近 30 天自動交易量（USDT，0＝不檢查）<input id="ra_min" type="number" min="0" step="100" value="${C.minVol}"></label>` : ''}
+      <p class="tlsub">註冊頁第一步「選擇你的邀請人」會顯示這裡的<b>個人檔案</b>：大頭貼、名字、IG、自我介紹、Bitunix 邀請碼。用戶點開會看到邀請連結的 <b>QR code</b> 和 Instagram、邀請碼註冊兩個按鈕。用戶選了誰，Discord 會寫「某某的用戶需要審核」並通知那個人（他自己要設好 Discord 通知）。${own ? '新增的管理員會自動列進來，<b>取好名字才會出現在註冊頁</b>。' : ''}</p>
+      ${edRefs.map((r, i) => `<div class="rfed">
+        <div class="rfav"><span class="rfpic">${r.avatar ? `<img src="${esc(r.avatar)}" alt="">` : '<b>?</b>'}</span><label class="btn">${r.avatar ? '換大頭貼' : '上傳大頭貼'}<input type="file" accept="image/*" data-raav="${i}" hidden></label>${r.avatar ? `<button class="btn" data-raavx="${i}">移除</button>` : ''}</div>
+        <div class="rfgrid">
+          <label class="field">名字（註冊頁顯示）<input data-rae="${i}" data-k="name" value="${r.unnamed && !RA.edit ? '' : esc(r.name)}" placeholder="${r.unnamed ? '輸入管理員名字' : '例如 7hzynn'}" maxlength="30">${r.unnamed ? '<small class="qr">還沒取名字，註冊頁不會顯示</small>' : ''}</label>
+          ${own ? `<label class="field">通知帳號 UID${r.auto ? `（${r.own ? '擁有者' : '管理員'}，自動）` : ''}<input data-rae="${i}" data-k="uid" value="${esc(r.uid || '')}" placeholder="網站帳號 UID" inputmode="numeric"${r.auto ? ' readonly' : ''}></label>` : ''}
+          <label class="field">IG 主頁連結<input data-rae="${i}" data-k="ig" value="${esc(r.ig || '')}" placeholder="https://www.instagram.com/帳號"></label>
+          <label class="field">Bitunix 邀請碼<input data-rae="${i}" data-k="code" value="${esc(r.code || '')}" maxlength="40"></label>
+          <label class="field rfw">Bitunix 邀請連結（QR code 會用這個）<input data-rae="${i}" data-k="link" value="${esc(r.link || '')}" placeholder="https://www.bitunix.../referral/..."></label>
+          <label class="field rfw">自我介紹（150 字內）<textarea data-rae="${i}" data-k="bio" rows="2" maxlength="150">${esc(r.bio || '')}</textarea></label>
+        </div>
+        ${own && !r.auto ? `<div class="qbt"><button class="btn" data-radel="${i}">刪除這個邀請人</button></div>` : ''}</div>`).join('')}
+      <div class="qbt">${own ? '<button class="btn" id="ra_add">＋ 新增邀請人</button><button class="btn primary" id="ra_save">儲存設定</button>' : '<button class="btn primary" id="ra_mSave">儲存我的個人檔案</button>'}<a class="btn" href="pay.html" target="_blank" rel="noopener">預覽註冊頁</a><span class="tlsub" id="ra_msg"></span></div>
+      ${own ? '' : '<p class="tlsub">記得到「☰ 選單 → 設定」設好自己的 Discord 通知，才收得到審核提醒。</p>'}</details>` : ''}
     <h5>📋 邀請名單（代理商後台的 UID）<small class="tlmut">　目前 ${C.listN} 個${C.listAt ? `・${bDate(C.listAt)} 更新` : ''}</small></h5>
     <p class="tlsub">到 Bitunix 代理商後台的「邀請用戶」，把 UID 清單整段複製貼上（夾雜其他文字也沒關係，系統只抓 4～20 位數字）。名單只是<b>標示</b>：待審核清單的「名單」欄會打 ✅，方便你判斷，<b>一律還是要人工按「通過」</b>。</p>
     <textarea id="ra_txt" rows="3" placeholder="貼上 UID 清單…" style="width:100%;box-sizing:border-box">${esc(RA.txt)}</textarea>
@@ -6692,14 +6705,18 @@ function refDraw() {
 function refBind() {
   const h = $('refAdm'); if (!h || h.dataset.b) return; h.dataset.b = '1';
   const A = (op, body) => srvFetch('/api/ref/admin', { op, ...body });
-  h.addEventListener('input', e => { const t = e.target; if (t.id === 'ra_txt') RA.txt = t.value; if (t.dataset.rae) { RA.edit = RA.edit || RA.d.cfg.refs.map(r => ({ ...r })); RA.edit[+t.dataset.rae][t.dataset.k] = t.value; } });
+  h.addEventListener('toggle', e => { if (e.target.id === 'ra_pf') RA.open = e.target.open; }, true);
+  h.addEventListener('change', async e => { const t = e.target; if (!t.dataset || t.dataset.raav === undefined || !t.files || !t.files[0]) return;
+    try { const u = await refAvatar(t.files[0]); RA.edit = RA.edit || refEdInit(); RA.edit[+t.dataset.raav].avatar = u; refDraw(); const g = $('ra_msg'); if (g) g.textContent = '大頭貼已放上，記得按儲存'; } catch (er) { alert(er.message); } });
+  h.addEventListener('input', e => { const t = e.target; if (t.id === 'ra_txt') RA.txt = t.value; if (t.dataset.rae) { RA.edit = RA.edit || refEdInit(); RA.edit[+t.dataset.rae][t.dataset.k] = t.value; } });
   h.addEventListener('click', async e => {
     const t = e.target.closest('button'); if (!t) return;
     try {
       if (t.dataset.copy) { try { await navigator.clipboard.writeText(t.dataset.copy); t.textContent = '已複製'; } catch (er) { prompt('複製：', t.dataset.copy); } return; }
-      if (t.id === 'ra_add') { RA.edit = RA.edit || RA.d.cfg.refs.map(r => ({ ...r })); RA.edit.push({ id: '', name: '', uid: '', code: '', link: '' }); return refDraw(); }
-      if (t.dataset.radel) { RA.edit = RA.edit || RA.d.cfg.refs.map(r => ({ ...r })); RA.edit.splice(+t.dataset.radel, 1); return refDraw(); }
-      if (t.id === 'ra_mSave') { await A('mine', { name: $('ra_mName').value, code: $('ra_mCode').value, link: $('ra_mLink').value }); await refLoad(); const m = $('ra_mMsg'); if (m) m.textContent = '✅ 已儲存'; return; }
+      if (t.id === 'ra_add') { RA.edit = RA.edit || refEdInit(); RA.edit.push({ id: '', name: '', uid: '', code: '', link: '', ig: '', bio: '', avatar: '' }); return refDraw(); }
+      if (t.dataset.radel) { RA.edit = RA.edit || refEdInit(); RA.edit.splice(+t.dataset.radel, 1); return refDraw(); }
+      if (t.id === 'ra_mSave') { const m = (RA.edit || refEdInit())[0]; await A('mine', { name: m.name, code: m.code, link: m.link, ig: m.ig, bio: m.bio, avatar: m.avatar || '' }); RA.edit = null; await refLoad(); const g = $('ra_msg'); if (g) g.textContent = '✅ 已儲存'; return; }
+      if (t.dataset.raavx) { RA.edit = RA.edit || refEdInit(); RA.edit[+t.dataset.raavx].avatar = ''; return refDraw(); }
       if (t.id === 'ra_save') { await A('cfg', { ...($('ra_on') ? { on: $('ra_on').checked } : {}), minVol: +$('ra_min').value || 0, refs: RA.edit || RA.d.cfg.refs }); RA.edit = null; await refLoad(); const m = $('ra_msg'); if (m) m.textContent = '✅ 已儲存'; return; }
       if (t.id === 'ra_listAdd' || t.id === 'ra_listRep') {
         if (t.id === 'ra_listRep' && !confirm('用這次貼的內容「整份取代」目前的邀請名單？')) return;
@@ -7862,6 +7879,10 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-16l', title: '2026/11/16 更新（邀請人個人檔案）', items: [
+    { ic: '🪪', t: '註冊頁新增第一步「選擇你的邀請人」：每位管理員有自己的個人檔案（大頭貼、名字、IG、自我介紹、Bitunix 邀請碼），點開會看到邀請連結的 QR code、Instagram 和「邀請碼註冊 Bitunix」兩個按鈕，選好就帶到第二步用他的邀請碼註冊。' },
+    { ic: '⚙️', t: '「🎟 審核註冊」可以編輯個人檔案：擁有者可以改每個人的，管理員可以改自己的；大頭貼直接上傳，會自動裁成正方形縮小。' }
+  ] },
   { id: '2026-11-16k', title: '2026/11/16 更新（管理員名字）', items: [
     { ic: '🙋', t: '註冊頁「選擇邀請你的管理員」顯示的是擁有者在「🎟 審核註冊」設定裡輸入的管理員名字；新管理員還沒取名字前不會出現在註冊頁。Discord 通知會寫「某某的用戶需要審核」。' }
   ] },
