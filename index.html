@@ -1117,6 +1117,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
 </style>
 <style id="annCss">/* 📢 更新通知（擁有者發送／大家收到） */
 .qannwide{grid-column:1/-1}
+.qeqper{margin-left:auto}.qeqper select{max-width:100%}
 #ann_x{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:7px 9px;min-width:0;width:100%;box-sizing:border-box;font:inherit;font-size:14px;line-height:1.6;color:inherit;resize:vertical}
 .mnpage[data-p="set"] #ann_x{background:var(--gin);border:1px solid var(--gdl);color:var(--gtx);border-radius:8px}
 #qAnnBox .qbt{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -1325,7 +1326,7 @@ body.sponly #qSrc,body.sponly #qAuto,body.sponly #qScan,body.sponly #qStat,body.
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-15c</div>
+      <div class="qver" id="qVer">網站版本 2026-11-15d</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -1504,7 +1505,7 @@ body.sponly #qSrc,body.sponly #qAuto,body.sponly #qScan,body.sponly #qStat,body.
         <div class="qspbox" id="qSpBox" hidden><div class="qsph">🗡 特級交易<span>特級咒具的訊號真實下單的成績</span></div><div id="qSpPnl"></div><div class="qkpi" id="qSpKpi"></div></div>
         <div id="qRecon" hidden></div>
         <div class="qeq">
-          <div class="qeqh"><b>資金曲線</b><span id="qEqTitle"></span></div>
+          <div class="qeqh"><b>資金曲線</b><span id="qEqTitle"></span><label class="tzsel qeqper" id="qePerWrap" hidden>範圍 <select id="qe_per" aria-label="資金曲線的範圍"><option value="cur">本期（從設定投入資金開始，跟持倉區一致）</option><option value="all">全部特級交易紀錄</option></select></label></div>
           <div class="qeqset">
             <label class="tzsel">本金 <input id="qe_cap" type="number" min="1" step="10"> U</label>
             <label class="tzsel">每筆 <select id="qe_mode"><option value="fixed">固定保證金</option><option value="pct">本金的 %（複利）</option></select></label>
@@ -3799,7 +3800,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-15c・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-15d・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     if (j.notice) ntShow(j.notice);                     // 📢 擁有者發的更新通知
     $('qAnnBox').hidden = !OWN(); if (OWN() && !$('ann_t').value && !$('ann_x').value) annFill();
@@ -7758,6 +7759,9 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-15d', title: '2026/11/15 更新（資金曲線對帳）', items: [
+    { ic: '🔧', t: '修正：資金曲線的金額跟持倉區的「特級交易權益」對不上。原因是重新設定特級投入資金後，持倉區從那一刻重新算，資金曲線卻把以前所有的特級單都算進來。現在資金曲線預設看「本期」（從最近一次設定投入資金開始），數字跟持倉區一樣；想看以前全部的成績，可以在資金曲線右上角切到「全部特級交易紀錄」。' }
+  ] },
   { id: '2026-11-15c', title: '2026/11/15 更新（AWS 帳單提醒）', items: [
     { ic: '🔧', t: '修正：設定頁的「💰 AWS 帳單提醒」一直顯示「連上伺服器後可以設定」，主機建立日、每月費用都是空的。現在會正常讀到伺服器的設定。' }
   ] },
@@ -10124,6 +10128,8 @@ $('qSpBxTab').addEventListener('click', bxTabClick);   // 🗡 特級持倉的�
 /* ---------- 實盤資料：成功率、累積損益、資金曲線、歷史紀錄都改用真實成交 ---------- */
 let DATA = SPONLY ? 'real' : LS.get('quantData', 'real');   // 🗡 特級專用版：只有實盤（沒有 CVD 訊號模擬）
 $('qDataSrc').value = DATA;
+$('qe_per').value = LS.get('quantEqPer', 'cur');
+$('qe_per').onchange = () => { LS.set('quantEqPer', $('qe_per').value); EQC = null; renderHist(); };
 $('qDataSrc').onchange = () => { DATA = $('qDataSrc').value; LS.set('quantData', DATA); hMore = 300; renderHist(); };
 $('qLtReset').onclick = () => { const C = SRVLT.cfg || {}; if (confirm(`實盤統計要從現在開始，用${C.budget > 0 ? `你設定的投入資金 ${C.budget}U` : '目前 Bitunix 帳戶的資金'}重新累積嗎？（之前的實盤紀錄還在，只是不算進統計）`)) ltCall('/api/lt/config', { reset: true }); };
 const inStatC = (t, startAt) => t.et >= (startAt || 0) || t.status === 'open' || (t.exitAt || 0) >= (startAt || 0);   // 跟伺服器同一套：起算時還開著的單也算
@@ -10148,9 +10154,9 @@ function realRows() {
   }).sort((a, b) => b.c.et - a.c.et);
 }
 function renderEq3(list, box, col, LWC, CAP) {          // 🗡 三條資金曲線：一般交易（藍）、特級交易（紅）、合計（紫），各自從起始本金開始，最後一點含持有中的現價
-  const K = eqCaps(), isT = x => !!(x.t && x.t.src === 'tool'), Rn = simEquityReal(list.filter(x => !isT(x)), K.n), Rs = simEquityReal(list.filter(isT), K.s), Ra = simEquityReal(list, K.a);
+  const K = eqCaps(), isT = x => !!(x.t && x.t.src === 'tool'), Rn = simEquityReal(list.filter(x => !isT(x)), K.n), Rs = eqMan(simEquityReal(list.filter(isT), K.s, EQP && EQP.since)), Ra = simEquityReal(list, K.a);
   CAP = K.a;
-  $('qEqNote').textContent = SPONLY ? '用「報酬率」畫，從 0% 開始，虛線 0% 就是本金：紅線＝🗡 特級交易（盈虧 ÷ 特級投入資金）。每一筆結單時用 Bitunix 的實際損益（扣手續費、加減資金費），最後一點把持有中的單用現價算進去。' : '三條線都用「報酬率」畫，從 0% 開始，虛線 0% 就是本金：藍線＝一般交易（盈虧 ÷ 一般投入資金）、紅線＝🗡 特級交易（盈虧 ÷ 特級投入資金）、紫線＝綜合（兩邊盈虧加起來 ÷ 兩個投入資金加起來）。上面的數字卡是兩邊合計的金額。每一筆結單時用 Bitunix 的實際損益（扣手續費、加減資金費），最後一點把持有中的單用現價算進去。';
+  $('qEqNote').textContent = SPONLY ? (EQP ? '「本期」從你最近一次設定特級投入資金開始算，數字跟持倉區的「特級交易權益」一樣（手動單虧損分攤、收回的資金也算進去）；之前的單在「全部特級交易紀錄」、成功率、歷史紀錄都還看得到。' : '「全部」把所有特級單都算進來，但本金用的是「目前」的投入資金，中間重新設定過投入資金的話，會跟持倉區的「特級交易權益」對不上。') + '用「報酬率」畫，從 0% 開始，虛線 0% 就是本金：紅線＝🗡 特級交易（盈虧 ÷ 特級投入資金）。每一筆結單時用 Bitunix 的實際損益（扣手續費、加減資金費），最後一點把持有中的單用現價算進去。' : '三條線都用「報酬率」畫，從 0% 開始，虛線 0% 就是本金：藍線＝一般交易（盈虧 ÷ 一般投入資金）、紅線＝🗡 特級交易（盈虧 ÷ 特級投入資金）、紫線＝綜合（兩邊盈虧加起來 ÷ 兩個投入資金加起來）。上面的數字卡是兩邊合計的金額。每一筆結單時用 Bitunix 的實際損益（扣手續費、加減資金費），最後一點把持有中的單用現價算進去。';
   if (!EQC || !box.contains(EQC.el) || EQC.mode !== 3) {
     box.innerHTML = `<div class="qeqleg">${SPONLY ? '' : '<span><i style="background:#3b82f6"></i>一般交易</span>'}<span><i style="background:#ef4444"></i>🗡 特級交易</span>${SPONLY ? '' : '<span><i style="background:#a855f7"></i>綜合</span>'}<span><i style="background:${col('--muted')}"></i>本金（0%）</span></div>`;
     const el = document.createElement('div'); el.style.cssText = 'position:absolute;inset:0'; box.appendChild(el);
@@ -10177,11 +10183,22 @@ function renderEq3(list, box, col, LWC, CAP) {          // 🗡 三條資金曲�
   const dK = SPONLY ? data(Rs) : dA, key = dK.length + ':' + (dK[0] ? dK[0].time : 0);
   if (EQC.fitKey !== key) { EQC.ch.timeScale().fitContent(); EQC.fitKey = key; }
 }
+var EQP = null;                                       // 🗡 資金曲線「本期」：{ since, man }，null＝全部
+function eqPeriod() {
+  if (!SPONLY || DATA !== 'real' || !SRVLT.cfg) return null;
+  const C = SRVLT.cfg, since = C.spBudAt || C.spStartAt || 0, per = $('qe_per').value;
+  return per === 'all' || !since ? null : { since, man: SRVLT.spBot ? +SRVLT.spBot.man || 0 : 0 };
+}
+const eqInPer = (t, since) => !!t && (t.et >= since || t.status === 'open' || (t.exitAt || 0) >= since);   // 跟伺服器 inStat 一樣
+function eqMan(R) {                                    // 本期：手動單虧損分攤（伺服器算的）也算進去，數字才會跟持倉區一致
+  if (!EQP || !EQP.man) return R;
+  R.eq += EQP.man; R.low = Math.min(R.low, R.eq); R.pts.push({ t: Date.now() - 1000, v: R.eq }); return R;
+}
 function eqCaps() {                                   // 資金曲線的起點：一般＝投入資金（起始本金）、特級＝特級投入資金、合計＝兩個加起來
   const C = SRVLT.cfg || {}, n = C.startCap || 0, s = C.spBudget > 0 ? C.spBudget : 0;
   return { n, s: s || n, a: n + s };
 }
-function simEquityReal(list, capIn) {
+function simEquityReal(list, capIn, t0) {           // t0：曲線從這個時間開始（特級專用版的「本期」）
   const C = SRVLT.cfg || { startCap: 0, startAt: 0 }, cap = capIn ?? (C.startCap || 0), ev = [];
   let fees = 0, wins = 0, losses = 0, unreal = 0, liveN = 0;
   for (const x of list) {
@@ -10193,7 +10210,7 @@ function simEquityReal(list, capIn) {
     else if (ltNetC(t) >= 0) wins++; else losses++;
   }
   ev.sort((a, b) => a.t - b.t);
-  let eq = cap, peak = cap, mdd = 0, low = cap; const pts = [{ t: C.startAt || (ev[0] ? ev[0].t - 60000 : Date.now()), v: cap }];
+  let eq = cap, peak = cap, mdd = 0, low = cap; const pts = [{ t: t0 || C.startAt || (ev[0] ? ev[0].t - 60000 : Date.now()), v: cap }];
   for (const e of ev) { eq += e.v; peak = Math.max(peak, eq); low = Math.min(low, eq); mdd = Math.max(mdd, (peak - eq) / peak); pts.push({ t: e.t, v: eq }); }
   return { pts, eq, unreal, liveN, skipped: 0, taken: list.length, mdd, low, wins, losses, fees, cap };
 }
@@ -10344,7 +10361,8 @@ let EQC = null;
 async function renderEquity(list, filtered) {
   if ($('qHist').hidden || !SRVREADY) return;
   if (SPONLY) list = list.filter(x => x.t && x.t.src === 'tool');   // 🗡 特級專用版：只有特級交易
-  const REAL = DATA === 'real' && SRV.on && SRVLT.cfg, R = REAL ? simEquityReal(list, SRVLT.toolOk ? (SPONLY ? eqCaps().s : eqCaps().a) : undefined) : simEquity(list),   /* 🗡 有特級交易：數字卡用合計的起始本金（跟紫線一致） */ CAP = REAL ? R.cap : EQ.cap, now = Date.now(), tot = R.eq + R.unreal, ret = v => spct((v / CAP - 1) * 100, 1);
+  EQP = eqPeriod(); if (EQP) list = list.filter(x => eqInPer(x.t, EQP.since));   // 「本期」：跟持倉區的「特級交易權益」用同一個起點
+  const REAL = DATA === 'real' && SRV.on && SRVLT.cfg, R = REAL ? eqMan(simEquityReal(list, SRVLT.toolOk ? (SPONLY ? eqCaps().s : eqCaps().a) : undefined, EQP && EQP.since)) : simEquity(list),   /* 🗡 有特級交易：數字卡用合計的起始本金（跟紫線一致） */ CAP = REAL ? R.cap : EQ.cap, now = Date.now(), tot = R.eq + R.unreal, ret = v => spct((v / CAP - 1) * 100, 1);
   document.querySelector('.qeqset').hidden = !!REAL;
   if (REAL && !(R.cap > 0)) {                         // 帳戶還沒入金：不要假設 100U
     $('qEqTitle').textContent = '實盤';
@@ -10353,7 +10371,8 @@ async function renderEquity(list, filtered) {
   }
   if (SPONLY && REAL) $('qDataNote').textContent = '';
   else $('qDataNote').textContent = REAL ? `實盤統計從 ${SRVLT.cfg.startAt ? fmtT(SRVLT.cfg.startAt) : '一開始'} 起算、起始本金 ${R.cap}U，只算自動交易開的單（起算時還開著的單也算進來）` : '模擬：伺服器記錄的訊號和回測';
-  $('qEqTitle').textContent = REAL ? `${SPONLY ? '🗡 特級交易・' : ''}實盤：從 ${CAP}U 開始，用 Bitunix 真實成交的損益（已扣手續費、資金費）` : `${filtered ? '只算篩選後的紀錄・' : ''}${EQ.mode === 'pct' ? `每筆用當時資金的 ${EQ.amt}%` : `每筆 ${EQ.amt}U`}・${T.lev}x・+${T.tp}%／−${T.sl}%`;
+  $('qePerWrap').hidden = !(SPONLY && REAL);
+  $('qEqTitle').textContent = REAL ? `${SPONLY ? '🗡 特級交易・' : ''}${EQP ? `本期（${fmtT(EQP.since)} 設定投入資金）・` : SPONLY ? '全部紀錄・' : ''}實盤：從 ${CAP}U 開始，用 Bitunix 真實成交的損益（已扣手續費、資金費）` : `${filtered ? '只算篩選後的紀錄・' : ''}${EQ.mode === 'pct' ? `每筆用當時資金的 ${EQ.amt}%` : `每筆 ${EQ.amt}U`}・${T.lev}x・+${T.tp}%／−${T.sl}%`;
   const c = v => v >= CAP ? 'pos' : 'neg', C0 = SRVLT.cfg || {}, WD = REAL ? (SPONLY ? 0 : +C0.wd || 0) + (SRVLT.toolOk ? +C0.spWd || 0 : 0) : 0;   // 💸 收回的錢：金額扣掉，百分比、曲線不變
   $('qEqKpi').innerHTML = `<div><span>起始本金</span><b>${CAP.toFixed(2)}U</b><em>${R.taken} 筆有下單${WD > 0 ? `・已收回 ${WD.toFixed(2)}U` : ''}</em></div>
     <div><span>已實現資金${WD > 0 ? '（扣掉收回）' : ''}</span><b class="${c(R.eq)}">${(R.eq - WD).toFixed(2)}U</b><em>${ret(R.eq)}・已出場 ${R.wins + R.losses} 筆</em></div>
