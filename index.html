@@ -1328,7 +1328,7 @@ body.sponly #qSrc,body.sponly #qAuto,body.sponly #qScan,body.sponly #qStat,body.
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-16g</div>
+      <div class="qver" id="qVer">網站版本 2026-11-16i</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3804,7 +3804,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.man = j.lt.man || []; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-16g・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-16i・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     if (j.notice) ntShow(j.notice);                     // 📢 擁有者發的更新通知
     $('qAnnBox').hidden = !OWN(); if (OWN() && !$('ann_t').value && !$('ann_x').value) annFill();
@@ -4224,7 +4224,7 @@ const MN_ITEMS = [                                    // [代號, 圖示, 名稱
   ['pos', '💼', '持倉', 'qBx', '#d4af37', '交易'], ['tool', '🗡', '特級咒具', 'mnpTool', '#ef4444', '交易'], ['xent', '🔔', '額外進場', 'mnpXent', '#a78bfa', '交易'], ['cards', '📡', '訊號卡片', 'qSidePanel', '#22d3ee', '交易'],
   ['stats', '🎯', '成功率', 'mnpStats', '#34d399', '數據'], ['eq', '📈', '資金曲線', 'mnpEq', '#60a5fa', '數據'], ['hist', '📋', '歷史紀錄', 'qTabPanel', '#fbbf24', '數據'], ['bt', '📊', '回測數據', 'qBtHost', '#2dd4bf', '數據'],
   ['kline', '🕯', 'K 線圖', 'mnpKline', '#f59e0b', '市場'], ['heat', '🔥', '熱力圖', 'qHeatHost', '#fb923c', '市場'], ['pat', '📉', '歷史走勢', '', '#a78bfa', '市場'], ['news', '📰', '加密新聞', 'newsPanel', '#f472b6', '市場'], ['whale', '🐋', '幣安鯨魚大單', 'whalePanel', '#38bdf8', '市場'],
-  ['bill', '💳', '方案與繳費', 'mnpBill', '#34d399', '其他'], ['set', '👤', '設定', 'mnpSet', '#7aa2ff', '其他'], ['guide', '📖', '使用說明', '', '#94a3b8', '其他']].filter(x => !(SPONLY && x[0] === 'cards'));   // 🗡 特級專用版：沒有 CVD 訊號卡片
+  ['bill', SPONLY ? '🎟' : '💳', SPONLY ? '審核註冊' : '方案與繳費', 'mnpBill', '#34d399', '其他'], ['set', '👤', '設定', 'mnpSet', '#7aa2ff', '其他'], ['guide', '📖', '使用說明', '', '#94a3b8', '其他']].filter(x => !(SPONLY && x[0] === 'cards'));   // 🗡 特級專用版：沒有 CVD 訊號卡片
 /* ---------- 🗡 特級咒具：上鎖（擁有者或輸入密碼的人才能用）；一個幣一張卡片；設定收在「⚙ 設定」裡 ---------- */
 const TL = { d: null, timer: null, hf: 'all', hn: 60 };
 const TL_PN = { h4: { hn: '4H', ln: '15M', nm: '4H→15M', hms: 4 * 3600000 }, h1: { hn: '1H', ln: '5M', nm: '1H→5M', hms: 3600000 } };
@@ -6668,9 +6668,9 @@ function refDraw() {
   const d = RA.d; if (!d) return; const C = d.cfg, U = d.users, own = d.owner, refs = RA.edit || C.refs;
   const pend = U.filter(u => u.st === 'pending').sort((a, b) => a.at - b.at), rest = U.filter(u => u.st !== 'pending').sort((a, b) => (b.doneAt || b.created) - (a.doneAt || a.created));
   const vol = u => `<span class="${u.st === 'ok' && u.vol < C.minVol ? 'qr' : ''}">${u.vol.toLocaleString()}</span>`;
-  RA.html = `<h4>🎟 邀請碼審核 <small class="tlmut">${C.on ? '<b class="qg">開啟中</b>（免費，用邀請碼註冊的人審核通過才能自動交易）' : '<b class="qr">關閉</b>（不檢查邀請碼）'}</small></h4>
-    ${own ? `<details${C.on ? '' : ' open'}><summary class="tlsub">⚙️ 設定（只有擁有者）</summary>
-      <label class="agree"><input type="checkbox" id="ra_on"${C.on ? ' checked' : ''}> 開啟邀請碼制（開啟時，現有帳號都會自動算「已通過」）</label>
+  RA.html = `<h4>🎟 審核註冊 <small class="tlmut">${SPONLY ? '免費註冊：用邀請碼註冊 Bitunix 的人，審核通過才能自動交易' : C.on ? '<b class="qg">開啟中</b>（免費，用邀請碼註冊的人審核通過才能自動交易）' : '<b class="qr">關閉</b>（不檢查邀請碼）'}</small></h4>
+    ${own ? `<details${C.refs.length ? '' : ' open'}><summary class="tlsub">⚙️ 邀請人和活躍門檻（只有擁有者能改）</summary>
+      ${SPONLY ? '' : `<label class="agree"><input type="checkbox" id="ra_on"${C.on ? ' checked' : ''}> 開啟邀請碼制（開啟時，現有帳號都會自動算「已通過」）</label>`}
       <label class="field">活躍門檻：近 30 天自動交易量（USDT，0＝不檢查）<input id="ra_min" type="number" min="0" step="100" value="${C.minVol}"></label>
       <p class="tlsub">邀請人：申請時讓用戶選「用誰的邀請碼註冊」；有人選了，會發 Discord 給那個人（填他在本網站的帳號 UID，他自己要設好 Discord 通知）和你。</p>
       <div class="tablewrap"><table class="tltab"><tr><th>名稱</th><th>通知帳號 UID</th><th>邀請碼</th><th>邀請連結</th><th></th></tr>${refs.map((r, i) => `<tr><td><input data-rae="${i}" data-k="name" value="${esc(r.name)}" placeholder="例如 7hzynn"></td><td><input data-rae="${i}" data-k="uid" value="${esc(r.uid || '')}" placeholder="網站帳號 UID" inputmode="numeric"></td><td><input data-rae="${i}" data-k="code" value="${esc(r.code || '')}"></td><td><input data-rae="${i}" data-k="link" value="${esc(r.link || '')}" placeholder="https://"></td><td><button class="btn" data-radel="${i}">刪除</button></td></tr>`).join('')}</table></div>
@@ -6694,7 +6694,7 @@ function refBind() {
       if (t.dataset.copy) { try { await navigator.clipboard.writeText(t.dataset.copy); t.textContent = '已複製'; } catch (er) { prompt('複製：', t.dataset.copy); } return; }
       if (t.id === 'ra_add') { RA.edit = RA.edit || RA.d.cfg.refs.map(r => ({ ...r })); RA.edit.push({ id: '', name: '', uid: '', code: '', link: '' }); return refDraw(); }
       if (t.dataset.radel) { RA.edit = RA.edit || RA.d.cfg.refs.map(r => ({ ...r })); RA.edit.splice(+t.dataset.radel, 1); return refDraw(); }
-      if (t.id === 'ra_save') { await A('cfg', { on: $('ra_on').checked, minVol: +$('ra_min').value || 0, refs: RA.edit || RA.d.cfg.refs }); RA.edit = null; await refLoad(); const m = $('ra_msg'); if (m) m.textContent = '✅ 已儲存'; return; }
+      if (t.id === 'ra_save') { await A('cfg', { ...($('ra_on') ? { on: $('ra_on').checked } : {}), minVol: +$('ra_min').value || 0, refs: RA.edit || RA.d.cfg.refs }); RA.edit = null; await refLoad(); const m = $('ra_msg'); if (m) m.textContent = '✅ 已儲存'; return; }
       if (t.id === 'ra_listAdd' || t.id === 'ra_listRep') {
         if (t.id === 'ra_listRep' && !confirm('用這次貼的內容「整份取代」目前的邀請名單？')) return;
         const r = await A('listSet', { text: RA.txt, mode: t.id === 'ra_listRep' ? 'replace' : 'add' }); RA.txt = ''; await refLoad();
@@ -7812,7 +7812,12 @@ function mnOpen(k) {
   clearInterval(TL.timer);
   if (k === 'tool') { $('mnpTool').innerHTML = '<p class="tlsub">載入中…</p>'; tlLoad('tool'); TL.timer = setInterval(() => { if (MN_PAGE === 'tool' && TL.d && !($('tlDlg') && $('tlDlg').open)) tlLoad('tool'); }, 20000); }   // 設定視窗打開時不更新
   if (k === 'kline') { klGate().then(ok => { if (ok && MN_PAGE === 'kline') { klInit(); ksyPull(); } }); } else klClose();   // 🕯 K 線圖：先檢查圖表鎖，再打開（離開就關掉即時連線）
-  if (k === 'bill') { $('mnpBill').innerHTML = '<p class="tlsub">載入中…</p>'; biLoad(); TL.timer = setInterval(() => { if (MN_PAGE === 'bill' && !document.activeElement.closest('#mnpBill input,#mnpBill select')) biLoad(BI.d && (BI.d.orders || []).some(o => o.status === 'pending')); }, 15000); }
+  if (k === 'bill' && SPONLY) {                        // 🎟 特級專用版：「審核註冊」只有邀請碼審核（沒有繳費）
+    if (!CANW()) { $('mnpBill').innerHTML = '<p class="tlsub">這個頁面只有擁有者和管理員可以看。</p>'; }
+    else { $('mnpBill').innerHTML = `<div class="bi"><section class="bibox" id="refAdm">${RA.html || '<p class="tlmut">讀取中…</p>'}</section></div>`; refBind(); refLoad();
+      TL.timer = setInterval(() => { if (MN_PAGE === 'bill' && !RA.edit && !RA.txt && !(document.activeElement && document.activeElement.closest('#refAdm'))) refLoad(); }, 15000); }
+  }
+  else if (k === 'bill') { $('mnpBill').innerHTML = '<p class="tlsub">載入中…</p>'; biLoad(); TL.timer = setInterval(() => { if (MN_PAGE === 'bill' && !document.activeElement.closest('#mnpBill input,#mnpBill select')) biLoad(BI.d && (BI.d.orders || []).some(o => o.status === 'pending')); }, 15000); }
   if (k === 'xent') { XE.dirty = false; $('mnpXent').innerHTML = '<p class="tlsub">載入中…</p>'; xeLoad(); TL.timer = setInterval(() => { if (MN_PAGE === 'xent' && !XE.dirty && !($('xeDlg') && $('xeDlg').open)) xeLoad(); }, 30000); }
   try { if (k === 'cards') { $('qSidePanel').hidden = false; renderCards(); } if (k === 'hist') { $('qTabPanel').hidden = false; hSeg(HSEG.tab); } if (k === 'stats' || k === 'eq') { EQC = null; renderHist(); } } catch (e) { console.error(e); }   // 重畫出錯也要照樣打開頁面
   $('mnSheet').hidden = false; document.body.classList.add('mn-sheet'); $('mnSheet').scrollTop = 0; $('mnSheetBody').scrollTop = 0;
@@ -7851,6 +7856,14 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-16i', title: '2026/11/16 更新（登入畫面）', items: [
+    { ic: '🔧', t: '修正：登入畫面打字時游標會一直跳回 UID 那格、打到別的欄位。原因是登入過期後，背景更新每次失敗都重新打開一次登入畫面；現在登入畫面開著時只更新提示文字，不會再搶游標。' }
+  ] },
+  { id: '2026-11-16h', title: '2026/11/16 更新（審核註冊）', items: [
+    { ic: '🎟', t: '「方案與繳費」改成「🎟 審核註冊」，只有擁有者和管理員看得到，裡面只有邀請人、活躍門檻、邀請名單、待審核和全部帳號；繳費、退款那些都拿掉了（現在全部免費）。' },
+    { ic: '🔧', t: '修正：登入頁按「免費註冊」會跳出「目前沒有開放購買」。現在一律是免費註冊（邀請碼制永遠開著）。' },
+    { ic: '📈', t: '審核狀態改在持倉區上方顯示：審核中、沒通過、被撤銷，或近 30 天交易量低於門檻時都會提示。' }
+  ] },
   { id: '2026-11-16g', title: '2026/11/16 更新（一律人工審核）', items: [
     { ic: '🎟', t: '取消「在邀請名單裡就自動通過」：所有申請一律由擁有者或管理員人工按「通過」。邀請名單還是可以貼，只用來在待審核清單和 Discord 通知上標示「✅ 在邀請名單裡」。' }
   ] },
@@ -8239,7 +8252,7 @@ $('ann_go').onclick = async () => {
 };
 $('nwAll').onclick = () => { $('nwDlg').close(); GD.news = true; GD.newsNext = true; gdOpen(0); };
 /* ---------- 📖 使用說明書：功能介紹（頁數依權限：有特級咒具權限多一頁） ---------- */
-const gdPages = () => SPONLY ? ['api', 'dc', 'fund', 'f6', 'war', 'f2', 'f3', 'f5', 'kl1', 'kl2', 'kl3', 'bill', ...(OWN() ? ['own'] : []), 'done'] : ['api', 'dc', 'fund', 'tp', 'f1', 'war', 'f2', 'f3', 'f4', 'f5', 'kl1', 'kl2', 'kl3', 'bill', ...(OWN() ? ['own'] : []), ...(SRVLT.toolOk ? ['f6'] : []), 'done'];
+const gdPages = () => SPONLY ? ['api', 'dc', 'fund', 'f6', 'war', 'f2', 'f3', 'f5', 'kl1', 'kl2', 'kl3', ...(OWN() ? ['own'] : []), 'done'] : ['api', 'dc', 'fund', 'tp', 'f1', 'war', 'f2', 'f3', 'f4', 'f5', 'kl1', 'kl2', 'kl3', 'bill', ...(OWN() ? ['own'] : []), ...(SRVLT.toolOk ? ['f6'] : []), 'done'];
 function gdPage2(p) {
   if (p === 'fund') return gdPage('fund') + gdTip('投入資金就是起始本金：之後改投入資金，過去的盈虧會照算進去。帳戶的錢不夠時會提醒「資金不足」；不想讓自動交易用了，可以在設定裡「收回資金」。');
   if (p === 'f1') return `<div class="gdmock"><div class="gd2"><span class="gdbtn pri fake">▶ 開始交易</span><span class="gdbtn red fake">一鍵平倉（自動單）</span></div>
@@ -8254,7 +8267,7 @@ function gdPage2(p) {
     ${gdPt('<path d="M3 17l6-6 4 4 8-8"></path><path d="M15 7h6v6"></path>', SPONLY ? '<b>「☰ 選單 → 成功率」「資金曲線」</b>：看特級交易在你帳戶真正的賺賠、成功率、做多做空和報酬率曲線。' : '主畫面下方：<b>實盤</b>看你帳戶真正的賺賠、成功率、做多做空、資金曲線；<b>訊號模擬</b>看所有訊號照規則跑的成績。')}
     ${gdPt('<rect x="4" y="4" width="16" height="16" rx="2"></rect><path d="M4 10h16"></path><path d="M10 10v10"></path>', '<b>「☰ 選單 → 歷史紀錄」</b>：每一筆的進場價、最大浮盈浮虧、出場原因，點一行看圖表，也能匯出 CSV。')}
     ${gdPt('<circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path>', SPONLY ? '<b>「☰ 選單 → 回測數據」</b>：用過去的資料看特級咒具的規則以前會賺還是賠，也有 BTC 急漲急跌統計。' : '<b>「☰ 選單 → 回測數據」</b>：用過去的資料看這套規則以前會賺還是賠。')}`;
-  if (p === 'f3') { const DS = { pos: '持倉、開始／暫停交易、一鍵平倉', tool: SPONLY ? 'FVG／OB 回踩策略的卡片和特級交易（前面有一頁介紹）' : SRVLT.toolOk ? 'FVG／OB 回踩策略的卡片和特級交易（後面有一頁介紹）' : '開發中的新功能，需要擁有者給的密碼', xent: '暗流、折返、伏擊三種額外進場訊號，可以設定自己的 Discord 頻道', cards: '系統找到的進場機會', stats: SPONLY ? '特級交易的成功率、做多做空' : '實盤和訊號模擬的成功率', eq: SPONLY ? '特級交易的資金曲線（報酬率）' : '資金曲線（一般、特級、綜合）', hist: '每一筆交易的紀錄，可以匯出 CSV', bt: SPONLY ? '特級咒具回測、BTC 急漲急跌統計' : '回測、回測報告、BTC 急漲急跌統計', kline: '多格 K 線圖、畫圖、指標、Pine 編輯器、回放（後面有三頁介紹）', heat: '市場漲跌、資金費率、清算地圖', pat: '畫出走勢，找歷史上相似的段落', news: '新聞列表和新聞星圖', whale: '幣安的即時大單', bill: '方案、付款、付款紀錄、退款（後面有一頁介紹）', set: 'Bitunix API、Discord 通知、交易設定、收回資金、改密碼', guide: '就是這份說明書，還有更新紀錄' };
+  if (p === 'f3') { const DS = { pos: '持倉、開始／暫停交易、一鍵平倉', tool: SPONLY ? 'FVG／OB 回踩策略的卡片和特級交易（前面有一頁介紹）' : SRVLT.toolOk ? 'FVG／OB 回踩策略的卡片和特級交易（後面有一頁介紹）' : '開發中的新功能，需要擁有者給的密碼', xent: '暗流、折返、伏擊三種額外進場訊號，可以設定自己的 Discord 頻道', cards: '系統找到的進場機會', stats: SPONLY ? '特級交易的成功率、做多做空' : '實盤和訊號模擬的成功率', eq: SPONLY ? '特級交易的資金曲線（報酬率）' : '資金曲線（一般、特級、綜合）', hist: '每一筆交易的紀錄，可以匯出 CSV', bt: SPONLY ? '特級咒具回測、BTC 急漲急跌統計' : '回測、回測報告、BTC 急漲急跌統計', kline: '多格 K 線圖、畫圖、指標、Pine 編輯器、回放（後面有三頁介紹）', heat: '市場漲跌、資金費率、清算地圖', pat: '畫出走勢，找歷史上相似的段落', news: '新聞列表和新聞星圖', whale: '幣安的即時大單', bill: SPONLY ? '審核註冊：邀請人、待審核、全部帳號（只有擁有者和管理員看得到）' : '方案、付款、付款紀錄、退款（後面有一頁介紹）', set: 'Bitunix API、Discord 通知、交易設定、收回資金、改密碼', guide: '就是這份說明書，還有更新紀錄' };
     return `<h2>右上角「☰ 選單」</h2><p class="gdsub">主畫面只放作戰室、持倉和成功率，其他功能都在右上角的選單裡，依「交易、數據、市場、其他」分類。</p>
     ${MN_ITEMS.map(([k, i, t]) => `<div class="gdfeat"><span class="gdic" style="font-size:20px;text-align:center" aria-hidden="true">${i}</span><div><b>${t}</b><p>${DS[k] || ''}</p></div></div>`).join('')}`; }
   if (p === 'f4') return gdPage('f1').replace('每 10 秒掃描幣安', '<b>「☰ 選單 → 訊號卡片」</b>：每 10 秒掃描幣安');
@@ -8304,7 +8317,7 @@ function gdPage2(p) {
     ${gdPt('<path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v5h5"></path>', '<b>↩️ 待退款</b>：付錯金額、多轉的部分、7 天內解約都會列在這裡。用收款錢包把「金額」原樣轉回「退回地址」，系統每分鐘查一次區塊鏈，轉出去後自動標成已退款並通知對方；解約的退款完成後，自動取消那筆付款的天數。')}
     ${gdPt('<path d="M9 14l-4-4 4-4"></path><path d="M5 10h11a4 4 0 0 1 0 8h-1"></path>', '<b>辦理退款</b>：付款單上的按鈕，用戶寄信申請、或依條款第 7 條按比例退款時用，可以填退款金額。「手動確認已付」的單系統不知道付款錢包，要自己跟用戶確認地址再轉。<b>對不上的轉帳</b>可以指定給某個帳號或退款。')}
     ${gdPt('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path>', '<b>服務條款</b>：改了文字並儲存，就會變成新的版本（用當天日期），舊版本保留，每個人同意的是哪一版都有紀錄。對已付費的人不利的修改，要在生效前 7 天公告並寄信通知。')}
-    ${gdPt('<rect x="3" y="6" width="18" height="12" rx="2"></rect><path d="M9 6v12"></path>', '<b>🎟 邀請碼制（免費）</b>：「☰ 選單 → 方案與繳費」最下面。擁有者先在「⚙️ 設定」開啟、加邀請人（名稱、他在本網站的帳號 UID、邀請碼、邀請連結）、設活躍門檻；用戶在「免費申請」頁（pay.html）選邀請人、填 UID 申請，你和管理員會收到 Discord。到 Bitunix 代理商後台查得到這個 UID 就按「通過」，也可以把代理商後台的 UID 清單貼進「邀請名單」，待審核清單會標示誰在名單裡（一律還是人工按通過）。')}
+    ${gdPt('<rect x="3" y="6" width="18" height="12" rx="2"></rect><path d="M9 6v12"></path>', '<b>🎟 邀請碼制（免費）</b>：「☰ 選單 → 🎟 審核註冊」（只有擁有者和管理員看得到）。擁有者先在「⚙️ 邀請人和活躍門檻」加邀請人（名稱、他在本網站的帳號 UID、邀請碼、邀請連結）、設活躍門檻；用戶在登入頁按「🎟 免費註冊」選邀請人、填 UID 申請，你和管理員會收到 Discord。到 Bitunix 代理商後台查得到這個 UID 就按「通過」，也可以把代理商後台的 UID 清單貼進「邀請名單」，待審核清單會標示誰在名單裡（一律還是人工按通過）。')}
     ${gdPt('<path d="M3 11l15-6v14L3 13z"></path><path d="M7 13v5h3"></path>', '<b>📢 更新通知</b>：在「☰ 選單 → 設定」的「更新通知」，可以帶入最新的更新紀錄，按「發送」就會發給所有帳號：每個人打開網站時跳出公告，有設 Discord 的人同時收到，也可以勾選一起寄 Email。')}
     ${gdTip('伺服器要設定好寄信（Gmail 應用程式密碼）：新用戶購買要收信箱驗證碼，沒設定的話沒有人能買。打開收費後，自己在購買頁用一個 Gmail 按「寄驗證碼」試一次。', true)}`;
   if (p === 'done') return gdPage('done').replace('<p class="gdsub">之後想再看說明', '<button class="gdbtn" id="gd_news2" style="align-self:center">📰 看更新紀錄</button><p class="gdsub">之後想再看說明');
@@ -9740,6 +9753,9 @@ let GATE_SETUP = false;
 var RESET_ON = false;                                 // 從信裡的連結打開、正在設定新密碼：其他程式（背景更新）不能把畫面切回登入
 function gateShow(msg) {
   if (RESET_ON) return;
+  if (!$('qGate').hidden && document.body.classList.contains('gated')) {   // 登入畫面已經開著：背景更新又遇到「登入過期」時只更新訊息，不切換表單、不搶游標（不然打字會一直跳到別格）
+    if (msg && !$('qGateForm').hidden) $('qgErr').textContent = msg; return;
+  }
   document.body.classList.add('gated'); $('qGate').hidden = false; gateForm('qGateForm');
   $('qg_url').value = SRV.url || DEFAULT_SRV; $('qgErr').textContent = msg || '';
   const url = ($('qg_url').value || DEFAULT_SRV).replace(/\/+$/, '');
@@ -9751,7 +9767,7 @@ function gateShow(msg) {
     $('qg_go').textContent = GATE_SETUP ? '建立並登入' : '登入';
     $('qg_forgot').hidden = GATE_SETUP;
   }).catch(() => { $('qgErr').textContent = (msg ? msg + '　' : '') + '連不到伺服器，請確認網路或伺服器網址。'; });
-  setTimeout(() => $(GATE_SETUP ? 'qg_key' : 'qg_uid').focus(), 50);
+  setTimeout(() => { const f = document.activeElement; if (f && f.closest && f.closest('#qGate') && /INPUT|SELECT|TEXTAREA/.test(f.tagName)) return; $(GATE_SETUP ? 'qg_key' : 'qg_uid').focus(); }, 50);   // 已經在某一格打字就不搶游標
 }
 function gateHide() {
   document.body.classList.remove('gated'); $('qGate').hidden = true;
@@ -9765,6 +9781,7 @@ function gateHide() {
     else if (B && B.st === 'grace') $('qRoleB').innerHTML += `<button class="trialb bad" data-bill>⚠️ 方案到期・寬限中・按這裡續費</button>`;
     $('qRoleB').onclick = e => { if (e.target.closest('[data-bill]')) mnOpen('bill'); }; }
   $('qAdmBtn').hidden = !CANW();
+  if (SPONLY) { const mb = document.querySelector('#mnList [data-k="bill"]'); if (mb) mb.hidden = !CANW(); }   // 🎟 審核註冊：只有擁有者和管理員看得到
   window.qWhaleFetch = (sym, a) => srvFetch(`/api/whale?sym=${encodeURIComponent(sym)}&a=${a || 0}`);   // 🐋 鯨魚大單改由伺服器收集
   window.dispatchEvent(new Event('whaleready'));
 }
@@ -10123,7 +10140,7 @@ function renderLt() {
   $('qLtEco').hidden = !EB;
   $('qLtEco').textContent = EB ? `📅 美國重要數據（${EB.list.map(e => `${e.zh} ${fmtT(e.t).slice(-5)}`).join('、')}）：${fmtT(EB.from).slice(-11)}～${fmtT(EB.until).slice(-11)} 不開新單、不反手${EB.on ? '（現在暫停中）' : '，其他時間照常'}；已開的單照常管理。` : '';
   $('qLtToggle').textContent = C.on ? '⏸ 暫停交易' : '▶ 開始交易';
-  { const r = SRV.ref, el = $('qRefMsg'), sh = !!(r && MINE() && !['ok', 'exempt'].includes(r.st)); el.hidden = !sh; if (sh) el.textContent = r.st === 'pending' ? '🎟 邀請碼審核中：通過後才能開始自動交易（「☰ 選單 → 方案與繳費」看狀態）' : `🎟 ${r.st === 'no' ? '邀請碼審核沒有通過' : '使用資格已撤銷'}${r.note ? '：' + r.note : ''}，自動交易不會開新單`; }   // 🎟 邀請碼制
+  { const r = SRV.ref, el = $('qRefMsg'), sh = !!(r && MINE() && (!['ok', 'exempt'].includes(r.st) || r.low)); el.hidden = !sh; if (sh) el.textContent = r.st === 'pending' ? `🎟 註冊審核中${r.via ? `（邀請人 ${r.via}）` : ''}：通過後會寄信、發 Discord 通知你，才能開始自動交易；審核前可以先設定 API 和特級交易` : r.st === 'ok' ? `📈 近 30 天自動交易量 ${(+r.vol).toLocaleString()} USDT，低於免費使用門檻 ${(+r.minVol).toLocaleString()} USDT，請確認特級交易有開著` : `🎟 ${r.st === 'no' ? '註冊審核沒有通過' : '使用資格已撤銷'}${r.note ? '：' + r.note : ''}，自動交易不會開新單`; }   // 🎟 邀請碼制
   { const L = SRVLT.low, noB = !SPONLY && MINE() && !(C.budget > 0), noS = MINE() && SRVLT.toolOk && !(C.spBudget > 0);   // ⚠️ 還沒填投入資金
     $('qLtLow').hidden = !(L && MINE()) && !noB && !noS;
     if (!(L && MINE()) && (noB || noS)) $('qLtLow').textContent = `⚠️ 還沒填${[noB ? '一般交易' : '', noS ? '🗡 特級交易' : ''].filter(Boolean).join('和')}的投入資金：請到「☰ 選單 → 設定」填一個大於 0 的數字${noB && C.on || noS && C.sp ? '（現在照常交易，但沒有資金上限）' : '，填好才能開始交易'}`;   // ⚠️ 資金不足：一般＋特級的「目前」比帳戶的錢多
