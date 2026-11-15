@@ -47,6 +47,9 @@ ol.notice{margin:0;padding-left:20px;font-size:13.5px;color:#c4cad6}ol.notice li
 .big{text-align:center;padding:20px 8px}.big .ic{font-size:56px}.big h2{font-size:22px;margin:8px 0}
 .mute{color:var(--mu);font-size:13px}.who{background:rgba(232,121,198,.1);border:1px solid rgba(232,121,198,.4);border-radius:12px;padding:10px 12px;font-size:14px}
 @media (prefers-reduced-motion:reduce){.dot{animation:none}}
+.seg{display:flex;gap:8px;margin-top:4px}.segb{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border:1.5px solid var(--line);border-radius:10px;cursor:pointer;font-weight:700;font-size:14px}
+.segb input{accent-color:var(--pk)}.segb:has(input:checked){border-color:var(--pk);background:rgba(232,121,198,.12)}
+select{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:#0c1120;color:var(--tx);font-size:16px}
 </style>
 </head>
 <body>
@@ -73,7 +76,7 @@ async function api(path, body, auth) {
 const step = n => [...$('steps').children].forEach((el, i) => { el.className = i + 1 < n ? 'done' : i + 1 === n ? 'on' : ''; });
 const msg = (id, t, ok) => { const el = $(id); if (el) { el.className = 'msg ' + (ok ? 'ok' : 'bad'); el.textContent = t; } };
 async function loadInfo() {                              // 方案、條款、須知（續費用登入的資料，新用戶用公開的）
-  if (S.mode === 'renew') { const d = await api('/api/bill', { op: 'me' }, true); S.info = { on: d.on && !!d.addr, plans: d.plans, terms: d.terms, state: d.state, price: d.price, days: d.days, termsVer: d.termsVer, notice: d.notice || [], acks: d.acks || [], privacy: d.privacy || '', hist: d.hist || [], mine: d.termsVerMine || '' }; return d; }
+  if (S.mode === 'renew') { const d = await api('/api/bill', { op: 'me' }, true); S.info = { on: d.on && !!d.addr, plans: d.plans, terms: d.terms, state: d.state, price: d.price, days: d.days, termsVer: d.termsVer, notice: d.notice || [], acks: d.acks || [], privacy: d.privacy || '', hist: d.hist || [], mine: d.termsVerMine || '', refundTo: d.refundTo || '', refundKind: d.refundKind || '', refundVia: d.refundVia || '', addr: d.addr || '' }; return d; }
   S.info = await api('/api/buy', { op: 'info' }); return S.info;
 }
 async function boot() {
@@ -98,6 +101,23 @@ function legalCard(I) {                                  // 📜 購買前須知
     ${H.length > 1 ? `<details><summary>🗂 條款的歷史版本（${H.length} 版）</summary><div class="hist">${H.map(h => `<button class="btn" type="button" data-ver="${esc(h.ver)}">${esc(h.ver)}${h.ver === I.termsVer ? '（目前）' : ''}</button>`).join('')}</div><pre id="histTx" hidden></pre></details>` : ''}
     <div class="acks" role="group" aria-labelledby="ackT"><h3 id="ackT">付款前必須逐項勾選</h3>${A.map((t, i) => `<label class="ack"><input type="checkbox" class="ackc" data-i="${i}"><span>${esc(t)}</span></label>`).join('')}<p class="ackn" id="ackN" aria-live="polite">已勾選 0／${A.length}</p></div></div>`;
 }
+const RF_LIST = { wallet: ['TronLink', 'Trust Wallet', 'imToken', 'TokenPocket', 'OKX Wallet', 'Bitget Wallet', 'SafePal', 'Ledger', '其他'], cex: ['Bitunix', '幣安 Binance', 'OKX', 'Bybit', 'Bitget', 'MEXC', 'Gate', 'HTX（火幣）', 'KuCoin', '幣託 BitoPro', 'MAX', '派網 Pionex', '其他'] };
+S.rf = null;                                             // 退款方式：{ k: 'wallet'|'cex', via, other }
+function rfSetup() {                                     // 退款方式：錢包／交易所 → 哪一個 → 地址（不同提示）
+  if (!S.rf) { const k = S.info.refundKind, v = S.info.refundVia || ''; S.rf = k ? { k, via: RF_LIST[k].includes(v) ? v : '其他', other: RF_LIST[k].includes(v) ? '' : v } : { k: '', via: '', other: '' }; }
+  const draw = () => { const R = S.rf, L = RF_LIST[R.k] || [];
+    document.querySelectorAll('input[name=rfk]').forEach(x => x.checked = x.value === R.k);
+    $('rfViaBox').hidden = !R.k; $('rfViaL').textContent = R.k === 'cex' ? '哪一家交易所' : '哪一個錢包';
+    $('rfVia').innerHTML = `<option value="">請選擇</option>` + L.map(n => `<option${n === R.via ? ' selected' : ''}>${esc(n)}</option>`).join('');
+    $('rfOther').hidden = R.via !== '其他'; $('rfOther').value = R.other || ''; $('rfOther').placeholder = R.k === 'cex' ? '交易所名稱' : '錢包名稱';
+    $('rfL').textContent = R.k === 'cex' ? '你在這家交易所的 USDT（TRC20）充值地址' : R.k === 'wallet' ? '你錢包的 USDT（TRC20）地址' : '退款地址（USDT・TRC20）';
+    $('rfHint').innerHTML = R.k === 'cex' ? '到交易所 App：<b>資產 → 充值 → USDT → 網路選 TRC20（TRON）</b>，複製「充值地址」貼上。<b>不是</b>你提領時的地址，也<b>不是</b>我們的收款地址。' : R.k === 'wallet' ? '打開錢包 App，選 <b>USDT（TRC20／TRON）→ 收款</b>，複製地址貼上（T 開頭、34 個字）。' : '先選上面的「自己的錢包」或「交易所」。';
+  };
+  document.querySelectorAll('input[name=rfk]').forEach(x => x.onchange = () => { S.rf = { k: x.value, via: '', other: '' }; draw(); });
+  $('rfVia').onchange = () => { S.rf.via = $('rfVia').value; if (S.rf.via !== '其他') S.rf.other = ''; draw(); if (S.rf.via === '其他') $('rfOther').focus(); };
+  $('rfOther').oninput = () => { S.rf.other = $('rfOther').value; };
+  draw();
+}
 function formView() {
   step(S.mode === 'renew' ? 2 : 1); const I = S.info, p0 = I.plans.find(p => p.m === S.m) || I.plans[0];
   $('app').innerHTML = `
@@ -112,6 +132,11 @@ function formView() {
     <label class="f" for="em">Google 信箱（收驗證碼、收據、忘記密碼用）</label><div class="row"><input id="em" type="email" autocomplete="email" autocapitalize="off" placeholder="example@gmail.com"><button class="btn" id="sendCode" type="button">寄驗證碼</button></div>
     <label class="f" for="ec">信箱驗證碼（6 位數字）</label><input id="ec" inputmode="numeric" autocomplete="one-time-code" maxlength="6"><p class="msg" id="codeMsg" role="status"></p>
     <label class="f" for="ph">手機號碼</label><input id="ph" type="tel" inputmode="tel" autocomplete="tel" placeholder="0912345678">`}
+    <div class="f">退款方式 <b style="color:var(--bad)">＊必填</b>　<small>日後如果要退款（金額轉錯、多轉、7 天內解約），錢會退到這裡</small></div>
+    <div class="seg" role="radiogroup" aria-label="退款地址是錢包還是交易所"><label class="segb"><input type="radio" name="rfk" value="wallet"> 👛 自己的錢包</label><label class="segb"><input type="radio" name="rfk" value="cex"> 🏦 交易所</label></div>
+    <div id="rfViaBox" hidden><label class="f" for="rfVia" id="rfViaL">哪一個錢包</label><select id="rfVia"></select><input id="rfOther" hidden placeholder="填名稱" maxlength="30" style="margin-top:6px"></div>
+    <label class="f" for="rf" id="rfL">退款地址（USDT・TRC20）</label><input id="rf" value="${esc(S.info.refundTo || '')}" placeholder="T 開頭、34 個英數字" autocomplete="off" spellcheck="false" autocapitalize="off">
+    <p class="mute" id="rfHint" style="margin:4px 0 0;font-size:12.5px">先選上面的「自己的錢包」或「交易所」。</p>
     <label class="f" for="code">邀請碼（選填）</label><div class="row"><input id="code" value="${esc(S.code)}" autocomplete="off" placeholder="有的話可以打折"><button class="btn" id="quote" type="button">套用</button></div><p class="msg" id="qMsg" role="status"></p></div>
   ${legalCard(I)}
   <div class="card"><button class="btn pri" id="go" type="button" style="margin-top:0">產生付款單（<span id="goAmt">${S.q && S.q.m === S.m ? S.q.price : p0.price}</span> USDT）</button><p class="msg" id="goMsg" role="alert"></p></div>`;
@@ -122,9 +147,10 @@ function formView() {
   document.querySelectorAll('.ackc').forEach(c => c.onchange = () => { $('ackN').textContent = `已勾選 ${ackCount()}／${(S.info.acks || []).length}`; });
   document.querySelectorAll('[data-ver]').forEach(b => b.onclick = async () => { const p = $('histTx'); p.hidden = false; p.textContent = '讀取中…'; try { const r = await api('/api/buy', { op: 'terms', ver: b.dataset.ver }); p.textContent = `【${r.ver}${/^\d/.test(r.ver) ? ' 版' : ''}】\n\n${r.text}`; } catch (e) { p.textContent = e.message; } });
   $('go').onclick = () => order(ackCount());
+  rfSetup();
 }
 let KEEP = {};                                           // 換方案、條款更新重畫時保留已經填的資料
-function keep() { for (const k of ['uid', 'pw', 'pw2', 'em', 'ec', 'ph', 'code']) if ($(k)) KEEP[k] = $(k).value; }
+function keep() { for (const k of ['uid', 'pw', 'pw2', 'em', 'ec', 'ph', 'rf', 'code']) if ($(k)) KEEP[k] = $(k).value; }
 function restore() { for (const [k, v] of Object.entries(KEEP)) if ($(k)) $(k).value = v; }
 async function order(n) {
   const need = (S.info.acks || []).length;
@@ -132,13 +158,18 @@ async function order(n) {
   const b = $('go'); b.disabled = true; msg('goMsg', '建立付款單中…', true);
   const legal = { agree: true, acks: n, termsVer: S.info.termsVer };
   try {
-    let o;
-    if (S.mode === 'renew') { const r = await api('/api/bill', { op: 'order', code: $('code').value.trim(), m: S.m, ...legal }, true); o = { ...r.order, mode: 'renew' }; }
+    let o; const refundTo = $('rf').value.trim();
+    if (!/^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(refundTo)) { $('rf').focus(); throw new Error('請填退款地址：USDT（TRC20）地址是 T 開頭、34 個英數字；從交易所付款的話，填你在交易所的充值地址'); }
+    const R = S.rf || {}, refundKind = R.k, refundVia = (R.via === '其他' ? (R.other || '').trim() : R.via) || '';
+    if (!refundKind) { throw new Error('請選退款方式：自己的錢包，還是交易所'); }
+    if (!refundVia) { $(R.via === '其他' ? 'rfOther' : 'rfVia').focus(); throw new Error(refundKind === 'cex' ? '請選是哪一家交易所' : '請選是哪一個錢包'); }
+    if (S.info.addr && refundTo === S.info.addr) { $('rf').focus(); throw new Error('退款地址不能填我們的收款地址：請填你自己的錢包地址，或你在交易所的充值地址'); }
+    if (S.mode === 'renew') { const r = await api('/api/bill', { op: 'order', code: $('code').value.trim(), m: S.m, refundTo, refundKind, refundVia, ...legal }, true); o = { ...r.order, mode: 'renew' }; }
     else {
       const uid = $('uid').value.normalize('NFKC').replace(/\s+/g, ''), pw = $('pw').value;
       if (!/^\d{4,20}$/.test(uid)) throw new Error('UID 應該是 4～20 位數字'); if (pw.length < 8) throw new Error('密碼至少 8 個字'); if (pw !== $('pw2').value) throw new Error('兩次輸入的密碼不一樣');
-      const r = await api('/api/buy', { op: 'order', uid, password: pw, email: $('em').value.trim().toLowerCase(), emailCode: $('ec').value.trim(), phone: $('ph').value.trim(), m: S.m, code: $('code').value.trim(), ...legal });
-      o = { ...r.order, otok: r.otok, mode: 'new' };
+      const r = await api('/api/buy', { op: 'order', uid, password: pw, email: $('em').value.trim().toLowerCase(), emailCode: $('ec').value.trim(), phone: $('ph').value.trim(), m: S.m, code: $('code').value.trim(), refundTo, refundKind, refundVia, ...legal });
+      o = { ...r.order, otok: r.otok, mode: 'new', refundTo, refundKind, refundVia };
     }
     o.termsVer = S.info.termsVer; S.order = o; LS.set('qxPay', o); payView();
   } catch (e) {
@@ -150,10 +181,12 @@ function payView() {
   step(3); const o = S.order;
   $('app').innerHTML = `<div class="card"><h2>③ 付款</h2>
     <div class="warn">⚠️ 只能用 <b>TRON（TRC20）</b>網路轉 <b>USDT</b>。從交易所提領的話，請把提領手續費加上去，讓<b>「實際到帳」剛好等於下面的金額</b>。到帳不足會全額退回；多轉的話方案照常開通，多出來的部分會退回。</div>
+    <div class="warn">💡 建議用<b>自己的錢包</b>（TronLink、Trust Wallet 等）付款。從交易所（Bitunix、幣安等）<b>直接提領</b>的話，區塊鏈上的付款地址是<b>交易所的</b>，日後如果要退款，退回去<b>不會自動進你的帳戶</b>，所以退款會轉到你填的<b>退款地址</b>（下面可以看到，退款完成前也能改）。</div>
     <div class="kv"><span>金額</span><b class="amt" id="amt">${o.amount}</b><button class="btn" data-copy="${o.amount}">複製</button></div>
     <div class="kv"><span>收款地址</span><code>${esc(o.addr)}</code><button class="btn" data-copy="${esc(o.addr)}">複製</button></div>
     <div class="kv"><span>網路</span><b>TRON（TRC20）</b></div>
     <div class="kv"><span>方案</span><b>${o.m || 1} 個月${o.code ? `・邀請碼 ${esc(o.code)} −${o.pct}%` : ''}</b></div>
+    ${o.refundTo ? `<div class="kv"><span>退款地址</span><code>${esc(o.refundTo)}</code>${o.refundVia ? `<small class="mute">${o.refundKind === 'cex' ? '🏦 ' + esc(o.refundVia) + ' 充值地址' : '👛 ' + esc(o.refundVia) + ' 錢包'}</small>` : ''}</div>` : ''}
     <div class="kv"><span>帳號</span><b>${esc(o.uid || (S.me && S.me.uid) || '')}</b></div>
     ${o.termsVer ? `<div class="kv"><span>條款</span><b>你同意的是 ${esc(o.termsVer)} 版</b></div>` : ''}
     <div class="qr" id="qr" aria-label="收款地址 QR code"></div>
@@ -174,10 +207,30 @@ async function poll() {
     let st, until = 0, refund = [];
     if (o.mode === 'renew') { const d = await api('/api/bill', { op: 'poll' }, true), x = (d.orders || []).find(y => y.id === o.id); st = x ? x.status : 'cancel'; until = d.state.paidUntil; refund = (d.refunds || []).filter(r => r.orderId === o.id); }
     else { const d = await api('/api/buy', { op: 'status', id: o.id, otok: o.otok }); st = d.status; until = d.until; refund = d.refund || []; }
-    if ($('refund')) $('refund').innerHTML = refund.length ? `<div class="warn">↩️ 收到 ${refund.map(r => `${r.amount} USDT`).join('、')}，金額不對，會全額退回到 ${esc(refund[0].from)}（${refund.every(r => r.status === 'done') ? '已退款' : '退款處理中'}）。請重新轉帳，實際到帳要剛好是 <b>${o.amount}</b>。</div>` : '';
+    const RB = $('refund'), key = JSON.stringify(refund.map(r => [r.id, r.status, r.to || r.from]));   // 內容有變才重畫，不會打斷正在輸入的地址
+    if (RB && RB.dataset.k !== key) { RB.dataset.k = key; RB.innerHTML = refund.length ? refHtml(refund, o) : ''; refBind(o); }
     if (st === 'paid') { clearInterval(S.timer); LS.del('qxPay'); success(until); }
     else if (st === 'cancel') { clearInterval(S.timer); LS.del('qxPay'); S.order = null; formView(); }
   } catch (e) { if (/找不到這張付款單/.test(e.message)) { clearInterval(S.timer); LS.del('qxPay'); S.order = null; return formView(); } if ($('waitT')) $('waitT').textContent = '連線不穩，稍後自動重試…'; }
+}
+function refHtml(refund, o) {                          // ↩️ 金額不對要退款：顯示退到哪，退款完成前可以改成自己的充值地址
+  return `<div class="warn">↩️ 收到 ${refund.map(r => `${r.amount} USDT`).join('、')}，金額不對，會全額退回（${refund.every(r => r.status === 'done') ? '已退款' : '退款處理中'}）。請重新轉帳，實際到帳要剛好是 <b>${o.amount}</b>。</div>` +
+    refund.map(r => { const to = r.to || r.from, own = to !== r.from;
+      return `<div class="kv"><span>退回到</span><code>${esc(to)}</code><small class="mute">${(lab => lab ? esc(lab) : own ? '你指定的地址' : '你付款的錢包')(r.label || (r.toVia ? (r.toKind === 'cex' ? r.toVia + ' 交易所充值地址' : r.toVia + ' 錢包') : ''))}</small></div>` + (r.status === 'todo' && r.id ? `
+      <details${own ? '' : ' open'}><summary>從交易所直接提領付款的？改成退到你自己的充值地址</summary><p class="mute">到交易所的「充值 → USDT」，網路選 <b>TRC20（TRON）</b>，把充值地址貼在這裡。退款完成前都可以改。</p>
+      <div class="row"><input data-rtoin="${esc(r.id)}" placeholder="你的 USDT（TRC20）充值地址，T 開頭" autocomplete="off" spellcheck="false" autocapitalize="off"><button class="btn" data-rto="${esc(r.id)}" type="button">改退款地址</button></div><p class="msg" data-rtomsg="${esc(r.id)}" role="status"></p></details>` : ''); }).join('');
+}
+function refBind(o) {
+  document.querySelectorAll('[data-rto]').forEach(b => b.onclick = async () => {
+    const id = b.dataset.rto, to = document.querySelector(`[data-rtoin="${id}"]`).value.trim(), m = document.querySelector(`[data-rtomsg="${id}"]`);
+    if (!/^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(to)) { m.className = 'msg bad'; m.textContent = '地址格式不對：TRON 地址是 T 開頭、34 個英數字'; return; }
+    if (to === o.addr) { m.className = 'msg bad'; m.textContent = '退款地址不能填我們的收款地址'; return; }
+    if (!confirm(`退款改成轉到這個地址？\n\n${to}\n\n請再確認一次：這是 USDT（TRC20／TRON 網路）的地址，轉錯網路的錢拿不回來。`)) return;
+    b.disabled = true;
+    try { if (o.mode === 'renew') await api('/api/bill', { op: 'refundTo', id, to }, true); else await api('/api/buy', { op: 'refundTo', id: o.id, otok: o.otok, rid: id, to });
+      delete $('refund').dataset.k; poll(); }
+    catch (e) { m.className = 'msg bad'; m.textContent = e.message; b.disabled = false; }
+  });
 }
 function success(until) {
   step(5); const o = S.order, isNew = o.mode === 'new';
