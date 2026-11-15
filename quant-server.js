@@ -952,7 +952,7 @@ setInterval(() => { if (!SP_ONLY && !REP.busy && Date.now() >= (ST.rep.next || 0
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-11-16l';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-11-16m';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -2628,30 +2628,50 @@ const ECO_ZH = [
   [/consumer confidence/i, '消費者信心'], [/prelim uom|uom consumer sentiment/i, '密大消費者信心'], [/adp/i, 'ADP 就業人數'], [/durable goods/i, '耐久財訂單']
 ];
 const ecoZh = t => { for (const [re, zh] of ECO_ZH) if (re.test(t)) return zh + (/(m\/m)/i.test(t) ? '（月增）' : /(y\/y)/i.test(t) ? '（年增）' : /(q\/q)/i.test(t) ? '（季增）' : ''); return t; };
-async function ecoGet(urls) {
-  for (const url of urls) {
-    try {
-      const r = await fetch(url, { signal: AbortSignal.timeout(15000), headers: { 'User-Agent': 'Mozilla/5.0' } });
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      return await r.json();
-    } catch (e) { ECO.err = e.message; }
-  }
-  return null;
+/* 📅 資料源 faireconomy（ForexFactory 的行事曆）限制「5 分鐘最多 2 次」，超過會被封鎖一陣子 → 以前一次抓 2～4 個網址、伺服器一重啟又馬上抓，就會「讀取失敗」。
+   現在：兩次請求之間至少隔 3 分鐘；本週平常 1 小時抓一次（公布前後 6 分鐘）、下週 6 小時抓一次；被擋就等 20 分鐘；抓到的存在硬碟，重啟不用重抓，抓失敗也照樣顯示上次的資料 */
+const ECO_FILE = path.join(DATA_DIR, 'eco-cache.json'), ECO_GAP = 3 * 60000;
+ECO.last = 0; ECO.wait = 0; ECO.wkAt = 0; ECO.nxAt = 0;
+try { const c = JSON.parse(fs.readFileSync(ECO_FILE, 'utf8')); if (Array.isArray(c.list)) { ECO.list = c.list.filter(e => e.t > Date.now() - 8 * 24 * HOUR); ECO.at = c.at || 0; ECO.wkAt = c.wkAt || 0; ECO.nxAt = c.nxAt || 0; ECO.last = c.last || 0; ECO.wait = c.wait || 0; ECO.hasNext = !!c.hasNext; ECO.sent = c.sent || {}; } } catch (e) {}
+const ecoSave = () => { try { fs.writeFileSync(ECO_FILE, JSON.stringify({ list: ECO.list, at: ECO.at, wkAt: ECO.wkAt, nxAt: ECO.nxAt, last: ECO.last, wait: ECO.wait, hasNext: ECO.hasNext, sent: ECO.sent })); } catch (e) {} };
+async function ecoGet(url) {
+  ECO.last = Date.now();
+  try {
+    const r = await fetch(url, { signal: AbortSignal.timeout(15000), headers: { 'User-Agent': 'Mozilla/5.0 (QEVRAX calendar)', Accept: 'application/json' } });
+    const tx = await r.text();
+    if (r.status === 429 || /request denied|exceeding|rate limit/i.test(tx.slice(0, 2000))) { ECO.wait = Date.now() + 20 * 60000; throw new Error('資料源暫時擋住（請求太頻繁），20 分鐘後自動再試'); }
+    if (r.status === 404) return { miss: true };     // 下週的還沒出來
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    let j; try { j = JSON.parse(tx); } catch (e) { throw new Error('資料源回傳的不是 JSON'); }
+    if (!Array.isArray(j)) throw new Error('資料格式不對');
+    return { list: j };
+  } catch (e) { ECO.err = e.name === 'TimeoutError' ? '資料源太久沒回應' : e.message; if (!(ECO.wait > Date.now())) ECO.wait = Date.now() + 10 * 60000; log('數據公布抓取失敗', ECO.err); return null; }
 }
-async function ecoFetch() {                           // 本週＋下週
-  const base = process.env.ECO_URL ? [process.env.ECO_URL] : null;
-  const wk = await ecoGet(base || ['https://nfs.faireconomy.media/ff_calendar_thisweek.json', 'https://cdn-nfs.faireconomy.media/ff_calendar_thisweek.json']);
-  const nx = await ecoGet(base ? [base[0].replace('thisweek', 'nextweek')] : ['https://nfs.faireconomy.media/ff_calendar_nextweek.json', 'https://cdn-nfs.faireconomy.media/ff_calendar_nextweek.json']);
-  if (!wk && !nx) return;
-  const m = new Map();
-  for (const e of [].concat(wk || [], nx || [])) {
+function ecoMerge(arr) {                               // 合併到現有清單（同一筆用新的；舊的保留 8 天）
+  const m = new Map(ECO.list.filter(e => e.t > Date.now() - 8 * 24 * HOUR).map(e => [e.id, e]));
+  for (const e of arr) {
     if (e.country !== 'USD' || (e.impact !== 'High' && e.impact !== 'Medium')) continue;   // 清單顯示高、中影響；Discord 只通知高影響
     const t = Date.parse(e.date); if (!Number.isFinite(t)) continue;
     const id = e.title + '|' + e.date;
     m.set(id, { id, t, imp: e.impact === 'High' ? 'H' : 'M', title: e.title, zh: ecoZh(e.title), forecast: e.forecast || '', previous: e.previous || '', actual: e.actual || '' });
   }
   ECO.list = [...m.values()].sort((a, b) => a.t - b.t);
-  ECO.at = Date.now(); ECO.err = wk ? '' : ECO.err; ECO.hasNext = !!nx;
+}
+let ecoBusy = false;
+async function ecoFetch() {                            // 每分鐘看一次「該不該抓」：一次最多抓一個網址
+  const now = Date.now(); if (ecoBusy || now < ECO.wait || now - ECO.last < ECO_GAP) return;
+  const base = process.env.ECO_URL || 'https://nfs.faireconomy.media/ff_calendar_thisweek.json';
+  const near = ECO.list.some(e => e.imp === 'H' && e.t - now < 20 * 60000 && now - e.t < 60 * 60000 && !e.actual);   // 公布前後：等實際值
+  const wkDue = now - ECO.wkAt > (near ? 6 : 60) * 60000 || !ECO.list.length || twDay(ECO.wkAt) !== twDay(now) && new Date(now + 8 * HOUR).getUTCDay() === 1;
+  const nxDue = !wkDue && now - ECO.nxAt > 6 * HOUR;
+  if (!wkDue && !nxDue) return;
+  ecoBusy = true;
+  try {
+    const r = await ecoGet(wkDue ? base : base.replace('thisweek', 'nextweek'));
+    if (!r) { ecoSave(); return; }
+    if (wkDue) { ECO.wkAt = now; ECO.err = ''; ECO.wait = 0; } else { ECO.nxAt = now; ECO.hasNext = !r.miss; }
+    if (r.list) ecoMerge(r.list); ECO.at = now; ecoSave();
+  } finally { ecoBusy = false; }
 }
 function ecoTick() {
   const now = Date.now(), fv = e => `${e.forecast ? `預測 ${e.forecast}` : ''}${e.forecast && e.previous ? '・' : ''}${e.previous ? `前值 ${e.previous}` : ''}`;
@@ -2664,8 +2684,8 @@ function ecoTick() {
   }
 }
 // 每 30 分鐘抓一次（公布時間前後改成每 5 分鐘，才拿得到實際值）；每 30 秒檢查要不要發通知
-setTimeout(ecoFetch, 4000);
-setInterval(() => { const now = Date.now(), near = ECO.list.some(e => e.imp === 'H' && Math.abs(e.t - now) < 30 * 60000); if (now - ECO.at > (near ? 5 : 30) * 60000) ecoFetch(); }, 60000);
+setTimeout(ecoFetch, 4000);                          // 重啟時：硬碟有 1 小時內的資料就不會重抓（ecoFetch 自己判斷）
+setInterval(ecoFetch, 60000);
 setInterval(ecoTick, 30000);
 
 /* ---------------- 🐋 鯨魚大單（伺服器用 WebSocket 收幣安逐筆成交，網頁只來讀結果） ----------------
