@@ -80,6 +80,11 @@ async function loadInfo() {                              // 方案、條款、�
   S.info = await api('/api/buy', { op: 'info' }); return S.info;
 }
 async function boot() {
+  let R = null; try { R = await api('/api/ref', { op: 'info' }); } catch (e) {}   // 🎟 邀請碼制（免費）開著：顯示免費申請
+  if (R && R.on) {
+    if (SRVC.token) { try { const r = await fetch(URL0 + '/api/me', { headers: { Authorization: 'Bearer ' + SRVC.token } }); if (r.ok) return done0('🎟', '你已經有帳號了', '目前是免費使用（邀請碼制），到網站「☰ 選單 → 方案與繳費」可以看審核狀態。'); } catch (e) {} }
+    return refView(R);
+  }
   if (SRVC.token) { try { const r = await fetch(URL0 + '/api/me', { headers: { Authorization: 'Bearer ' + SRVC.token } }); if (r.ok) { S.me = await r.json(); S.mode = 'renew'; } } catch (e) {} }
   try { const d = await loadInfo(); if (S.mode === 'renew' && d.state.st === 'free') return done0('🎁', '你是免費帳號', '不用付費，所有功能都可以直接使用。'); }
   catch (e) { return $('app').innerHTML = `<div class="card"><p class="msg bad">連不到伺服器：${esc(e.message)}</p></div>`; }
@@ -87,6 +92,46 @@ async function boot() {
   const saved = LS.get('qxPay', null);                   // 重新整理也不會弄丟付款單
   if (saved && saved.exp > Date.now() - 48 * 3600000 && saved.mode === S.mode) { S.order = saved; return payView(); }
   formView();
+}
+function refView(R) {                                  // 🎟 免費申請：① 用邀請碼註冊 Bitunix → ② 填資料 → ③ 審核
+  $('steps').innerHTML = '<span>① 註冊 Bitunix</span><span>② 填資料</span><span>③ 審核</span><span>④ 完成</span>'; step(1);
+  document.title = '免費申請｜QEVRAX';
+  const refs = R.refs || [];
+  $('app').innerHTML = `<div class="card"><h2>① 先用邀請碼註冊 Bitunix</h2>
+    <p class="mute">QEVRAX <b>免費使用</b>，條件是你的 Bitunix 帳號要用我們的邀請碼註冊，並且開著自動交易（近 30 天交易量 ${(+R.minVol || 0).toLocaleString()} USDT 以上，保證金 × 槓桿，小資金也很容易達到）。</p>
+    ${refs.length ? `<label class="f" for="via">誰邀請你的？（你用誰的邀請碼註冊 Bitunix）<b style="color:var(--bad)">＊必填</b></label><select id="via"><option value="">請選擇</option>${refs.map(r => `<option value="${esc(r.id)}">${esc(r.name)}</option>`).join('')}</select><div id="viaBox"></div>` : ''}
+    <p class="mute" style="font-size:12.5px;margin-top:10px">已經有 Bitunix 帳號、但不是用我們的邀請碼註冊的，要用邀請連結<b>重新註冊一個新帳號</b>才能免費使用。<br>申請被拒絕過、或填錯 UID？用<b>同一個信箱</b>重新申請就好，舊的申請會自動作廢。</p></div>
+  <div class="card"><h2>② 填資料</h2><p class="mute">送出後會<b>馬上建立帳號</b>，用這組 UID 和密碼登入。審核通過前可以先設定，但還不能開始自動交易。</p>
+    <label class="f" for="uid">Bitunix UID（用邀請碼註冊的那個帳號）</label><input id="uid" inputmode="numeric" autocomplete="username" autocapitalize="off">
+    <label class="f" for="pw">設定密碼（至少 8 個字）</label><input id="pw" type="password" autocomplete="new-password">
+    <label class="f" for="pw2">再輸入一次密碼</label><input id="pw2" type="password" autocomplete="new-password">
+    <label class="f" for="em">Google 信箱（收驗證碼、通知、忘記密碼用）</label><div class="row"><input id="em" type="email" autocomplete="email" autocapitalize="off" placeholder="example@gmail.com"><button class="btn" id="sendCode" type="button">寄驗證碼</button></div>
+    <label class="f" for="ec">信箱驗證碼（6 位數字）</label><input id="ec" inputmode="numeric" autocomplete="one-time-code" maxlength="6"><p class="msg" id="codeMsg" role="status"></p>
+    <label class="f" for="ph">手機號碼</label><input id="ph" type="tel" inputmode="tel" autocomplete="tel" placeholder="0912345678">
+    <details><summary>📄 服務條款全文<span class="ver">版本 ${esc(R.termsVer || '')}</span></summary><pre>${esc(R.terms || '')}</pre></details>
+    <label class="agree"><input type="checkbox" id="agree"> 我已閱讀並同意服務條款</label>
+    <button class="btn pri" id="apply" type="button">送出申請</button><p class="msg" id="aMsg" role="alert"></p></div>`;
+  if ($('via')) $('via').onchange = () => { const r = refs.find(x => x.id === $('via').value), box = $('viaBox'); step(1);
+    box.innerHTML = r && (r.code || r.link) ? `<div class="kv">${r.code ? `<span>邀請碼</span><code>${esc(r.code)}</code><button class="btn" data-copy="${esc(r.code)}" type="button">複製</button>` : ''}</div>${r.link ? `<p style="margin:8px 0 0"><a class="btn" href="${esc(r.link)}" target="_blank" rel="noopener">👉 用 ${esc(r.name)} 的邀請連結註冊 Bitunix</a></p>` : ''}` : '';
+    box.querySelectorAll('[data-copy]').forEach(b => b.onclick = async () => { try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = '已複製'; } catch (e) { prompt('複製這段：', b.dataset.copy); } }); };
+  $('uid').onfocus = () => step(2);
+  $('sendCode').onclick = async () => { const b = $('sendCode'); b.disabled = true; try { const r = await api('/api/buy', { op: 'code', email: $('em').value.trim().toLowerCase() }); msg('codeMsg', r.msg, true); let n = 60; const t = setInterval(() => { b.textContent = `${--n} 秒後可重寄`; if (n <= 0) { clearInterval(t); b.disabled = false; b.textContent = '重寄驗證碼'; } }, 1000); } catch (e) { msg('codeMsg', e.message); b.disabled = false; } };
+  $('apply').onclick = async () => {
+    const b = $('apply'), uid = $('uid').value.normalize('NFKC').replace(/\s+/g, ''), pw = $('pw').value;
+    try {
+      if (refs.length && !$('via').value) { $('via').focus(); throw new Error('請選是誰邀請你的'); }
+      if (!/^\d{4,20}$/.test(uid)) throw new Error('UID 應該是 4～20 位數字（Bitunix 的 UID）'); if (pw.length < 8) throw new Error('密碼至少 8 個字'); if (pw !== $('pw2').value) throw new Error('兩次輸入的密碼不一樣');
+      if (!$('agree').checked) throw new Error('請先閱讀並勾選同意服務條款');
+      b.disabled = true; msg('aMsg', '送出中…', true);
+      const r = await api('/api/ref', { op: 'apply', uid, password: pw, email: $('em').value.trim().toLowerCase(), emailCode: $('ec').value.trim(), phone: $('ph').value.trim(), via: $('via') ? $('via').value : '', agree: true });
+      LS.set('quantSrv', { ...SRVC, url: URL0, on: true, token: r.token, uid: r.uid, role: r.role });   // 申請完直接登入
+      step(r.st === 'ok' ? 5 : 3);
+      $('app').innerHTML = `<div class="card big"><div class="ic">${r.st === 'ok' ? '✅' : '⏳'}</div><h2>${r.st === 'ok' ? '已通過，可以開始使用！' : '申請已送出，審核中'}</h2>
+        <p>帳號 <b>${esc(r.uid)}</b> 已經建立，已幫你登入。</p>
+        <p class="mute">${r.st === 'ok' ? '你的 UID 在我們的邀請名單裡，已經自動通過。' : '我們會確認你是用我們的邀請碼註冊 Bitunix，通過後會寄信通知你。'}接下來請到網站「☰ 選單 → 設定」設定 Bitunix API（要開交易權限）和特級交易${r.st === 'ok' ? '，再按「開始特級交易」' : '，審核通過就能開始'}。</p>
+        <a class="btn pri" href="./" style="display:block;text-decoration:none">前往網站</a></div>`;
+    } catch (e) { msg('aMsg', e.message); b.disabled = false; if (e.j && e.j.needLogin) $('aMsg').innerHTML += ' <a href="./">前往登入</a>'; }
+  };
 }
 function done0(ic, t, d) { step(0); $('app').innerHTML = `<div class="card big"><div class="ic">${ic}</div><h2>${t}</h2><p class="mute">${d}</p><a class="btn" href="./">回網站</a></div>`; }
 function legalCard(I) {                                  // 📜 購買前須知＋逐項勾選＋條款全文＋個資告知＋歷史版本
