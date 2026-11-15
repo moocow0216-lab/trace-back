@@ -951,7 +951,7 @@ setInterval(() => { if (!SP_ONLY && !REP.busy && Date.now() >= (ST.rep.next || 0
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-11-15e';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-11-16c';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -2084,20 +2084,27 @@ function billApply(o, tx, how, from) {                 // 收到錢：延長天�
   billMail(usr, '付款收據', `付款收據\n\nUID：${usr.uid}\n方案：${o.m || 1} 個月\n金額：${o.amount} USDT（TRON TRC20）${o.code ? `\n邀請碼：${o.code}（−${o.pct}%）` : ''}\n付款時間：${tw(now)}（台北）\n交易編號：${o.tx || '手動確認'}\n有效期限：${tw(usr.paidUntil)}（台北）${wasLocked ? '\n\n提醒：到期時自動交易被關掉了，請登入後到「☰ 選單 → 設定」重新打開。' : ''}\n\n付款後 7 天內可以無條件申請全額退款（網站「💳 方案與繳費」的付款紀錄，或回覆這封信）。\n謝謝你的支持！`);
   dcX(ctx(ownerUid()), `💳 **收到月費**：${o.uid} 付了 ${o.amount} USDT（${o.m || 1} 個月${o.code ? `，邀請碼 ${mdEsc(o.code)} −${o.pct}%` : ''}），到期 ${tw(usr.paidUntil)}${how === 'manual' ? '（手動確認）' : how === 'claim' ? '（用戶自己認領）' : ''}`);
 }
+const TRON_RE = /^T[1-9A-HJ-NP-Za-km-z]{33}$/;      // TRON 地址格式
+const RF_KIND = { wallet: '錢包', cex: '交易所' };     // 退款地址是哪一種：自己的錢包、交易所充值地址
+const rfVia = b => { const k = String(b.refundKind || '').trim(), v = String(b.refundVia || '').trim().slice(0, 30); return RF_KIND[k] && v ? { refundKind: k, refundVia: v } : null; };
+const rfLabel = (k, v) => RF_KIND[k] && v ? (k === 'cex' ? `${v} 交易所充值地址` : `${v} 錢包`) : '';
+const rTo = r => r.to || r.from;                       // ↩️ 退款要轉到哪：用戶指定的地址（例如他的交易所充值地址），沒指定就退回原付款錢包
+const rToTxt = r => { const L = rfLabel(r.toKind, r.toVia); return r.to && r.to !== r.from ? `${r.to}（${L || '用戶指定的退款地址'}${r.from ? `，原付款錢包 ${r.from}` : ''}）` : `${r.from}（原付款錢包${L ? '・' + L : ''}）`; };
 function billRefund(r) {                               // ↩️ 待退款（伺服器不碰私鑰：擁有者用收款錢包轉回去，系統自動確認）
   const B = BL(); if (B.refunds.some(x => x.tx === r.tx)) return;
+  if (!r.to && r.orderId) { const o = B.orders.find(x => x.id === r.orderId); if (o && o.refundTo) { if (o.refundTo !== r.from) r.to = o.refundTo; if (o.refundKind) { r.toKind = o.refundKind; r.toVia = o.refundVia; } } }   // 付款時填的退款地址（錢包／交易所、哪一家）
   B.refunds.unshift({ id: crypto.randomBytes(6).toString('hex'), status: 'todo', addr: r.addr || B.addr, ...r }); if (B.refunds.length > 500) B.refunds.length = 500; dirty = true;
-  dcX(ctx(ownerUid()), `↩️ **需要退款**：${r.amount} USDT → ${r.from}${r.uid ? `（${r.uid}）` : ''}\n原因：${mdEsc(r.why || '')}\n請用收款錢包轉回去（金額一樣），系統會自動確認。`);
-  const usr = r.uid && ST.users.find(x => x.uid === r.uid); if (usr) billMail(usr, '退款通知', `會退回 ${r.amount} USDT 到 ${r.from}。${r.why ? `\n原因：${r.why}` : ''}${r.kind === 'cancel' ? '\n退款完成後，這筆付款的使用期間會取消。' : /多轉/.test(r.why || '') ? '\n你的方案已經開通，不用重新付款。' : '\n請重新產生付款單，並確認「實際到帳金額」跟付款單完全一樣。'}\n退款完成後會再通知你。`);
+  dcX(ctx(ownerUid()), `↩️ **需要退款**：${r.amount} USDT → ${rToTxt(r)}${r.uid ? `（${r.uid}）` : ''}\n原因：${mdEsc(r.why || '')}\n請用收款錢包轉到上面這個地址（金額一樣），系統會自動確認。${r.to ? '' : '\n⚠️ 轉之前先到 Tronscan 看這個地址：交易筆數很多、資產很大的是交易所的出金錢包，退過去不會進用戶帳戶，請先請用戶在網站填他自己的退款地址。'}`);
+  const usr = r.uid && ST.users.find(x => x.uid === r.uid); if (usr) billMail(usr, '退款通知', `會退回 ${r.amount} USDT 到 ${rTo(r)}。${r.to ? '' : '\n⚠️ 這是你當初付款的錢包地址。如果你是從交易所（例如 Bitunix、幣安）直接提領付款的，這個地址是交易所的，退回去不會進你的帳戶：請在退款完成前，到網站「☰ 選單 → 方案與繳費」填你自己的 USDT（TRC20）充值地址。'}${r.why ? `\n原因：${r.why}` : ''}${r.kind === 'cancel' ? '\n退款完成後，這筆付款的使用期間會取消。' : /多轉/.test(r.why || '') ? '\n你的方案已經開通，不用重新付款。' : '\n請重新產生付款單，並確認「實際到帳金額」跟付款單完全一樣。'}\n退款完成後會再通知你。`);
 }
-function billCancel(o, by, amount) {                  // ↩️ 解約退款（服務條款第 6、7 條）：付了的錢退回付款錢包；退款真的轉出去後，這筆的天數才取消
+function billCancel(o, by, amount, to) {                  // ↩️ 解約退款（服務條款第 6、7 條）：付了的錢退回付款錢包；退款真的轉出去後，這筆的天數才取消
   const B = BL(); if (!o || o.status !== 'paid') return '這筆付款不能退款（不是已付款的狀態）';
-  if (o.cancelAt) return '這筆已經申請退款了'; if (!o.from) return '這筆是手動確認的付款，系統不知道付款錢包地址，請跟用戶確認退款地址後自己轉帳';
+  if (o.cancelAt) return '這筆已經申請退款了'; if (!o.from && !to && !o.refundTo) return '這筆是手動確認的付款，系統不知道付款錢包地址，請填用戶的退款地址';
   const amt = Math.min(+o.amount, amount > 0 ? +amount : +o.amount); if (!(amt > 0)) return '退款金額不對';
   o.cancelAt = Date.now(); o.cancelBy = by; dirty = true;
-  billRefund({ tx: 'cancel-' + o.id, from: o.from, amount: amt.toFixed(2), uid: o.uid, orderId: o.id, addr: o.addr || B.addr, at: Date.now(), kind: 'cancel',
+  billRefund({ tx: 'cancel-' + o.id, from: o.from || '', ...(to && to !== o.from ? { to } : {}), amount: amt.toFixed(2), uid: o.uid, orderId: o.id, addr: o.addr || B.addr, at: Date.now(), kind: 'cancel',
     why: by === 'user' ? `付款後 7 天內申請解約（服務條款第 6 條）：全額退回 ${o.amount}` : `擁有者辦理退款：退回 ${amt.toFixed(2)}（付款 ${o.amount}）` });
-  const own = ST.users.find(x => x.uid === ownerUid()); if (by === 'user' && own) billMail(own, '有人申請退款', `UID ${o.uid} 申請付款後 7 天內解約退款。\n金額：${o.amount} USDT\n退回地址：${o.from}\n\n請用收款錢包轉回去（金額要一樣），系統會自動確認，並取消他這筆付費的期間。`);
+  const own = ST.users.find(x => x.uid === ownerUid()); if (by === 'user' && own) billMail(own, '有人申請退款', `UID ${o.uid} 申請付款後 7 天內解約退款。\n金額：${o.amount} USDT\n退回地址：${to && to !== o.from ? `${to}（用戶指定，原付款錢包 ${o.from}）` : o.from}\n\n請用收款錢包轉過去（金額要一樣），系統會自動確認，並取消他這筆付費的期間。`);
   return '';
 }
 function billRefundDone(r, outTx, how) {
@@ -2106,10 +2113,10 @@ function billRefundDone(r, outTx, how) {
     const B = BL(), o = B.orders.find(x => x.id === r.orderId), usr = ST.users.find(x => x.uid === r.uid), now = Date.now();
     if (o) { o.status = 'refunded'; o.refundedAt = now; }
     if (o && usr && usr.paidUntil) { usr.paidUntil -= (o.days || 30) * DAYMS; if (usr.paidUntil <= now) usr.paidUntil = now - GRACE - 1000; }
-    if (usr) billMail(usr, '退款完成', `退款已完成：${r.amount} USDT 已經退回到 ${r.from}。${outTx ? `\nhttps://tronscan.org/#/transaction/${outTx}` : ''}\n這筆付款的使用期間已經取消${usr.paidUntil > now ? `，你的方案目前到 ${tw(usr.paidUntil)}（台北）` : '，付費服務已停止'}。`);
+    if (usr) billMail(usr, '退款完成', `退款已完成：${r.amount} USDT 已經退回到 ${rTo(r)}。${outTx ? `\nhttps://tronscan.org/#/transaction/${outTx}` : ''}\n這筆付款的使用期間已經取消${usr.paidUntil > now ? `，你的方案目前到 ${tw(usr.paidUntil)}（台北）` : '，付費服務已停止'}。`);
   }
-  if (r.uid && ST.accts[r.uid]) dcX(ctx(r.uid), `↩️ **退款完成**：${r.amount} USDT 已經退回到 ${r.from}${outTx ? `\nhttps://tronscan.org/#/transaction/${outTx}` : ''}`);
-  dcX(ctx(ownerUid()), `↩️ 退款完成：${r.amount} USDT → ${r.from}${how === 'manual' ? '（手動標記）' : '（區塊鏈已確認）'}`);
+  if (r.uid && ST.accts[r.uid]) dcX(ctx(r.uid), `↩️ **退款完成**：${r.amount} USDT 已經退回到 ${rTo(r)}${outTx ? `\nhttps://tronscan.org/#/transaction/${outTx}` : ''}`);
+  dcX(ctx(ownerUid()), `↩️ 退款完成：${r.amount} USDT → ${rTo(r)}${how === 'manual' ? '（手動標記）' : '（區塊鏈已確認）'}`);
 }
 async function tgList(addr, dir, since) {               // TronGrid：某地址收到（to）或轉出（from）的 USDT，自動翻頁（最多 10 頁＝2000 筆）
   const out = []; let fp = '';
@@ -2175,7 +2182,7 @@ async function billScan(force) {                       // 每分鐘：查每個�
       const rt = todo.filter(r => (r.addr || B.addr) === addr);
       if (rt.length) for (const t of await tgList(addr, 'from', Math.min(...rt.map(r => r.at)) - 10 * 60000)) {   // ↩️ 退款有沒有轉出去
         if (!t.transaction_id || B.seenOut[t.transaction_id] || t.from !== addr) continue;
-        const rf = rt.find(r => r.status === 'todo' && r.from === t.to && Math.round(+r.amount * 1e6) === +t.value);
+        const rf = rt.find(r => r.status === 'todo' && rTo(r) === t.to && Math.round(+r.amount * 1e6) === +t.value);   // 用戶指定了退款地址就對那個地址
         if (rf) { B.seenOut[t.transaction_id] = now; billRefundDone(rf, t.transaction_id, 'auto'); }
       }
     }
@@ -2952,7 +2959,7 @@ http.createServer(async (req, res) => {
       }
       if (u.pathname === '/api/buy') {                   // 💳 獨立繳費頁（不用登入）：看方案、寄信箱驗證碼、下單、查付款、認領
         const B = BL(), op = String(b.op || 'info');
-        if (op === 'info') return send(res, 200, { on: B.on && !!B.addr, price: B.price, days: B.days, plans: B.plans.map(p => ({ ...p, price: billPrice('', p.m).price })), terms: B.terms, orderHours: B.orderHours, mail: mailOn(), ...legalOut(B) });
+        if (op === 'info') return send(res, 200, { on: B.on && !!B.addr, addr: B.addr || '', price: B.price, days: B.days, plans: B.plans.map(p => ({ ...p, price: billPrice('', p.m).price })), terms: B.terms, orderHours: B.orderHours, mail: mailOn(), ...legalOut(B) });
         if (op === 'terms') { const h = (B.termsHist || []).find(x => x.ver === String(b.ver || B.termsVer)); return h ? send(res, 200, { ver: h.ver, at: h.at, text: h.text, cur: B.termsVer }) : send(res, 404, { error: '找不到這個版本' }); }   // 📜 看某一版的條款全文
         if (op === 'quote') { const q = billPrice(b.code, b.m); if (b.code && !q.code) return send(res, 400, { error: '邀請碼不對' }); return send(res, 200, q); }
         if (op === 'code') {                             // 📧 寄信箱驗證碼（10 分鐘內有效）
@@ -2977,8 +2984,9 @@ http.createServer(async (req, res) => {
           const c = ST.users.find(x => x.bind && (x.bind.email === email || x.bind.phone === phone));
           if (c) return send(res, 400, { error: `這個${c.bind.email === email ? '信箱' : '手機號碼'}已經綁定其他帳號了，請直接登入那個帳號續費` });
           if (b.code && !billPrice(b.code, b.m).code) return send(res, 400, { error: '邀請碼不對' });
+          const rto = String(b.refundTo || '').trim(); if (!TRON_RE.test(rto)) return send(res, 400, { error: '請填退款地址（USDT TRC20，T 開頭、34 個英數字）：從交易所付款的話，要填你在交易所的「充值地址」' }); if (rto === B.addr) return send(res, 400, { error: '退款地址不能填我們的收款地址：請填你自己的錢包地址，或你在交易所的充值地址' }); const rv = rfVia(b); if (!rv) return send(res, 400, { error: '請選退款地址是「錢包」還是「交易所」，並填是哪一個錢包／哪一家交易所' });
           const o = billOrder(uid, b.code, b.m), otok = crypto.randomBytes(16).toString('hex');
-          o.newAcct = { ...hashPw(String(b.password)), email, phone }; o.otok = sha(otok); o.agreeAt = Date.now(); o.termsVer = B.termsVer; o.acks = LEGAL.acks.length; o.ip = ip; BUYC.delete(email); dirty = true;
+          o.refundTo = rto; Object.assign(o, rv); o.newAcct = { ...hashPw(String(b.password)), email, phone }; o.otok = sha(otok); o.agreeAt = Date.now(); o.termsVer = B.termsVer; o.acks = LEGAL.acks.length; o.ip = ip; BUYC.delete(email); dirty = true;
           dcX(ctx(ownerUid()), `🛒 **有人要直接購買**：UID ${uid}・${maskMail(email)}・${o.amount} USDT（${o.m} 個月），等他付款`);
           return send(res, 200, { order: { id: o.id, amount: o.amount, addr: o.addr, exp: o.exp, m: o.m, pct: o.pct, code: o.code, uid }, otok });
         }
@@ -2987,7 +2995,13 @@ http.createServer(async (req, res) => {
         if (op === 'status') {
           if (o.status !== 'paid' && Date.now() - B.scan.at > 20000) await billScan(false).catch(() => {});
           const usr = ST.users.find(x => x.uid === o.uid);
-          return send(res, 200, { status: o.status, amount: o.amount, addr: o.addr, exp: o.exp, uid: o.uid, until: o.status === 'paid' && usr ? usr.paidUntil : 0, refund: B.refunds.filter(r => r.orderId === o.id).map(r => ({ amount: r.amount, status: r.status, from: r.from })) });
+          return send(res, 200, { status: o.status, amount: o.amount, addr: o.addr, exp: o.exp, uid: o.uid, until: o.status === 'paid' && usr ? usr.paidUntil : 0, refund: B.refunds.filter(r => r.orderId === o.id).map(r => ({ id: r.id, amount: r.amount, status: r.status, from: r.from, to: rTo(r), label: rfLabel(r.toKind, r.toVia) })) });
+        }
+        if (op === 'refundTo') {                           // ↩️ 新購買的人（還沒登入）：金額不對要退款時，可以改退款地址（例如交易所充值地址）
+          const r = B.refunds.find(x => x.id === String(b.rid || '') && x.orderId === o.id && x.status === 'todo'); if (!r) return send(res, 404, { error: '找不到這筆待退款（可能已經退款完成了）' });
+          const to = String(b.to || '').trim(); if (!TRON_RE.test(to)) return send(res, 400, { error: '地址格式不對：TRON 地址是 T 開頭、34 個英數字' }); if (to === B.addr) return send(res, 400, { error: '退款地址不能填我們的收款地址' });
+          r.to = to === r.from ? undefined : to; r.toAt = Date.now(); { const rv = rfVia(b); r.toKind = rv ? rv.refundKind : undefined; r.toVia = rv ? rv.refundVia : undefined; } dirty = true;
+          dcX(ctx(ownerUid()), `↩️ **退款地址改了**：${r.amount} USDT → ${rToTxt(r)}（付款單 ${o.uid}）`); return send(res, 200, { ok: true, to: rTo(r) });
         }
         if (op === 'cancel') { if (o.status === 'pending') { o.status = 'cancel'; dirty = true; } return send(res, 200, { ok: true }); }
         if (op === 'claim') {
@@ -3202,14 +3216,24 @@ http.createServer(async (req, res) => {
           if (billFree(usr.uid)) return send(res, 400, { error: '你是免費帳號，不用付費' });
           { const le = legalCheck(B, b); if (le === 'TERMS_CHANGED') return send(res, 409, { error: '服務條款剛更新了，請重新閱讀並勾選後再產生付款單', termsChanged: true }); if (le) return send(res, 400, { error: le }); }
           if (b.code && !billPrice(b.code, b.m).code) return send(res, 400, { error: '邀請碼不對' });
-          usr.termsAt = Date.now(); usr.termsVer = B.termsVer; const o = billOrder(usr.uid, b.code, b.m); o.agreeAt = usr.termsAt; o.termsVer = B.termsVer; o.acks = LEGAL.acks.length; return send(res, 200, { order: o });
+          const rto = String(b.refundTo || '').trim(); if (!TRON_RE.test(rto)) return send(res, 400, { error: '請填退款地址（USDT TRC20，T 開頭、34 個英數字）：從交易所付款的話，要填你在交易所的「充值地址」' }); if (rto === B.addr) return send(res, 400, { error: '退款地址不能填我們的收款地址：請填你自己的錢包地址，或你在交易所的充值地址' }); const rv = rfVia(b); if (!rv) return send(res, 400, { error: '請選退款地址是「錢包」還是「交易所」，並填是哪一個錢包／哪一家交易所' });
+          usr.refundTo = rto; Object.assign(usr, rv);   // 記住，下次續費自動帶入
+          usr.termsAt = Date.now(); usr.termsVer = B.termsVer; const o = billOrder(usr.uid, b.code, b.m); o.refundTo = rto; Object.assign(o, rv); o.agreeAt = usr.termsAt; o.termsVer = B.termsVer; o.acks = LEGAL.acks.length; return send(res, 200, { order: o });
         }
         if (op === 'cancel') { const o = B.orders.find(x => x.id === String(b.id) && x.uid === usr.uid && x.status === 'pending'); if (o) { o.status = 'cancel'; dirty = true; } return send(res, 200, { ok: true }); }
         if (op === 'cancelReq') {                        // ↩️ 付款後 7 天內申請解約退款（服務條款第 6 條）
           const o = B.orders.find(x => x.id === String(b.id || '') && x.uid === usr.uid); if (!o || o.status !== 'paid') return send(res, 404, { error: '找不到這筆付款' });
           if (Date.now() - (o.paidAt || o.at) > 7 * DAYMS) return send(res, 400, { error: '已經超過付款後 7 天，請看服務條款第 7 條，或寄信聯絡我們' });
-          const e = billCancel(o, 'user'); if (e) return send(res, 400, { error: e });
-          log('申請 7 天內退款', usr.uid, o.amount); return send(res, 200, { ok: true, msg: `已收到退款申請，${o.amount} USDT 會在 15 天內全額退回到 ${o.from}。退款完成後，這筆付款的使用期間會取消。` });
+          const to = String(b.to || '').trim(); if (to && !TRON_RE.test(to)) return send(res, 400, { error: '退款地址格式不對：TRON 地址是 T 開頭、34 個英數字' }); if (to && to === B.addr) return send(res, 400, { error: '退款地址不能填我們的收款地址' });
+          const e = billCancel(o, 'user', 0, to); if (e) return send(res, 400, { error: e });
+          log('申請 7 天內退款', usr.uid, o.amount, to ? '指定地址' : '原付款錢包'); return send(res, 200, { ok: true, msg: `已收到退款申請，${o.amount} USDT 會在 15 天內全額退回到 ${to || o.refundTo || o.from}${to || o.refundTo ? '' : '（你當初付款的錢包）'}。退款完成後，這筆付款的使用期間會取消。` });
+        }
+        if (op === 'refundTo') {                           // ↩️ 退款完成前，用戶可以改退款地址（例如當初從交易所提領付款，要退到自己的交易所充值地址）
+          const r = B.refunds.find(x => x.id === String(b.id || '') && x.uid === usr.uid && x.status === 'todo'); if (!r) return send(res, 404, { error: '找不到這筆待退款（可能已經退款完成了）' });
+          const to = String(b.to || '').trim(); if (!TRON_RE.test(to)) return send(res, 400, { error: '地址格式不對：TRON 地址是 T 開頭、34 個英數字' }); if (to === B.addr) return send(res, 400, { error: '退款地址不能填我們的收款地址' });
+          r.to = to === r.from ? undefined : to; r.toAt = Date.now(); { const rv = rfVia(b); r.toKind = rv ? rv.refundKind : undefined; r.toVia = rv ? rv.refundVia : undefined; } dirty = true;
+          dcX(ctx(ownerUid()), `↩️ **退款地址改了**：${usr.uid} 的 ${r.amount} USDT → ${rToTxt(r)}`); log('改退款地址', usr.uid, r.id);
+          return send(res, 200, { ok: true, to: rTo(r) });
         }
         if (op === 'claim') {
           const tx = String(b.tx || '').trim().toLowerCase().replace(/^.*transaction\//, '').replace(/[^0-9a-f]/g, '');
@@ -3220,7 +3244,7 @@ http.createServer(async (req, res) => {
         if (op === 'poll' && Date.now() - B.scan.at > 20000) await billScan(false).catch(() => {});
         const st = billState(usr);
         return send(res, 200, { on: B.on, price: B.price, days: B.days, addr: B.addr, orderHours: B.orderHours, plans: B.plans.map(p => ({ ...p, price: billPrice('', p.m).price })), terms: B.terms, termsAt: usr.termsAt || 0, termsVerMine: usr.termsVer || '', ...legalOut(B),
-          state: { ...st, paidUntil: usr.paidUntil || 0, trialEnd: usr.trialEnd || 0 }, orders: B.orders.filter(o => o.uid === usr.uid).slice(0, 20).map(o => { const { newAcct, otok, ...r } = o; return r; }), refunds: B.refunds.filter(r => r.uid === usr.uid).slice(0, 20),
+          state: { ...st, paidUntil: usr.paidUntil || 0, trialEnd: usr.trialEnd || 0 }, refundTo: usr.refundTo || '', refundKind: usr.refundKind || '', refundVia: usr.refundVia || '', orders: B.orders.filter(o => o.uid === usr.uid).slice(0, 20).map(o => { const { newAcct, otok, ...r } = o; return r; }), refunds: B.refunds.filter(r => r.uid === usr.uid).slice(0, 20),
           scan: { at: B.scan.at, err: B.scan.err ? '查詢區塊鏈失敗，稍後會再試' : '' }, owner: !!owner });
       }
       if (u.pathname === '/api/bill/admin') {            // 💳 繳費後台（擁有者）
@@ -3253,15 +3277,16 @@ http.createServer(async (req, res) => {
         if (op === 'assign') { const m = B.unmatched.find(x => x.tx === String(b.tx)); const usr = ST.users.find(x => x.uid === String(b.uid)); if (!m || !usr) return send(res, 404, { error: '找不到這筆轉帳或帳號' }); const o = { id: crypto.randomBytes(6).toString('hex'), uid: usr.uid, addr: m.addr || B.addr, m: 1, base: B.price, pct: 0, code: '', micro: Math.round(+m.amount * 1e6), amount: m.amount, at: m.at, exp: m.at, status: 'pending', days: Math.max(1, Math.round(+b.days || B.days)) }; B.orders.unshift(o); billApply(o, m.tx, 'manual', m.from); B.unmatched = B.unmatched.filter(x => x !== m); return send(res, 200, { ok: true }); }
         if (op === 'dismiss') { B.unmatched = B.unmatched.filter(x => x.tx !== String(b.tx)); dirty = true; return send(res, 200, { ok: true }); }
         if (op === 'refund') { const m = B.unmatched.find(x => x.tx === String(b.tx)); if (!m) return send(res, 404, { error: '找不到這筆轉帳' }); billRefund({ tx: m.tx, from: m.from, amount: m.amount, uid: String(b.uid || ''), addr: m.addr || B.addr, at: m.at, why: '擁有者決定退款' }); B.unmatched = B.unmatched.filter(x => x !== m); return send(res, 200, { ok: true }); }
-        if (op === 'cancelPaid') { const o = B.orders.find(x => x.id === String(b.id || '')); const e = billCancel(o, 'owner', +b.amount || 0); if (e) return send(res, 400, { error: e }); log('擁有者辦理退款', o.uid, b.amount || o.amount); return send(res, 200, { ok: true }); }
+        if (op === 'refundTo') { const r = B.refunds.find(x => x.id === String(b.id) && x.status === 'todo'); if (!r) return send(res, 404, { error: '找不到這筆待退款' }); const to = String(b.to || '').trim(); if (!TRON_RE.test(to)) return send(res, 400, { error: '地址格式不對：TRON 地址是 T 開頭、34 個英數字' }); if (to === B.addr) return send(res, 400, { error: '退款地址不能填我們的收款地址' }); r.to = to === r.from ? undefined : to; r.toAt = Date.now(); { const rv = rfVia(b); r.toKind = rv ? rv.refundKind : undefined; r.toVia = rv ? rv.refundVia : undefined; } dirty = true; return send(res, 200, { ok: true }); }   // 👑 擁有者幫用戶改退款地址
+        if (op === 'cancelPaid') { const to = String(b.to || '').trim(); if (to && !TRON_RE.test(to)) return send(res, 400, { error: '退款地址格式不對' }); const o = B.orders.find(x => x.id === String(b.id || '')); const e = billCancel(o, 'owner', +b.amount || 0, to); if (e) return send(res, 400, { error: e }); log('擁有者辦理退款', o.uid, b.amount || o.amount); return send(res, 200, { ok: true }); }
         if (op === 'refundDone') { const r = B.refunds.find(x => x.id === String(b.id) && x.status === 'todo'); if (!r) return send(res, 404, { error: '找不到這筆待退款' }); billRefundDone(r, String(b.tx || '').trim(), 'manual'); return send(res, 200, { ok: true }); }
         if (op === 'refundSkip') { const r = B.refunds.find(x => x.id === String(b.id) && x.status === 'todo'); if (!r) return send(res, 404, { error: '找不到這筆待退款' }); r.status = 'skip'; r.doneAt = Date.now(); r.note = String(b.note || '').slice(0, 100); dirty = true; return send(res, 200, { ok: true }); }
         if (op === 'scan') { await billScan(true); }
         const users = ST.users.map(x => { const st = billState(x), paid = B.orders.filter(o => o.uid === x.uid && o.status === 'paid'); return { uid: x.uid, role: x.role, owner: x.uid === ownerUid(), free: billFree(x.uid), st: st.st, paidUntil: x.paidUntil || 0, trialEnd: x.trialEnd || 0, total: +paid.reduce((a, o) => a + +o.amount, 0).toFixed(4), n: paid.length }; });
         const who = uid => { const usr = ST.users.find(x => x.uid === uid), o = B.orders.find(x => x.uid === uid && x.newAcct), g = (B.gone || []).find(x => x.uid === uid); return { email: usr && usr.bind ? usr.bind.email : o ? o.newAcct.email : g ? g.email : '', phone: usr && usr.bind ? usr.bind.phone : o ? o.newAcct.phone : '' }; };
         const ledger = [];                               // 📒 收款紀錄：每一筆收到的錢（開通的、退回的），附付款錢包、退款、聯絡資料
-        for (const o of B.orders.filter(x => x.status === 'paid')) { const rf = B.refunds.filter(r => r.orderId === o.id || (o.tx && r.tx === o.tx)); ledger.push({ type: 'paid', at: o.paidAt || o.at, uid: o.uid, from: o.from || '', amount: o.amount, m: o.m || 1, code: o.code || '', pct: o.pct || 0, how: o.how || '', tx: o.tx || '', isNew: !!o.newAcct, refunds: rf.map(r => ({ amount: r.amount, to: r.from, status: r.status, outTx: r.outTx || '', why: r.why || '' })), ...who(o.uid) }); }
-        for (const r of B.refunds.filter(x => !B.orders.some(o => o.status === 'paid' && (o.id === x.orderId || (o.tx && o.tx === x.tx))))) ledger.push({ type: 'refund', at: r.at, uid: r.uid || '', from: r.from, amount: r.amount, m: 0, code: '', pct: 0, how: '', tx: r.tx, isNew: false, refunds: [{ amount: r.amount, to: r.from, status: r.status, outTx: r.outTx || '', why: r.why || '' }], ...(r.uid ? who(r.uid) : { email: '', phone: '' }) });
+        for (const o of B.orders.filter(x => x.status === 'paid')) { const rf = B.refunds.filter(r => r.orderId === o.id || (o.tx && r.tx === o.tx)); ledger.push({ type: 'paid', at: o.paidAt || o.at, uid: o.uid, from: o.from || '', amount: o.amount, m: o.m || 1, code: o.code || '', pct: o.pct || 0, how: o.how || '', tx: o.tx || '', isNew: !!o.newAcct, refunds: rf.map(r => ({ amount: r.amount, to: rTo(r), status: r.status, outTx: r.outTx || '', why: r.why || '' })), ...who(o.uid) }); }
+        for (const r of B.refunds.filter(x => !B.orders.some(o => o.status === 'paid' && (o.id === x.orderId || (o.tx && o.tx === x.tx))))) ledger.push({ type: 'refund', at: r.at, uid: r.uid || '', from: r.from, amount: r.amount, m: 0, code: '', pct: 0, how: '', tx: r.tx, isNew: false, refunds: [{ amount: r.amount, to: rTo(r), status: r.status, outTx: r.outTx || '', why: r.why || '' }], ...(r.uid ? who(r.uid) : { email: '', phone: '' }) });
         ledger.sort((x, y) => y.at - x.at);
         let baks = []; try { baks = fs.readdirSync(BAK_DIR).filter(f => f.startsWith('state-')).sort().reverse().slice(0, 5); } catch (e) {}
         return send(res, 200, { cfg: { on: B.on, onAt: B.onAt, price: B.price, days: B.days, addr: B.addr, delDays: B.delDays, graceDays: B.graceDays, orderHours: B.orderHours, plans: B.plans, terms: B.terms, termsVer: B.termsVer, termsN: (B.termsHist || []).length, tgKey: !!process.env.TRONGRID_KEY, mail: mailOn(), baks }, codes: B.codes, free: B.free, users, ledger, orders: B.orders.slice(0, 200).map(o => { const { newAcct, otok, ...r } = o; return { ...r, isNew: !!newAcct, email: newAcct ? maskMail(newAcct.email) : '' }; }), unmatched: B.unmatched, refunds: B.refunds.slice(0, 200), gone: (B.gone || []).slice(0, 100), scan: B.scan,
@@ -3479,7 +3504,7 @@ http.createServer(async (req, res) => {
           if (b.sp && !hasKey(X)) return send(res, 400, { error: '請先設定你自己的 Bitunix API 金鑰（要開交易權限）' });
           if (b.sp && !(C.spBudget > 0)) return send(res, 400, { error: '請先到「☰ 選單 → 設定 → 🗡 特級交易設定」填「特級交易投入資金」，再開始特級交易' });
           if (b.sp) { const ov = ltOver(X); if (ov) return send(res, 400, { error: `資金分配超過：${ov}。請先到「☰ 選單 → 設定」調低投入資金（或調高合約總資金），再開始特級交易` }); }
-          if (b.sp && C.spBudget > 0) { const B = ltSpEq(X); if (B.eq <= 0) { const pnl = B.eq - (C.spBudget - (C.spWd || 0)); return send(res, 400, { error: `特級交易的目前資金是 ${B.eq.toFixed(2)}U（投入 ${C.spBudget}U 之後虧掉了），開始了也會馬上暫停。請到「☰ 選單 → 設定 → 🗡 特級交易設定」重新輸入投入資金，特級交易就會從那個金額重新開始` }); } }
+          if (b.sp && C.spBudget > 0) { const B = ltSpEq(X); if (B.eq <= 0) { const pnl = B.eq - (C.spBudget - (C.spWd || 0)); const man = ltManShare(X, true); return send(res, 400, { error: `特級交易的目前資金是 ${B.eq.toFixed(2)}U（投入 ${C.spBudget}U${man < 0 ? `，含手動單虧損分攤 ${man.toFixed(2)}U` : ''}），開始了也會馬上暫停。請到「☰ 選單 → 設定 → 🗡 特級交易設定」按「↺ 從投入資金重新開始」，特級交易就會從投入資金重新算`, needRestart: true }); } }
           C.spAllOff = false; C.rsSp = false;
           if (C.sp !== b.sp) { C.sp = b.sp; if (!b.sp) X.LT.pause = { t: Date.now(), why: '你按了暫停特級交易' }; else if (X.LT.pause && /特級/.test(X.LT.pause.why)) X.LT.pause = null; dcX(X, b.sp ? `🗡 **特級交易已開始**：特級咒具的 🧱 FVG／OB 回踩進場會${X.sim ? '用模擬資金下單' : '用你的 Bitunix 帳戶真實下單'}\n每筆 ${C.spMargin}U・${C.spLev}x・止損＝4H／1H FVG／OB 的低點（做空＝高點）・止盈 1:1・持有 ${Math.round(C.spHold / 24 * 10) / 10} 天${C.spBudget > 0 ? `・投入 ${C.spBudget}U` : ''}${C.spDayLoss > 0 ? `・單日虧損上限 ${C.spDayLoss}U` : ''}` : '⏸ **特級交易已暫停**（已開的單照常管理）'); }
         }
@@ -3516,8 +3541,8 @@ http.createServer(async (req, res) => {
           if (bud !== undefined && !(bud > 0)) return send(res, 400, { error: '特級交易的投入資金要填大於 0 的數字' });
           if (bud !== undefined) {                        // 網頁只在你改過投入資金時才送
             const err = ltAllocCheck(X, C.budget || 0, bud); if (err) return send(res, 400, { error: err });
-            const old = +C.spBudget || 0;
-            if (!(old > 0)) { C.spBudAt = Date.now(); C.spWd = 0; C.spDeps = []; C.spV5 = true; }   // 第一次設定：從這個金額開始
+            const old = +C.spBudget || 0, broke = old > 0 && ltSpEq(X).eq <= 0;
+            if (!(old > 0) || v.restart || broke) { C.spBudAt = Date.now(); C.spWd = 0; C.spDeps = []; C.spV5 = true; X.LT.spDayPnl = 0; log('特級交易重新開始', X.uid, bud, v.restart ? '按重新開始' : broke ? '資金虧完後重設' : '第一次設定'); }   // 第一次設定、按「重新開始」、或資金已經虧完：從這個金額重新開始（之前的盈虧、手動單分攤都不算）
             else if (bud !== old) { (C.spDeps = C.spDeps || []).push({ t: Date.now(), amt: +(bud - old).toFixed(2) }); if (C.spDeps.length > 100) C.spDeps.shift(); }   // 💰 之後改投入資金＝加碼／減碼：之前的特級盈虧照算（500U 賺到 713U，再加 500U → 1213U）
             C.spBudget = bud;
           }
