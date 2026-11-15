@@ -102,7 +102,7 @@ function formView() {
   step(S.mode === 'renew' ? 2 : 1); const I = S.info, p0 = I.plans.find(p => p.m === S.m) || I.plans[0];
   $('app').innerHTML = `
   <div class="card"><h2>① 選方案</h2><div class="plans" role="radiogroup" aria-label="方案長度">${I.plans.map(p => `<label class="plan${p.m === S.m ? ' on' : ''}"><input type="radio" name="m" value="${p.m}"${p.m === S.m ? ' checked' : ''}><b>${p.m} 個月</b><span class="p">${p.price} U</span>${p.pct ? `<em>省 ${p.pct}%</em>` : `<small>${I.price} USDT／${I.days} 天</small>`}</label>`).join('')}</div>
-    <ul class="inc"><li>一般交易：CVD 異常偵測、自動下單</li><li>🗡 特級咒具＋特級交易</li><li>🔔 額外進場通知、⚔ 作戰室、🧪 模擬盤</li></ul></div>
+    <ul class="inc"><li>🗡 特級咒具＋特級交易（FVG／OB 回踩，自動下單）</li><li>🔔 額外進場通知、⚔ 作戰室、🧪 模擬盤</li></ul></div>
   <div class="card"><h2>② ${S.mode === 'renew' ? '確認帳號' : '建立帳號'}</h2>
     ${S.mode === 'renew' ? `<div class="who">續費帳號：<b>${esc(S.me.uid)}</b>${S.info.state && S.info.state.until ? `　目前到期：${fmt(S.info.state.until)}` : ''}<br><small class="mute">付款後會從目前到期日（或今天）往後加。</small></div>` : `
     <p class="mute">付款成功後會<b>自動建立帳號</b>，用這組 UID 和密碼登入。已經有帳號的話，請<a href="./">先登入</a>再續費。</p>
