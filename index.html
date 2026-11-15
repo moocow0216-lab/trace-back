@@ -1115,6 +1115,18 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
 @media (max-width:900px){.wxmid{grid-template-columns:1fr}.wxmid .wxbal canvas{min-height:180px}.wxmid .wxscene canvas{aspect-ratio:16/11}}
 @media (max-width:600px){.wxmid .wxscene canvas{aspect-ratio:1/1.05;max-height:none}.wxpop{width:min(180px,52%)!important;font-size:10px!important}.wxpopc{min-height:4.6em!important}}
 </style>
+<style id="annCss">/* 📢 更新通知（擁有者發送／大家收到） */
+.qannwide{grid-column:1/-1}
+#ann_x{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:7px 9px;min-width:0;width:100%;box-sizing:border-box;font:inherit;font-size:14px;line-height:1.6;color:inherit;resize:vertical}
+.mnpage[data-p="set"] #ann_x{background:var(--gin);border:1px solid var(--gdl);color:var(--gtx);border-radius:8px}
+#qAnnBox .qbt{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ntbody{white-space:pre-wrap;line-height:1.75;font-size:14.5px;overflow-wrap:anywhere}
+</style>
+<style id="spOnlyCss">/* 🗡 特級專用版：一般交易的介面全部藏起來 */
+body.sponly #qLtSt,body.sponly #qLtToggle,body.sponly #qLtMsg,body.sponly #qLtCfg,body.sponly #qMyTrade .params,body.sponly #qmt_note,body.sponly #qMyTrade .qwd,
+body.sponly #qScanBox,body.sponly #qCfg,body.sponly #qBtArea .qbtrow,body.sponly #qBtCmp,body.sponly #qPnl,body.sponly #qKpi,body.sponly .qdsrc,body.sponly #qSidePanel,body.sponly #qTabCards,
+body.sponly #qSrc,body.sponly #qAuto,body.sponly #qScan,body.sponly #qStat,body.sponly .qprog,body.sponly #qBtcNow,body.sponly label.tzsel:has(#qf_src),body.sponly #qTab th:nth-child(5),body.sponly #qTab td:nth-child(5),body.sponly label:has(>#qtg_entry),body.sponly label:has(>#qtg_exit),body.sponly .tlrow:has(#tlNewPw),body.sponly .tlrow:has(#tlNewPw)+.tlsub,body.sponly #qBxSum,body.sponly button[data-adopt],body.sponly button[data-a="lt"],body.sponly #qa_allOff,body.sponly #qa_allOn,body.sponly .qbxadopt{display:none!important}
+</style>
 </head>
 <body class="quant-on mn">
 <div class="qgate" id="qGate">
@@ -1313,7 +1325,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-10d</div>
+      <div class="qver" id="qVer">網站版本 2026-11-15b</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -1389,6 +1401,16 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
           <div class="qbt" style="margin:8px 0 0"><button class="btn primary qspbtn" id="sp_save">儲存</button><span class="qltmsg" id="sp_msg"></span></div>
           <div class="qwd"><b>💸 收回資金</b><input id="wd_sp" type="number" min="0" step="1" placeholder="金額（U），留空＝全部"><button class="btn qspbtn" id="wd_spGo">收回</button><span class="qltmsg" id="wd_spMsg"></span></div>
           <div class="qcfgnote">止損＝4H／1H FVG／OB 低點（做空＝高點）・止盈 1:1・每 +1% 價格套保一次（100x＝+100%）・同幣反向訊號會反手。</div>
+        </div>
+        <div class="qtg" id="qAnnBox" hidden>
+          <b>📢 更新通知</b><span>（只有擁有者看得到）按「發送」之後，所有帳號都會收到</span>
+          <div class="params">
+            <label class="field qannwide">標題<input id="ann_t" maxlength="80" placeholder="例如：2026/11/15 更新（特級專用版）"></label>
+            <label class="field qannwide">內容<textarea id="ann_x" rows="7" maxlength="1800" placeholder="這次更新了什麼、大家要做什麼"></textarea></label>
+            <label class="field qannwide">Email<span class="qtgck"><label><input type="checkbox" id="ann_mail"> 也寄到每個帳號綁定的信箱</label></span></label>
+          </div>
+          <div class="qbt" style="margin:8px 0 0"><button class="btn" id="ann_fill">帶入最新的更新紀錄</button><button class="btn primary" id="ann_go">📢 發送更新通知給所有帳號</button><span class="qltmsg" id="ann_msg" role="status"></span></div>
+          <div class="qcfgnote">每個帳號下次打開網站會跳出這則公告；有設定 Discord 的人會同時收到 Discord 通知；勾 Email 的話也會寄信（要先設定好寄信用的 Gmail，信會在背景一封一封寄）。同一則 1 分鐘內不能重複發。</div>
         </div>
         <div class="qtg" id="qScanBox" hidden>
           <b>🔍 掃描條件</b><span>（全站共用，只有擁有者看得到、能改）</span>
@@ -1607,15 +1629,15 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
 <dialog id="qAdmDlg" aria-labelledby="qAdmTitle">
   <div class="qdh"><h2 id="qAdmTitle">🔐 帳號管理（後台）</h2><span class="spacer"></span><button class="btn" id="qAdmClose">關閉</button></div>
   <div class="qadm">
-    <p class="qrepnote">每個帳號用 Bitunix UID 登入，第一次登入要綁定 Google 信箱和手機號碼。<span class="rbadge own">👑 擁有者</span> 只有一個人，所有功能都能用（掃描條件、回測、結算、改任何人的密碼、轉讓擁有者）。<span class="rbadge adm">管理員</span> 可以建立帳號、「查看」每個帳號、把別人改成管理員或一般、重設綁定、強制登出、刪除帳號，但不能動擁有者，也不能改別人的密碼。<span class="rbadge usr">一般</span> 只能設定自己的 API、Discord 和交易參數。<b>沒有任何人能動別人的倉位和資金。</b></p>
-    <div class="trbox"><h3>🧪 7 天試用申請</h3><p class="qrepnote">有人在登入頁按「申請 7 天試用」就會出現在這裡。<b>開通</b>後才能登入，可以用一般用戶的所有功能和特級進場；到期自動停止交易、平掉系統開的單、刪除帳號和 API。申請紀錄永遠保留。<b>重複</b>欄會比對每一筆申請的 UID、信箱、電話，跟之前所有試用申請和現有帳號比對。</p>
+    <p class="qrepnote">每個帳號用 Bitunix UID 登入，第一次登入要綁定 Google 信箱和手機號碼。<span class="rbadge own">👑 擁有者</span> 只有一個人，所有功能都能用（掃描條件、回測、結算、改任何人的密碼、轉讓擁有者）。<span class="rbadge adm">管理員</span> 可以建立帳號、「查看」每個帳號、把別人改成管理員或用戶、重設綁定、強制登出、刪除帳號，但不能動擁有者，也不能改別人的密碼。<span class="rbadge usr">用戶</span> 只能設定自己的 API、Discord 和交易參數。<b>沒有任何人能動別人的倉位和資金。</b></p>
+    <div class="trbox"><h3>🧪 7 天試用申請</h3><p class="qrepnote">有人在登入頁按「申請 7 天試用」就會出現在這裡。<b>開通</b>後才能登入，可以用所有功能（含特級交易）；到期自動停止交易、平掉系統開的單、刪除帳號和 API。申請紀錄永遠保留。<b>重複</b>欄會比對每一筆申請的 UID、信箱、電話，跟之前所有試用申請和現有帳號比對。</p>
       <div class="trtabs" id="trTabs"></div><div class="tablewrap"><table class="stat" id="trTab"></table></div></div>
     <div class="tablewrap"><table class="stat" id="qAdmTab"></table></div>
     <h3 style="font-size:14px;margin:14px 0 6px">新增帳號／修改密碼</h3>
     <div class="params">
       <label class="field">Bitunix UID<input id="qa_uid" inputmode="numeric" autocomplete="off"></label>
       <label class="field">新密碼（至少 8 個字）<input id="qa_pw" type="password" autocomplete="new-password"></label>
-      <label class="field">權限<select id="qa_role"><option value="">不變（新帳號預設一般）</option><option value="viewer">一般（只設定自己的 API、DC、交易）</option><option value="admin">管理員（灰色）</option></select></label>
+      <label class="field">權限<select id="qa_role"><option value="">不變（新帳號預設用戶）</option><option value="viewer">用戶（只設定自己的 API、DC、交易）</option><option value="admin">管理員（灰色）</option></select></label>
     </div>
     <div class="qbt" style="margin-top:8px"><button class="btn primary" id="qa_save">儲存</button></div>
     <h3 style="font-size:14px;margin:16px 0 6px">📧 寄信功能（忘記密碼、擁有者驗證碼）</h3>
@@ -1659,6 +1681,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
     <button class="btn primary" id="mnPwGo">更改密碼</button><p class="mnmsg" id="mnPwMsg" role="status"></p>
     <small>改完之後，其他裝置的登入會被登出，這台裝置保持登入。</small></div>
 </div>
+<dialog id="ntDlg" class="nwdlg" aria-labelledby="ntT"><div class="nwcard"><div class="nwhead"><h2 id="ntT">📢 更新通知</h2><p id="ntSub"></p></div><div class="nwbody"><div class="ntbody" id="ntBody"></div></div><div class="nwfoot"><button class="gdbtn" id="ntLog">📰 更新紀錄</button><button class="gdbtn pri" id="ntOk" autofocus>知道了</button></div></div></dialog>
 <dialog id="nwDlg" class="nwdlg" aria-labelledby="nwT"><div class="nwcard"><div class="nwhead"><h2 id="nwT">📰 版本更新</h2><p>這次更新了這些地方：</p></div><div class="nwbody" id="nwBody"></div><div class="nwfoot"><button class="gdbtn" id="nwAll">看完整的使用說明</button><button class="gdbtn pri" id="nwOk" autofocus>知道了</button></div></div></dialog>
 <dialog id="gdDlg" aria-label="使用說明"><div class="gdcard" id="gdBody"></div></dialog>
 <dialog id="htDlg" aria-labelledby="htDlgT" style="padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);width:min(560px,96vw)">
@@ -3437,6 +3460,9 @@ let loading = null; window.patLoad = () => loading || (loading = load());   // �
 (() => {
 'use strict';
 const $ = id => document.getElementById(id);
+var SPONLY = true;                                    // 🗡 特級專用版：沒有一般交易（CVD 訊號、一般自動交易、CVD 回測都拿掉）
+document.body.classList.toggle('sponly', SPONLY);
+if (SPONLY) { const b = $('qMyTrade') && $('qMyTrade').querySelector('b'); if (b) b.textContent = '💰 合約總資金'; }
 const BF = 'https://fapi.binance.com', BS = 'https://api.binance.com', OKX = 'https://www.okx.com';
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const HOUR_MS = 3600000;
@@ -3449,7 +3475,7 @@ const DEFAULT_SRV = 'https://3-107-254-240.sslip.io';
 var SRV = Object.assign({ url: '', key: '', on: false, token: '', uid: '', role: '' }, LS.get('quantSrv', {}));
 const CANW = () => SRV.role === 'admin' && !!SRV.token;
 const MINE = () => !!SRV.on && !!SRV.token;
-const roleBadge = (role, owner) => owner ? '<span class="rbadge own">👑 擁有者</span>' : role === 'admin' ? '<span class="rbadge adm">管理員</span>' : '<span class="rbadge usr">一般</span>';
+const roleBadge = (role, owner) => owner ? '<span class="rbadge own">👑 擁有者</span>' : role === 'admin' ? '<span class="rbadge adm">管理員</span>' : '<span class="rbadge usr">用戶</span>';
 const OWN = () => CANW() && !!SRV.owner;      // 👑 擁有者：全站設定（掃描條件、回測、結算、匯入…）只有他能改   // 有登入就能設定「自己的」Bitunix、自動交易、平倉、Discord（每個帳號各自一份）   // 只有用管理員帳號登入才能修改   // 管理員帳號（或舊的管理金鑰）才能修改
 const _lsSet = LS.set;
 LS.set = (k, v) => { if (SRV.on && (k === 'quantCards' || k === 'quantBT')) return; _lsSet(k, v); };   // 伺服器模式不覆蓋這台自己的紀錄
@@ -3773,8 +3799,10 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-10d・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-15b・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
+    if (j.notice) ntShow(j.notice);                     // 📢 擁有者發的更新通知
+    $('qAnnBox').hidden = !OWN(); if (OWN() && !$('ann_t').value && !$('ann_x').value) annFill();
     $('qAwsBox').hidden = !j.aws; $('qScanBox').hidden = !OWN();   // 掃描條件只給擁有者 if (j.aws) renderAws(j.aws);   // AWS 帳單只有伺服器擁有者看得到
     if (j.reports) { SRVREP.list = j.reports; SV.rv = j.rv; }
     if ($('qRepDlg').open) renderRep();   // 連線後先把這台的浮盈／槓桿設定同步給伺服器
@@ -3791,6 +3819,7 @@ async function srvPull() {
 }
 async function scan() {
   if (SRV.on) return srvPull();
+  if (SPONLY) return;                                 // 🗡 特級專用版：不在瀏覽器掃 CVD 異常
   if (Q.scanning) return;
   Q.scanning = true; Q.started = true; const g = ++Q.gen, t0 = Date.now();
   Q.err = ''; Q.note = ''; Q.done = 0; Q.todo = 0; Q.found = 0; renderStat('正在取得合約清單…');
@@ -3873,8 +3902,8 @@ $('qFind').oninput = () => { QF = $('qFind').value.normalize('NFKC').toUpperCase
 function renderCards() {
   const el = $('qCards');
   if (QF) {
-    const nAll = Q.cards.filter(c => qfOk(c.sym)).length, nHist = SRVREADY ? allTrades().filter(x => qfOk(x.c.sym)).length : 0;
-    $('qFindNote').textContent = `${QF}：訊號卡片 ${nAll} 張・歷史紀錄 ${nHist} 筆（「成功率與歷史紀錄」也只算這個幣）`;
+    const nAll = Q.cards.filter(c => qfOk(c.sym)).length, nHist = SRVREADY ? allTrades().filter(x => qfOk(x.c.sym) && (!SPONLY || (x.t && x.t.src === 'tool'))).length : 0;
+    $('qFindNote').textContent = SPONLY ? `${QF}：歷史紀錄 ${nHist} 筆（成功率、資金曲線也只算這個幣）` : `${QF}：訊號卡片 ${nAll} 張・歷史紀錄 ${nHist} 筆（「成功率與歷史紀錄」也只算這個幣）`;
   } else $('qFindNote').textContent = '';
   if (QF && !Q.cards.some(c => qfOk(c.sym))) { el.innerHTML = `<div class="qempty">目前沒有 ${esc(QF)} 的訊號卡片。可以切到「成功率與歷史紀錄」看它以前的紀錄。</div>`; return; }
   if (!Q.cards.length) {
@@ -4043,6 +4072,16 @@ function gdPage(p) {
     ${gdNum(2, '點頻道旁邊的齒輪「編輯頻道」，進入「整合」→「Webhook」。')}
     ${gdNum(3, '按「新 Webhook」，再按「複製 Webhook 網址」，貼到上面。')}
     ${gdTip('略過的話就收不到通知，但自動交易照常運作。之後在<b>「☰ 選單 → 設定」</b>可以再填。')}`;
+  if (p === 'fund' && SPONLY) return `<h2>🗡 特級交易的資金與下單</h2><p class="gdsub">決定特級交易可以用多少錢、每一筆下多少、用幾倍槓桿。止損、止盈由策略決定（FVG／OB 的低點止損、1:1 止盈）。</p>
+    ${gdHasApi() ? '' : gdTip('你還沒設定 Bitunix API，系統讀不到你的帳戶資金，<b>這一步可以先略過</b>。之後在<b>「☰ 選單 → 設定 → 🗡 特級交易設定」</b>都能再調整。', true)}
+    <div class="gdbox">
+      <label class="gdf">特級交易投入資金（U）<input id="gd_budget" type="number" min="0" step="10" placeholder="例如 50" value="${C.spBudget > 0 ? C.spBudget : ''}"${gdHasApi() ? '' : ' disabled'}><small>特級交易最多只用這麼多，不能超過你的合約帳戶資金${SRVLT.acctEq ? `（目前約 ${(+SRVLT.acctEq).toFixed(2)}U）` : ''}。要填才能開始特級交易。</small></label>
+      <label class="gdf">每筆下單保證金（U）<input id="gd_margin" type="number" min="0.01" step="0.1" value="${C.spMargin || C.margin || 0.3}"><small>每出現一個特級進場，就用這麼多保證金開一筆。</small></label>
+      <div class="gdf"><span>槓桿倍數</span><div class="gd4" id="gd_levs">${[20, 50, 75, 100].map(v => `<button class="gdbtn${(C.spLev || C.lev || 100) === v ? ' on' : ''}" data-lev="${v}">${v}x</button>`).join('')}</div>
+        <input id="gd_lev" type="number" min="1" max="125" step="1" value="${C.spLev || C.lev || 100}" aria-label="自訂槓桿倍數"><small>幣種開不到這麼高時，自動用那個幣的最高槓桿。</small></div>
+    </div>
+    <div class="gdbox calc" id="gd_calc"></div>
+    <button class="gdbtn dash" id="gd_def1">使用預設值（每筆 0.3U・100x）</button><p class="gdmsg" id="gdMsg" role="status"></p>`;
   if (p === 'fund') return `<h2>資金與下單</h2><p class="gdsub">決定自動交易可以用多少錢、每一筆下多少、用幾倍槓桿。</p>
     ${gdHasApi() ? '' : gdTip('你還沒設定 Bitunix API，系統讀不到你的帳戶資金，<b>這一步可以先略過</b>。之後在<b>「☰ 選單 → 設定」</b>都能再調整。', true)}
     <div class="gdbox">
@@ -4095,8 +4134,8 @@ function gdPage(p) {
   const row = (k, v, cls) => `<div class="gdsum"><span>${k}</span><b${cls ? ` class="${cls}"` : ''}>${v}</b></div>`;
   return `<div class="gddone"><div class="gdcheck"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></div><h2>設定完成</h2><p class="gdsub">下面是你目前的設定，之後都可以在「☰ 選單 → 設定」修改。</p></div>
     <div class="gdbox sum">${row('Bitunix API', gdHasApi() ? '已連接' : '略過（之後再設）', gdHasApi() ? 'cy' : 'or')}${row('Discord 通知', GD.nt && GD.nt.hasHook ? '已設定' : '略過（之後再設）', GD.nt && GD.nt.hasHook ? 'cy' : 'or')}
-      ${row('資金與下單', `${C.budget > 0 ? C.budget + 'U' : '整個帳戶'}・每筆 ${C.margin || 0.3}U・${C.lev || 100}x`)}${row('鎖利與停損', `+${C.tp || T.tp}% 起・每 ${C.step ?? 50}%・−${C.sl || 250}%`)}</div>
-    ${gdTip('設定好不會馬上下單。準備好之後，到持倉區按<b>「開始交易」</b>，伺服器才會用你的帳戶自動交易。', true)}
+      ${SPONLY ? row('🗡 特級交易', `${C.spBudget > 0 ? '投入 ' + C.spBudget + 'U' : '<span class="or">還沒填投入資金</span>'}・每筆 ${C.spMargin || C.margin || 0.3}U・${C.spLev || C.lev || 100}x`) : `${row('資金與下單', `${C.budget > 0 ? C.budget + 'U' : '整個帳戶'}・每筆 ${C.margin || 0.3}U・${C.lev || 100}x`)}${row('鎖利與停損', `+${C.tp || T.tp}% 起・每 ${C.step ?? 50}%・−${C.sl || 250}%`)}`}</div>
+    ${gdTip(SPONLY ? '設定好不會馬上下單。準備好之後，到持倉區按<b>「🗡 開始特級交易」</b>，伺服器才會用你的帳戶自動交易。' : '設定好不會馬上下單。準備好之後，到持倉區按<b>「開始交易」</b>，伺服器才會用你的帳戶自動交易。', true)}
     <p class="gdsub">之後想再看說明，按右上角<b>「☰ 選單」→「使用說明」</b>。</p>`;
 }
 function gdCalc() {                                   // 第 3、4 步的試算
@@ -4115,11 +4154,11 @@ async function gdSave(body, okMsg) {                  // 用網站原本的 API 
 }
 function gdRender() {
   if (GD.news) return gdNews();
-  const PG = gdPages(), last = PG.length - 1, nF = PG.length - 5; if (GD.i > last) GD.i = last;
-  const p = PG[GD.i], setup = GD.i < 4, feat = GD.i >= 4 && GD.i < last, done = p === 'done';
-  const head = done ? '' : `<div class="gdhead"><span>${setup ? `設定 ${GD.i + 1}／4` : `功能介紹 ${GD.i - 3}／${nF}`}</span><span class="gd2b"><button class="gdbtn sm" id="gd_news">📰 更新紀錄</button><button class="gdbtn" id="gd_skip">${setup ? '略過' : '略過介紹'}</button></span></div>
-    ${setup ? `<div class="gdprog">${[0, 1, 2, 3].map(k => `<i class="${k <= GD.i ? 'on' : ''}"></i>`).join('')}</div>` : `<div class="gddots">${PG.slice(4, last).map((_, k) => `<i class="${k + 4 === GD.i ? 'on' : ''}"></i>`).join('')}</div>`}`;
-  const nextTxt = p === 'tp' ? '完成設定，看功能介紹' : GD.i === last - 1 ? '看完了' : done ? '開始使用' : '下一步';
+  const NS = SPONLY ? 3 : 4, PG = gdPages(), last = PG.length - 1, nF = PG.length - NS - 1; if (GD.i > last) GD.i = last;   // NS：設定有幾步（特級專用版沒有「鎖利」那一步）
+  const p = PG[GD.i], setup = GD.i < NS, feat = GD.i >= NS && GD.i < last, done = p === 'done';
+  const head = done ? '' : `<div class="gdhead"><span>${setup ? `設定 ${GD.i + 1}／${NS}` : `功能介紹 ${GD.i - NS + 1}／${nF}`}</span><span class="gd2b"><button class="gdbtn sm" id="gd_news">📰 更新紀錄</button><button class="gdbtn" id="gd_skip">${setup ? '略過' : '略過介紹'}</button></span></div>
+    ${setup ? `<div class="gdprog">${[0, 1, 2, 3].slice(0, NS).map(k => `<i class="${k <= GD.i ? 'on' : ''}"></i>`).join('')}</div>` : `<div class="gddots">${PG.slice(NS, last).map((_, k) => `<i class="${k + NS === GD.i ? 'on' : ''}"></i>`).join('')}</div>`}`;
+  const nextTxt = GD.i === NS - 1 ? '完成設定，看功能介紹' : GD.i === last - 1 ? '看完了' : done ? '開始使用' : '下一步';
   $('gdBody').innerHTML = `${head}<div class="gdscroll">${gdPage2(p)}</div><div class="gdfoot${GD.i === 0 || done ? ' one' : ''}">${GD.i === 0 || done ? '' : `<button class="gdbtn" id="gd_prev">${feat ? '上一個' : '上一步'}</button>`}<button class="gdbtn pri" id="gd_next">${nextTxt}</button></div>`;
   $('gdBody').querySelector('.gdscroll').scrollTop = 0;
   const on = (id, f) => { const el = $(id); if (el) el.onclick = f; };
@@ -4156,8 +4195,9 @@ async function gdNext() {
       const m = +$('gd_margin').value, lev = +$('gd_lev').value, bud = $('gd_budget').value === '' ? 0 : +$('gd_budget').value;
       if (!(m > 0)) { $('gdMsg').className = 'gdmsg bad'; $('gdMsg').textContent = '每筆保證金要大於 0。'; return; }
       if (!(lev >= 1 && lev <= 125)) { $('gdMsg').className = 'gdmsg bad'; $('gdMsg').textContent = '槓桿要在 1～125 倍之間。'; return; }
+      if (SPONLY) { const set = { margin: m, lev }; if (gdHasApi() && bud > 0 && bud !== +((SRVLT.cfg || {}).spBudget || 0)) set.budget = bud; if (!(await gdSave({ path: '/api/lt/config', data: { sp_set: set } }, '已儲存。'))) return; }   // 🗡 特級專用版：存到特級交易設定
       const data = { margin: m, lev }; if (gdHasApi() && bud > 0 && bud !== +((SRVLT.cfg || {}).budget || 0)) data.budget = bud;   // 只有真的改了投入資金才送（沒填、沒改都不動）
-      if (!(await gdSave({ path: '/api/lt/config', data }, '已儲存。'))) return;
+      if (!SPONLY && !(await gdSave({ path: '/api/lt/config', data }, '已儲存。'))) return;
     }
     if (p === 'tp') {
       const data = { tp: +$('gd_tp').value, step: +$('gd_step').value, sl: +$('gd_sl').value };
@@ -4178,7 +4218,7 @@ const MN_ITEMS = [                                    // [代號, 圖示, 名稱
   ['pos', '💼', '持倉', 'qBx', '#d4af37', '交易'], ['tool', '🗡', '特級咒具', 'mnpTool', '#ef4444', '交易'], ['xent', '🔔', '額外進場', 'mnpXent', '#a78bfa', '交易'], ['cards', '📡', '訊號卡片', 'qSidePanel', '#22d3ee', '交易'],
   ['stats', '🎯', '成功率', 'mnpStats', '#34d399', '數據'], ['eq', '📈', '資金曲線', 'mnpEq', '#60a5fa', '數據'], ['hist', '📋', '歷史紀錄', 'qTabPanel', '#fbbf24', '數據'], ['bt', '📊', '回測數據', 'qBtHost', '#2dd4bf', '數據'],
   ['kline', '🕯', 'K 線圖', 'mnpKline', '#f59e0b', '市場'], ['heat', '🔥', '熱力圖', 'qHeatHost', '#fb923c', '市場'], ['pat', '📉', '歷史走勢', '', '#a78bfa', '市場'], ['news', '📰', '加密新聞', 'newsPanel', '#f472b6', '市場'], ['whale', '🐋', '幣安鯨魚大單', 'whalePanel', '#38bdf8', '市場'],
-  ['bill', '💳', '方案與繳費', 'mnpBill', '#34d399', '其他'], ['set', '👤', '設定', 'mnpSet', '#7aa2ff', '其他'], ['guide', '📖', '使用說明', '', '#94a3b8', '其他']];
+  ['bill', '💳', '方案與繳費', 'mnpBill', '#34d399', '其他'], ['set', '👤', '設定', 'mnpSet', '#7aa2ff', '其他'], ['guide', '📖', '使用說明', '', '#94a3b8', '其他']].filter(x => !(SPONLY && x[0] === 'cards'));   // 🗡 特級專用版：沒有 CVD 訊號卡片
 /* ---------- 🗡 特級咒具：上鎖（擁有者或輸入密碼的人才能用）；一個幣一張卡片；設定收在「⚙ 設定」裡 ---------- */
 const TL = { d: null, timer: null, hf: 'all', hn: 60 };
 const TL_PN = { h4: { hn: '4H', ln: '15M', nm: '4H→15M', hms: 4 * 3600000 }, h1: { hn: '1H', ln: '5M', nm: '1H→5M', hms: 3600000 } };
@@ -4283,7 +4323,7 @@ function tlHist() {                                    // 📜 特級咒具歷�
 }
 function tlSettings() {                                // ⚙ 設定視窗：Discord、擁有者設定
   const d = TL.d, S = d.set;
-  $('tlDlgB').innerHTML = `<div class="tlbox"><b>💬 Discord 通知</b><span class="tlsub">${d.hook ? '<span class="qg">已設定</span>，進場時會傳到你的頻道' : '還沒設定。可以跟一般通知用不同的頻道'}${d.hookLast ? (d.hookLast.ok ? `・✅ 上次傳送成功 ${fmtT(d.hookLast.at).slice(-5)}` : `・<span class="qr">❌ 上次傳送失敗：${esc(d.hookLast.err)}</span>`) : ''}</span>
+  $('tlDlgB').innerHTML = `<div class="tlbox"><b>💬 Discord 通知</b><span class="tlsub">${d.hook ? '<span class="qg">已設定</span>，進場時會傳到你的頻道' : '還沒設定。可以跟主要通知用不同的頻道'}${d.hookLast ? (d.hookLast.ok ? `・✅ 上次傳送成功 ${fmtT(d.hookLast.at).slice(-5)}` : `・<span class="qr">❌ 上次傳送失敗：${esc(d.hookLast.err)}</span>`) : ''}</span>
       <div class="tlrow"><input id="tlHook" placeholder="https://discord.com/api/webhooks/…" autocomplete="off" spellcheck="false" aria-label="Discord Webhook 網址"><button class="btn primary" id="tlHookSave">儲存</button><button class="btn" id="tlHookTest">傳測試訊息</button>${d.hook ? '<button class="btn" id="tlHookDel">清除</button>' : ''}</div><p class="mnmsg" id="tlHookMsg" role="status"></p></div>
     ${d.owner ? `<div class="tlbox"><b>👑 擁有者設定</b>
       <div class="tlset"><label>掃描成交額前幾個幣<input id="tlN" type="number" min="1" max="30" value="${S.n}"></label>
@@ -6613,7 +6653,7 @@ function biRender() {
   if (!d.on) html += `<section class="bibox"><p class="tlsub">目前網站沒有開放收費，所有功能都可以直接使用。</p></section>`;
   else if (s.st !== 'free') {
     BI.m = BI.m || 1;
-    html += `<section class="bibox"><h4>月費方案</h4><div class="biplan"><div><b>${d.price}</b><small>USDT／${d.days} 天</small></div><ul><li>一般交易（CVD 異常偵測、自動下單）</li><li>🗡 特級咒具＋特級交易</li><li>🔔 額外進場通知、作戰室、模擬盤</li></ul></div>
+    html += `<section class="bibox"><h4>月費方案</h4><div class="biplan"><div><b>${d.price}</b><small>USDT／${d.days} 天</small></div><ul>${SPONLY ? '' : '<li>一般交易（CVD 異常偵測、自動下單）</li>'}<li>🗡 特級咒具＋特級交易（自動下單）</li><li>🔔 額外進場通知、作戰室、模擬盤</li><li>🕯 K 線圖、熱力圖、回測</li></ul></div>
       ${pend ? '' : `<div class="biplans" role="radiogroup" aria-label="方案長度">${d.plans.map(p => `<label class="biplanopt${BI.m === p.m ? ' on' : ''}"><input type="radio" name="biM" value="${p.m}"${BI.m === p.m ? ' checked' : ''}><b>${p.m} 個月</b><span>${p.price} USDT</span>${p.pct ? `<em>省 ${p.pct}%</em>` : ''}</label>`).join('')}</div>`}`;
     if (pend) {
       const left = Math.max(0, pend.exp - now), mm = Math.floor(left / 60000);
@@ -6762,7 +6802,7 @@ function xeRender() {
       <div class="qsaverow"><button class="btn primary" id="xeSave">儲存</button><span class="qltmsg" id="xeMsg" role="status"></span></div>
       <section class="xebox"><h4>最近的訊號（你關注的幣）</h4><div id="xeList"></div></section>
       <dialog id="xeDlg" class="tldlg" aria-labelledby="xeDlgT"><div class="tldlgh"><h3 id="xeDlgT">💬 額外進場的 Discord 頻道</h3><button class="btn" id="xeDlgX">關閉</button></div>
-        <p class="tlsub">可以跟一般通知、特級咒具用不同的頻道。頻道設定 → 整合 → Webhook → 新增 → 複製網址。</p><p class="tlsub" id="xeHookSt"></p>
+        <p class="tlsub">可以跟主要通知、特級咒具用不同的頻道。頻道設定 → 整合 → Webhook → 新增 → 複製網址。</p><p class="tlsub" id="xeHookSt"></p>
         <div class="tlrow"><input id="xeHook" placeholder="https://discord.com/api/webhooks/…" autocomplete="off" spellcheck="false" aria-label="Discord Webhook 網址"><button class="btn primary" id="xeHookSave">儲存</button><button class="btn" id="xeHookTest">測試</button><button class="btn" id="xeHookDel">清除</button></div><p class="mnmsg" id="xeHookMsg" role="status"></p></dialog></div>`;
     const msg = (id, ok, t) => { $(id).className = 'mnmsg ' + (ok ? 'ok' : 'bad'); $(id).textContent = t; };
     const mark = () => { XE.dirty = true; $('xeMsg').textContent = '● 有改動還沒儲存'; $('xeMsg').style.color = '#f1d77a'; };
@@ -6809,10 +6849,10 @@ const ROLE = [                                         // 代號、名稱、說�
   ['size', 'SIZE', '軍需', '資金分配', '#3b82f6'], ['fills', 'FILLS', '執行', '下單', '#22c55e'], ['risk', 'RISK', '守護', '風控', '#f59e0b'], ['crawl', 'CRAWLER', '資料', '抓數據・連線', '#f472b6']];
 function warData() {                                   // 把伺服器傳來的資料整理成畫面要用的數字
   const C = SRVLT.cfg || {}, T = !!SRVLT.toolOk, now = Date.now(), TD = T ? WAR.tool : null, tc = TD ? TD.cards || [] : [];
-  const EB = SRVECO && SRVECO.block, blk = !!(EB && EB.on), trades = (SRVLT.trades || []).slice().sort((a, b) => (b.exitAt || b.et || 0) - (a.exitAt || a.et || 0));
-  const nc = (Q.cards || []).slice().sort((a, b) => (b.t || 0) - (a.t || 0))[0];
+  const EB = SRVECO && SRVECO.block, blk = !!(EB && EB.on), trades = (SRVLT.trades || []).filter(t => !SPONLY || t.src === 'tool').sort((a, b) => (b.exitAt || b.et || 0) - (a.exitAt || a.et || 0));
+  const nc = SPONLY ? null : (Q.cards || []).slice().sort((a, b) => (b.t || 0) - (a.t || 0))[0];   // 🗡 特級專用版：沒有 CVD 訊號
   const ord = { brk: 3, touch: 2, touch0: 1 }, cands = tc.filter(c => ord[c.st]).sort((a, b) => ord[b.st] - ord[a.st] || b.touchAt - a.touchAt), cand = cands[0];   // 走到第 2 步以後的特級卡片（ANALYSIS 輪播用）
-  const B = SRVLT.bud || SRVLT.bot, SB = T ? SRVLT.spBot : null, AE = SRVLT.acctEq || 0, cap = C.pool > 0 ? C.pool : AE, used = (C.budget || 0) + (T ? C.spBudget || 0 : 0);
+  const B = SPONLY ? null : SRVLT.bud || SRVLT.bot, SB = T ? SRVLT.spBot : null, AE = SRVLT.acctEq || 0, cap = C.pool > 0 ? C.pool : AE, used = (SPONLY ? 0 : C.budget || 0) + (T ? C.spBudget || 0 : 0);
   const eq = (B ? B.eq : 0) + (SB ? SB.eq : 0), open = trades.filter(t => t.status === 'open');
   const pos = SRVBX && SRVBX.pos ? SRVBX.pos.filter(p => p.bot) : [], dist = p => { const mk = p.qty > 0 ? p.entry + p.upnl / (p.qty * p.dir) : p.entry; return p.liq > 0 && mk > 0 ? Math.abs(mk - p.liq) / mk * 100 : null; };
   const near = pos.map(p => [p, dist(p)]).filter(x => x[1] != null).sort((a, b) => a[1] - b[1])[0];
@@ -6820,7 +6860,23 @@ function warData() {                                   // 把伺服器傳來的�
 }
 function warCards(D) {                                 // 8 張角色卡：[狀態, 左邊標籤, 右邊數字, 進度 0~1, 台詞]
   const { C, T, nc, cand, TD, tc, B, SB, cap, used, open, trades, near, blk, EB } = D, lt = trades[0], sk = (SRVLT.spSkip || [])[0];
-  const N = cand ? TL_PN[cand.pair] : null, hit = (C.dayLoss > 0 && -D.day >= C.dayLoss) || (T && C.spDayLoss > 0 && -D.spDay >= C.spDayLoss);
+  const N = cand ? TL_PN[cand.pair] : null, hit = (!SPONLY && C.dayLoss > 0 && -D.day >= C.dayLoss) || (T && C.spDayLoss > 0 && -D.spDay >= C.spDayLoss);
+  if (SPONLY) {                                        // 🗡 特級專用版：8 張角色卡只看特級交易
+    const sc = (TD && TD.scan) || {}, flow = tc.filter(c => c.st !== 'entry').length, wn = TD ? (TD.wait || []).length : 0;
+    return {
+      chief: [blk ? 'wait' : C.sp ? 'ok' : 'off', D.sim ? '模擬盤' : '實盤', C.sp ? '特級 ▶' : '特級 ⏸', C.sp ? 1 : 0, blk ? `數據公布前後先不進場，${wHm(EB.until)} 恢復` : C.sp ? '特級交易在跑，訊號一到就進場' : '目前暫停中'],
+      scan: [sc.err ? 'bad' : 'ok', `${sc.coins || 0} 個幣`, `${tc.length} 張`, Math.min(1, tc.length / 10), flow ? `${flow} 張特級卡片在走流程` : `等回踩 ${wn} 個`],
+      vet: [cand ? 'wait' : 'ok', cand ? `${wSym(cand.sym)} ${N.hn}` : '—', cand ? `${cand.val.toFixed(2)}%` : '—', cand ? ({ touch0: 1, touch: 2, brk: 3 }[cand.st]) / 4 : 0,
+        cand ? (cand.st === 'brk' ? `結構轉向了，等回踩 ${N.ln} FVG` : cand.st === 'touch' ? `${(TL_RT[cand.rt] || '回踩')}，等 ${N.ln} 轉向` : `碰到 FVG，等 ${N.hn} 收盤確認`) : '有訊號時逐條檢查條件'],
+      intel: [blk ? 'wait' : 'ok', 'BTC', WAR.btc && WAR.btc.d ? (WAR.btc.d > 0 ? '偏多' : '偏空') : '讀取中', WAR.btc && WAR.btc.d ? 0.5 + WAR.btc.d * 0.4 : 0.5,
+        blk ? '數據公布前後，先不進場' : EB ? `${wHm(EB.from)} 起避開數據` : WAR.btc && WAR.btc.d ? `BTC ${WAR.btc.d > 0 ? '偏多' : '偏空'}，${WAR.btc.d > 0 ? '做多' : '做空'}比較好過` : '盯著 BTC 和經濟數據'],
+      size: [SRVLT.low ? 'bad' : 'ok', `可用 ${(SB ? Math.max(0, SB.free) : 0).toFixed(1)}U`, `${cap.toFixed(0)}U`, cap > 0 ? Math.min(1, used / cap) : 0, SRVLT.low ? '分配超過了，先調整' : `特級 ${SB ? SB.eq.toFixed(1) : '—'}U`],
+      fills: [open.length ? 'ok' : 'wait', lt ? (lt.status === 'open' ? '持倉中' : '上一筆') : '還沒下單', lt ? (lt.status === 'open' ? `${wSym(lt.sym)} ${fpx(lt.entry)}` : `${wSym(lt.sym)} ${wU(wNet(lt))}`) : '—', Math.min(1, open.length / 5),
+        sk && Date.now() - sk.t < 3600000 ? `${wSym(sk.sym)} 沒下單：${esc(sk.why).slice(0, 18)}` : lt ? `${wSym(lt.sym)} ${lt.dir > 0 ? '多' : '空'}${lt.status === 'open' ? ' 持倉中' : ' 已出場'}` : '等訊號下單'],
+      risk: [hit || (near && near[1] < 5) ? 'bad' : 'ok', '今日', wU(D.spDay), C.spDayLoss > 0 ? Math.min(1, Math.max(0, -D.spDay) / C.spDayLoss) : 0,
+        hit ? '今天虧到上限，先停下來' : near ? `${wSym(near[0].sym)} 離強平 ${near[1].toFixed(1)}%` : '止損、套保、避險待命'],
+      crawl: [sc.err || (SRVBX && SRVBX.err) ? 'bad' : 'ok', '上次掃描', wAgo(sc.at), sc.at ? Math.max(0, 1 - (Date.now() - sc.at) / 1200000) : 0, sc.err ? esc(sc.err).slice(0, 22) : `${sc.coins || 0} 個幣掃完了`] };
+  }
   return {
     chief: [blk ? 'wait' : C.on || (T && C.sp) ? 'ok' : 'off', D.sim ? '模擬盤' : '實盤', `${C.on ? '一般 ▶' : '一般 ⏸'}${T ? `　${C.sp ? '特級 ▶' : '特級 ⏸'}` : ''}`, (C.on ? 0.5 : 0) + (T && C.sp ? 0.5 : 0),
       blk ? `數據公布前後先不進場，${wHm(EB.until)} 恢復` : C.on && C.sp ? '兩條線都在跑，訊號一到就進場' : C.on ? '一般交易在跑' : '目前暫停中'],
@@ -6861,10 +6917,10 @@ function warRender() {
   const ST = { ok: '運作中', wait: '等待中', bad: '注意', off: '暫停' };
   $('wxCards').innerHTML = ROLE.map(([k, en, zh, sub, col]) => { const [st, lab, val, pr, q] = K[k];
     return `<article class="wxc ${st}" style="--rc:${col}"><div class="wxch"><span class="wxdot"></span><b>${en}</b><small>${zh}・${sub}</small><em>${ST[st]}</em></div>
-      <div class="wxcm"><span>${lab}</span><b>${val}</b></div><div class="wxcb"><i style="width:${Math.round(Math.max(0, Math.min(1, pr)) * 100)}%"></i></div><q>${q}</q>${k === 'chief' ? `<div class="wxbtns"><button class="btn" data-war="lt">${D.C.on ? '⏸ 一般' : '▶ 一般'}</button>${D.T ? `<button class="btn" data-war="sp">${D.C.sp ? '⏸ 特級' : '🗡 特級'}</button>` : ''}</div>` : ''}</article>`; }).join('');
+      <div class="wxcm"><span>${lab}</span><b>${val}</b></div><div class="wxcb"><i style="width:${Math.round(Math.max(0, Math.min(1, pr)) * 100)}%"></i></div><q>${q}</q>${k === 'chief' ? `<div class="wxbtns">${SPONLY ? '' : `<button class="btn" data-war="lt">${D.C.on ? '⏸ 一般' : '▶ 一般'}</button>`}${D.T ? `<button class="btn" data-war="sp">${D.C.sp ? '⏸ 特級' : '🗡 特級'}</button>` : ''}</div>` : ''}</article>`; }).join('');
   warXCards();
   // 跑馬燈
-  $('wxTick').textContent = `持倉 ${D.open.length}・掃描 ${Q.total || 0} 幣・${D.T ? `特級卡片 ${D.tc.length}・等回踩 ${D.TD ? (D.TD.wait || []).length : 0}・` : ''}今日 ${wU(D.day + (D.T ? D.spDay : 0))}・${D.sim ? '模擬盤' : '實盤'}・${D.blk ? '數據避險中' : '正常交易'}`;
+  $('wxTick').textContent = `持倉 ${D.open.length}・${SPONLY ? '' : `掃描 ${Q.total || 0} 幣・`}${D.T ? `特級卡片 ${D.tc.length}・等回踩 ${D.TD ? (D.TD.wait || []).length : 0}・` : ''}今日 ${wU((SPONLY ? 0 : D.day) + (D.T ? D.spDay : 0))}・${D.sim ? '模擬盤' : '實盤'}・${D.blk ? '數據避險中' : '正常交易'}`;
   WAR.d = D; WAR.k = K;
   warBalance(D); warAnalysis(D);
 }
@@ -6874,7 +6930,7 @@ function warBalance(D) {                                // 資金曲線：先算
   const start = D.eq - cl.reduce((a, t) => a + wNet(t), 0); let v = start; const pts = [start, ...cl.map(t => (v += wNet(t)))];
   if (D.open.length || pts.length < 2) pts.push(D.eq);
   $('wxBalV').textContent = D.eq.toFixed(2) + 'U'; const ch = D.eq - start; $('wxBalD').innerHTML = `<b class="${ch >= 0 ? 'qg' : 'qr'}">${wU(ch)}</b>・最近 ${cl.length} 筆`;
-  $('wxBalSub').textContent = `${D.sim ? '模擬盤' : '實盤'}・一般＋特級`;
+  $('wxBalSub').textContent = `${D.sim ? '模擬盤' : '實盤'}・${SPONLY ? '🗡 特級' : '一般＋特級'}`;
   const key = pts.map(x => x.toFixed(4)).join(','); if (!WAR.bal || WAR.bal.key !== key) WAR.bal = { key, pts, cl, up: ch >= 0, at: performance.now() };
 }
 function warBalDraw(now, reduce) {                       // 📈 動態資金曲線：從左畫到右、亮光沿著線跑、最後一點在呼吸
@@ -7383,7 +7439,7 @@ function warVault(g, w, h, now, reduce) {
   g.save(); g.translate(cx, cy);
   if (!reduce) { const a0 = now / 1400; g.save(); g.rotate(a0); const wg = g.createLinearGradient(0, 0, L.CR, 0); wg.addColorStop(0, vA(0.32)); wg.addColorStop(1, vA(0)); g.fillStyle = wg; g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, L.CR - 2, -0.55, 0); g.closePath(); g.fill(); g.restore(); }   // 雷達掃描
   const S = C.S; g.save(); g.rotate(t / 22000); g.drawImage(C.tk, -S / 2, -S / 2, S, S); g.restore(); g.save(); g.rotate(-t / 9000); g.drawImage(C.dr, -S / 2, -S / 2, S, S); g.restore(); g.drawImage(C.hx, -S / 2, -S / 2, S, S);
-  const armed = !!(WAR.d && WAR.d.C && WAR.d.C.on); if (!reduce && now - VG.glitch > 2200 + Math.random() * 3000) VG.glitch = now; const gl = !reduce && now - VG.glitch < 140;
+  const armed = !!(WAR.d && WAR.d.C && (SPONLY ? WAR.d.C.sp : WAR.d.C.on)); if (!reduce && now - VG.glitch > 2200 + Math.random() * 3000) VG.glitch = now; const gl = !reduce && now - VG.glitch < 140;
   const mz = R * 0.78, mg = g.createLinearGradient(-mz / 2, -mz / 2, mz / 2, mz / 2); mg.addColorStop(0, '#9c7a24'); mg.addColorStop(0.45, '#fff2bf'); mg.addColorStop(0.7, VGO); mg.addColorStop(1, '#7a5e1a');
   g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = `300 ${mz}px "Didot","Bodoni 72","Times New Roman",serif`;
   if (gl) { g.globalCompositeOperation = 'lighter'; g.fillStyle = 'rgba(255,170,0,.55)'; g.fillText('Q', -R * 0.05, -R * 0.08); g.fillStyle = 'rgba(255,255,255,.35)'; g.fillText('Q', R * 0.05, -R * 0.08); g.globalCompositeOperation = 'source-over'; }
@@ -7701,6 +7757,16 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-15b', title: '2026/11/15 更新（更新通知）', items: [
+    { ic: '📢', t: '擁有者發更新通知時，每個帳號打開網站都會跳出公告，有設定 Discord 的人也會同時收到。' },
+    { ic: '🧹', t: '特級專用版再整理：帳號管理的「查看」改成顯示特級交易的狀態和紀錄、熱力圖不再標示 CVD 訊號、帳號權限「一般」改叫「用戶」，伺服器也不再跑 CVD 回測和雙週結算。' }
+  ] },
+  { id: '2026-11-15a', title: '2026/11/15 更新（特級專用版）', items: [
+    { ic: '🗡', t: '系統改成只有「🗡 特級交易」：一般交易（CVD 異常偵測、一般自動下單、訊號卡片、訊號模擬、CVD 回測）全部拿掉。' },
+    { ic: '🔓', t: '每個帳號都可以直接用特級咒具和特級交易，不用再輸入密碼解鎖。' },
+    { ic: '💰', t: '原本一般交易的投入資金已經歸零，合約總資金可以全部分配給特級交易：請到「☰ 選單 → 設定 → 🗡 特級交易設定」填投入資金，再按「🗡 開始特級交易」。之前開著的一般單照原本的規則管到出場。' },
+    { ic: '📈', t: '成功率、資金曲線、歷史紀錄、作戰室只算特級交易；使用說明書也照新的流程改寫。' }
+  ] },
   { id: '2026-11-10d', title: '2026/11/10 更新（使用說明書）', items: [
     { ic: '📖', t: '使用說明書全面更新：新增作戰室、K 線圖基本操作、畫圖、Pine 編輯器、方案與繳費（擁有者另外有繳費後台）的介紹，選單那一頁也照最新的選單重寫。' }
   ] },
@@ -8013,9 +8079,32 @@ function nwAuto() {                                   // 登入後第一次進�
   $('nwBody').innerHTML = nwHtml(list); $('nwDlg').showModal();
 }
 $('nwOk').onclick = () => $('nwDlg').close();
+/* ---------- 📢 更新通知：擁有者在「☰ 選單 → 設定」發送，所有帳號打開網站時跳出一次（Discord、Email 由伺服器發） ---------- */
+function ntShow(n) {
+  if (!n || !n.id || !SRV.uid || Date.now() - n.t > 14 * 86400000) return;   // 太舊的（超過 14 天）不再跳
+  const k = 'quantNotice:' + SRV.uid; if (LS.get(k) === n.id) return; LS.set(k, n.id);
+  $('ntT').textContent = '📢 ' + n.title; $('ntSub').textContent = `QEVRAX 更新通知・${fmtT(n.t)}`; $('ntBody').textContent = n.text;
+  if (!$('ntDlg').open) $('ntDlg').showModal();
+}
+$('ntOk').onclick = () => $('ntDlg').close();
+$('ntLog').onclick = () => { $('ntDlg').close(); GD.news = true; GD.newsNext = true; gdOpen(0); };
+function annFill() {                                   // 帶入最新一筆更新紀錄
+  const e = CHANGELOG[0]; if (!e) return;
+  $('ann_t').value = e.title; $('ann_x').value = e.items.map(i => `${i.ic} ${String(i.t).replace(/<[^>]+>/g, '')}`).join('\n');
+}
+$('ann_fill').onclick = () => { annFill(); $('ann_msg').textContent = ''; };
+$('ann_go').onclick = async () => {
+  const title = $('ann_t').value.trim(), text = $('ann_x').value.trim(), email = $('ann_mail').checked, m = $('ann_msg');
+  if (!title || !text) { m.textContent = '❌ 標題和內容都要填'; m.style.color = '#ff9aa2'; return; }
+  if (!confirm(`要把這則更新通知發給「所有帳號」嗎？\n\n標題：${title}\n\n會發到：網站公告（每個人打開網站時跳出）、每個人的 Discord${email ? '、每個人的 Email' : ''}。\n發出去就收不回來。`)) return;
+  $('ann_go').disabled = true; m.textContent = '發送中…'; m.style.color = '';
+  try { const r = await srvFetch('/api/announce', { title, text, email }); m.textContent = `✅ 已發送給 ${r.users} 個帳號：Discord ${r.dc} 個頻道${r.mail ? `、Email ${r.mail} 封（在背景一封一封寄）` : ''}${r.mailOff ? '・⚠️ 伺服器沒有設定寄信，Email 沒寄' : ''}`; SV.lv = 0; srvPull(); }
+  catch (e) { m.textContent = '❌ ' + e.message; m.style.color = '#ff9aa2'; }
+  finally { setTimeout(() => { $('ann_go').disabled = false; }, 3000); }
+};
 $('nwAll').onclick = () => { $('nwDlg').close(); GD.news = true; GD.newsNext = true; gdOpen(0); };
 /* ---------- 📖 使用說明書：功能介紹（頁數依權限：有特級咒具權限多一頁） ---------- */
-const gdPages = () => ['api', 'dc', 'fund', 'tp', 'f1', 'war', 'f2', 'f3', 'f4', 'f5', 'kl1', 'kl2', 'kl3', 'bill', ...(OWN() ? ['own'] : []), ...(SRVLT.toolOk ? ['f6'] : []), 'done'];
+const gdPages = () => SPONLY ? ['api', 'dc', 'fund', 'f6', 'war', 'f2', 'f3', 'f5', 'kl1', 'kl2', 'kl3', 'bill', ...(OWN() ? ['own'] : []), 'done'] : ['api', 'dc', 'fund', 'tp', 'f1', 'war', 'f2', 'f3', 'f4', 'f5', 'kl1', 'kl2', 'kl3', 'bill', ...(OWN() ? ['own'] : []), ...(SRVLT.toolOk ? ['f6'] : []), 'done'];
 function gdPage2(p) {
   if (p === 'fund') return gdPage('fund') + gdTip('投入資金就是起始本金：之後改投入資金，過去的盈虧會照算進去。帳戶的錢不夠時會提醒「資金不足」；不想讓自動交易用了，可以在設定裡「收回資金」。');
   if (p === 'f1') return `<div class="gdmock"><div class="gd2"><span class="gdbtn pri fake">▶ 開始交易</span><span class="gdbtn red fake">一鍵平倉（自動單）</span></div>
@@ -8027,10 +8116,10 @@ function gdPage2(p) {
     ${gdPt('<path d="M21 12a9 9 0 1 1-3-6.7"></path><path d="M21 4v5h-5"></path>', '伺服器更新或重開後，<b class="or">約 1 分鐘自動恢復</b>。按鈕下方的黃字會寫「上次暫停」的時間和原因；紅字「資金不足」代表帳戶的錢不夠。')}`;
   if (p === 'f2') return `<div class="gdmock"><svg width="100%" height="64" viewBox="0 0 320 64" preserveAspectRatio="none" aria-hidden="true"><path d="M0 54 L40 48 L80 51 L120 36 L160 40 L200 27 L240 31 L280 16 L320 10" fill="none" stroke="#5ec8e0" stroke-width="2.5"></path><path d="M0 54 L40 48 L80 51 L120 36 L160 40 L200 27 L240 31 L280 16 L320 10 L320 64 L0 64 Z" fill="#5ec8e0" fill-opacity=".12"></path></svg></div>
     <h2>成功率、資金曲線與紀錄</h2>
-    ${gdPt('<path d="M3 17l6-6 4 4 8-8"></path><path d="M15 7h6v6"></path>', '主畫面下方：<b>實盤</b>看你帳戶真正的賺賠、成功率、做多做空、資金曲線；<b>訊號模擬</b>看所有訊號照規則跑的成績。')}
+    ${gdPt('<path d="M3 17l6-6 4 4 8-8"></path><path d="M15 7h6v6"></path>', SPONLY ? '<b>「☰ 選單 → 成功率」「資金曲線」</b>：看特級交易在你帳戶真正的賺賠、成功率、做多做空和報酬率曲線。' : '主畫面下方：<b>實盤</b>看你帳戶真正的賺賠、成功率、做多做空、資金曲線；<b>訊號模擬</b>看所有訊號照規則跑的成績。')}
     ${gdPt('<rect x="4" y="4" width="16" height="16" rx="2"></rect><path d="M4 10h16"></path><path d="M10 10v10"></path>', '<b>「☰ 選單 → 歷史紀錄」</b>：每一筆的進場價、最大浮盈浮虧、出場原因，點一行看圖表，也能匯出 CSV。')}
-    ${gdPt('<circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path>', '<b>「☰ 選單 → 回測數據」</b>：用過去的資料看這套規則以前會賺還是賠。')}`;
-  if (p === 'f3') { const DS = { pos: '持倉、開始／暫停交易、一鍵平倉', tool: SRVLT.toolOk ? 'FVG／OB 回踩策略的卡片和特級交易（後面有一頁介紹）' : '開發中的新功能，需要擁有者給的密碼', xent: '暗流、折返、伏擊三種額外進場訊號，可以設定自己的 Discord 頻道', cards: '系統找到的進場機會', stats: '實盤和訊號模擬的成功率', eq: '資金曲線（一般、特級、綜合）', hist: '每一筆交易的紀錄，可以匯出 CSV', bt: '回測、回測報告、BTC 急漲急跌統計', kline: '多格 K 線圖、畫圖、指標、Pine 編輯器、回放（後面有三頁介紹）', heat: '市場漲跌、資金費率、清算地圖', pat: '畫出走勢，找歷史上相似的段落', news: '新聞列表和新聞星圖', whale: '幣安的即時大單', bill: '方案、付款、付款紀錄、退款（後面有一頁介紹）', set: 'Bitunix API、Discord 通知、交易設定、收回資金、改密碼', guide: '就是這份說明書，還有更新紀錄' };
+    ${gdPt('<circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path>', SPONLY ? '<b>「☰ 選單 → 回測數據」</b>：用過去的資料看特級咒具的規則以前會賺還是賠，也有 BTC 急漲急跌統計。' : '<b>「☰ 選單 → 回測數據」</b>：用過去的資料看這套規則以前會賺還是賠。')}`;
+  if (p === 'f3') { const DS = { pos: '持倉、開始／暫停交易、一鍵平倉', tool: SPONLY ? 'FVG／OB 回踩策略的卡片和特級交易（前面有一頁介紹）' : SRVLT.toolOk ? 'FVG／OB 回踩策略的卡片和特級交易（後面有一頁介紹）' : '開發中的新功能，需要擁有者給的密碼', xent: '暗流、折返、伏擊三種額外進場訊號，可以設定自己的 Discord 頻道', cards: '系統找到的進場機會', stats: SPONLY ? '特級交易的成功率、做多做空' : '實盤和訊號模擬的成功率', eq: SPONLY ? '特級交易的資金曲線（報酬率）' : '資金曲線（一般、特級、綜合）', hist: '每一筆交易的紀錄，可以匯出 CSV', bt: SPONLY ? '特級咒具回測、BTC 急漲急跌統計' : '回測、回測報告、BTC 急漲急跌統計', kline: '多格 K 線圖、畫圖、指標、Pine 編輯器、回放（後面有三頁介紹）', heat: '市場漲跌、資金費率、清算地圖', pat: '畫出走勢，找歷史上相似的段落', news: '新聞列表和新聞星圖', whale: '幣安的即時大單', bill: '方案、付款、付款紀錄、退款（後面有一頁介紹）', set: 'Bitunix API、Discord 通知、交易設定、收回資金、改密碼', guide: '就是這份說明書，還有更新紀錄' };
     return `<h2>右上角「☰ 選單」</h2><p class="gdsub">主畫面只放作戰室、持倉和成功率，其他功能都在右上角的選單裡，依「交易、數據、市場、其他」分類。</p>
     ${MN_ITEMS.map(([k, i, t]) => `<div class="gdfeat"><span class="gdic" style="font-size:20px;text-align:center" aria-hidden="true">${i}</span><div><b>${t}</b><p>${DS[k] || ''}</p></div></div>`).join('')}`; }
   if (p === 'f4') return gdPage('f1').replace('每 10 秒掃描幣安', '<b>「☰ 選單 → 訊號卡片」</b>：每 10 秒掃描幣安');
@@ -8038,17 +8127,17 @@ function gdPage2(p) {
   if (p === 'f6') return `<div class="gdmock" style="border-color:#7f1d1d"><div class="gdmrow"><b>🗡 特級咒具</b><span class="gdchip" style="border-color:#f5c542;color:#f5c542">FVG／OB 回踩</span><span class="gdchip">4H→15M</span><span class="gdchip">1H→5M</span></div></div>
     <h2>🗡 特級咒具與特級交易</h2>
     ${gdPt('<path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"></path>', '<b>「☰ 選單 → 特級咒具」</b>：4H／1H 的 FVG／OB 被價格回踩時出現卡片，卡片上一步一步寫出走到哪裡、下一步在等什麼。沒達成的移到「📜 特級咒具歷史」。右上「⚙ 設定」可以設定自己的 Discord 通知。')}
-    ${gdPt('<path d="M8 5v14l11-7z"></path>', '持倉區「<b>🗡 開始特級交易</b>」：用這些訊號自動下單，跟一般交易分開開關。同一個幣出現反方向的特級訊號會反手。')}
+    ${gdPt('<path d="M8 5v14l11-7z"></path>', SPONLY ? '持倉區「<b>🗡 開始特級交易</b>」：用這些訊號自動下單。關掉網頁、手機鎖螢幕，伺服器照樣 24 小時運作；同一個幣出現反方向的特級訊號會反手。' : '持倉區「<b>🗡 開始特級交易</b>」：用這些訊號自動下單，跟一般交易分開開關。同一個幣出現反方向的特級訊號會反手。')}
     ${gdPt('<circle cx="12" cy="12" r="3"></circle><path d="M12 2v3"></path><path d="M12 19v3"></path><path d="M2 12h3"></path><path d="M19 12h3"></path>', '<b>「☰ 選單 → 設定 → 🗡 特級交易設定」</b>：自己的投入資金、每筆保證金、槓桿、持有天數、單日虧損上限，還有收回資金。止損、止盈由策略決定（4H／1H FVG／OB 低點、1:1）。')}
-    ${gdPt('<path d="M3 17l6-6 4 4 8-8"></path>', '主畫面的紅框「特級持倉」「特級交易」是特級自己的成績；資金曲線三條線：<b style="color:#60a5fa">一般藍</b>、<b style="color:#f87171">特級紅</b>、<b style="color:#c084fc">綜合紫</b>（都用報酬率）。')}
-    ${gdTip('Bitunix 是「雙向持倉」時，一般單和特級單可以多空雙開；單向持倉會自動跳過。「☰ 選單 → 回測數據」可以做特級咒具的回測。')}`;
+    ${gdPt('<path d="M3 17l6-6 4 4 8-8"></path>', SPONLY ? '持倉區的紅框「特級持倉」是特級交易開的單；「☰ 選單 → 資金曲線」的<b style="color:#f87171">紅線</b>是特級交易的報酬率。止損＝4H／1H FVG／OB 的低點（做空＝高點），止盈 1:1，交易所也會掛好止損。' : '主畫面的紅框「特級持倉」「特級交易」是特級自己的成績；資金曲線三條線：<b style="color:#60a5fa">一般藍</b>、<b style="color:#f87171">特級紅</b>、<b style="color:#c084fc">綜合紫</b>（都用報酬率）。')}
+    ${gdTip(SPONLY ? '你自己在 App 開的單是手動單，系統不會動它。Bitunix 是「雙向持倉」時，特級單和手動單可以多空雙開；單向持倉會自動跳過。「☰ 選單 → 回測數據」可以做特級咒具的回測。' : 'Bitunix 是「雙向持倉」時，一般單和特級單可以多空雙開；單向持倉會自動跳過。「☰ 選單 → 回測數據」可以做特級咒具的回測。')}`;
   if (p === 'war') return `<div class="gdmock" style="background:#070604;border-color:#5c4a1a"><div class="gdmrow"><b style="color:#f5e6a8;letter-spacing:.2em">QEVRAX VAULT</b><span class="gdchip" style="border-color:#d4af37;color:#d4af37">● ARMED</span><span class="gdchip">NODES 8/8 ONLINE</span><span class="gdchip">RELAY #012</span></div></div>
     <h2>作戰室（主畫面上方）</h2><p class="gdsub">一眼看出整套系統現在在做什麼。動畫裡的每個數字都是真的資料。</p>
     ${gdPt('<circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="4"></circle>', '中間的<b>金色核心</b>：自動交易開著顯示 <b style="color:#d4af37">● ARMED</b>，關著顯示 <b>○ STANDBY</b>。')}
     ${gdPt('<rect x="3" y="6" width="8" height="5" rx="1"></rect><rect x="13" y="13" width="8" height="5" rx="1"></rect><path d="M7 11v4h6"></path>', '外圍 8 個<b>金邊模組</b>是 8 個角色（總指揮、偵察、鑑定、情報、軍需、執行、守護、資料）。左邊的直條是狀態：<b style="color:#d4af37">金＝運作中</b>、<b style="color:#f59e0b">橘＝等待中</b>、<b style="color:#ef4444">紅＝有問題</b>、灰＝沒開；右邊是它現在的數字，下面是進度。')}
     ${gdPt('<path d="M4 12h6l2-4 2 8 2-4h4"></path>', '每次<b>接力</b>，一顆金色資料封包會沿著電路從一個角色經過核心傳到下一個；最後一棒會發出脈衝。電腦上還會跳出那個角色的小視窗，一個字一個字打出它在做的事。')}
     ${gdPt('<path d="M12 3l4 9-4 9-4-9z"></path>', '左下 3 個<b>菱形哨兵</b>是額外進場（暗流 FLOW、折返 PIVOT、伏擊 AMBUSH）：有訊號時亮起來顯示 ALERT，並送封包給總指揮；IDLE＝監聽中、OFF＝沒開。')}
-    ${gdTip('動畫下面是 8 張角色卡和 BALANCE 資金曲線。總指揮卡片上的「⏸ 一般」「🗡 特級」可以直接開關兩條交易線，開特級時會跳出確認視窗，要按「確定」才會開始。')}`;
+    ${gdTip(SPONLY ? '動畫下面是 8 張角色卡和 BALANCE 資金曲線。總指揮卡片上的「🗡 特級」可以直接開關特級交易，開的時候會跳出確認視窗，要按「確定」才會開始。' : '動畫下面是 8 張角色卡和 BALANCE 資金曲線。總指揮卡片上的「⏸ 一般」「🗡 特級」可以直接開關兩條交易線，開特級時會跳出確認視窗，要按「確定」才會開始。')}`;
   if (p === 'kl1') return `<div class="gdmock"><div class="gdmrow sm"><span>1分 5分 15分 <b style="color:#60a5fa">1小時</b> 4小時 日 週</span><span><span class="gdchip">◧ 3 格</span> <span class="gdchip">ƒx 指標</span> <span class="gdchip">📝 Pine</span> <span class="gdchip">⏪ 回放</span></span></div><div class="gdmrow sm"><span><span class="gdchip">ƒx</span> <b>BTC ▾</b> <span class="gdchip">1小時 ▾</span> 75,821</span><span class="gdchip or">75,821 · 42:17</span></div></div>
     <h2>🕯 K 線圖：基本操作</h2><p class="gdsub">在「☰ 選單 → K 線圖」，會填滿整個視窗。</p>
     ${gdPt('<rect x="3" y="3" width="8" height="8"></rect><rect x="13" y="3" width="8" height="8"></rect><rect x="3" y="13" width="8" height="8"></rect><rect x="13" y="13" width="8" height="8"></rect>', '<b>格數</b>：1～4 格。每一格左上角都有一樣的<b>幣種按鈕</b>（點了跳出搜尋清單，有價格和漲跌）和週期選單；⤢ 可以跟主圖交換。「格數」選單裡有<b>同步幣種</b>和<b>同步指標</b>（其他格自動用主圖的指標；某一格自己改過就各自獨立）。')}
@@ -8080,6 +8169,7 @@ function gdPage2(p) {
     ${gdPt('<path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 4v5h5"></path>', '<b>↩️ 待退款</b>：付錯金額、多轉的部分、7 天內解約都會列在這裡。用收款錢包把「金額」原樣轉回「退回地址」，系統每分鐘查一次區塊鏈，轉出去後自動標成已退款並通知對方；解約的退款完成後，自動取消那筆付款的天數。')}
     ${gdPt('<path d="M9 14l-4-4 4-4"></path><path d="M5 10h11a4 4 0 0 1 0 8h-1"></path>', '<b>辦理退款</b>：付款單上的按鈕，用戶寄信申請、或依條款第 7 條按比例退款時用，可以填退款金額。「手動確認已付」的單系統不知道付款錢包，要自己跟用戶確認地址再轉。<b>對不上的轉帳</b>可以指定給某個帳號或退款。')}
     ${gdPt('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path>', '<b>服務條款</b>：改了文字並儲存，就會變成新的版本（用當天日期），舊版本保留，每個人同意的是哪一版都有紀錄。對已付費的人不利的修改，要在生效前 7 天公告並寄信通知。')}
+    ${gdPt('<path d="M3 11l15-6v14L3 13z"></path><path d="M7 13v5h3"></path>', '<b>📢 更新通知</b>：在「☰ 選單 → 設定」的「更新通知」，可以帶入最新的更新紀錄，按「發送」就會發給所有帳號：每個人打開網站時跳出公告，有設 Discord 的人同時收到，也可以勾選一起寄 Email。')}
     ${gdTip('伺服器要設定好寄信（Gmail 應用程式密碼）：新用戶購買要收信箱驗證碼，沒設定的話沒有人能買。打開收費後，自己在購買頁用一個 Gmail 按「寄驗證碼」試一次。', true)}`;
   if (p === 'done') return gdPage('done').replace('<p class="gdsub">之後想再看說明', '<button class="gdbtn" id="gd_news2" style="align-self:center">📰 看更新紀錄</button><p class="gdsub">之後想再看說明');
   return gdPage(p);
@@ -8193,7 +8283,7 @@ function htRenderMkt() {
   const H = W < 640 ? Math.round(W * 1.3) : Math.min(720, Math.round(W * 0.55)), key = list.join(',') + '|' + W;
   if (key !== HT.keys || Date.now() - HT.layoutAt > 60000) {   // 格子大小：每分鐘或幣種改變才重排（不然會一直跳）
     HT.keys = key; HT.layoutAt = Date.now();
-    HT.liveSet = new Set(Q.cards.filter(c => c.et && evalTrade(c).st === 'open').map(c => c.sym));
+    HT.liveSet = new Set((SPONLY ? [] : Q.cards).filter(c => c.et && evalTrade(c).st === 'open').map(c => c.sym));
     HT.rects = htSquarify(list.map(s => ({ k: s, v: Math.sqrt(Math.max(1, (HT.mini.get(s) || {}).q || 1)) })), 0, 0, W, H);
     box.style.height = H + 'px';
     box.innerHTML = HT.rects.map(r => `<div class="htc${HT.liveSet.has(r.k) ? ' sig' : ''}" data-s="${r.k}" style="left:${r.x.toFixed(1)}px;top:${r.y.toFixed(1)}px;width:${r.w.toFixed(1)}px;height:${r.h.toFixed(1)}px;font-size:${Math.max(9, Math.min(22, Math.min(r.w, r.h) / 4)).toFixed(0)}px"><b></b><span></span></div>`).join('');
@@ -9171,7 +9261,7 @@ const pnlS = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toLocaleStrin
 function pnlBox(list, title, view) {
   const R = rate(list), n = R.d, V = rate(view || list), filtered = view && view.length !== list.length;
   const cls = v => v > 0 ? 'pos' : v < 0 ? 'neg' : '';
-  return `<div class="qpnl"><div class="qpnlh">${title}<em>共 ${R.cnt} 筆，持有中的單用現價的浮動損益一起算（藍字），每 3 秒更新。成功單${T.exit === 'lock' ? (T.step > 0 ? `跑回鎖利線出場（+${T.tp}% 起，每多 ${T.step}% 上調一次）` : `跑回 +${T.tp}% 就以 +${T.tp}% 出場`) : `一律 +${T.tp}%`}，失敗單一律 −${T.sl}%，逾時用到期價格。單位是單筆保證金的 %，100% 就是一份保證金。沒扣手續費。</em></div>
+  return `<div class="qpnl"><div class="qpnlh">${title}<em>共 ${R.cnt} 筆，持有中的單用現價的浮動損益一起算（藍字），每 3 秒更新。${SPONLY ? '特級交易：止損＝4H／1H FVG／OB 的低點（做空＝高點），止盈 1:1，或持有到期出場。' : `成功單${T.exit === 'lock' ? (T.step > 0 ? `跑回鎖利線出場（+${T.tp}% 起，每多 ${T.step}% 上調一次）` : `跑回 +${T.tp}% 就以 +${T.tp}% 出場`) : `一律 +${T.tp}%`}，失敗單一律 −${T.sl}%，逾時用到期價格。`}單位是單筆保證金的 %，100% 就是一份保證金。沒扣手續費。</em></div>
     <div class="qpnlg"><div><span>累積浮盈</span><b class="pos">${pnlS(R.gain)}</b><em>＝ ${(R.gain / 100).toFixed(1)} 份保證金</em></div>
     <div><span>累積虧損</span><b class="neg">${pnlS(R.loss)}</b><em>＝ ${(Math.abs(R.loss) / 100).toFixed(1)} 份保證金</em></div>
     <div><span>總和</span><b class="${R.net >= 0 ? 'pos' : 'neg'}">${pnlS(R.net)}</b><em>${R.cnt ? `${R.cnt} 筆平均 ${pnlS(R.net / R.cnt)}` : '—'}</em></div></div>
@@ -9201,8 +9291,8 @@ function renderHist() {
     const w = '<div class="qempty">正在讀取伺服器的紀錄和最新價格…</div>';
     $('qPnl').innerHTML = w; $('qKpi').innerHTML = ''; $('qEqKpi').innerHTML = ''; return;
   }
-  const all = allTrades().filter(x => qfOk(x.c.sym));
-  const RL = DATA === 'real' && SRV.on && SRVLT.cfg, SP = !!(RL && SRVLT.toolOk), isT = x => !!(x.t && x.t.src === 'tool');   // 🗡 有特級交易：一般、特級分開算
+  const isT = x => !!(x.t && x.t.src === 'tool'), all = allTrades().filter(x => qfOk(x.c.sym) && (!SPONLY || isT(x)));   // 🗡 特級專用版：只算特級交易的單
+  const RL = DATA === 'real' && SRV.on && SRVLT.cfg, SP = !!(RL && SRVLT.toolOk);   // 🗡 有特級交易：一般、特級分開算
   const allN = SP ? all.filter(x => !isT(x)) : all, allS = SP ? all.filter(isT) : [];
   $('qKpi').innerHTML = kpi(RL ? `${SP ? '🤖 一般交易・' : ''}整體成功率（實盤：結單賺錢就算成功）` : `整體成功率（${T.lev}x，+${T.tp}%／−${T.sl}%）`, allN) + kpi('做多', allN.filter(x => x.c.dir > 0)) + kpi('做空', allN.filter(x => x.c.dir < 0));
   $('qSpBox').hidden = !SP;
@@ -9467,7 +9557,7 @@ function renderBx(b) {
   renderLt();
   { const all = b.pos.reduce((a, p) => a + p.upnl, 0), nB = b.pos.filter(p => p.bot).length;   // 📊 全部倉位合計：跟 Bitunix App 的「盈虧」同一個算法
     $('qBxAll').hidden = !b.pos.length;
-    if (b.pos.length) $('qBxAll').innerHTML = `📊 <b>全部倉位的未實現損益</b>（${SPV ? '一般＋特級＋手動' : '自動＋手動'}，共 ${b.pos.length} 筆，跟 Bitunix App 的「盈虧」對照）：<b class="${all >= 0 ? 'qg' : 'qr'}">${all >= 0 ? '+' : '−'}${Math.abs(all).toFixed(2)}U</b><span>數字是 Bitunix 算的，每 10 秒讀一次，App 是即時跳動的，所以會差一點。「現價」那一欄是幣安的價格，只是參考。</span>`; }
+    if (b.pos.length) $('qBxAll').innerHTML = `📊 <b>全部倉位的未實現損益</b>（${SPONLY ? '特級＋手動' : SPV ? '一般＋特級＋手動' : '自動＋手動'}，共 ${b.pos.length} 筆，跟 Bitunix App 的「盈虧」對照）：<b class="${all >= 0 ? 'qg' : 'qr'}">${all >= 0 ? '+' : '−'}${Math.abs(all).toFixed(2)}U</b><span>數字是 Bitunix 算的，每 10 秒讀一次，App 是即時跳動的，所以會差一點。「現價」那一欄是幣安的價格，只是參考。</span>`; }
   $('qSpBx').hidden = !SPV;
   if (SPV) {                                           // 🗡 特級持倉：一樣的數字卡
     const sup = spPos.reduce((a, p) => a + p.upnl, 0), smg = spPos.reduce((a, p) => a + p.margin, 0), SB = SRVLT.spBot, SC = SRVLT.cfg || {};
@@ -9737,7 +9827,7 @@ async function trLoad() {                             // 🧪 試用申請：列
   const TABS = [['pending', '等開通'], ['active', '試用中'], ['ended', '已結束'], ['rejected', '已拒絕'], ['all', '全部紀錄']];
   $('trTabs').innerHTML = TABS.map(([k, n]) => `<button class="btn${TRF.f === k ? ' primary' : ''}" data-trf="${k}">${n}（${cnt(k)}）</button>`).join('');
   const ST_ = { pending: '<b class="qy">等開通</b>', active: '<b class="qg">試用中</b>', closing: '<b class="qy">結束中（平倉）</b>', ended: '已結束', rejected: '<span class="qr">已拒絕</span>' };
-  const SN = { pending: '等開通', active: '試用中', closing: '結束中', ended: '已結束', rejected: '已拒絕', user: '一般帳號', 'trial-user': '試用帳號' };
+  const SN = { pending: '等開通', active: '試用中', closing: '結束中', ended: '已結束', rejected: '已拒絕', user: '正式帳號', 'trial-user': '試用帳號' };
   const rows = L.filter(x => TRF.f === 'all' || x.status === TRF.f || (TRF.f === 'active' && x.status === 'closing'));
   const left = x => { const d = x.expireAt - Date.now(); return d > 0 ? `剩 ${Math.floor(d / 86400000)} 天 ${Math.floor(d % 86400000 / 3600000)} 小時` : '到期'; };
   $('trTab').innerHTML = rows.length ? `<tr><th>申請時間</th><th>UID</th><th>信箱</th><th>電話</th><th>狀態</th><th>試用期</th><th>重複比對</th><th>操作</th></tr>` + rows.map(x => `<tr class="${x.dups.length ? 'trdup' : ''}">
@@ -9796,7 +9886,7 @@ async function admLoad() {
       }
     }
     $('qAdmTab').innerHTML = '<thead><tr><th>UID</th><th>權限</th><th>綁定（Google／手機）</th><th>Bitunix API</th><th>自動交易</th><th>自動單持倉</th><th>備註</th><th>建立時間</th><th>最後登入</th><th>登入中裝置</th><th>操作</th></tr></thead><tbody>' +
-      j.users.map(u => (ADM_NOTE[u.uid] = u.note || '', `<tr><td><b>${esc(u.uid)}</b>${u.uid === SRV.uid ? '（你）' : ''}</td><td>${roleBadge(u.role, u.owner)}</td><td>${u.bind ? `${esc(u.bind.email)}${u.bind.google ? ' ✅' : ''}<br>${esc(u.bind.phone)}` : '<span style="color:var(--muted)">還沒綁定</span>'}</td><td>${u.api ? '已設定' : '<span style="color:var(--muted)">未設定</span>'}</td><td>${u.auto ? '<b class="qg">運作中</b>' : '暫停'}${u.tool ? `<br><span class="qspmini${u.sp ? ' on' : ''}">🗡 特級：${u.sp ? '運作中' : '暫停'}</span>` : ''}${OWN() ? `<br><button class="iconbtn" data-a="lt" data-on="${u.auto ? 0 : 1}" data-u="${esc(u.uid)}"${!u.auto && !u.api ? ' disabled title="還沒設定 Bitunix API"' : ''}>${u.auto ? '⏸ 暫停' : '▶ 開始'}</button>` : ''}</td><td>${u.open || 0} 筆</td><td class="qadmnote">${u.note ? `<span title="${u.noteAt ? `${esc(u.noteBy)} 在 ${fmtT(u.noteAt)} 寫的` : ''}">${esc(u.note)}</span>` : '<span style="color:var(--muted)">—</span>'}${u.owner && !OWN() ? '' : ` <button class="iconbtn" data-a="note" data-u="${esc(u.uid)}" aria-label="編輯 ${esc(u.uid)} 的備註">✏</button>`}</td><td>${u.created ? fmtT(u.created) : '—'}</td><td>${u.last ? fmtT(u.last) : '—'}</td><td>${u.sessions}</td>
+      j.users.map(u => (ADM_NOTE[u.uid] = u.note || '', `<tr><td><b>${esc(u.uid)}</b>${u.uid === SRV.uid ? '（你）' : ''}</td><td>${roleBadge(u.role, u.owner)}</td><td>${u.bind ? `${esc(u.bind.email)}${u.bind.google ? ' ✅' : ''}<br>${esc(u.bind.phone)}` : '<span style="color:var(--muted)">還沒綁定</span>'}</td><td>${u.api ? '已設定' : '<span style="color:var(--muted)">未設定</span>'}</td><td>${SPONLY ? '' : u.auto ? '<b class="qg">運作中</b>' : '暫停'}${u.tool ? `${SPONLY ? '' : '<br>'}<span class="qspmini${u.sp ? ' on' : ''}">🗡 特級：${u.sp ? '運作中' : '暫停'}</span>` : ''}${OWN() ? `<br><button class="iconbtn" data-a="lt" data-on="${u.auto ? 0 : 1}" data-u="${esc(u.uid)}"${!u.auto && !u.api ? ' disabled title="還沒設定 Bitunix API"' : ''}>${u.auto ? '⏸ 暫停' : '▶ 開始'}</button>` : ''}</td><td>${u.open || 0} 筆</td><td class="qadmnote">${u.note ? `<span title="${u.noteAt ? `${esc(u.noteBy)} 在 ${fmtT(u.noteAt)} 寫的` : ''}">${esc(u.note)}</span>` : '<span style="color:var(--muted)">—</span>'}${u.owner && !OWN() ? '' : ` <button class="iconbtn" data-a="note" data-u="${esc(u.uid)}" aria-label="編輯 ${esc(u.uid)} 的備註">✏</button>`}</td><td>${u.created ? fmtT(u.created) : '—'}</td><td>${u.last ? fmtT(u.last) : '—'}</td><td>${u.sessions}</td>
         <td><button class="iconbtn" data-a="view" data-u="${esc(u.uid)}">👁 查看</button>${(OWN() || u.uid === SRV.uid) ? ` <button class="iconbtn" data-a="pw" data-u="${esc(u.uid)}">改密碼</button>` : ''}${u.owner && !OWN() ? '' : `${u.bind ? ` <button class="iconbtn" data-a="unbind" data-u="${esc(u.uid)}">重設綁定</button>` : ''}${u.owner ? '' : ` <button class="iconbtn" data-a="role" data-r="${u.role === 'admin' ? 'viewer' : 'admin'}" data-u="${esc(u.uid)}">${u.role === 'admin' ? '改成一般' : '改成管理員'}</button>`}`}${u.owner && !OWN() ? '' : ` <button class="iconbtn" data-a="kick" data-u="${esc(u.uid)}">登出所有裝置</button>`}${u.owner ? '' : ` <button class="iconbtn" data-a="del" data-u="${esc(u.uid)}">刪除</button>`}</td></tr>`)).join('') + '</tbody>';
   } catch (e) { $('qAdmTab').innerHTML = `<tbody><tr><td>${esc(e.message)}</td></tr></tbody>`; }
 }
@@ -9816,7 +9906,7 @@ $('qAdmTab').addEventListener('click', async e => {
       if (!confirm(on ? `要幫 ${uid} 開始自動交易嗎？\n\n伺服器會用他的 Bitunix 帳戶「真實下單」，他的 Discord 會收到通知。` : `要幫 ${uid} 暫停自動交易嗎？\n\n已經開著的單會照常管理到平倉。`)) return;
       await srvFetch('/api/users/lt', { uid, on });
     }
-    if (b.dataset.a === 'role') { const r = b.dataset.r; if (!confirm(`要把 ${uid} 改成${r === 'admin' ? '管理員（灰色）' : '一般'}嗎？`)) return; await srvFetch('/api/users', { uid, role: r }); }
+    if (b.dataset.a === 'role') { const r = b.dataset.r; if (!confirm(`要把 ${uid} 改成${r === 'admin' ? '管理員（灰色）' : '用戶'}嗎？`)) return; await srvFetch('/api/users', { uid, role: r }); }
     if (b.dataset.a === 'unbind') { if (!confirm(`要重設 ${uid} 的 Google 信箱和手機綁定嗎？\n對方會被登出，下次登入要重新綁定。`)) return; await srvFetch('/api/users', { uid, unbind: true }); }
     if (b.dataset.a === 'pw') { $('qa_uid').value = uid; $('qa_pw').value = ''; $('qa_pw').focus(); return; }
     if (b.dataset.a === 'kick') { if (!confirm(`要讓 ${uid} 在所有裝置登出嗎？`)) return; await srvFetch('/api/users/kick', { uid }); if (uid === SRV.uid) return location.reload(); }
@@ -9859,20 +9949,22 @@ async function viewLoad(uid) {
 }
 function viewHtml(v) {
   const box = (k, val) => `<div><span>${k}</span><b>${val}</b></div>`, L = v.lt || {};
-  const head = box('權限', (v.role === 'admin' ? '管理員' : '一般') + (v.owner ? '・擁有者' : '')) + box('Google 信箱', v.bind ? esc(v.bind.email) + (v.bind.google ? ' ✅' : '') : '還沒綁定') + box('手機', v.bind ? esc(v.bind.phone) : '—') + box('最後登入', v.last ? fmtT(v.last) : '—') + (v.note ? box('備註', esc(v.note)) : '');
+  const head = box('權限', (v.role === 'admin' ? '管理員' : '用戶') + (v.owner ? '・擁有者' : '')) + box('Google 信箱', v.bind ? esc(v.bind.email) + (v.bind.google ? ' ✅' : '') : '還沒綁定') + box('手機', v.bind ? esc(v.bind.phone) : '—') + box('最後登入', v.last ? fmtT(v.last) : '—') + (v.note ? box('備註', esc(v.note)) : '');
   if (v.empty || !v.api) return `<div class="qvgrid">${head}${box('Bitunix API', '還沒設定')}</div><p class="qrepnote">這個帳號還沒設定 Bitunix API，沒有持倉和交易紀錄。</p>`;
   const B = v.bot || {}, S = v.stats || {};
   const grid = head + box('Bitunix API', v.err ? '<span class="neg">讀取失敗</span>' : '已連上') + box('Discord', v.hook ? '已設定' : '沒設定') +
+    (SPONLY ? box('🗡 特級交易', L.sp ? '<span class="qg">運作中</span>' : '暫停') + box('合約帳戶權益', (v.acctEq || 0).toFixed(2) + 'U') + box('特級投入資金', L.spBudget > 0 ? L.spBudget + 'U' : '還沒填') +
+      box('特級交易權益', ((v.spBot || {}).eq || 0).toFixed(2) + 'U') + box('今日損益', `<span class="${(v.spDay || 0) >= 0 ? 'qg' : 'qr'}">${vU(v.spDay || 0)}</span>`) :
     box('自動交易', L.on ? '<span class="qg">運作中</span>' : '暫停') + box('合約帳戶權益', (v.acctEq || 0).toFixed(2) + 'U') + box('投入資金', L.budget > 0 ? L.budget + 'U' : '整個帳戶') +
-    box('自動交易權益', (B.eq || 0).toFixed(2) + 'U') + box('今日損益', `<span class="${v.dayPnl >= 0 ? 'qg' : 'qr'}">${vU(v.dayPnl)}</span>`) +
+    box('自動交易權益', (B.eq || 0).toFixed(2) + 'U') + box('今日損益', `<span class="${v.dayPnl >= 0 ? 'qg' : 'qr'}">${vU(v.dayPnl)}</span>`)) +
     box('已結單', `${S.n || 0} 筆・賺 ${S.win || 0} 筆`) + box('累計淨損益', `<span class="${S.net >= 0 ? 'qg' : 'qr'}">${vU(S.net)}</span>`) + box('手續費合計', (S.fee || 0).toFixed(2) + 'U');
-  const cfg = `每筆 ${L.margin}U・${L.lev}x・單日虧損上限 ${L.dayLoss}U・浮虧 −${L.sl}% 平倉・鎖利每 ${L.step}% 上調・最長持有 ${+(L.hold / 24).toFixed(1)} 天${v.msg ? '・' + esc(v.msg) : ''}`;
+  const cfg = SPONLY ? `特級交易：每筆 ${L.spMargin ?? L.margin}U・${L.spLev ?? L.lev}x・單日虧損上限 ${L.spDayLoss ?? '—'}U・止損 FVG／OB、止盈 1:1・最長持有 ${+((L.spHold || 168) / 24).toFixed(1)} 天${v.msg ? '・' + esc(v.msg) : ''}` : `每筆 ${L.margin}U・${L.lev}x・單日虧損上限 ${L.dayLoss}U・浮虧 −${L.sl}% 平倉・鎖利每 ${L.step}% 上調・最長持有 ${+(L.hold / 24).toFixed(1)} 天${v.msg ? '・' + esc(v.msg) : ''}`;
   const pos = (v.pos || []).length ? `<div class="tablewrap"><table class="stat"><thead><tr><th>幣種</th><th>方向</th><th>槓桿</th><th>數量</th><th>開倉價</th><th>現價</th><th>未實現損益</th><th>保證金</th><th>強平價</th><th>開倉時間</th><th>來源</th></tr></thead><tbody>` +
     v.pos.map(p => `<tr><td><b>${esc(p.sym)}</b></td><td>${p.dir > 0 ? '做多' : '做空'}</td><td>${p.lev}x</td><td>${p.qty}</td><td>${p.entry}</td><td>${p.px ?? '—'}</td><td class="${p.upnl >= 0 ? 'qg' : 'qr'}">${vU(p.upnl)}</td><td>${(+p.margin).toFixed(2)}U</td><td>${p.liq > 0 ? p.liq : '低風險'}</td><td>${p.ctime ? fmtT(p.ctime) : '—'}</td><td>${p.bot ? '🤖 自動' : `手動${OWN() && p.id ? `<br><button class="iconbtn" data-vadopt="${esc(p.id)}" data-s="${esc(p.sym)}" data-dir="${p.dir}" data-lev="${p.lev}" data-ct="${p.ctime || 0}">🤖 幫他改成自動單</button>` : ''}`}</td></tr>`).join('') + '</tbody></table></div>' : '<p class="qrepnote">目前沒有持倉。</p>';
   const RS = { win: '達標', lock: '鎖利', fail: '失敗線', timeout: '到期', manual: '手動平倉', all: '一鍵平倉', liq: '強平', exchange: '交易所平倉', flip: '反手' };
   const tr = (v.trades || []).length ? `<div class="tablewrap"><table class="stat"><thead><tr><th>幣種</th><th>方向</th><th>開倉</th><th>平倉</th><th>結果</th><th>淨損益</th></tr></thead><tbody>` +
     v.trades.map(t => `<tr><td><b>${esc(t.sym)}</b></td><td>${t.dir > 0 ? '做多' : '做空'}</td><td>${fmtT(t.et)}</td><td>${t.exitAt ? fmtT(t.exitAt) : '持有中'}</td><td>${t.status === 'open' ? '—' : esc(RS[t.reason] || t.reason)}</td><td class="${(t.status === 'open' ? t.net + t.upnl : t.net) >= 0 ? 'qg' : 'qr'}">${vU(t.status === 'open' ? t.net + t.upnl : t.net)}</td></tr>`).join('') + '</tbody></table></div>' : '<p class="qrepnote">還沒有自動交易紀錄。</p>';
-  return `<div class="qvgrid">${grid}</div><p class="qrepnote">交易設定：${cfg}</p><h3 style="font-size:14px;margin:12px 0 6px">持倉</h3>${pos}<h3 style="font-size:14px;margin:12px 0 6px">最近 30 筆自動交易</h3>${tr}`;
+  return `<div class="qvgrid">${grid}</div><p class="qrepnote">交易設定：${cfg}</p><h3 style="font-size:14px;margin:12px 0 6px">持倉</h3>${pos}<h3 style="font-size:14px;margin:12px 0 6px">最近 30 筆${SPONLY ? '特級交易' : '自動交易'}</h3>${tr}`;
 }
 $('qViewRe').onclick = () => VIEW_UID && viewLoad(VIEW_UID);
 $('qViewClose').onclick = () => $('qViewDlg').close();
@@ -9895,11 +9987,11 @@ function renderLt() {
   $('qLtEco').hidden = !EB;
   $('qLtEco').textContent = EB ? `📅 美國重要數據（${EB.list.map(e => `${e.zh} ${fmtT(e.t).slice(-5)}`).join('、')}）：${fmtT(EB.from).slice(-11)}～${fmtT(EB.until).slice(-11)} 不開新單、不反手${EB.on ? '（現在暫停中）' : '，其他時間照常'}；已開的單照常管理。` : '';
   $('qLtToggle').textContent = C.on ? '⏸ 暫停交易' : '▶ 開始交易';
-  { const L = SRVLT.low, noB = MINE() && !(C.budget > 0), noS = MINE() && SRVLT.toolOk && !(C.spBudget > 0);   // ⚠️ 還沒填投入資金
+  { const L = SRVLT.low, noB = !SPONLY && MINE() && !(C.budget > 0), noS = MINE() && SRVLT.toolOk && !(C.spBudget > 0);   // ⚠️ 還沒填投入資金
     $('qLtLow').hidden = !(L && MINE()) && !noB && !noS;
     if (!(L && MINE()) && (noB || noS)) $('qLtLow').textContent = `⚠️ 還沒填${[noB ? '一般交易' : '', noS ? '🗡 特級交易' : ''].filter(Boolean).join('和')}的投入資金：請到「☰ 選單 → 設定」填一個大於 0 的數字${noB && C.on || noS && C.sp ? '（現在照常交易，但沒有資金上限）' : '，填好才能開始交易'}`;   // ⚠️ 資金不足：一般＋特級的「目前」比帳戶的錢多
     else if (L && MINE()) $('qLtLow').textContent = `⛔ 資金分配超過：${L.why}。現在不會開新單（已開的單照常管理），請到「☰ 選單 → 設定」調低投入資金。`; }
-  { const P = SRVLT.pause, isSp = !!(P && /特級/.test(P.why)), show = !!(P && MINE() && (isSp ? SRVLT.toolOk && !C.sp : !C.on || (/重新啟動|擁有者一鍵|平倉異常|API/.test(P.why) && SRVLT.toolOk && !C.sp)));   // ⏸ 上次暫停的原因：一般、特級的原因各自只在那一邊暫停時顯示
+  { const P = SRVLT.pause, isSp = !!(P && /特級/.test(P.why)), show = !!(P && MINE() && (SPONLY ? !C.sp : isSp ? SRVLT.toolOk && !C.sp : !C.on || (/重新啟動|擁有者一鍵|平倉異常|API/.test(P.why) && SRVLT.toolOk && !C.sp)));   // ⏸ 上次暫停的原因：一般、特級的原因各自只在那一邊暫停時顯示
     $('qLtWhy').hidden = !show; if (show) $('qLtWhy').textContent = `⏸ 上次暫停：${fmtT(P.t).slice(-11)}・${P.why}`; }
   { const ok = !!(SRVLT.toolOk && MINE()), SB = SRVLT.spBot;   // 🗡 特級交易設定：只有特級咒具權限的人看得到
     $('qSpCfg').hidden = !ok;
@@ -9913,7 +10005,7 @@ function renderLt() {
     $('qSpToggle').hidden = $('qSpSt').hidden = !ok;
     $('qSpToggle').textContent = C.sp ? '⏸ 暫停特級交易' : '🗡 開始特級交易'; $('qSpToggle').classList.toggle('on', !!C.sp);
     $('qSpSt').textContent = C.sp ? '🗡 特級交易：運作中' : '🗡 特級交易：暫停中'; $('qSpSt').classList.toggle('on', !!C.sp); }
-  $('qLtToggle').hidden = $('qLtAll').hidden = !MINE(); $('qLtCfgBtn').hidden = !MINE() || document.body.classList.contains('mn');   // 選單版面：設定在「☰ 選單 → 設定」，這裡不重複放
+  $('qLtToggle').hidden = SPONLY || !MINE(); $('qLtAll').hidden = !MINE(); $('qLtCfgBtn').hidden = !MINE() || document.body.classList.contains('mn');   // 選單版面：設定在「☰ 選單 → 設定」，這裡不重複放
   const B = SRVLT.bud, AE = SRVLT.acctEq || 0;            // 投入資金還剩多少：從設定投入資金那一刻起算
   $('qLtMsg').textContent = `${C.budget > 0 ? `投入 ${C.budget}U（帳戶 ${AE.toFixed(2)}U）・目前 ${B ? B.eq.toFixed(2) : '—'}U${C.wd > 0 ? `（已收回 ${(+C.wd).toFixed(2)}U）` : ''}、可用 ${B ? Math.max(0, B.free).toFixed(2) : '—'}U・` : `用整個帳戶（${AE.toFixed(2)}U）・`}每筆 ${C.margin}U・${C.lev}x 全倉・最多 ${C.maxOpen || '不限'} 筆・今日 ${SRVLT.day >= 0 ? '+' : '−'}${Math.abs(SRVLT.day).toFixed(2)}U（上限 −${C.dayLoss}U）${SRVLT.msg ? '・' + SRVLT.msg : ''}`;
   const keepEl = el => document.activeElement === el || el.dataset.dirty;   // 正在改、或改了還沒按儲存的欄位不要蓋掉
@@ -9927,7 +10019,7 @@ function renderLt() {
     if (document.activeElement !== $('lt_pool') && !$('lt_pool').dataset.dirty) $('lt_pool').value = C.pool > 0 ? C.pool : '';
     if (document.activeElement !== $('lt_allocTol') && !$('lt_allocTol').dataset.dirty) $('lt_allocTol').value = C.allocTol ?? 10;
     $('qpool_bar').style.width = cap > 0 ? Math.min(100, tot / cap * 100) + '%' : '0'; $('qpool_bar').classList.toggle('over', over && tot - cap > (C.allocTol ?? 10) + 0.009);   // 在容許差額內就不顯示紅色
-    $('qpool_stat').innerHTML = cap > 0 ? `已分配 一般 <b>${n}U</b>${SRVLT.toolOk ? `＋特級 <b>${sp}U</b>` : ''}＝<b class="${over ? 'qr' : ''}">${+tot.toFixed(2)}U</b>／${C.pool > 0 ? '總資金' : '整個帳戶'} ${cap.toFixed(2)}U${over ? (tot - cap <= (C.allocTol ?? 10) + 0.009 ? `・<b class="qy">比帳戶多 ${(tot - cap).toFixed(2)}U，在容許差額 ${C.allocTol ?? 10}U 內，照常開單</b>` : `・<b class="qr">超過 ${(tot - cap).toFixed(2)}U（容許差額 ${C.allocTol ?? 10}U），請調低投入資金</b>`) : `・還能分配 ${(cap - tot).toFixed(2)}U`}${C.pool > 0 && AE2 > 0 && C.pool > AE2 + 0.009 ? `・<b class="qr">帳戶只剩 ${AE2.toFixed(2)}U，比總資金少</b>` : ''}` : '';
+    $('qpool_stat').innerHTML = cap > 0 ? `已分配 ${SPONLY ? `🗡 特級 <b>${sp}U</b>` : `一般 <b>${n}U</b>${SRVLT.toolOk ? `＋特級 <b>${sp}U</b>` : ''}`}＝<b class="${over ? 'qr' : ''}">${+tot.toFixed(2)}U</b>／${C.pool > 0 ? '總資金' : '整個帳戶'} ${cap.toFixed(2)}U${over ? (tot - cap <= (C.allocTol ?? 10) + 0.009 ? `・<b class="qy">比帳戶多 ${(tot - cap).toFixed(2)}U，在容許差額 ${C.allocTol ?? 10}U 內，照常開單</b>` : `・<b class="qr">超過 ${(tot - cap).toFixed(2)}U（容許差額 ${C.allocTol ?? 10}U），請調低投入資金</b>`) : `・還能分配 ${(cap - tot).toFixed(2)}U`}${C.pool > 0 && AE2 > 0 && C.pool > AE2 + 0.009 ? `・<b class="qr">帳戶只剩 ${AE2.toFixed(2)}U，比總資金少</b>` : ''}` : '';
   }
   $('qmt_note').innerHTML = `出場：+${T.tp}% 開始鎖利${C.step > 0 ? `・每 +${C.step}% 上調` : ''}・−${C.sl}% 停損・${+((C.hold || 168) / 24).toFixed(1)} 天到期`;
 }
@@ -10026,7 +10118,7 @@ $('qBxTab').addEventListener('click', bxTabClick);
 $('qSpBxTab').addEventListener('click', bxTabClick);   // 🗡 特級持倉的表格一樣能平倉
 
 /* ---------- 實盤資料：成功率、累積損益、資金曲線、歷史紀錄都改用真實成交 ---------- */
-let DATA = LS.get('quantData', 'real');
+let DATA = SPONLY ? 'real' : LS.get('quantData', 'real');   // 🗡 特級專用版：只有實盤（沒有 CVD 訊號模擬）
 $('qDataSrc').value = DATA;
 $('qDataSrc').onchange = () => { DATA = $('qDataSrc').value; LS.set('quantData', DATA); hMore = 300; renderHist(); };
 $('qLtReset').onclick = () => { const C = SRVLT.cfg || {}; if (confirm(`實盤統計要從現在開始，用${C.budget > 0 ? `你設定的投入資金 ${C.budget}U` : '目前 Bitunix 帳戶的資金'}重新累積嗎？（之前的實盤紀錄還在，只是不算進統計）`)) ltCall('/api/lt/config', { reset: true }); };
@@ -10054,9 +10146,9 @@ function realRows() {
 function renderEq3(list, box, col, LWC, CAP) {          // 🗡 三條資金曲線：一般交易（藍）、特級交易（紅）、合計（紫），各自從起始本金開始，最後一點含持有中的現價
   const K = eqCaps(), isT = x => !!(x.t && x.t.src === 'tool'), Rn = simEquityReal(list.filter(x => !isT(x)), K.n), Rs = simEquityReal(list.filter(isT), K.s), Ra = simEquityReal(list, K.a);
   CAP = K.a;
-  $('qEqNote').textContent = '三條線都用「報酬率」畫，從 0% 開始，虛線 0% 就是本金：藍線＝一般交易（盈虧 ÷ 一般投入資金）、紅線＝🗡 特級交易（盈虧 ÷ 特級投入資金）、紫線＝綜合（兩邊盈虧加起來 ÷ 兩個投入資金加起來）。上面的數字卡是兩邊合計的金額。每一筆結單時用 Bitunix 的實際損益（扣手續費、加減資金費），最後一點把持有中的單用現價算進去。';
+  $('qEqNote').textContent = SPONLY ? '用「報酬率」畫，從 0% 開始，虛線 0% 就是本金：紅線＝🗡 特級交易（盈虧 ÷ 特級投入資金）。每一筆結單時用 Bitunix 的實際損益（扣手續費、加減資金費），最後一點把持有中的單用現價算進去。' : '三條線都用「報酬率」畫，從 0% 開始，虛線 0% 就是本金：藍線＝一般交易（盈虧 ÷ 一般投入資金）、紅線＝🗡 特級交易（盈虧 ÷ 特級投入資金）、紫線＝綜合（兩邊盈虧加起來 ÷ 兩個投入資金加起來）。上面的數字卡是兩邊合計的金額。每一筆結單時用 Bitunix 的實際損益（扣手續費、加減資金費），最後一點把持有中的單用現價算進去。';
   if (!EQC || !box.contains(EQC.el) || EQC.mode !== 3) {
-    box.innerHTML = `<div class="qeqleg"><span><i style="background:#3b82f6"></i>一般交易</span><span><i style="background:#ef4444"></i>🗡 特級交易</span><span><i style="background:#a855f7"></i>綜合</span><span><i style="background:${col('--muted')}"></i>本金（0%）</span></div>`;
+    box.innerHTML = `<div class="qeqleg">${SPONLY ? '' : '<span><i style="background:#3b82f6"></i>一般交易</span>'}<span><i style="background:#ef4444"></i>🗡 特級交易</span>${SPONLY ? '' : '<span><i style="background:#a855f7"></i>綜合</span>'}<span><i style="background:${col('--muted')}"></i>本金（0%）</span></div>`;
     const el = document.createElement('div'); el.style.cssText = 'position:absolute;inset:0'; box.appendChild(el);
     const ch = LWC.createChart(el, {
       layout: { background: { type: 'solid', color: col('--paper') }, textColor: col('--muted'), fontSize: 11, fontFamily: '"IBM Plex Sans","Noto Sans TC",system-ui,sans-serif' },
@@ -10068,15 +10160,17 @@ function renderEq3(list, box, col, LWC, CAP) {          // 🗡 三條資金曲�
     const fmt = { type: 'custom', minMove: 0.01, formatter: v => (v > 0 ? '+' : '') + v.toFixed(2) + '%' }, mk = (c, w) => ch.addLineSeries({ color: c, lineWidth: w, lineType: 0, priceFormat: fmt, lastValueVisible: true, priceLineVisible: false });
     const n = mk('#3b82f6', 2), sp = mk('#ef4444', 2), a = mk('#a855f7', 3);
     new ResizeObserver(() => { if (el.clientWidth && el.clientHeight) ch.resize(el.clientWidth, el.clientHeight); }).observe(el);
-    a.applyOptions({ autoscaleInfoProvider: o => { const r = o(); if (!r || !r.priceRange) return r; return { priceRange: { minValue: Math.min(r.priceRange.minValue, 0), maxValue: Math.max(r.priceRange.maxValue, 0) }, margins: r.margins }; } });   // 一定看得到 0%（本金）
+    if (SPONLY) { n.applyOptions({ visible: false }); a.applyOptions({ visible: false, lastValueVisible: false }); }   // 🗡 特級專用版：只畫紅線
+    (SPONLY ? sp : a).applyOptions({ autoscaleInfoProvider: o => { const r = o(); if (!r || !r.priceRange) return r; return { priceRange: { minValue: Math.min(r.priceRange.minValue, 0), maxValue: Math.max(r.priceRange.maxValue, 0) }, margins: r.margins }; } });   // 一定看得到 0%（本金）
     EQC = { el, ch, n, sp, a, line: null, fitKey: '', mode: 3 };
   }
   const sec = t => Math.floor((t + tzOff(t)) / 1000), now = Date.now();
   const data = R => { const m = new Map(), c = R.cap > 0 ? R.cap : 1; R.pts.concat([{ t: now, v: R.eq + R.unreal }]).forEach(p => m.set(sec(p.t), (p.v / c - 1) * 100)); return [...m].sort((x, y) => x[0] - y[0]).map(([time, value]) => ({ time, value: Math.round(value * 100) / 100 })); };   // 報酬率：各自的盈虧 ÷ 各自的本金
   const dA = data(Ra); EQC.n.setData(data(Rn)); EQC.sp.setData(data(Rs)); EQC.a.setData(dA);
-  if (EQC.line) EQC.a.removePriceLine(EQC.line);
-  EQC.line = EQC.a.createPriceLine({ price: 0, color: col('--muted'), lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: '本金' });
-  const key = dA.length + ':' + (dA[0] ? dA[0].time : 0);
+  const L0 = SPONLY ? EQC.sp : EQC.a;
+  if (EQC.line) L0.removePriceLine(EQC.line);
+  EQC.line = L0.createPriceLine({ price: 0, color: col('--muted'), lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: '本金' });
+  const dK = SPONLY ? data(Rs) : dA, key = dK.length + ':' + (dK[0] ? dK[0].time : 0);
   if (EQC.fitKey !== key) { EQC.ch.timeScale().fitContent(); EQC.fitKey = key; }
 }
 function eqCaps() {                                   // 資金曲線的起點：一般＝投入資金（起始本金）、特級＝特級投入資金、合計＝兩個加起來
@@ -10245,16 +10339,18 @@ const LW_TIME = {
 let EQC = null;
 async function renderEquity(list, filtered) {
   if ($('qHist').hidden || !SRVREADY) return;
-  const REAL = DATA === 'real' && SRV.on && SRVLT.cfg, R = REAL ? simEquityReal(list, SRVLT.toolOk ? eqCaps().a : undefined) : simEquity(list),   /* 🗡 有特級交易：數字卡用合計的起始本金（跟紫線一致） */ CAP = REAL ? R.cap : EQ.cap, now = Date.now(), tot = R.eq + R.unreal, ret = v => spct((v / CAP - 1) * 100, 1);
+  if (SPONLY) list = list.filter(x => x.t && x.t.src === 'tool');   // 🗡 特級專用版：只有特級交易
+  const REAL = DATA === 'real' && SRV.on && SRVLT.cfg, R = REAL ? simEquityReal(list, SRVLT.toolOk ? (SPONLY ? eqCaps().s : eqCaps().a) : undefined) : simEquity(list),   /* 🗡 有特級交易：數字卡用合計的起始本金（跟紫線一致） */ CAP = REAL ? R.cap : EQ.cap, now = Date.now(), tot = R.eq + R.unreal, ret = v => spct((v / CAP - 1) * 100, 1);
   document.querySelector('.qeqset').hidden = !!REAL;
   if (REAL && !(R.cap > 0)) {                         // 帳戶還沒入金：不要假設 100U
     $('qEqTitle').textContent = '實盤';
     $('qEqKpi').innerHTML = '<div style="grid-column:1/-1"><span>起始本金</span><b>還沒偵測到資金</b><em>Bitunix 合約帳戶入金後，伺服器會自動抓目前的帳戶資金當作起始本金，從那一刻開始計算。</em></div>';
     $('qDataNote').textContent = '等待帳戶入金'; return;
   }
-  $('qDataNote').textContent = REAL ? `實盤統計從 ${SRVLT.cfg.startAt ? fmtT(SRVLT.cfg.startAt) : '一開始'} 起算、起始本金 ${R.cap}U，只算自動交易開的單（起算時還開著的單也算進來）` : '模擬：伺服器記錄的訊號和回測';
-  $('qEqTitle').textContent = REAL ? `實盤：從 ${CAP}U 開始，用 Bitunix 真實成交的損益（已扣手續費、資金費）` : `${filtered ? '只算篩選後的紀錄・' : ''}${EQ.mode === 'pct' ? `每筆用當時資金的 ${EQ.amt}%` : `每筆 ${EQ.amt}U`}・${T.lev}x・+${T.tp}%／−${T.sl}%`;
-  const c = v => v >= CAP ? 'pos' : 'neg', C0 = SRVLT.cfg || {}, WD = REAL ? (+C0.wd || 0) + (SRVLT.toolOk ? +C0.spWd || 0 : 0) : 0;   // 💸 收回的錢：金額扣掉，百分比、曲線不變
+  if (SPONLY && REAL) $('qDataNote').textContent = '';
+  else $('qDataNote').textContent = REAL ? `實盤統計從 ${SRVLT.cfg.startAt ? fmtT(SRVLT.cfg.startAt) : '一開始'} 起算、起始本金 ${R.cap}U，只算自動交易開的單（起算時還開著的單也算進來）` : '模擬：伺服器記錄的訊號和回測';
+  $('qEqTitle').textContent = REAL ? `${SPONLY ? '🗡 特級交易・' : ''}實盤：從 ${CAP}U 開始，用 Bitunix 真實成交的損益（已扣手續費、資金費）` : `${filtered ? '只算篩選後的紀錄・' : ''}${EQ.mode === 'pct' ? `每筆用當時資金的 ${EQ.amt}%` : `每筆 ${EQ.amt}U`}・${T.lev}x・+${T.tp}%／−${T.sl}%`;
+  const c = v => v >= CAP ? 'pos' : 'neg', C0 = SRVLT.cfg || {}, WD = REAL ? (SPONLY ? 0 : +C0.wd || 0) + (SRVLT.toolOk ? +C0.spWd || 0 : 0) : 0;   // 💸 收回的錢：金額扣掉，百分比、曲線不變
   $('qEqKpi').innerHTML = `<div><span>起始本金</span><b>${CAP.toFixed(2)}U</b><em>${R.taken} 筆有下單${WD > 0 ? `・已收回 ${WD.toFixed(2)}U` : ''}</em></div>
     <div><span>已實現資金${WD > 0 ? '（扣掉收回）' : ''}</span><b class="${c(R.eq)}">${(R.eq - WD).toFixed(2)}U</b><em>${ret(R.eq)}・已出場 ${R.wins + R.losses} 筆</em></div>
     <div><span>含持有中（現價）</span><b class="qb">${(tot - WD).toFixed(2)}U</b><em>${ret(tot)}・持有中 ${R.liveN} 筆 ${R.unreal >= 0 ? '+' : '−'}${Math.abs(R.unreal).toFixed(2)}U</em></div>
