@@ -952,7 +952,7 @@ setInterval(() => { if (!SP_ONLY && !REP.busy && Date.now() >= (ST.rep.next || 0
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-11-16g';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-11-16h';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -2048,6 +2048,9 @@ const billLocked = uid => { const usr = ST.users.find(x => x.uid === String(uid)
 /* ---------- 🎟 邀請碼制（免費）：用我們的 Bitunix 邀請碼註冊的人免費用；擁有者／管理員審核，或貼上代理商後台的 UID 名單自動通過 ---------- */
 ST.ref = { on: false, minVol: 2000, list: [], listAt: 0, refs: [], ...(ST.ref || {}) };
 if (!Array.isArray(ST.ref.list)) ST.ref.list = []; if (!Array.isArray(ST.ref.refs)) ST.ref.refs = [];
+if (SP_ONLY && !ST.ref.on) {                           // 🗡 特級專用版：一律免費註冊（邀請碼制永遠開著）；第一次開啟時現有帳號都算已通過
+  ST.ref.on = true; for (const x of ST.users) if (!x.ref) x.ref = { st: 'ok', at: Date.now(), by: '開啟前的帳號', doneAt: Date.now() }; dirty = true;
+}
 const REF_TERMS = `【免費使用（邀請碼制）補充條款】
 一、資格：使用者以本服務提供之 Bitunix 邀請碼或邀請連結註冊之 Bitunix 帳戶，經本服務審核確認後，得免費使用本服務；本服務不向使用者收取月費。
 二、審核：本服務依 Bitunix 代理商後台之邀請紀錄進行審核，審核結果以本服務之判斷為準。審核通過前，使用者得登入及設定，但不得使用自動交易功能。
@@ -2065,7 +2068,7 @@ function refVol(uid) {                                 // 近 30 天自動交易
 }
 const refVia = usr => { const r = usr && usr.ref && REF().refs.find(x => x.id === usr.ref.via); return r || null; };
 function refNotifyNew(usr, olds, tag) {               // 🔔 有人申請：通知擁有者，也通知他選的那個邀請人（管理員）；tag＝催審核的提醒
-  const via = refVia(usr), st = usr.ref.st, msg = `${tag || ''}🎟 **${via ? via.name + ' 的用戶' : '新用戶'}需要審核**：UID ${usr.uid}・${maskMail(usr.bind.email)}・${usr.bind.phone || ''}${olds && olds.length ? `（重新申請，舊的 UID ${olds.join('、')} 已作廢）` : ''}${REF().list.includes(usr.uid) ? '・✅ 在邀請名單裡' : '・名單裡沒有'}${st === 'ok' ? '' : `\n請到 Bitunix 代理商後台查這個 UID，再到網站「☰ 選單 → 方案與繳費 → 🎟 邀請碼審核」按通過或拒絕：${SITE}`}`;
+  const via = refVia(usr), st = usr.ref.st, msg = `${tag || ''}🎟 **${via ? via.name + ' 的用戶' : '新用戶'}需要審核**：UID ${usr.uid}・${maskMail(usr.bind.email)}・${usr.bind.phone || ''}${olds && olds.length ? `（重新申請，舊的 UID ${olds.join('、')} 已作廢）` : ''}${REF().list.includes(usr.uid) ? '・✅ 在邀請名單裡' : '・名單裡沒有'}${st === 'ok' ? '' : `\n請到 Bitunix 代理商後台查這個 UID，再到網站「☰ 選單 → 🎟 審核註冊」按通過或拒絕：${SITE}`}`;
   dcX(ctx(ownerUid()), msg);
   if (via && via.uid && via.uid !== ownerUid() && ST.users.some(x => x.uid === via.uid)) dcX(ctx(via.uid), msg);
 }
@@ -2083,7 +2086,7 @@ setInterval(() => {                                    // ⏰ 催審核：待審
   const R = REF(); if (!R.on) return; const now = Date.now();
   for (const u of ST.users) {
     if (refExempt(u) || !u.ref || u.ref.st !== 'pending') continue; const age = now - (u.ref.at || u.created || now);
-    if (age > 24 * HOUR && !u.ref.rem24) { u.ref.rem24 = now; dirty = true; refNotifyNew(u, null, `⏰ **已經等 ${Math.floor(age / HOUR)} 小時還沒審核**\n`); for (const a of ST.users) if (a.role === 'admin' && a.uid !== ownerUid() && (!refVia(u) || refVia(u).uid !== a.uid)) dcX(ctx(a.uid), `⏰ 有申請等了 ${Math.floor(age / HOUR)} 小時還沒審核：UID ${u.uid}${refVia(u) ? `（${refVia(u).name} 的用戶）` : ''}，請到網站「方案與繳費 → 🎟 邀請碼審核」處理：${SITE}`); }
+    if (age > 24 * HOUR && !u.ref.rem24) { u.ref.rem24 = now; dirty = true; refNotifyNew(u, null, `⏰ **已經等 ${Math.floor(age / HOUR)} 小時還沒審核**\n`); for (const a of ST.users) if (a.role === 'admin' && a.uid !== ownerUid() && (!refVia(u) || refVia(u).uid !== a.uid)) dcX(ctx(a.uid), `⏰ 有申請等了 ${Math.floor(age / HOUR)} 小時還沒審核：UID ${u.uid}${refVia(u) ? `（${refVia(u).name} 的用戶）` : ''}，請到網站「☰ 選單 → 🎟 審核註冊」處理：${SITE}`); }
     else if (age > 6 * HOUR && !u.ref.rem6) { u.ref.rem6 = now; dirty = true; refNotifyNew(u, null, `⏰ **已經等 ${Math.floor(age / HOUR)} 小時還沒審核**\n`); }
     else continue;
     log('催審核', u.uid, `${Math.floor(age / HOUR)} 小時`);
@@ -3250,7 +3253,7 @@ http.createServer(async (req, res) => {
           if (!owner) return send(res, 403, { error: '邀請碼的設定只有擁有者可以改' });
           if (b.minVol !== undefined) { const v = +b.minVol; if (!(v >= 0 && v <= 1e9)) return send(res, 400, { error: '活躍門檻要是 0 以上的數字' }); R.minVol = v; }
           if (Array.isArray(b.refs)) R.refs = b.refs.slice(0, 50).map(r => ({ id: String(r.id || crypto.randomBytes(4).toString('hex')).slice(0, 20), name: String(r.name || '').trim().slice(0, 30), uid: String(r.uid || '').trim().slice(0, 20), code: String(r.code || '').trim().slice(0, 40), link: String(r.link || '').trim().slice(0, 300) })).filter(r => r.name);
-          if (typeof b.on === 'boolean' && b.on !== R.on) {
+          if (typeof b.on === 'boolean' && b.on !== R.on && !SP_ONLY) {   // 特級專用版一律開著
             R.on = b.on;
             if (b.on) { let n = 0; for (const x of ST.users) if (!x.ref) { x.ref = { st: 'ok', at: Date.now(), by: '開啟前的帳號', doneAt: Date.now() }; n++; } log('開啟邀請碼制', `現有 ${n} 個帳號自動通過`); }
           }
@@ -3606,7 +3609,7 @@ http.createServer(async (req, res) => {
       }
       if (u.pathname === '/api/lt/config') {
         const C = X.A.lt;
-        if ((b.on === true || b.sp === true) && me && refLocked(me.uid)) return send(res, 403, { error: refLockMsg(me.uid) + '（可以到「☰ 選單 → 方案與繳費」看審核狀態）', needRef: true });
+        if ((b.on === true || b.sp === true) && me && refLocked(me.uid)) return send(res, 403, { error: refLockMsg(me.uid), needRef: true });
         if ((b.on === true || b.sp === true) && me && billLocked(me.uid)) return send(res, 402, { error: '方案已到期，請到「☰ 選單 → 💳 方案與繳費」續費後再開始交易', needPay: true });
         if (SP_ONLY && (b.on === true || b.budget !== undefined)) return send(res, 400, { error: '這個版本只有 🗡 特級交易，沒有一般交易' });
         if (typeof b.on === 'boolean') {
