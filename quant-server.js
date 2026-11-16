@@ -952,7 +952,7 @@ setInterval(() => { if (!SP_ONLY && !REP.busy && Date.now() >= (ST.rep.next || 0
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-11-16s';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-11-16t';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1366,9 +1366,11 @@ async function ltSlPx(X, t, slPx) {
   }
   const ok = L.some(o => near(+o.slPrice));
   if (ok) for (const o of L) if (!near(+o.slPrice)) await bxPost('/api/v1/futures/tpsl/cancel_order', { symbol: t.sym, orderId: String(o.id) }, K).catch(() => {});   // 確定新的在了，才取消舊的
-  t.slPx = ok ? slPx : t.slPx; t.exSL = ok; t.slFail = ok ? 0 : (t.slFail || 0) + 1; t.slErr = ok ? '' : errs.slice(-2).join('；'); touchLT(X);
+  const api = !ok && errs.some(e => API_NO_RE.test(e));   // 🚫 Bitunix 不開放這個幣用 API 改止損：再試也沒用
+  t.slPx = ok ? slPx : t.slPx; t.exSL = ok; t.slFail = ok ? 0 : api ? 99 : (t.slFail || 0) + 1; t.slErr = ok ? '' : errs.slice(-2).join('；'); touchLT(X);
+  if (api) { t.apiNo = true; apiNoAdd(t.sym); }
   if (!ok) log('交易所止損移動失敗', X.uid, t.sym, sp, t.slErr);
-  return { ok, err: t.slErr, fixed: ok && !hadIt };
+  return { ok, err: t.slErr, fixed: ok && !hadIt, api };
 }
 // 🛡 把交易所上的止損改成目前設定的浮虧 %：先改「持倉止損」，沒有的話就新掛一張；舊的止損單取消掉
 async function ltSyncSL(X, kind) {                     // kind：'n'＝只同步一般、'sp'＝只同步特級、不給＝全部（每筆照自己的規則）
@@ -1480,10 +1482,10 @@ async function ltManageX(X) {
       if (k >= 1) { const lv = t.entry * (1 + t.dir * (k - 1) / 100);
         if (!t.pLk || t.dir * (lv - t.pLk) > 0) { const first = !t.pLk; t.pLk = lv; t.lockLv = +((k - 1) * t.lev).toFixed(0); touchLT(X);
           const head = `🛡 **特級交易套保**｜${mdEsc(t.sym)} ${t.dir > 0 ? '做多' : '做空'}：浮盈 +${(k * t.lev).toFixed(0)}%，止損移到 ${fpx(lv)}（${first ? '進場價，保本' : `鎖住 +${t.lockLv}%`}）`;
-          ltSlPx(X, t, lv).then(r => dcX(X, head + (r.ok ? '・✅ 交易所止損已更新' : `\n⚠️ 交易所止損沒改成功（${mdEsc(r.err || '不明原因')}），伺服器會照 ${fpx(lv)} 幫你平倉，並每分鐘自動重試`)))
+          ltSlPx(X, t, lv).then(r => r.api ? dcX(X, head + '\n' + `🚫 **${mdEsc(t.sym)} 需要你手動處理**：Bitunix 不開放這個幣用 API 改止損（可能也不能用 API 平倉）。\n👉 請現在到 Bitunix App 把這筆${t.dir > 0 ? '多單' : '空單'}的止損設在 **${fpx(lv)}**，或直接手動平倉。\n伺服器到價時還是會試著幫你平倉，但可能會被 Bitunix 拒絕；之後這個幣不會再自動開單。`) : dcX(X, head + (r.ok ? '・✅ 交易所止損已更新' : `\n⚠️ 交易所止損沒改成功（${mdEsc(r.err || '不明原因')}），伺服器會照 ${fpx(lv)} 幫你平倉，並每分鐘自動重試`)))
             .catch(e => dcX(X, head + `\n⚠️ 交易所止損沒改成功（${mdEsc(e.message)}），伺服器會照 ${fpx(lv)} 幫你平倉，並每分鐘自動重試`)); } }
       if (t.pLk && ((t.slFail || 0) > 0 && t.slFail < 30 || !t.slChk) && now - (t.slTry || 0) > 60000) {   // 上次沒改成功：每分鐘重試（最多 30 次）；更新前已經套保的單，先檢查一次交易所上有沒有這個止損
-        const was = t.slFail || 0, chk = !!t.slChk; t.slTry = now; ltSlPx(X, t, t.pLk).then(r => { if (r.ok && (was > 0 || r.fixed)) dcX(X, `🛡 **特級交易套保**｜${mdEsc(t.sym)}：重試成功，交易所止損已改到 ${fpx(t.pLk)}`); else if (t.slFail === 30) dcX(X, `❗ **特級交易套保**｜${mdEsc(t.sym)}：交易所止損試了 30 次都改不成（${mdEsc(r.err || '')}），請到 Bitunix 手動把止損設在 ${fpx(t.pLk)}；伺服器仍會照這個價格平倉`); }).catch(() => {});
+        const was = t.slFail || 0, chk = !!t.slChk; t.slTry = now; ltSlPx(X, t, t.pLk).then(r => { const lv = t.pLk; if (r.api) { dcX(X, `🚫 **${mdEsc(t.sym)} 需要你手動處理**：Bitunix 不開放這個幣用 API 改止損（可能也不能用 API 平倉）。\n👉 請現在到 Bitunix App 把這筆${t.dir > 0 ? '多單' : '空單'}的止損設在 **${fpx(lv)}**，或直接手動平倉。\n伺服器到價時還是會試著幫你平倉，但可能會被 Bitunix 拒絕；之後這個幣不會再自動開單。`); return; } if (r.ok && (was > 0 || r.fixed)) dcX(X, `🛡 **特級交易套保**｜${mdEsc(t.sym)}：重試成功，交易所止損已改到 ${fpx(t.pLk)}`); else if (t.slFail === 30) dcX(X, `❗ **特級交易套保**｜${mdEsc(t.sym)}：交易所止損試了 30 次都改不成（${mdEsc(r.err || '')}），請到 Bitunix 手動把止損設在 ${fpx(t.pLk)}；伺服器仍會照這個價格平倉`); }).catch(() => {});
       }
       const stop = t.pLk && t.dir * (t.pLk - t.pSl) > 0 ? t.pLk : t.pSl;
       if (t.dir * (px - stop) <= 0) why = stop === t.pSl ? 'fail' : 'lock'; else if (t.dir * (px - t.pTp) >= 0) why = 'win';
@@ -1499,10 +1501,13 @@ async function ltManageX(X) {
       if (roe < lv) why = 'lock';
     }
     if (!why && now - t.et >= T.hold * HOUR) why = 'timeout';
-    if (!why) continue;
+    if (!why || (t.closeNext && now < t.closeNext)) continue;
     t.closing = true;
     try { await ltClosePos(X, t.positionId, 1, why); }
-    catch (e) { dcX(X, `❗ **自動平倉失敗** ${mdEsc(t.sym)}：${mdEsc(e.message)}`); }
+    catch (e) {
+      if (API_NO_RE.test(e.message)) { apiNoAdd(t.sym); if (!t.apiCloseMsg) { t.apiCloseMsg = now; touchLT(X); dcX(X, `🚫 **${mdEsc(t.sym)} 到了出場價，但 Bitunix 不開放用 API 平倉**\n👉 請馬上到 Bitunix App 手動平掉這筆${t.dir > 0 ? '多單' : '空單'}（現價 ${fpx(px)}）。伺服器每 10 分鐘會再試一次。`); } t.closeNext = now + 10 * 60000; }
+      else if (!t.closeMsgAt || now - t.closeMsgAt > 5 * 60000) { t.closeMsgAt = now; dcX(X, `❗ **自動平倉失敗** ${mdEsc(t.sym)}：${mdEsc(e.message)}（伺服器會一直重試，這個通知最多 5 分鐘一次）`); }
+    }
     t.closing = false;
   }
 }
