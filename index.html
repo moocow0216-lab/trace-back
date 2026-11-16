@@ -1183,15 +1183,15 @@ input[type=checkbox],input[type=radio],input[type=range]{accent-color:var(--g1)}
 .mnitem .mnno{color:#6f6142;font-size:11.5px;font-weight:600;min-width:20px;font-variant-numeric:tabular-nums;transition:color .25s}
 .mnitem.on .mnno{color:#3b2e0c}
 .mnitem.fire{color:#f1d77a}
-#mnList .mnitem.on,#mnList .mnitem.hv,#mnList .mnitem.fire.on,#mnList .mnitem.fire.hv{color:#120d02!important;font-weight:800}
+#mnList .mnitem.on,#mnList .mnitem.hv,#mnList .mnitem.fire.on,#mnList .mnitem.fire.hv{color:#fff!important;font-weight:700}
 #mnList.hov .mnitem.on:not(.hv){color:#e2d8bd!important;font-weight:500}
-#mnList .mnitem.on .mnno,#mnList .mnitem.hv .mnno{color:#4a3a10!important}#mnList.hov .mnitem.on:not(.hv) .mnno{color:#6f6142!important}
+#mnList .mnitem.on .mnno,#mnList .mnitem.hv .mnno{color:rgba(255,255,255,.75)!important}#mnList.hov .mnitem.on:not(.hv) .mnno{color:#6f6142!important}
 #mnList .mnitem.on .mnic,#mnList .mnitem.hv .mnic{filter:none}
-.mnitem{color:#e2d8bd}.mnpill{background:linear-gradient(180deg,#ffe48a,#d6a832);box-shadow:0 6px 24px rgba(230,185,50,.45),inset 0 1px 0 rgba(255,255,255,.6)}.mnitem.fire .mnno{color:#b8902c}.mnitem.fire.on .mnno{color:#3b2e0c}
+.mnitem{color:#e2d8bd}.mnitem.fire .mnno{color:#b8902c}.mnitem.fire.on .mnno{color:#3b2e0c}
 .mnitem .mnic{filter:saturate(.35) sepia(.5);transition:filter .25s}
 .mnitem.on .mnic,.mnitem:hover .mnic{filter:none}
-.mnpill{position:absolute;left:10px;right:10px;top:0;height:0;z-index:0;border-radius:12px;pointer-events:none;opacity:0;
-  background:linear-gradient(180deg,#f3d97c,#c99c2e);box-shadow:0 6px 22px rgba(212,175,55,.35),inset 0 1px 0 rgba(255,255,255,.45);transition:opacity .25s}
+.mnpill{position:absolute;left:10px;right:10px;top:0;height:0;z-index:0;border-radius:12px;pointer-events:none;opacity:0;transition:opacity .25s;
+  background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.07));border:1px solid rgba(255,255,255,.32);box-shadow:0 8px 26px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.28);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}   /* 白色半透明的框（毛玻璃） */
 .mnpill.ghost{background:rgba(212,175,55,.10);box-shadow:inset 0 0 0 1px rgba(212,175,55,.35)}
 .mndrawer.in #mnList>*{animation:mnIn .5s var(--ease-out) both;animation-delay:calc(var(--i,0) * 22ms + 80ms)}
 @keyframes mnIn{from{opacity:0;transform:translateX(18px)}}
@@ -1426,7 +1426,7 @@ input[type=checkbox],input[type=radio],input[type=range]{accent-color:var(--g1)}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-16o</div>
+      <div class="qver" id="qVer">網站版本 2026-11-16p</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3902,7 +3902,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.man = j.lt.man || []; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-16o・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-16p・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     if (j.notice) ntShow(j.notice);                     // 📢 擁有者發的更新通知
     $('qAnnBox').hidden = !OWN(); if (OWN() && !$('ann_t').value && !$('ann_x').value) annFill();
@@ -8043,6 +8043,9 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-16p', title: '2026/11/16 更新（選單框）', items: [
+    { ic: '✨', t: '選單和右側圖示欄的滑動框，從金色改成白色半透明的毛玻璃框，選到的項目文字是白色粗體。' }
+  ] },
   { id: '2026-11-16o', title: '2026/11/16 更新（選單更清楚、更快）', items: [
     { ic: '✨', t: '選單的金色膠囊上，文字改成深色粗體，看得更清楚；膠囊滑動速度加快將近一倍。' },
     { ic: '🖤', t: '主畫面和各頁面的卡片底色從偏咖啡色改成純黑，金色只留在框線和重點文字。' }
