@@ -952,7 +952,7 @@ setInterval(() => { if (!SP_ONLY && !REP.busy && Date.now() >= (ST.rep.next || 0
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-11-16m';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-11-16s';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1255,6 +1255,12 @@ function ecoDayTick() {                               // 有數據的日子早�
 }
 setInterval(ecoDayTick, 60000); setTimeout(ecoDayTick, 90000);
 const toolOkUid = uid => { if (SP_ONLY) return true; uid = String(uid).replace(/~sim$/, ''); return uid === ownerUid() || ST.tool.grants.includes(uid); };   // 模擬盤跟本人一樣   // 🗡 有特級咒具權限
+/* 🚫 Bitunix 不開放 API 下單的幣（錯誤 710002：This trading pair does not currently support trading via OpenAPI，例如 SOXL 這類美股代幣）
+   第一次下單被拒就記到硬碟，7 天內真實帳號和模擬盤都不再下單（模擬盤也略過，績效才跟真實帳號對得上）；7 天後再試一次，看 Bitunix 有沒有開放 */
+const API_NO_RE = /710002|not\s+currently\s+support\s+trading\s+via\s+open\s*api/i, API_NO_FILE = path.join(DATA_DIR, 'api-no.json');
+let API_NO = {}; try { API_NO = JSON.parse(fs.readFileSync(API_NO_FILE, 'utf8')) || {}; } catch (e) {}
+const apiNo = s => API_NO[s] > 0 && Date.now() - API_NO[s] < 7 * 24 * HOUR;
+function apiNoAdd(s) { API_NO[s] = Date.now(); try { fs.writeFileSync(API_NO_FILE, JSON.stringify(API_NO)); } catch (e) {} }
 async function ltOpen(X, c) {
   const C = X.A.lt, K = X.A.bx, LT = X.LT, BX = X.BX, sp = c.src === 'tool';
   const M = sp ? C.spMargin || C.margin : C.margin, LV = sp ? C.spLev || C.lev : C.lev, BUD = sp ? C.spBudget : C.budget, NM = sp ? '特級交易' : '自動交易';   // 🗡 特級交易用自己的設定（先替換再插入，避免這行也被換掉）   // sp：🗡 特級交易（特級咒具的訊號）
@@ -1284,6 +1290,7 @@ async function ltOpen(X, c) {
     const pr = await ltPair(c.sym);
     if (!pr) return skip(`Bitunix 沒有 ${c.sym}，略過`);
     if (pr.symbolStatus !== 'OPEN') return skip(`${c.sym} 在 Bitunix 暫停交易，略過`);
+    if (apiNo(c.sym)) return skip(`${c.sym} 是 Bitunix 不開放 API 下單的幣（只能在 App 手動交易），自動交易略過`, 'api' + c.sym);
     const px = PX.map[c.sym] || c.last, lev = Math.max(1, Math.min(LV, +pr.maxLeverage || LV));
     if (BX.acct && BX.acct.avail < M * 1.2) return skip(`可用餘額不足（${BX.acct.avail.toFixed(2)}U），${c.sym} 不下單`);
     if (BUD > 0) {                                // 只用你設定的投入資金，不碰帳戶裡其他的錢
@@ -1324,19 +1331,44 @@ async function ltOpen(X, c) {
     log('自動開倉', X.uid, c.sym, c.dir > 0 ? '做多' : '做空', qty, '@', t.entry);
     if (pSL) { const rl = (v) => (c.dir * (v / t.entry - 1) * lev * 100).toFixed(0); dcX(X, `🗡 **特級交易開倉**（🧱 FVG／OB 回踩・${c.tpair === 'h4' ? '4H→15 分' : '1H→5 分'}） ${c.dir > 0 ? '🟢 做多' : '🔴 做空'} **${mdEsc(c.sym)}**\n成交價 ${fpx(t.entry)}・${lev}x 全倉・數量 ${t.qty}・保證金約 ${t.margin.toFixed(2)}U\n止損 ${fpx(t.pSl)}（${rl(t.pSl)}%，${c.tpair === 'h4' ? '4H' : '1H'} FVG／OB ${c.dir > 0 ? '低點' : '高點'}）${exSL ? '・已掛在交易所' : '・⚠️ 交易所止損沒設成功，改由伺服器監控'}\n止盈 ${fpx(t.pTp)}（+${rl(t.pTp)}%，盈虧比 1:1，伺服器監控）`); return; }
     dcX(X, `${sp ? `🗡 **特級交易開倉**（${c.tpair === 'h4' ? '4H→15 分' : '1H→5 分'}）` : '🤖 **自動開倉**'} ${c.dir > 0 ? '🟢 做多' : '🔴 做空'} **${mdEsc(c.sym)}**\n成交價 ${fpx(t.entry)}・${lev}x 全倉・數量 ${t.qty}・保證金約 ${t.margin.toFixed(2)}U\n${exSL ? `交易所止損 ${fpx(slPx)}（−${pctK(T.sl, lev / LV)}%）` : '⚠️ 交易所止損沒設成功，改由伺服器監控'}\n出場規則：浮盈 **+${pctK(T.tp, lev / LV)}%** 開始鎖利、浮虧 **−${pctK(T.sl, lev / LV)}%** 停損${lev !== LV ? `\n-# 這個幣最高 ${lev}x，你設 ${LV}x：停利停損按 ${lev}÷${LV} 縮小（你的 +${T.tp}%／−${T.sl}%），出場價格不變` : ''}`);
-  } catch (e) { LT.msg = `${c.sym} 自動下單失敗：${e.message}`; log(X.uid, LT.msg); dcX(X, `❗ **自動下單失敗** ${mdEsc(c.sym)}：${mdEsc(e.message)}`); }
+  } catch (e) {
+    if (API_NO_RE.test(e.message)) {                   // 🚫 Bitunix 不開放 API 下單的幣（美股代幣等）：記起來，之後真實帳號和模擬盤都略過
+      apiNoAdd(c.sym); LT.msg = `${c.sym} 不開放 API 下單，之後自動略過`; log(X.uid, LT.msg);
+      dcX(X, `⏭️ **${mdEsc(c.sym)} 不能自動下單**：Bitunix 不開放這個幣用 API 交易（只能在 App 手動下單），之後這個幣的訊號會自動略過，模擬盤也一起略過`); return;
+    }
+    LT.msg = `${c.sym} 自動下單失敗：${e.message}`; log(X.uid, LT.msg); dcX(X, `❗ **自動下單失敗** ${mdEsc(c.sym)}：${mdEsc(e.message)}`); }
   finally { LT.busy.delete(c.sym); }
 }
 // 🛡 把交易所上這筆單的止損改到指定價格（特級交易套保用）；改失敗沒關係，伺服器還是會照這個價格平倉
+/* 以前的問題：開倉時帶的止損在 Bitunix 是「分批止盈止損」單，舊程式卻只去改「持倉止盈止損」；改不到就新掛一張，
+   而且不管成功失敗都照樣發「止損移到…保本」，實際上交易所可能根本沒有新的止損（HYPE 就是這樣）。
+   現在：① 先找這筆倉位現有的止損單，直接改它 ② 改不了再依序試「持倉止損」「分批止損」新掛 ③ 再查一次交易所，確定新價格真的在上面
+   ④ 確定之後才取消舊的止損單 ⑤ 結果寫進通知；失敗的話每分鐘自動重試，伺服器也會照新價格幫你平倉 */
 async function ltSlPx(X, t, slPx) {
-  const K = X.A.bx, pr = await ltPair(t.sym).catch(() => null), sp = pxStr(slPx, pr ? +pr.quotePrecision || 4 : 6);
-  const body = { symbol: t.sym, positionId: t.positionId, slPrice: sp, slStopType: 'MARK_PRICE' };
-  let oid = null;
-  try { oid = (await bxPost('/api/v1/futures/tpsl/position/modify_order', body, K) || {}).orderId; }
-  catch (e1) { oid = (await bxPost('/api/v1/futures/tpsl/position/place_order', body, K) || {}).orderId; }
-  try { const L = await bxGet('/api/v1/futures/tpsl/get_pending_orders', { symbol: t.sym, positionId: t.positionId, limit: 20 }, K);
-    for (const o of Array.isArray(L) ? L : []) if (o.slPrice && String(o.id) !== String(oid) && Math.abs(+o.slPrice / slPx - 1) > 1e-6) await bxPost('/api/v1/futures/tpsl/cancel_order', { symbol: t.sym, orderId: String(o.id) }, K).catch(() => {}); } catch (e) {}
-  t.slPx = slPx; t.exSL = true; touchLT(X);
+  const K = X.A.bx, pr = await ltPair(t.sym).catch(() => null), sp = pxStr(slPx, pr ? +pr.quotePrecision || 4 : 6), errs = [];
+  const near = v => v > 0 && Math.abs(v / slPx - 1) < 1e-5;
+  const list = async () => { const L = await bxGet('/api/v1/futures/tpsl/get_pending_orders', { symbol: t.sym, positionId: t.positionId, limit: 50 }, K); return (Array.isArray(L) ? L : []).filter(o => +o.slPrice > 0 && (!o.positionId || String(o.positionId) === String(t.positionId))); };
+  t.slTry = Date.now(); t.slChk = true;
+  let L = await list().catch(e => { errs.push('查止損單：' + e.message); return []; });
+  const hadIt = L.some(o => near(+o.slPrice));
+  if (!hadIt) {
+    const cur = L[0], qty = String((cur && +cur.slQty) || t.qty);
+    const tries = [
+      ...(cur ? [['改現有止損單', '/api/v1/futures/tpsl/modify_order', { orderId: String(cur.id), slPrice: sp, slStopType: 'MARK_PRICE', slOrderType: 'MARKET', slQty: qty }]] : []),
+      ['改持倉止損', '/api/v1/futures/tpsl/position/modify_order', { symbol: t.sym, positionId: t.positionId, slPrice: sp, slStopType: 'MARK_PRICE' }],
+      ['新掛持倉止損', '/api/v1/futures/tpsl/position/place_order', { symbol: t.sym, positionId: t.positionId, slPrice: sp, slStopType: 'MARK_PRICE' }],
+      ['新掛分批止損', '/api/v1/futures/tpsl/place_order', { symbol: t.sym, positionId: t.positionId, slPrice: sp, slStopType: 'MARK_PRICE', slOrderType: 'MARKET', slQty: String(t.qty) }],
+    ];
+    for (const [nm, path, body] of tries) {
+      try { await bxPost(path, body, K); await sleep(700); L = await list().catch(() => L); if (L.some(o => near(+o.slPrice))) break; errs.push(nm + '：送出了但交易所上看不到'); }
+      catch (e) { errs.push(nm + '：' + e.message); }
+    }
+  }
+  const ok = L.some(o => near(+o.slPrice));
+  if (ok) for (const o of L) if (!near(+o.slPrice)) await bxPost('/api/v1/futures/tpsl/cancel_order', { symbol: t.sym, orderId: String(o.id) }, K).catch(() => {});   // 確定新的在了，才取消舊的
+  t.slPx = ok ? slPx : t.slPx; t.exSL = ok; t.slFail = ok ? 0 : (t.slFail || 0) + 1; t.slErr = ok ? '' : errs.slice(-2).join('；'); touchLT(X);
+  if (!ok) log('交易所止損移動失敗', X.uid, t.sym, sp, t.slErr);
+  return { ok, err: t.slErr, fixed: ok && !hadIt };
 }
 // 🛡 把交易所上的止損改成目前設定的浮虧 %：先改「持倉止損」，沒有的話就新掛一張；舊的止損單取消掉
 async function ltSyncSL(X, kind) {                     // kind：'n'＝只同步一般、'sp'＝只同步特級、不給＝全部（每筆照自己的規則）
@@ -1446,8 +1478,13 @@ async function ltManageX(X) {
     if (t.pSl > 0) {                                    // 🗡 FVG／OB 策略：照價格止損、止盈 1:1；🛡 價格每往有利方向走 1%（100x＝+100%）就套保一次
       const k = Math.floor(t.dir * (px / t.entry - 1) * 100 + 1e-9);
       if (k >= 1) { const lv = t.entry * (1 + t.dir * (k - 1) / 100);
-        if (!t.pLk || t.dir * (lv - t.pLk) > 0) { const first = !t.pLk; t.pLk = lv; t.lockLv = +((k - 1) * t.lev).toFixed(0); touchLT(X); ltSlPx(X, t, lv).catch(() => {});
-          dcX(X, `🛡 **特級交易套保**｜${mdEsc(t.sym)} ${t.dir > 0 ? '做多' : '做空'}：浮盈 +${(k * t.lev).toFixed(0)}%，止損移到 ${fpx(lv)}（${first ? '進場價，保本' : `鎖住 +${t.lockLv}%`}）`); } }
+        if (!t.pLk || t.dir * (lv - t.pLk) > 0) { const first = !t.pLk; t.pLk = lv; t.lockLv = +((k - 1) * t.lev).toFixed(0); touchLT(X);
+          const head = `🛡 **特級交易套保**｜${mdEsc(t.sym)} ${t.dir > 0 ? '做多' : '做空'}：浮盈 +${(k * t.lev).toFixed(0)}%，止損移到 ${fpx(lv)}（${first ? '進場價，保本' : `鎖住 +${t.lockLv}%`}）`;
+          ltSlPx(X, t, lv).then(r => dcX(X, head + (r.ok ? '・✅ 交易所止損已更新' : `\n⚠️ 交易所止損沒改成功（${mdEsc(r.err || '不明原因')}），伺服器會照 ${fpx(lv)} 幫你平倉，並每分鐘自動重試`)))
+            .catch(e => dcX(X, head + `\n⚠️ 交易所止損沒改成功（${mdEsc(e.message)}），伺服器會照 ${fpx(lv)} 幫你平倉，並每分鐘自動重試`)); } }
+      if (t.pLk && ((t.slFail || 0) > 0 && t.slFail < 30 || !t.slChk) && now - (t.slTry || 0) > 60000) {   // 上次沒改成功：每分鐘重試（最多 30 次）；更新前已經套保的單，先檢查一次交易所上有沒有這個止損
+        const was = t.slFail || 0, chk = !!t.slChk; t.slTry = now; ltSlPx(X, t, t.pLk).then(r => { if (r.ok && (was > 0 || r.fixed)) dcX(X, `🛡 **特級交易套保**｜${mdEsc(t.sym)}：重試成功，交易所止損已改到 ${fpx(t.pLk)}`); else if (t.slFail === 30) dcX(X, `❗ **特級交易套保**｜${mdEsc(t.sym)}：交易所止損試了 30 次都改不成（${mdEsc(r.err || '')}），請到 Bitunix 手動把止損設在 ${fpx(t.pLk)}；伺服器仍會照這個價格平倉`); }).catch(() => {});
+      }
       const stop = t.pLk && t.dir * (t.pLk - t.pSl) > 0 ? t.pLk : t.pSl;
       if (t.dir * (px - stop) <= 0) why = stop === t.pSl ? 'fail' : 'lock'; else if (t.dir * (px - t.pTp) >= 0) why = 'win';
     }
