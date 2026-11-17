@@ -952,7 +952,7 @@ setInterval(() => { if (!SP_ONLY && !REP.busy && Date.now() >= (ST.rep.next || 0
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-11-16t';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-11-17b';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -3393,7 +3393,9 @@ http.createServer(async (req, res) => {
         lt: { on: L.on, tp: L.tp || ST.trade.tp, budget: L.budget, margin: L.margin, lev: L.lev, dayLoss: L.dayLoss, sl: L.sl, step: L.step, hold: L.hold, startCap: L.startCap, startAt: L.startAt, sp: L.sp, spBudget: L.spBudget, spMargin: L.spMargin, spLev: L.spLev, spDayLoss: L.spDayLoss, spHold: L.spHold },
         spBot: ltSpEq(V), spDay: V.LT.spDayPnl || 0,
         pos: V.BX.pos.map(p => ({ id: p.id, sym: p.sym, dir: p.dir, lev: p.lev, qty: p.qty, entry: p.entry, px: PX.map[p.sym] || null, upnl: p.upnl, margin: p.margin, liq: p.liq, ctime: p.ctime, bot: !!V.A.ltTrades.find(t => t.status === 'open' && t.positionId === p.id) })),
-        stats: { n: done.length, win: done.filter(t => ltNet(t) > 0).length, net, fee: TR.reduce((a, t) => a + Math.abs(t.fee || 0), 0) },
+        stats: (() => { const roe = t => { const im = t.entry > 0 && (t.qty0 || t.qty) > 0 && t.lev > 0 ? t.entry * (t.qty0 || t.qty) / t.lev : 0; return im ? (t.realized || 0) / im * 100 : 0; };
+          const be = done.filter(t => roe(t) <= 0 && roe(t) >= -10 && (t.pLk > 0 || t.reason === 'lock'));   // 🛡 套保後撞回開倉價：不算勝率（跟網頁同一套）
+          return { n: done.length - be.length, win: done.filter(t => roe(t) > 0).length, be: be.length, net, fee: TR.reduce((a, t) => a + Math.abs(t.fee || 0), 0) }; })(),
         trades: V.A.ltTrades.filter(t => !SP_ONLY || t.src === 'tool').slice(0, 30).map(t => ({ sym: t.sym, dir: t.dir, lev: t.lev, et: t.et, exitAt: t.exitAt || 0, status: t.status, reason: t.reason || '', net: ltNet(t), upnl: t.upnl || 0, m0: t.m0 || 0 }))
       });
     }
