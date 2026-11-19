@@ -952,7 +952,7 @@ setInterval(() => { if (!SP_ONLY && !REP.busy && Date.now() >= (ST.rep.next || 0
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-11-17b';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-11-20a';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1329,7 +1329,7 @@ async function ltOpen(X, c) {
     if (t.positionId) X.A.ltTrades = X.A.ltTrades.filter(o => !(o.status === 'open' && o.found && o.positionId === t.positionId));   // 同一筆倉位如果已經被「自動接回」，以這筆開倉紀錄為準，不要變成兩筆
     X.A.ltTrades.unshift(t); X.A.ltTrades = X.A.ltTrades.slice(0, 2000); touchLT(X);
     log('自動開倉', X.uid, c.sym, c.dir > 0 ? '做多' : '做空', qty, '@', t.entry);
-    if (pSL) { const rl = (v) => (c.dir * (v / t.entry - 1) * lev * 100).toFixed(0); dcX(X, `🗡 **特級交易開倉**（🧱 FVG／OB 回踩・${c.tpair === 'h4' ? '4H→15 分' : '1H→5 分'}） ${c.dir > 0 ? '🟢 做多' : '🔴 做空'} **${mdEsc(c.sym)}**\n成交價 ${fpx(t.entry)}・${lev}x 全倉・數量 ${t.qty}・保證金約 ${t.margin.toFixed(2)}U\n止損 ${fpx(t.pSl)}（${rl(t.pSl)}%，${c.tpair === 'h4' ? '4H' : '1H'} FVG／OB ${c.dir > 0 ? '低點' : '高點'}）${exSL ? '・已掛在交易所' : '・⚠️ 交易所止損沒設成功，改由伺服器監控'}\n止盈 ${fpx(t.pTp)}（+${rl(t.pTp)}%，盈虧比 1:1，伺服器監控）`); return; }
+    if (pSL) { const rl = (v) => (c.dir * (v / t.entry - 1) * lev * 100).toFixed(0); dcX(X, `🗡 **特級交易開倉**（🧱 FVG／OB 回踩・${c.tpair === 'h4' ? '4H→15 分' : '1H→5 分'}） ${c.dir > 0 ? '🟢 做多' : '🔴 做空'} **${mdEsc(c.sym)}**\n成交價 ${fpx(t.entry)}・${lev}x 全倉・數量 ${t.qty}・保證金約 ${t.margin.toFixed(2)}U\n止損 ${fpx(t.pSl)}（${rl(t.pSl)}%，${c.tpair === 'h4' ? '4H' : '1H'} ${c.slBy === 'fvg' ? 'FVG（失衡區）' : c.slBy === 'ob' ? 'OB' : 'FVG／OB'}${c.dir > 0 ? '下緣' : '上緣'}）${exSL ? '・已掛在交易所' : '・⚠️ 交易所止損沒設成功，改由伺服器監控'}\n止盈 ${fpx(t.pTp)}（+${rl(t.pTp)}%，盈虧比 1:1，伺服器監控）`); return; }
     dcX(X, `${sp ? `🗡 **特級交易開倉**（${c.tpair === 'h4' ? '4H→15 分' : '1H→5 分'}）` : '🤖 **自動開倉**'} ${c.dir > 0 ? '🟢 做多' : '🔴 做空'} **${mdEsc(c.sym)}**\n成交價 ${fpx(t.entry)}・${lev}x 全倉・數量 ${t.qty}・保證金約 ${t.margin.toFixed(2)}U\n${exSL ? `交易所止損 ${fpx(slPx)}（−${pctK(T.sl, lev / LV)}%）` : '⚠️ 交易所止損沒設成功，改由伺服器監控'}\n出場規則：浮盈 **+${pctK(T.tp, lev / LV)}%** 開始鎖利、浮虧 **−${pctK(T.sl, lev / LV)}%** 停損${lev !== LV ? `\n-# 這個幣最高 ${lev}x，你設 ${LV}x：停利停損按 ${lev}÷${LV} 縮小（你的 +${T.tp}%／−${T.sl}%），出場價格不變` : ''}`);
   } catch (e) {
     if (API_NO_RE.test(e.message)) {                   // 🚫 Bitunix 不開放 API 下單的幣（美股代幣等）：記起來，之後真實帳號和模擬盤都略過
@@ -1771,11 +1771,11 @@ function toolStrat(H, L, P, o) {
         if (up) { z.st = 'brk'; z.brkAt = ct; z.tag = up; z.bI = i; }   // ③ 同方向 CHoCH／BOS
         const f = z.dir > 0 ? hB : hS;
         if (z.st === 'brk' && i > z.bI && f) {          // ④ 回踩小週期 FVG → 進場
-          const ob = Math.abs(z.obHi - z.obLo), sl = z.dir > 0 ? z.lo - (o.slK || 0) * ob : z.hi + (o.slK || 0) * ob;   // 止損＝4H／1H 的 FVG／OB 外緣（最佳化時可以再往外／往內移「OB 高度 × slK」）
+          const ob = Math.abs(z.obHi - z.obLo), byF = z.rt === 'fvg', edge = byF ? (z.dir > 0 ? z.fvgLo : z.fvgHi) : (z.dir > 0 ? z.lo : z.hi), sl = edge - z.dir * (o.slK || 0) * ob;   // 止損：只回踩到 FVG（失衡區）就進場＝FVG 外緣；回踩到 OB（實體收破 FVG、或插針碰到 OB）＝OB 外緣（最佳化時可以再往外／往內移「OB 高度 × slK」）
           let e = b.c;                                 // 進場價：預設＝碰到小週期 FVG 那根 K 的收盤；最佳化時可以改成掛單在 FVG 的某個深度（0＝邊緣、1＝最深）
           if (o.ent != null && o.ent !== 'close') { const lv = z.dir > 0 ? f.top - o.ent * (f.top - f.bot) : f.bot + o.ent * (f.top - f.bot); e = (z.dir > 0 ? b.l <= lv : b.h >= lv) ? (z.dir > 0 ? Math.min(lv, b.o) : Math.max(lv, b.o)) : null; }
           const rk = e == null ? 0 : z.dir * (e - sl);
-          if (rk > 0) { Object.assign(z, { st: 'entry', entryAt: ct, eI: i, entry: e, sl, tp: e + z.dir * rk, fvgL: f.bot, fvgH: f.top }); continue; }
+          if (rk > 0) { Object.assign(z, { st: 'entry', entryAt: ct, eI: i, entry: e, sl, slBy: byF ? 'fvg' : 'ob', tp: e + z.dir * rk, fvgL: f.bot, fvgH: f.top }); continue; }
         }
       }
       if (z.st === 'entry' && i > z.eI) {               // 進場後：K 棒內走法——收漲當作「開→低→高→收」、收跌當作「開→高→低→收」
@@ -1786,7 +1786,7 @@ function toolStrat(H, L, P, o) {
     }
   }
   while (k + 1 < H.length && L.length && H[k + 1].t + P.hms <= L[L.length - 1].t + P.lms) htf(++k);
-  const last = L[L.length - 1], keep = ['t', 'dir', 'val', 'lo', 'hi', 'fvgLo', 'fvgHi', 'obLo', 'obHi', 'touchAt', 'cfAt', 'rt', 'brkAt', 'tag', 'resets', 'entryAt', 'entry', 'sl', 'tp', 'lk', 'fvgL', 'fvgH', 'how', 'xt', 'xp', 'st', 'endAt', 'why', 'wc'];
+  const last = L[L.length - 1], keep = ['t', 'dir', 'val', 'lo', 'hi', 'fvgLo', 'fvgHi', 'obLo', 'obHi', 'touchAt', 'cfAt', 'rt', 'brkAt', 'tag', 'resets', 'entryAt', 'entry', 'sl', 'slBy', 'tp', 'lk', 'fvgL', 'fvgH', 'how', 'xt', 'xp', 'st', 'endAt', 'why', 'wc'];
   const pick = z => { const r = {}; for (const x of keep) if (z[x] !== undefined) r[x] = z[x]; if (r.st === 'entry' && last) { r.xp = last.c; r.xt = last.t + P.lms; } return r; };
   return { setups: all.filter(z => z.touchAt).map(pick), wait: [...b1, ...b2].filter(z => z.st === 'wait').map(z => ({ t: z.t, dir: z.dir, val: +z.val.toFixed(3), lo: z.lo, hi: z.hi })) };
 }
@@ -1802,7 +1802,7 @@ async function toolUniverse(n) {                       // 成交額前 N 個 USD
 }
 function toolNotify(s) {                               // 進場通知（Discord）
   const P = TOOL_P[s.pair];
-  const msg = `🗡 **特級咒具**｜${s.dir > 0 ? '🟢 **做多**' : '🔴 **做空**'} **${mdEsc(s.sym)}**・🧱 FVG／OB 回踩（${P.name}）\n① ${P.hn} FVG／OB 數值 ${s.val.toFixed(2)}%・② ${({ fvg: '回踩 FVG', ob: '回踩 OB（實體突破 FVG）', both: '回踩 FVG、OB（插針收回）' })[s.rt] || '回踩'} ${tw(s.touchAt)}・③ ${P.ln} ${s.tag || 'CHoCH／BOS'}\n④ 進場 ${tw(s.entryAt)}（台北）・價格 ${fpx(s.entry)}\n止損 ${fpx(s.sl)}（${P.hn} FVG／OB ${s.dir > 0 ? '低點' : '高點'}）・止盈 ${fpx(s.tp)}（1:1）\n🛡 價格每往有利方向走 1% 就套保一次（第 1 次保本）`;
+  const msg = `🗡 **特級咒具**｜${s.dir > 0 ? '🟢 **做多**' : '🔴 **做空**'} **${mdEsc(s.sym)}**・🧱 FVG／OB 回踩（${P.name}）\n① ${P.hn} FVG／OB 數值 ${s.val.toFixed(2)}%・② ${({ fvg: '回踩 FVG', ob: '回踩 OB（實體突破 FVG）', both: '回踩 FVG、OB（插針收回）' })[s.rt] || '回踩'} ${tw(s.touchAt)}・③ ${P.ln} ${s.tag || 'CHoCH／BOS'}\n④ 進場 ${tw(s.entryAt)}（台北）・價格 ${fpx(s.entry)}\n止損 ${fpx(s.sl)}（${P.hn} ${s.slBy === 'fvg' ? 'FVG（失衡區）' : s.slBy === 'ob' ? 'OB' : 'FVG／OB'}${s.dir > 0 ? '下緣' : '上緣'}）・止盈 ${fpx(s.tp)}（1:1）\n🛡 價格每往有利方向走 1% 就套保一次（第 1 次保本）`;
   const seen = new Set();
   for (const uid of toolUsers()) { let h = ''; try { h = dec(ST.tool.hooks[uid] || ''); } catch (e) {} if (!h || seen.has(h)) continue; seen.add(h); dcSend(msg, { webhook: h }); }
 }
@@ -1909,6 +1909,7 @@ async function toolScan(pair) {
       for (const s of R.setups) {
         const id = `${sym}|${pair}|${s.t}|${s.dir}`, old = T.cards[id]; seen.add(id);
         if (inHist.has(id) || (!old && !isTop)) continue;   // 已經在歷史裡；不在前 N 名的幣只追蹤原本的卡片
+        if (old && old.st === 'entry' && !old.slBy && s.sl !== old.sl) { seen.delete(id); continue; }   // 這版之前就進場的單：照原本的止損追蹤（跟實盤的單一致），不要被新的止損規則重算
         const c = { ...(old || {}), id, sym, pair, ...s }; ch = ch || !old || old.st !== c.st;
         if (old && old.lk && c.st === 'entry' && (!c.lk || c.dir * (old.lk - c.lk) > 0)) c.lk = old.lk;   // 即時價格已經套保過的，不要被 K 棒重算蓋掉
         if (c.st === 'fail' || c.st === 'done') { if (!old && T.cleared && c.endAt < T.cleared) continue; toolArchive(c); inHist.add(id); continue; }   // 清除歷史之前就結束的不再放回去
