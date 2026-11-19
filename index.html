@@ -1453,7 +1453,7 @@ input[type=checkbox],input[type=radio],input[type=range]{accent-color:var(--g1)}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-17b</div>
+      <div class="qver" id="qVer">網站版本 2026-11-20a</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -1528,7 +1528,7 @@ input[type=checkbox],input[type=radio],input[type=range]{accent-color:var(--g1)}
           </div>
           <div class="qbt" style="margin:8px 0 0"><button class="btn primary qspbtn" id="sp_save">儲存</button><button class="btn" id="sp_restart" title="目前資金改回投入資金，之前的特級盈虧和手動單虧損分攤不再扣著">↺ 從投入資金重新開始</button><span class="qltmsg" id="sp_msg"></span></div>
           <div class="qwd"><b>💸 收回資金</b><input id="wd_sp" type="number" min="0" step="1" placeholder="金額（U），留空＝全部"><button class="btn qspbtn" id="wd_spGo">收回</button><span class="qltmsg" id="wd_spMsg"></span></div>
-          <div class="qcfgnote">改投入資金＝加碼／減碼，之前的盈虧照算（例如 500U 賺到 713U，改成 1000U 就是 1213U）；想從頭算或資金已經虧完，按「↺ 從投入資金重新開始」・止損＝4H／1H FVG／OB 低點（做空＝高點）・止盈 1:1・每 +1% 價格套保一次（100x＝+100%）・同幣反向訊號會反手。</div>
+          <div class="qcfgnote">改投入資金＝加碼／減碼，之前的盈虧照算（例如 500U 賺到 713U，改成 1000U 就是 1213U）；想從頭算或資金已經虧完，按「↺ 從投入資金重新開始」・止損＝只回踩失衡區（FVG）放 FVG 外緣、回踩到 OB 放 OB 外緣・止盈 1:1・每 +1% 價格套保一次（100x＝+100%）・同幣反向訊號會反手。</div>
         </div>
         <div class="qtg" id="qAnnBox" hidden>
           <b>📢 更新通知</b><span>（只有擁有者看得到）按「發送」之後，所有帳號都會收到</span>
@@ -3929,7 +3929,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.man = j.lt.man || []; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-17b・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-20a・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     if (j.notice) ntShow(j.notice);                     // 📢 擁有者發的更新通知
     $('qAnnBox').hidden = !OWN(); if (OWN() && !$('ann_t').value && !$('ann_x').value) annFill();
@@ -7756,7 +7756,7 @@ setInterval(() => { if (SRV.on && !document.hidden) { warTool(); warXent(); } },
 const TB = { timer: null };
 /* ---------- 🎯 停損 × 進場 最佳化：每一組參數跑一次完整回測，用表格、折線、3D 曲面比較 ---------- */
 const SWV = { tab: 'grid', plotly: null };
-const swSlLab = k => k === 0 ? 'OB 外緣（目前）' : `${k > 0 ? '外移' : '內縮'} ${Math.abs(k)}×OB`;
+const swSlLab = k => k === 0 ? '區塊外緣（目前）' : `${k > 0 ? '外移' : '內縮'} ${Math.abs(k)}×OB`;
 const swSlShort = k => k === 0 ? '0' : `${k > 0 ? '+' : ''}${k}`;
 const swEntLab = e => e === 'close' ? '收盤進場（目前）' : `FVG ${Math.round(e * 100)}% 掛單`;
 const swEntShort = e => e === 'close' ? '收盤' : `${Math.round(e * 100)}%`;
@@ -7776,7 +7776,7 @@ function swRender(d) {
   const R2 = v => `${v >= 0 ? '+' : ''}${(+v).toFixed(2)}R`;
   h += `<p class="tlsub">${fmtT(W.at)}・最近 ${W.days} 天・${W.coins} 個幣・${W.pairs.map(p => p === 'h4' ? '4H→15M' : '1H→5M').join('＋')}・扣手續費 ${W.fee}%（一來一回）・單位 R＝每一筆冒的風險（止損距離）</p>
     <div class="swkpi"><div><small>測試組合</small><b>${C.length}</b><span>${W.grid.sl.length} 種止損 × ${W.grid.ent.length} 種進場</span></div><div><small>賺錢的組合</small><b>${prof} <em>／${C.length}</em></b><span>${Math.round(prof / C.length * 100)}% 的組合</span></div><div><small>中位數淨利</small><b class="${med >= 0 ? 'qg' : 'qr'}">${R2(med)}</b><span>一半的組合比這低</span></div><div><small>最好 − 最差</small><b>${(hi - lo).toFixed(2)}R</b><span>參數影響有多大</span></div></div>
-    <div class="swbest"><b>🏆 最好的一組：</b>止損 <b>${swSlLab(B.slK)}</b>・進場 <b>${swEntLab(B.ent)}</b> → <b class="${B.net >= 0 ? 'qg' : 'qr'}">${R2(B.net)}</b>（${B.n} 筆、勝率 ${B.rate}%、PF ${B.pf}、最大回撤 ${B.mdd}R）${cur ? `<br><span class="tlmut">目前的設定（OB 外緣・收盤進場）：${R2(cur.net)}（${cur.n} 筆、勝率 ${cur.rate}%、PF ${cur.pf}、最大回撤 ${cur.mdd}R）</span>` : ''}</div>
+    <div class="swbest"><b>🏆 最好的一組：</b>止損 <b>${swSlLab(B.slK)}</b>・進場 <b>${swEntLab(B.ent)}</b> → <b class="${B.net >= 0 ? 'qg' : 'qr'}">${R2(B.net)}</b>（${B.n} 筆、勝率 ${B.rate}%、PF ${B.pf}、最大回撤 ${B.mdd}R）${cur ? `<br><span class="tlmut">目前的設定（區塊外緣・收盤進場）：${R2(cur.net)}（${cur.n} 筆、勝率 ${cur.rate}%、PF ${cur.pf}、最大回撤 ${cur.mdd}R）</span>` : ''}</div>
     <div class="swtabs" role="tablist">${[['line', '折線'], ['grid', '表格'], ['3d', '3D']].map(([k, n]) => `<button class="btn${SWV.tab === k ? ' primary' : ''}" role="tab" aria-selected="${SWV.tab === k}" data-swtab="${k}">${n}</button>`).join('')}</div>
     <div class="swview" id="swView"></div>
     <div class="swlegend"><span class="swgrad"></span>差 → 好（淨利 R）<span class="swdot"></span>最好的一組<span class="swcur"></span>目前的設定</div>
@@ -8071,6 +8071,9 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-20a', title: '2026/11/20 更新（止損依回踩位置）', items: [
+    { ic: '🧱', t: '特級交易的止損改成看「回踩到哪裡」：只回踩到失衡區（FVG）就進場的單，止損放在 FVG 外緣（做多＝下緣、做空＝上緣）；實體收破 FVG 回踩到 OB、或插針碰到 OB 的，止損才放在 OB 外緣。開倉通知會寫是 FVG 還是 OB。這版之前已經開的單照原本的止損。' }
+  ] },
   { id: '2026-11-17b', title: '2026/11/17 更新（保本出場不算失敗）', items: [
     { ic: '🛡', t: '套保把止損移到開倉價之後被打回來、結果在 0%～−10% 的單（只是滑點和手續費），改標成「保本」，不算失敗、也不列入勝率；成功率旁邊會顯示「撞保本 N 次」。套保之後出場還有賺的照樣算成功。歷史紀錄的「結果」篩選多了「保本」。' }
   ] },
@@ -8528,7 +8531,7 @@ function gdPage2(p) {
     <h2>🗡 特級咒具與特級交易</h2>
     ${gdPt('<path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"></path>', '<b>「☰ 選單 → 特級咒具」</b>：4H／1H 的 FVG／OB 被價格回踩時出現卡片，卡片上一步一步寫出走到哪裡、下一步在等什麼。沒達成的移到「📜 特級咒具歷史」。右上「⚙ 設定」可以設定自己的 Discord 通知。')}
     ${gdPt('<path d="M8 5v14l11-7z"></path>', SPONLY ? '持倉區「<b>🗡 開始特級交易</b>」：用這些訊號自動下單。關掉網頁、手機鎖螢幕，伺服器照樣 24 小時運作；同一個幣出現反方向的特級訊號會反手。' : '持倉區「<b>🗡 開始特級交易</b>」：用這些訊號自動下單，跟一般交易分開開關。同一個幣出現反方向的特級訊號會反手。')}
-    ${gdPt('<circle cx="12" cy="12" r="3"></circle><path d="M12 2v3"></path><path d="M12 19v3"></path><path d="M2 12h3"></path><path d="M19 12h3"></path>', '<b>「☰ 選單 → 設定 → 🗡 特級交易設定」</b>：自己的投入資金、每筆保證金、槓桿、持有天數、單日虧損上限，還有收回資金。止損、止盈由策略決定（4H／1H FVG／OB 低點、1:1）。')}
+    ${gdPt('<circle cx="12" cy="12" r="3"></circle><path d="M12 2v3"></path><path d="M12 19v3"></path><path d="M2 12h3"></path><path d="M19 12h3"></path>', '<b>「☰ 選單 → 設定 → 🗡 特級交易設定」</b>：自己的投入資金、每筆保證金、槓桿、持有天數、單日虧損上限，還有收回資金。止損、止盈由策略決定（只回踩失衡區放 FVG 外緣、回踩到 OB 放 OB 外緣；止盈 1:1）。')}
     ${gdPt('<path d="M3 17l6-6 4 4 8-8"></path>', SPONLY ? '持倉區的紅框「特級持倉」是特級交易開的單；「☰ 選單 → 資金曲線」的<b style="color:#f87171">紅線</b>是特級交易的報酬率。止損＝4H／1H FVG／OB 的低點（做空＝高點），止盈 1:1，交易所也會掛好止損。' : '主畫面的紅框「特級持倉」「特級交易」是特級自己的成績；資金曲線三條線：<b style="color:#60a5fa">一般藍</b>、<b style="color:#f87171">特級紅</b>、<b style="color:#c084fc">綜合紫</b>（都用報酬率）。')}
     ${gdTip(SPONLY ? '你自己在 App 開的單是手動單，系統不會動它。Bitunix 是「雙向持倉」時，特級單和手動單可以多空雙開；單向持倉會自動跳過。「☰ 選單 → 回測數據」可以做特級咒具的回測。' : 'Bitunix 是「雙向持倉」時，一般單和特級單可以多空雙開；單向持倉會自動跳過。「☰ 選單 → 回測數據」可以做特級咒具的回測。')}`;
   if (p === 'war') return `<div class="gdmock" style="background:#070604;border-color:#5c4a1a"><div class="gdmrow"><b style="color:#f5e6a8;letter-spacing:.2em">QEVRAX VAULT</b><span class="gdchip" style="border-color:#d4af37;color:#d4af37">● ARMED</span><span class="gdchip">NODES 8/8 ONLINE</span><span class="gdchip">RELAY #012</span></div></div>
