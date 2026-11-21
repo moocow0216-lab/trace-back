@@ -952,7 +952,7 @@ setInterval(() => { if (!SP_ONLY && !REP.busy && Date.now() >= (ST.rep.next || 0
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-11-21a';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-11-21b';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -983,7 +983,7 @@ const TT = X => ({ ...ST.trade, tp: X.A.lt.tp || ST.trade.tp, sl: X.A.lt.sl, ste
 const TS = X => { const L = X.A.lt; return { ...ST.trade, exit: 'lock', tp: L.spTp || L.tp, sl: L.spSl || L.sl, step: L.spStep ?? L.step, hold: L.spHold || L.hold, lev: L.spLev || L.lev }; };   // 🗡 特級交易自己的出場規則
 const TRule = (X, t) => (t && t.src === 'tool' ? TS(X) : TT(X));
 const hasKey = X => !!(X.A.bx.sim || (X.A.bx.key && X.A.bx.secret));
-const dcX = (X, msg) => { if (X.sim) { const B = ST.accts[X.base]; if (B) dcSend('🧪 **模擬盤**｜' + msg, B.notify); return; } dcSend(msg, X.A.notify); };   // 只傳到這個帳號自己的 Discord（模擬盤傳到本人的 Discord，前面加「模擬盤」）
+const dcX = (X, msg) => { if (X.sim) return; dcSend(msg, X.A.notify); };   // 只傳到這個帳號自己的 Discord；模擬盤不發（訊息太多）   // 只傳到這個帳號自己的 Discord（模擬盤傳到本人的 Discord，前面加「模擬盤」）
 function dcAll(content, ok = () => true) {             // 大家共用的通知（訊號、數據公布、結算）：每個帳號自己的 Discord 各傳一次，同一個 Webhook 不重複
   const seen = new Set();
   for (const X of allX()) {
@@ -1330,7 +1330,7 @@ async function ltOpen(X, c) {
     X.A.ltTrades.unshift(t); X.A.ltTrades = X.A.ltTrades.slice(0, 2000); touchLT(X);
     if (API_NO[c.sym]) { delete API_NO[c.sym]; try { fs.writeFileSync(API_NO_FILE, JSON.stringify(API_NO)); } catch (e) {} log('解除 API 封鎖', c.sym); }   // 之前被擋、現在開得了 → 不用等 7 天
     log('自動開倉', X.uid, c.sym, c.dir > 0 ? '做多' : '做空', qty, '@', t.entry);
-    if (pSL) { const rl = (v) => (c.dir * (v / t.entry - 1) * lev * 100).toFixed(0); dcX(X, `🗡 **特級交易開倉**（🧱 FVG／OB 回踩・${c.tpair === 'h4' ? '4H→15 分' : '1H→5 分'}） ${c.dir > 0 ? '🟢 做多' : '🔴 做空'} **${mdEsc(c.sym)}**\n成交價 ${fpx(t.entry)}・${lev}x 全倉・數量 ${t.qty}・保證金約 ${t.margin.toFixed(2)}U\n止損 ${fpx(t.pSl)}（${rl(t.pSl)}%，${c.tpair === 'h4' ? '4H' : '1H'} ${c.slBy === 'fvg' ? 'FVG（失衡區）' : c.slBy === 'ob' ? 'OB' : 'FVG／OB'}${c.dir > 0 ? '下緣' : '上緣'}）${exSL ? '・已掛在交易所' : '・⚠️ 交易所止損沒設成功，改由伺服器監控'}\n止盈 ${fpx(t.pTp)}（+${rl(t.pTp)}%，盈虧比 1:1，伺服器監控）`); return; }
+    if (pSL) { dcX(X, `${c.dir > 0 ? '🟢' : '🔴'} **${mdEsc(c.sym)}** 已下單・${c.dir > 0 ? '做多' : '做空'}${exSL ? '' : `\n🚨 交易所止損沒掛上，改由機器人到 ${fpx(t.pSl)} 出場`}`); return; }
     dcX(X, `${sp ? `🗡 **特級交易開倉**（${c.tpair === 'h4' ? '4H→15 分' : '1H→5 分'}）` : '🤖 **自動開倉**'} ${c.dir > 0 ? '🟢 做多' : '🔴 做空'} **${mdEsc(c.sym)}**\n成交價 ${fpx(t.entry)}・${lev}x 全倉・數量 ${t.qty}・保證金約 ${t.margin.toFixed(2)}U\n${exSL ? `交易所止損 ${fpx(slPx)}（−${pctK(T.sl, lev / LV)}%）` : '⚠️ 交易所止損沒設成功，改由伺服器監控'}\n出場規則：浮盈 **+${pctK(T.tp, lev / LV)}%** 開始鎖利、浮虧 **−${pctK(T.sl, lev / LV)}%** 停損${lev !== LV ? `\n-# 這個幣最高 ${lev}x，你設 ${LV}x：停利停損按 ${lev}÷${LV} 縮小（你的 +${T.tp}%／−${T.sl}%），出場價格不變` : ''}`);
   } catch (e) {
     if (API_NO_RE.test(e.message)) {                   // 🚫 Bitunix 不開放 API 下單的幣（美股代幣等）：記起來，之後真實帳號和模擬盤都略過
@@ -1446,6 +1446,19 @@ async function fullClose(X, p, onlyThis) {             // 三種方法依序試�
   try { await bxPost('/api/v1/futures/trade/place_order', closeBody(p, p.qty), K); return; } catch (e) { errs.push('市價平倉：' + e.message); }
   throw new Error(errs.join('；'));
 }
+/* 📤 出場通知（精簡）：誰出場（交易所／機器人）、碰到什麼價、淨損益 */
+function exitMsg(X, t, reason, net) {
+  const U = `淨損益 **${net >= 0 ? '+' : '−'}${Math.abs(net).toFixed(2)}U**`, S = `**${mdEsc(t.sym)}**`;
+  let why = reason, by = '機器人已出場';
+  if (reason === 'exchange' || reason === 'liq') {         // 交易所那邊平掉的：看平倉價最接近哪一條線
+    by = '交易所已出場'; const px = t.closePx || 0, L = [['lock', t.pLk], ['fail', t.pSl], ['win', t.pTp]].filter(x => x[1] > 0 && px > 0);
+    if (reason !== 'liq' && L.length) { L.sort((a, b) => Math.abs(a[1] - px) - Math.abs(b[1] - px)); const [k, v] = L[0]; if (Math.abs(v - px) / v < 0.004 && !(k === 'lock' && !(t.pLk && t.dir * (t.pLk - t.pSl) > 0))) why = k; }
+  }
+  const lk = t.pLk > 0 ? fpx(t.pLk) : '';
+  const head = { lock: `🛡 ${S} 價格抵達套保價 ${lk}・${by}`, win: `🎯 ${S} 已止盈・${by === '交易所已出場' ? '交易所自動出場' : by}`, fail: `❌ ${S} 已止損・${by === '交易所已出場' ? '交易所自動出場' : by}`,
+    timeout: `⏱ ${S} 持有到期・機器人已出場`, manual: `🖐 ${S} 手動平倉`, all: `🛑 ${S} 一鍵平倉`, flip: `🔄 ${S} 反手平倉`, liq: `💥 ${S} 被強平`, exchange: `📤 ${S} 交易所平倉（或你在 App 平倉）` }[why] || `📤 ${S} 已出場`;
+  return `${head}・${U}`;
+}
 async function ltClosePos(X, positionId, pct, reason) {
   const K = X.A.bx, p = X.BX.pos.find(x => x.id === positionId);
   if (!p) throw new Error('找不到這筆持倉，可能已經平倉了');
@@ -1469,7 +1482,8 @@ async function ltClosePos(X, positionId, pct, reason) {
   return 'part';
 }
 // 每 3 秒：照規則管理每個帳號自動開的單（帳號之間互不影響，一個帳號出錯不會卡住其他帳號）
-const srvSlMsg = (t, lv) => `🤖 **Bitunix 不開放這個幣用 API 改止損，改由機器人到價平倉**：新的止損 **${fpx(lv)}**，價格碰到時機器人自動送單平倉（每 3 秒看價格，另外每 3 分鐘回頭檢查一次有沒有漏掉）。交易所上開倉時的原始止損 ${fpx(t.pSl)} 還在，當作保險。`;
+const hgEx = (t, lv) => `🛡 **${mdEsc(t.sym)}** 交易所已套保・套保價 ${fpx(lv)}`, hgBot = (t, lv, why) => `🛡 **${mdEsc(t.sym)}** 機器人鎖定套保・套保價 ${fpx(lv)}${why ? `（${why}）` : ''}`;
+const srvSlMsg = (t, lv) => hgBot(t, lv, `交易所不給改，原本的止損 ${fpx(t.pSl)} 留著當保險`);
 /* ⏪ 每 3 分鐘：回頭看過去 5 分鐘（伺服器停過的話從上次檢查開始，最多 2 小時）的 1 分 K，價格有沒有碰到「機器人平倉的價格」
    ——伺服器重啟、斷線、或插針太快 3 秒沒看到，都靠這個補上。碰到了就交給主迴圈立刻平倉；沒碰到不發任何通知 */
 async function bxKl1m(sym, from) {
@@ -1515,13 +1529,13 @@ async function ltManageX(X) {
       const k = Math.floor(t.dir * (px / t.entry - 1) * 100 + 1e-9);
       if (k >= 1) { const lv = t.entry * (1 + t.dir * (k - 1) / 100);
         if (!t.pLk || t.dir * (lv - t.pLk) > 0) { const first = !t.pLk; t.pLk = lv; t.lockLv = +((k - 1) * t.lev).toFixed(0); touchLT(X);
-          const head = `🛡 **特級交易套保**｜${mdEsc(t.sym)} ${t.dir > 0 ? '做多' : '做空'}：浮盈 +${(k * t.lev).toFixed(0)}%，止損移到 ${fpx(lv)}（${first ? '進場價，保本' : `鎖住 +${t.lockLv}%`}）`;
-          if (t.srvSL) { dcX(X, head + `・🤖 由機器人到價平倉（交易所不給改止損）`); }
-          else ltSlPx(X, t, lv).then(r => r.api ? dcX(X, head + '\n' + srvSlMsg(t, lv)) : dcX(X, head + (r.ok ? '・✅ 交易所止損已更新' : `\n⚠️ 交易所止損沒改成功（${mdEsc(r.err || '不明原因')}），伺服器會照 ${fpx(lv)} 幫你平倉，並每分鐘自動重試`)))
-            .catch(e => dcX(X, head + `\n⚠️ 交易所止損沒改成功（${mdEsc(e.message)}），伺服器會照 ${fpx(lv)} 幫你平倉，並每分鐘自動重試`)); } }
+          t.slNote = '';
+          if (t.srvSL) { t.slNote = 'bot'; dcX(X, hgBot(t, lv)); }
+          else ltSlPx(X, t, lv).then(r => { t.slNote = r.ok ? 'ex' : 'bot'; dcX(X, r.ok ? hgEx(t, lv) : r.api ? srvSlMsg(t, lv) : hgBot(t, lv, '交易所暫時改不了，每分鐘重試')); })
+            .catch(() => { t.slNote = 'bot'; dcX(X, hgBot(t, lv, '交易所暫時改不了，每分鐘重試')); }); } }
       if (t.pLk && ((t.slFail || 0) > 0 && t.slFail < 30 && t.slFail !== 99 || !t.slChk || !t.slV2 && t.slFail !== 99) && now - (t.slTry || 0) > 60000) {   // slV2：這版上線後每筆套保過的單都重新檢查一次，順便清掉之前重複掛的止損單
         t.slV2 = true;   // 上次沒改成功：每分鐘重試（最多 30 次）；更新前已經套保的單，先檢查一次交易所上有沒有這個止損
-        const was = t.slFail || 0, chk = !!t.slChk; t.slTry = now; ltSlPx(X, t, t.pLk).then(r => { const lv = t.pLk; if (r.api) { dcX(X, `🛡 **特級交易套保**｜${mdEsc(t.sym)}\n` + srvSlMsg(t, lv)); return; } if (r.ok && (was > 0 || r.fixed)) dcX(X, `🛡 **特級交易套保**｜${mdEsc(t.sym)}：重試成功，交易所止損已改到 ${fpx(t.pLk)}`); else if (t.slFail === 30) dcX(X, `❗ **特級交易套保**｜${mdEsc(t.sym)}：交易所止損試了 30 次都改不成（${mdEsc(r.err || '')}），請到 Bitunix 手動把止損設在 ${fpx(t.pLk)}；伺服器仍會照這個價格平倉`); }).catch(() => {});
+        const was = t.slFail || 0, chk = !!t.slChk; t.slTry = now; ltSlPx(X, t, t.pLk).then(r => { const lv = t.pLk; if (r.api) { if (t.slNote !== 'bot') dcX(X, srvSlMsg(t, lv)); t.slNote = 'bot'; return; } if (r.ok) { if (t.slNote === 'bot' || (was > 0 && t.slNote !== 'ex')) dcX(X, hgEx(t, lv)); t.slNote = 'ex'; } else if (t.slFail === 30) { dcX(X, hgBot(t, lv, '交易所一直改不了，改由機器人出場')); t.slNote = 'bot'; } }).catch(() => {});   // 只有狀態改變才通知（機器人→交易所），不再發「重試成功」
       }
       const stop = t.pLk && t.dir * (t.pLk - t.pSl) > 0 ? t.pLk : t.pSl;
       if (t.dir * (px - stop) <= 0) why = stop === t.pSl ? 'fail' : 'lock'; else if (t.dir * (px - t.pTp) >= 0) why = 'win';
@@ -1542,8 +1556,8 @@ async function ltManageX(X) {
     t.closing = true;
     try { await ltClosePos(X, t.positionId, 1, why); }
     catch (e) {
-      if (API_NO_RE.test(e.message)) { apiNoAdd(t.sym); if (!t.apiCloseMsg) { t.apiCloseMsg = now; touchLT(X); dcX(X, `🚫 **${mdEsc(t.sym)} 到了出場價，但 Bitunix 不開放用 API 平倉**\n👉 請馬上到 Bitunix App 手動平掉這筆${t.dir > 0 ? '多單' : '空單'}（現價 ${fpx(px)}）。伺服器每 10 分鐘會再試一次。`); } t.closeNext = now + 10 * 60000; }
-      else if (!t.closeMsgAt || now - t.closeMsgAt > 5 * 60000) { t.closeMsgAt = now; dcX(X, `❗ **自動平倉失敗** ${mdEsc(t.sym)}：${mdEsc(e.message)}（伺服器會一直重試，這個通知最多 5 分鐘一次）`); }
+      if (API_NO_RE.test(e.message)) { apiNoAdd(t.sym); if (!t.apiCloseMsg) { t.apiCloseMsg = now; touchLT(X); dcX(X, `🚨 **${mdEsc(t.sym)} 需要手動平倉**：到了出場價，但 Bitunix 不給用 API 平倉，請馬上到 App 平掉這筆${t.dir > 0 ? '多單' : '空單'}（現價 ${fpx(px)}）`); } t.closeNext = now + 10 * 60000; }
+      else if (!t.closeMsgAt || now - t.closeMsgAt > 5 * 60000) { t.closeMsgAt = now; dcX(X, `🚨 **${mdEsc(t.sym)} 出不了場**：機器人平倉失敗（${mdEsc(e.message)}），正在一直重試；5 分鐘後還沒出場會再通知，必要時請到 App 手動平倉`); }
     }
     t.closing = false;
   }
@@ -1588,8 +1602,7 @@ async function ltReconcile(X, pos) {
     const prevPart = t.closes.reduce((a, c) => a + c.pnl, 0);
     t.closes.push({ t: Date.now(), qty: t.qty, pnl: (t.realized || 0) - prevPart, by: reason });
     Object.assign(t, { status: 'closed', exitAt: Date.now(), reason, qty: 0, upnl: 0 }); ch = true;
-    const net = ltNet(t), nm = (t.src === 'tool' ? '🗡 **特級交易平倉**｜' : X.sim ? '🤖 **自動單平倉**｜' : '🤖 **實盤平倉**｜') + ({ win: t.pSl > 0 ? '🎯 止盈出場（1:1）' : '✅ 達標出場', lock: t.pSl > 0 ? `🛡 套保出場（${t.lockLv > 0 ? `鎖住 +${t.lockLv}%` : '保本'}）` : `🔒 鎖利出場（鎖利線 +${pctK(t.lockLv || TRule(X, t).tp, rk(t, t.ruleLev || t.lev))}%）`, fail: t.pSl > 0 ? '❌ 止損出場（FVG／OB）' : '❌ 失敗線出場', timeout: '⏱ 持有到期出場', manual: '🖐 手動平倉', all: '🛑 一鍵平倉（自動單）', flip: '🔄 反手平倉', liq: '💥 強平', exchange: '📤 交易所平倉（止損或在 App 平倉）' }[reason] || reason);
-    dcX(X, `${nm} **${mdEsc(t.sym)}** ${t.dir > 0 ? '做多' : '做空'}\n淨損益 **${net >= 0 ? '+' : '−'}${Math.abs(net).toFixed(2)}U**（${(net / (t.m0 || X.A.lt.margin) * 100).toFixed(0)}%）・持有 ${durTxt(Date.now() - t.et)}${t.closePx ? `・平倉均價 ${fpx(t.closePx)}` : ''}`);
+    const net = ltNet(t); dcX(X, exitMsg(X, t, reason, net));
   }
   // 🔍 第二層判斷：沒被管理的倉位，如果其實是伺服器開的，就自動接回管理（每筆倉位每 5 分鐘檢查一次）
   //    ① 跟訊號卡片同幣、同方向，開倉時間跟卡片進場時間差 20 秒內（人看到通知再手動跟單通常要更久，不會被誤接）
