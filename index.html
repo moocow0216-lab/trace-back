@@ -539,7 +539,7 @@ body.gated{overflow:hidden}
 dialog#qViewDlg{padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);width:min(980px,96vw);max-width:96vw}
 dialog#qViewDlg::backdrop{background:rgba(7,7,7,.62)}
 .qvgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:8px 0}
-.qvgrid div{border:1px solid var(--line);border-radius:8px;padding:7px 9px}.qvgrid span{display:block;font-size:12px;color:var(--muted)}.qvgrid b{font-size:15px}
+.qvgrid div{border:1px solid var(--line);border-radius:8px;padding:7px 9px;min-width:0}.qvgrid span{display:block;font-size:12px;color:var(--muted)}.qvgrid b{font-size:15px;display:block;overflow-wrap:anywhere;word-break:break-word;line-height:1.35}
 dialog#qAdmDlg{padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);width:min(820px,96vw);max-width:96vw}
 dialog#qAdmDlg::backdrop{background:rgba(7,7,7,.62)}
 .qadm table td,.qadm table th{text-align:left;white-space:nowrap}
@@ -1453,7 +1453,7 @@ input[type=checkbox],input[type=radio],input[type=range]{accent-color:var(--g1)}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-20a</div>
+      <div class="qver" id="qVer">網站版本 2026-11-21c</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3929,7 +3929,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.man = j.lt.man || []; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-20a・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-21c・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     if (j.notice) ntShow(j.notice);                     // 📢 擁有者發的更新通知
     $('qAnnBox').hidden = !OWN(); if (OWN() && !$('ann_t').value && !$('ann_x').value) annFill();
@@ -8071,6 +8071,9 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-21c', title: '2026/11/21 更新（查看帳號）', items: [
+    { ic: '👁', t: '查看帳號：信箱、電話太長時會自動換行，不會再疊在一起；最後一格多了「使用機器人天數」（從第一筆自動單算起，還沒下過單就從註冊那天算）。' }
+  ] },
   { id: '2026-11-20a', title: '2026/11/20 更新（止損依回踩位置）', items: [
     { ic: '🧱', t: '特級交易的止損改成看「回踩到哪裡」：只回踩到失衡區（FVG）就進場的單，止損放在 FVG 外緣（做多＝下緣、做空＝上緣）；實體收破 FVG 回踩到 OB、或插針碰到 OB 的，止損才放在 OB 外緣。開倉通知會寫是 FVG 還是 OB。這版之前已經開的單照原本的止損。' }
   ] },
@@ -10356,6 +10359,11 @@ async function viewLoad(uid) {
   try { const v = await srvFetch('/api/users/view?uid=' + encodeURIComponent(uid)); if (VIEW_UID === uid) { VIEW_DATA = v; $('qViewBody').innerHTML = viewHtml(v); } }
   catch (e) { $('qViewBody').innerHTML = `<p class="qgerr">${esc(e.message)}</p>`; }
 }
+function useDays(v) {                                   // 📅 使用機器人天數：從第一筆自動單算起（還沒下過單就從註冊那天算）
+  const from = v.firstTrade || 0, base = from || v.created || 0; if (!base) return '';
+  const d = Math.max(1, Math.ceil((Date.now() - base) / 86400000));
+  return `<div><span>使用機器人天數</span><b>${d} 天</b><em class="tlmut" style="font-size:11.5px;font-style:normal">${from ? '第一筆自動單 ' : '註冊 '}${fmtT(base).slice(0, 10)}</em></div>`;
+}
 function viewHtml(v) {
   const box = (k, val) => `<div><span>${k}</span><b>${val}</b></div>`, L = v.lt || {};
   const head = box('權限', (v.role === 'admin' ? '管理員' : '用戶') + (v.owner ? '・擁有者' : '')) + box('Google 信箱', v.bind ? esc(v.bind.email) + (v.bind.google ? ' ✅' : '') : '還沒綁定') + box('手機', v.bind ? esc(v.bind.phone) : '—') + box('最後登入', v.last ? fmtT(v.last) : '—') + (v.note ? box('備註', esc(v.note)) : '');
@@ -10366,7 +10374,7 @@ function viewHtml(v) {
       box('特級交易權益', ((v.spBot || {}).eq || 0).toFixed(2) + 'U') + box('今日損益', `<span class="${(v.spDay || 0) >= 0 ? 'qg' : 'qr'}">${vU(v.spDay || 0)}</span>`) :
     box('自動交易', L.on ? '<span class="qg">運作中</span>' : '暫停') + box('合約帳戶權益', (v.acctEq || 0).toFixed(2) + 'U') + box('投入資金', L.budget > 0 ? L.budget + 'U' : '整個帳戶') +
     box('自動交易權益', (B.eq || 0).toFixed(2) + 'U') + box('今日損益', `<span class="${v.dayPnl >= 0 ? 'qg' : 'qr'}">${vU(v.dayPnl)}</span>`)) +
-    box('已結單', `${S.n || 0} 筆・賺 ${S.win || 0} 筆${S.be ? `・🛡 撞保本 ${S.be} 筆（不算）` : ''}`) + box('累計淨損益', `<span class="${S.net >= 0 ? 'qg' : 'qr'}">${vU(S.net)}</span>`) + box('手續費合計', (S.fee || 0).toFixed(2) + 'U');
+    box('已結單', `${S.n || 0} 筆・賺 ${S.win || 0} 筆${S.be ? `・🛡 撞保本 ${S.be} 筆（不算）` : ''}`) + box('累計淨損益', `<span class="${S.net >= 0 ? 'qg' : 'qr'}">${vU(S.net)}</span>`) + box('手續費合計', (S.fee || 0).toFixed(2) + 'U') + useDays(v);
   const cfg = SPONLY ? `特級交易：每筆 ${L.spMargin ?? L.margin}U・${L.spLev ?? L.lev}x・單日虧損上限 ${L.spDayLoss ?? '—'}U・止損 FVG／OB、止盈 1:1・最長持有 ${+((L.spHold || 168) / 24).toFixed(1)} 天${v.msg ? '・' + esc(v.msg) : ''}` : `每筆 ${L.margin}U・${L.lev}x・單日虧損上限 ${L.dayLoss}U・浮虧 −${L.sl}% 平倉・鎖利每 ${L.step}% 上調・最長持有 ${+(L.hold / 24).toFixed(1)} 天${v.msg ? '・' + esc(v.msg) : ''}`;
   const pos = (v.pos || []).length ? `<div class="tablewrap"><table class="stat"><thead><tr><th>幣種</th><th>方向</th><th>槓桿</th><th>數量</th><th>開倉價</th><th>現價</th><th>未實現損益</th><th>保證金</th><th>強平價</th><th>開倉時間</th><th>來源</th></tr></thead><tbody>` +
     v.pos.map(p => `<tr><td><b>${esc(p.sym)}</b></td><td>${p.dir > 0 ? '做多' : '做空'}</td><td>${p.lev}x</td><td>${p.qty}</td><td>${p.entry}</td><td>${p.px ?? '—'}</td><td class="${p.upnl >= 0 ? 'qg' : 'qr'}">${vU(p.upnl)}</td><td>${(+p.margin).toFixed(2)}U</td><td>${p.liq > 0 ? p.liq : '低風險'}</td><td>${p.ctime ? fmtT(p.ctime) : '—'}</td><td>${p.bot ? '🤖 自動' : `手動${OWN() && p.id ? `<br><button class="iconbtn" data-vadopt="${esc(p.id)}" data-s="${esc(p.sym)}" data-dir="${p.dir}" data-lev="${p.lev}" data-ct="${p.ctime || 0}">🤖 幫他改成自動單</button>` : ''}`}</td></tr>`).join('') + '</tbody></table></div>' : '<p class="qrepnote">目前沒有持倉。</p>';
