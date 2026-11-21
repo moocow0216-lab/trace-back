@@ -1130,7 +1130,7 @@ body.sponly #qLtSt,body.sponly #qLtToggle,body.sponly #qLtMsg,body.sponly #qLtCf
 body.sponly #qScanBox,body.sponly #qCfg,body.sponly #qBtArea .qbtrow,body.sponly #qBtCmp,body.sponly #qPnl,body.sponly #qKpi,body.sponly .qdsrc,body.sponly #qSidePanel,body.sponly #qTabCards,
 body.sponly #qSrc,body.sponly #qAuto,body.sponly #qScan,body.sponly #qStat,body.sponly .qprog,body.sponly #qBtcNow,body.sponly label.tzsel:has(#qf_src),body.sponly #qTab th:nth-child(5),body.sponly #qTab td:nth-child(5),body.sponly label:has(>#qtg_entry),body.sponly label:has(>#qtg_exit),body.sponly .tlrow:has(#tlNewPw),body.sponly .tlrow:has(#tlNewPw)+.tlsub,body.sponly #qBxSum,body.sponly button[data-adopt],body.sponly button[data-a="lt"],body.sponly #qa_allOff,body.sponly #qa_allOn,body.sponly .qbxadopt{display:none!important}
 </style>
-<style id="suCss">
+<style id="suCss">.suerr{padding:60px 16px;text-align:center;color:#e8c96a;border:1px solid rgba(212,175,55,.35);border-radius:16px;background:#111;line-height:1.8}.suerr small{color:#aaa}
 .suwrap{max-width:560px;margin:0 auto}
 .suvid{display:block;width:100%;max-height:72vh;aspect-ratio:9/16;object-fit:contain;background:#000;border-radius:16px;border:1px solid #2b2415}
 .sulist{list-style:none;padding:0;margin:14px 0;display:grid;gap:8px}
@@ -1465,7 +1465,7 @@ input[type=checkbox],input[type=radio],input[type=range]{accent-color:var(--g1)}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-21d</div>
+      <div class="qver" id="qVer">網站版本 2026-11-22a</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3942,7 +3942,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.man = j.lt.man || []; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-21d・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-22a・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     if (j.notice) ntShow(j.notice);                     // 📢 擁有者發的更新通知
     $('qAnnBox').hidden = !OWN(); if (OWN() && !$('ann_t').value && !$('ann_x').value) annFill();
@@ -8086,7 +8086,7 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
-  { id: '2026-11-21d', title: '2026/11/21 更新（新手設定影片）', items: [
+  { id: '2026-11-22a', title: '2026/11/21 更新（新手設定影片）', items: [
     { ic: '🎬', t: '選單多了「註冊與設定資金」：一支 50 秒的影片，教你在 Bitunix 建立 API、貼到 QEVRAX、設定特級交易的資金（每筆保證金建議設成總資產的 1/100）。新帳號第一次登入會自動播放。使用說明裡的 API、資金設定頁拿掉了，改看這支影片。' }
   ] },
   { id: '2026-11-21c', title: '2026/11/21 更新（查看帳號）', items: [
@@ -8613,7 +8613,7 @@ const SETUP_STEPS = [
   ['④', '「特級交易設定」填投入資金；<b>每筆保證金建議設成總資產的 1/100</b>（總資產 1000U → 每筆 10U），按「儲存」'],
   ['⑤', '審核通過後，回首頁按「▶ 特級」開始']];
 function setupHtml() {
-  return `<div class="suwrap"><video class="suvid" src="${SETUP_VID}" controls playsinline preload="metadata"></video>
+  return `<div class="suwrap"><video class="suvid" src="${SETUP_VID}" controls playsinline preload="metadata" onerror="this.outerHTML='<div class=&quot;suerr&quot;>⚠️ 影片載入失敗<br><small>請確認 setup-guide.mp4 已上傳到網站（與 index.html 同一個資料夾）</small></div>'"></video>
     <ol class="sulist">${SETUP_STEPS.map(([n, t]) => `<li><span>${n}</span><p>${t}</p></li>`).join('')}</ol>
     <p class="tlsub">看完還是不會？請聯絡邀請你的管理員。</p></div>`;
 }
@@ -8621,7 +8621,7 @@ function setupDlg(after) {                              // 第一次登入：先
   let d = $('suDlg');
   if (!d) { d = document.createElement('dialog'); d.id = 'suDlg'; d.className = 'sudlg'; document.body.appendChild(d); }
   d.innerHTML = `<div class="suhead"><b>🎬 新手設定：3 步驟開始自動交易</b><button class="btn" id="suX">看完了</button></div>
-    <video class="suvid" src="${SETUP_VID}" controls playsinline autoplay preload="auto"></video>
+    <video class="suvid" src="${SETUP_VID}" controls playsinline autoplay preload="auto" onerror="this.outerHTML='<div class=&quot;suerr&quot;>⚠️ 影片載入失敗<br><small>請確認 setup-guide.mp4 已上傳到網站（與 index.html 同一個資料夾）</small></div>'"></video>
     <button class="btn" id="suSnd" hidden>🔊 開聲音</button>
     <p class="tlsub">之後也可以在「☰ 選單 → 🎬 註冊與設定資金」再看一次。</p>`;
   const v = d.querySelector('video');
