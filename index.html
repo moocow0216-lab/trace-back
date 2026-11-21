@@ -1130,6 +1130,18 @@ body.sponly #qLtSt,body.sponly #qLtToggle,body.sponly #qLtMsg,body.sponly #qLtCf
 body.sponly #qScanBox,body.sponly #qCfg,body.sponly #qBtArea .qbtrow,body.sponly #qBtCmp,body.sponly #qPnl,body.sponly #qKpi,body.sponly .qdsrc,body.sponly #qSidePanel,body.sponly #qTabCards,
 body.sponly #qSrc,body.sponly #qAuto,body.sponly #qScan,body.sponly #qStat,body.sponly .qprog,body.sponly #qBtcNow,body.sponly label.tzsel:has(#qf_src),body.sponly #qTab th:nth-child(5),body.sponly #qTab td:nth-child(5),body.sponly label:has(>#qtg_entry),body.sponly label:has(>#qtg_exit),body.sponly .tlrow:has(#tlNewPw),body.sponly .tlrow:has(#tlNewPw)+.tlsub,body.sponly #qBxSum,body.sponly button[data-adopt],body.sponly button[data-a="lt"],body.sponly #qa_allOff,body.sponly #qa_allOn,body.sponly .qbxadopt{display:none!important}
 </style>
+<style id="suCss">
+.suwrap{max-width:560px;margin:0 auto}
+.suvid{display:block;width:100%;max-height:72vh;aspect-ratio:9/16;object-fit:contain;background:#000;border-radius:16px;border:1px solid #2b2415}
+.sulist{list-style:none;padding:0;margin:14px 0;display:grid;gap:8px}
+.sulist li{display:flex;gap:10px;align-items:flex-start;border:1px solid #2b2415;border-radius:12px;padding:10px 12px;background:#0d0d0d}
+.sulist span{color:#f1d77a;font-weight:800}.sulist p{margin:0;line-height:1.55}
+.sudlg{border:1px solid #3a3018;border-radius:18px;background:#0a0a0a;color:var(--ink);padding:14px;width:min(440px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto}
+.sudlg::backdrop{background:rgba(0,0,0,.75);backdrop-filter:blur(3px)}
+.suhead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.suhead b{color:#f1d77a}
+.sudlg .suvid{max-height:68dvh}
+#suSnd{margin-top:8px;width:100%}
+</style>
 <style id="bgTheme">/* 🖤 黑金主題（全站）＋ 選單滑動膠囊、頁面轉場 */
 :root,:root[data-theme="dark"],:root[data-theme="light"]{
   --bg:#060606; --panel:#0c0c0c; --panel2:#121212; --ink:#f3ecd9; --muted:#a69b7d; --faint:#6f6650; --line:#24211c;
@@ -1453,7 +1465,7 @@ input[type=checkbox],input[type=radio],input[type=range]{accent-color:var(--g1)}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-21c</div>
+      <div class="qver" id="qVer">網站版本 2026-11-21d</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -1797,6 +1809,7 @@ input[type=checkbox],input[type=radio],input[type=range]{accent-color:var(--g1)}
 <div id="mnpStats" class="mnstats"></div>
 <div id="mnpXent" class="mnxent"></div>
 <div id="mnpBill" class="mnbill"></div>
+<div id="mnpSetup" class="mnsetup"></div>
 <div id="mnpKline" class="mnkline"></div>
 <div id="mnpEq" class="mneq"></div>
 <div id="mnpToolH" class="tlwrap" hidden></div>
@@ -3929,7 +3942,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.man = j.lt.man || []; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-21c・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-21d・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     if (j.notice) ntShow(j.notice);                     // 📢 擁有者發的更新通知
     $('qAnnBox').hidden = !OWN(); if (OWN() && !$('ann_t').value && !$('ann_x').value) annFill();
@@ -4285,7 +4298,7 @@ async function gdSave(body, okMsg) {                  // 用網站原本的 API 
 }
 function gdRender() {
   if (GD.news) return gdNews();
-  const NS = SPONLY ? 3 : 4, PG = gdPages(), last = PG.length - 1, nF = PG.length - NS - 1; if (GD.i > last) GD.i = last;   // NS：設定有幾步（特級專用版沒有「鎖利」那一步）
+  const NS = SPONLY ? 1 : 4, PG = gdPages(), last = PG.length - 1, nF = PG.length - NS - 1; if (GD.i > last) GD.i = last;   // NS：設定有幾步（特級專用版：API、資金改看「🎬 註冊與設定資金」影片，只剩 Discord）
   const p = PG[GD.i], setup = GD.i < NS, feat = GD.i >= NS && GD.i < last, done = p === 'done';
   const head = done ? '' : `<div class="gdhead"><span>${setup ? `設定 ${GD.i + 1}／${NS}` : `功能介紹 ${GD.i - NS + 1}／${nF}`}</span><span class="gd2b"><button class="gdbtn sm" id="gd_news">📰 更新紀錄</button><button class="gdbtn" id="gd_skip">${setup ? '略過' : '略過介紹'}</button></span></div>
     ${setup ? `<div class="gdprog">${[0, 1, 2, 3].slice(0, NS).map(k => `<i class="${k <= GD.i ? 'on' : ''}"></i>`).join('')}</div>` : `<div class="gddots">${PG.slice(NS, last).map((_, k) => `<i class="${k + NS === GD.i ? 'on' : ''}"></i>`).join('')}</div>`}`;
@@ -4349,7 +4362,7 @@ const MN_ITEMS = [                                    // [代號, 圖示, 名稱
   ['pos', '💼', '持倉', 'qBx', '#d4af37', '交易'], ['tool', '🗡', '特級咒具', 'mnpTool', '#ef4444', '交易'], ['xent', '🔔', '額外進場', 'mnpXent', '#a78bfa', '交易'], ['cards', '📡', '訊號卡片', 'qSidePanel', '#22d3ee', '交易'],
   ['stats', '🎯', '成功率', 'mnpStats', '#34d399', '數據'], ['eq', '📈', '資金曲線', 'mnpEq', '#60a5fa', '數據'], ['hist', '📋', '歷史紀錄', 'qTabPanel', '#fbbf24', '數據'], ['bt', '📊', '回測數據', 'qBtHost', '#2dd4bf', '數據'],
   ['kline', '🕯', 'K 線圖', 'mnpKline', '#f59e0b', '市場'], ['heat', '🔥', '熱力圖', 'qHeatHost', '#fb923c', '市場'], ['pat', '📉', '歷史走勢', '', '#a78bfa', '市場'], ['news', '📰', '加密新聞', 'newsPanel', '#f472b6', '市場'], ['whale', '🐋', '幣安鯨魚大單', 'whalePanel', '#38bdf8', '市場'],
-  ['bill', SPONLY ? '🎟' : '💳', SPONLY ? '審核註冊' : '方案與繳費', 'mnpBill', '#34d399', '其他'], ['set', '👤', '設定', 'mnpSet', '#7aa2ff', '其他'], ['guide', '📖', '使用說明', '', '#94a3b8', '其他']].filter(x => !(SPONLY && x[0] === 'cards'));   // 🗡 特級專用版：沒有 CVD 訊號卡片
+  ['bill', SPONLY ? '🎟' : '💳', SPONLY ? '審核註冊' : '方案與繳費', 'mnpBill', '#34d399', '其他'], ['setup', '🎬', '註冊與設定資金', 'mnpSetup', '#d4af37', '其他'], ['set', '👤', '設定', 'mnpSet', '#7aa2ff', '其他'], ['guide', '📖', '使用說明', '', '#94a3b8', '其他']].filter(x => !(SPONLY && x[0] === 'cards'));   // 🗡 特級專用版：沒有 CVD 訊號卡片
 /* ---------- 🗡 特級咒具：上鎖（擁有者或輸入密碼的人才能用）；一個幣一張卡片；設定收在「⚙ 設定」裡 ---------- */
 const TL = { d: null, timer: null, hf: 'all', hn: 60 };
 const TL_PN = { h4: { hn: '4H', ln: '15M', nm: '4H→15M', hms: 4 * 3600000 }, h1: { hn: '1H', ln: '5M', nm: '1H→5M', hms: 3600000 } };
@@ -8017,6 +8030,8 @@ function mnOpen(k) {
   clearInterval(TL.timer);
   if (k === 'tool') { $('mnpTool').innerHTML = '<p class="tlsub">載入中…</p>'; tlLoad('tool'); TL.timer = setInterval(() => { if (MN_PAGE === 'tool' && TL.d && !($('tlDlg') && $('tlDlg').open)) tlLoad('tool'); }, 20000); }   // 設定視窗打開時不更新
   if (k === 'kline') { klGate().then(ok => { if (ok && MN_PAGE === 'kline') { klInit(); ksyPull(); } }); } else klClose();   // 🕯 K 線圖：先檢查圖表鎖，再打開（離開就關掉即時連線）
+  if (k === 'setup') $('mnpSetup').innerHTML = setupHtml();
+  else { const v = $('mnpSetup').querySelector('video'); if (v) v.pause(); }
   if (k === 'bill' && SPONLY) {                        // 🎟 特級專用版：「審核註冊」只有邀請碼審核（沒有繳費）
     if (!CANW()) { $('mnpBill').innerHTML = '<p class="tlsub">這個頁面只有擁有者和管理員可以看。</p>'; }
     else { $('mnpBill').innerHTML = `<div class="bi"><section class="bibox" id="refAdm">${RA.html || '<p class="tlmut">讀取中…</p>'}</section></div>`; refBind(); refLoad();
@@ -8071,6 +8086,9 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-21d', title: '2026/11/21 更新（新手設定影片）', items: [
+    { ic: '🎬', t: '選單多了「註冊與設定資金」：一支 50 秒的影片，教你在 Bitunix 建立 API、貼到 QEVRAX、設定特級交易的資金（每筆保證金建議設成總資產的 1/100）。新帳號第一次登入會自動播放。使用說明裡的 API、資金設定頁拿掉了，改看這支影片。' }
+  ] },
   { id: '2026-11-21c', title: '2026/11/21 更新（查看帳號）', items: [
     { ic: '👁', t: '查看帳號：信箱、電話太長時會自動換行，不會再疊在一起；最後一格多了「使用機器人天數」（從第一筆自動單算起，還沒下過單就從註冊那天算）。' }
   ] },
@@ -8510,7 +8528,7 @@ $('ann_go').onclick = async () => {
 };
 $('nwAll').onclick = () => { $('nwDlg').close(); GD.news = true; GD.newsNext = true; gdOpen(0); };
 /* ---------- 📖 使用說明書：功能介紹（頁數依權限：有特級咒具權限多一頁） ---------- */
-const gdPages = () => SPONLY ? ['api', 'dc', 'fund', 'f6', 'war', 'f2', 'f3', 'f5', 'kl1', 'kl2', 'kl3', ...(OWN() ? ['own'] : []), 'done'] : ['api', 'dc', 'fund', 'tp', 'f1', 'war', 'f2', 'f3', 'f4', 'f5', 'kl1', 'kl2', 'kl3', 'bill', ...(OWN() ? ['own'] : []), ...(SRVLT.toolOk ? ['f6'] : []), 'done'];
+const gdPages = () => SPONLY ? ['dc', 'f6', 'war', 'f2', 'f3', 'f5', 'kl1', 'kl2', 'kl3', ...(OWN() ? ['own'] : []), 'done'] : ['api', 'dc', 'fund', 'tp', 'f1', 'war', 'f2', 'f3', 'f4', 'f5', 'kl1', 'kl2', 'kl3', 'bill', ...(OWN() ? ['own'] : []), ...(SRVLT.toolOk ? ['f6'] : []), 'done'];
 function gdPage2(p) {
   if (p === 'fund') return gdPage('fund') + gdTip('投入資金就是起始本金：之後改投入資金，過去的盈虧會照算進去。帳戶的錢不夠時會提醒「資金不足」；不想讓自動交易用了，可以在設定裡「收回資金」。');
   if (p === 'f1') return `<div class="gdmock"><div class="gd2"><span class="gdbtn pri fake">▶ 開始交易</span><span class="gdbtn red fake">一鍵平倉（自動單）</span></div>
@@ -8586,9 +8604,36 @@ function gdNews() {                                   // 📰 更新紀錄（在
   $('gd_newsBack').onclick = () => { GD.news = false; gdRender(); };
   $('gd_newsX').onclick = () => gdClose();
 }
+/* 🎬 新手設定影片（Bitunix 拿 API → 貼到 QEVRAX → 設定資金）：選單「註冊與設定資金」、新帳號第一次登入自動播放 */
+const SETUP_VID = 'setup-guide.mp4';
+const SETUP_STEPS = [
+  ['①', 'Bitunix：頭像 → 個人中心 → API管理 → 創建API'],
+  ['②', '權限勾「交易」・<b>不要開「提現」</b>・IP 白名單 <b>3.107.254.240</b>'],
+  ['③', '複製 API Key、Secret Key（Secret Key 只顯示一次）→ QEVRAX「☰ 選單 → 設定 → Bitunix API」貼上，按「儲存並測試」'],
+  ['④', '「特級交易設定」填投入資金；<b>每筆保證金建議設成總資產的 1/100</b>（總資產 1000U → 每筆 10U），按「儲存」'],
+  ['⑤', '審核通過後，回首頁按「▶ 特級」開始']];
+function setupHtml() {
+  return `<div class="suwrap"><video class="suvid" src="${SETUP_VID}" controls playsinline preload="metadata"></video>
+    <ol class="sulist">${SETUP_STEPS.map(([n, t]) => `<li><span>${n}</span><p>${t}</p></li>`).join('')}</ol>
+    <p class="tlsub">看完還是不會？請聯絡邀請你的管理員。</p></div>`;
+}
+function setupDlg(after) {                              // 第一次登入：先看影片，關掉後再接使用說明
+  let d = $('suDlg');
+  if (!d) { d = document.createElement('dialog'); d.id = 'suDlg'; d.className = 'sudlg'; document.body.appendChild(d); }
+  d.innerHTML = `<div class="suhead"><b>🎬 新手設定：3 步驟開始自動交易</b><button class="btn" id="suX">看完了</button></div>
+    <video class="suvid" src="${SETUP_VID}" controls playsinline autoplay preload="auto"></video>
+    <button class="btn" id="suSnd" hidden>🔊 開聲音</button>
+    <p class="tlsub">之後也可以在「☰ 選單 → 🎬 註冊與設定資金」再看一次。</p>`;
+  const v = d.querySelector('video');
+  v.muted = false; const pr = v.play(); if (pr && pr.catch) pr.catch(() => { v.muted = true; v.play().catch(() => {}); $('suSnd').hidden = false; });   // 瀏覽器不准有聲自動播放 → 先靜音播，給一個開聲音的按鈕
+  $('suSnd').onclick = () => { v.muted = false; v.play().catch(() => {}); $('suSnd').hidden = true; };
+  $('suX').onclick = () => d.close();
+  d.addEventListener('close', () => { v.pause(); if (SRV.uid) LS.set('quantVid:' + SRV.uid, 1); if (after) after(); }, { once: true });
+  d.showModal();
+}
 function gdAuto() {                                   // 新帳號第一次登入、還沒設 API：自動打開一次
   if (GD.auto || !MINE() || !SRV.uid || !SRVBX) return; GD.auto = true;   // 等讀到 API 狀態才判斷（API 狀態比 Discord 晚一點讀到）
-  if (!LS.get('quantGuide:' + SRV.uid) && !gdHasApi()) { gdOpen(0); LS.set('quantSeen:' + SRV.uid, NW_LAST); return; }   // 新帳號先看說明書，不另外跳更新
+  if (!LS.get('quantGuide:' + SRV.uid) && !gdHasApi()) { LS.set('quantSeen:' + SRV.uid, NW_LAST); if (!LS.get('quantVid:' + SRV.uid)) setupDlg(() => gdOpen(0)); else gdOpen(0); return; }   // 新帳號：先看新手設定影片，再看使用說明（不另外跳更新）
   nwAuto();                                            // 📰 有新的更新：跳一次
 }
 
