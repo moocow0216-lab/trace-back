@@ -628,6 +628,8 @@ body.mode-pat #qPanel,body.mode-news #qPanel,body.mode-pat #newsPanel,body.mode-
 .fvrow{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x proximity;padding:2px 2px 12px;align-items:stretch;scrollbar-width:thin}
 .fvrow:focus-visible{outline:2px solid #f5b642;outline-offset:2px;border-radius:12px}
 .fvempty{padding:24px 4px}
+button.fvchip{cursor:pointer;font:inherit;font-size:12px;transition:background .15s,transform .15s}button.fvchip:hover{background:rgba(212,175,55,.12);transform:translateY(-1px)}button.fvchip.on{background:rgba(212,175,55,.16);box-shadow:0 0 0 1px rgba(212,175,55,.5)}
+.tlfind{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0 8px}.tlfind input{flex:0 1 260px;min-width:0;padding:8px 12px;border-radius:10px;border:1px solid #3e372a;background:#0d0d0d;color:inherit;font:inherit}.tlfind input:focus{outline:none;border-color:#d4af37}
 .fvcard{flex:0 0 272px;scroll-snap-align:start;display:flex;flex-direction:column;gap:12px;border:1px solid #383329;border-top:4px solid var(--fc);border-radius:16px;padding:14px;background:linear-gradient(180deg,#1a1a1a,#141414)}
 .fvcard.up{--fc:#22c55e}.fvcard.dn{--fc:#ef4444}
 .fvch{display:flex;justify-content:space-between;gap:8px}.fvdir{display:block;font-size:12.5px;font-weight:700;color:var(--fc)}
@@ -1465,7 +1467,7 @@ input[type=checkbox],input[type=radio],input[type=range]{accent-color:var(--g1)}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-22b</div>
+      <div class="qver" id="qVer">網站版本 2026-11-22c</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3942,7 +3944,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.man = j.lt.man || []; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-22b・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-22c・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     if (j.notice) ntShow(j.notice);                     // 📢 擁有者發的更新通知
     $('qAnnBox').hidden = !OWN(); if (OWN() && !$('ann_t').value && !$('ann_x').value) annFill();
@@ -4364,7 +4366,7 @@ const MN_ITEMS = [                                    // [代號, 圖示, 名稱
   ['kline', '🕯', 'K 線圖', 'mnpKline', '#f59e0b', '市場'], ['heat', '🔥', '熱力圖', 'qHeatHost', '#fb923c', '市場'], ['pat', '📉', '歷史走勢', '', '#a78bfa', '市場'], ['news', '📰', '加密新聞', 'newsPanel', '#f472b6', '市場'], ['whale', '🐋', '幣安鯨魚大單', 'whalePanel', '#38bdf8', '市場'],
   ['bill', SPONLY ? '🎟' : '💳', SPONLY ? '審核註冊' : '方案與繳費', 'mnpBill', '#34d399', '其他'], ['setup', '🎬', '註冊與設定資金', 'mnpSetup', '#d4af37', '其他'], ['set', '👤', '設定', 'mnpSet', '#7aa2ff', '其他'], ['guide', '📖', '使用說明', '', '#94a3b8', '其他']].filter(x => !(SPONLY && x[0] === 'cards'));   // 🗡 特級專用版：沒有 CVD 訊號卡片
 /* ---------- 🗡 特級咒具：上鎖（擁有者或輸入密碼的人才能用）；一個幣一張卡片；設定收在「⚙ 設定」裡 ---------- */
-const TL = { d: null, timer: null, hf: 'all', hn: 60 };
+const TL = { d: null, timer: null, hf: 'all', hn: 60, q: '', ex: false };   // q／ex：特級咒具查詢的幣種（ex＝點標籤，只看完全一樣的幣）
 const TL_PN = { h4: { hn: '4H', ln: '15M', nm: '4H→15M', hms: 4 * 3600000 }, h1: { hn: '1H', ln: '5M', nm: '1H→5M', hms: 3600000 } };
 async function tlLoad(page) {
   const host = page === 'toolh' ? 'mnpToolH' : 'mnpTool';
@@ -4385,20 +4387,35 @@ function tlRender() {
   if (!$('tlCards')) {                                // 第一次：畫外框（之後每 20 秒只更新內容，打開中的設定視窗不會被洗掉）
     $('mnpTool').innerHTML = `<div class="tlhead"><div><b>🗡 特級咒具・FVG／OB 回踩</b><span class="tlsub" id="tlStat"></span></div>
       <div class="tlrow tltools"><button class="btn" id="tlHistBtn">📜 特級咒具歷史</button><button class="btn" id="tlSetBtn">⚙ 設定</button></div></div>
+      <div class="tlfind"><button class="btn" id="tlBack" hidden>← 返回全部</button><input id="tlQ" type="search" list="tlQL" autocomplete="off" placeholder="🔍 查詢幣種（例：BTC）" aria-label="查詢幣種"><datalist id="tlQL"></datalist><span class="tlmut" id="tlQn" role="status"></span></div>
       <div class="fvwait" id="tlWait"></div>
       <div class="fvrow" id="tlCards" tabindex="0" aria-label="進行中的卡片，可以左右滑動"></div>
-      <p class="tlsub">步驟：① 4H／1H 出現 FVG＋OB（數值在設定的範圍內）→ ② 價格回踩，這時卡片出現；那根 4H／1H 收盤時看實體 K：收在 FVG 裡＝回踩 FVG、收破 FVG＝回踩 OB、插針碰到 OB 又收回 FVG＝回踩 FVG、OB、連 OB 都收破＝失效 → ③ 15M／5M 出現同方向 CHoCH 或 BOS（先出現反方向就失效）→ ④ 回踩 15M／5M FVG 進場，止損＝4H／1H FVG／OB 範圍的低點（做空＝高點），止盈 1:1；價格每往有利方向走 1% 套保一次（第 1 次保本）。回踩後 4H／1H 收盤收破整個 FVG／OB 範圍、FVG／OB 被指標刪掉、或回踩後 40 根 4H／1H 還沒進場，卡片就失效，移到「📜 特級咒具歷史」。</p>
       <dialog id="tlDlg" class="tldlg" aria-labelledby="tlDlgT"><div class="tldlgh"><h3 id="tlDlgT">⚙ 特級咒具設定</h3><button class="btn" id="tlDlgX">關閉</button></div><div id="tlDlgB"></div></dialog>`;
     $('tlSetBtn').onclick = () => { tlSettings(); $('tlDlg').showModal(); };
     $('tlDlgX').onclick = () => $('tlDlg').close();
     $('tlHistBtn').onclick = () => mnOpen('toolh');
+    $('tlQ').oninput = () => tlPick($('tlQ').value, false);
+    $('tlQ').onkeydown = e => { if (e.key === 'Escape') tlPick('', false); };
+    $('tlBack').onclick = () => tlPick('', false);
+    $('tlWait').onclick = e => { const b = e.target.closest('[data-s]'); if (b) tlPick(b.dataset.s, true); };
   }
   const d = TL.d, S = d.set;
   $('tlStat').innerHTML = `成交額前 ${S.n} 個幣・${[S.h4 ? '4H→15M（每 15 分鐘）' : '', S.h1 ? '1H→5M（每 5 分鐘）' : ''].filter(Boolean).join('、') || '已全部關閉'}・數值 ${S.vmin > 0 ? `${S.vmin}%～` : '≤ '}${S.vmax}%・上次掃描 ${d.scan.at ? fmtT(d.scan.at).slice(-5) : '還沒掃描'}${d.scan.err ? `・<span class="qr">${esc(d.scan.err)}</span>` : ''}${d.hook ? '' : '・<span class="qy">Discord 還沒設定（按 ⚙ 設定）</span>'}`;
-  const W = (d.wait || []).slice().sort((a, b) => b.t - a.t);
-  $('tlWait').innerHTML = `<span class="tlmut">① 等待回踩的 FVG／OB：${W.length} 個</span>${W.slice(0, 30).map(z => `<span class="fvchip ${z.dir > 0 ? 'up' : 'dn'}" title="範圍 ${tlPr(z.lo)}～${tlPr(z.hi)}・${tlT(z.t)} 形成">${esc(z.sym.replace(/USDT$/, ''))} ${TL_PN[z.pair].hn} ${z.dir > 0 ? '多' : '空'} ${z.val.toFixed(2)}%</span>`).join('')}`;
-  const C = d.cards || [];
-  $('tlCards').innerHTML = C.length ? C.map(tlCard).join('') : `<p class="tlsub fvempty">目前沒有進行中的卡片。上面的 FVG／OB 被價格回踩時，卡片就會出現在這裡。</p>`;
+  const bs = x => x.replace(/USDT$/, ''), q = TL.q, hit = z => !q || (TL.ex ? bs(z.sym) === q : bs(z.sym).includes(q));
+  const Wa = (d.wait || []).slice().sort((a, b) => b.t - a.t), Ca = d.cards || [];
+  $('tlQL').innerHTML = [...new Set([...Ca, ...Wa].map(z => bs(z.sym)))].sort().map(x => `<option value="${esc(x)}">`).join('');
+  const W = Wa.filter(hit), C = Ca.filter(hit);
+  $('tlBack').hidden = !q;
+  $('tlQn').textContent = q ? `${q}${TL.ex ? '' : '（含有這幾個字）'}：卡片 ${C.length} 張・等待回踩 ${W.length} 個` : '';
+  $('tlWait').innerHTML = `<span class="tlmut">① 等待回踩的 FVG／OB：${W.length} 個${q ? '' : '（點幣種直接切換）'}</span>${(q ? W : W.slice(0, 30)).map(z => `<button type="button" class="fvchip ${z.dir > 0 ? 'up' : 'dn'}${q && TL.ex ? ' on' : ''}" data-s="${esc(bs(z.sym))}" title="範圍 ${tlPr(z.lo)}～${tlPr(z.hi)}・${tlT(z.t)} 形成・點一下只看 ${esc(bs(z.sym))}">${esc(bs(z.sym))} ${TL_PN[z.pair].hn} ${z.dir > 0 ? '多' : '空'} ${z.val.toFixed(2)}%</button>`).join('')}`;
+  $('tlCards').innerHTML = C.length ? C.map(tlCard).join('') : q ? `<p class="tlsub fvempty">${esc(q)} 目前沒有進行中的卡片${W.length ? '，上面是它還在等待回踩的 FVG／OB' : '，也沒有等待回踩的 FVG／OB'}。按「← 返回全部」看全部幣種。</p>` : `<p class="tlsub fvempty">目前沒有進行中的卡片。上面的 FVG／OB 被價格回踩時，卡片就會出現在這裡。</p>`;
+}
+function tlPick(v, ex) {                               // 切換幣種：點標籤（ex＝完全一樣）、查詢框（含有就算）、返回（空白）
+  TL.q = String(v || '').trim().toUpperCase().replace(/USDT$/, ''); TL.ex = !!(ex && TL.q);
+  if ($('tlQ') && $('tlQ').value.trim().toUpperCase() !== TL.q && (ex || !TL.q)) $('tlQ').value = TL.q;
+  if (TL.d) tlRender();
+  if ($('tlCards')) $('tlCards').scrollLeft = 0;
+  if (ex && $('tlCards')) $('tlCards').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 const TL_RT = { fvg: '回踩 FVG', ob: '回踩 OB（實體突破 FVG）', both: '回踩 FVG、OB（插針收回）' };
 function tlZone(c, N) {                               // 第 1 步：FVG、OB 分開寫（做多：OB 在 FVG 下面；做空：OB 在 FVG 上面）
@@ -8086,7 +8103,10 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
-  { id: '2026-11-22b', title: '2026/11/21 更新（新手設定影片）', items: [
+  { id: '2026-11-22c', title: '2026/11/22 更新（特級咒具）', items: [
+    { ic: '🗡', sp: true, t: '特級咒具：點上面「等待回踩」的幣種標籤，就只看那個幣的卡片；新增「🔍 查詢幣種」，按「← 返回全部」回到全部幣種。下面那段步驟說明拿掉了。' }
+  ] },
+  { id: '2026-11-21d', title: '2026/11/21 更新（新手設定影片）', items: [
     { ic: '🎬', t: '選單多了「註冊與設定資金」：一支 50 秒的影片，教你在 Bitunix 建立 API、貼到 QEVRAX、設定特級交易的資金（每筆保證金建議設成總資產的 1/100）。新帳號第一次登入會自動播放。使用說明裡的 API、資金設定頁拿掉了，改看這支影片。' }
   ] },
   { id: '2026-11-21c', title: '2026/11/21 更新（查看帳號）', items: [
