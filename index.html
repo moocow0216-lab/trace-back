@@ -907,6 +907,17 @@ header{align-items:center}
 @media (max-width:620px){.wxscene canvas{aspect-ratio:4/3}.wxan{grid-template-columns:1fr}.wxprog{margin-left:0}.wxbar{width:110px}.wxbalb{flex-direction:column}.wxbalv{min-width:0}}
 
 /* ===== 🔔 額外進場 ===== */
+.xetabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:4px;border:1px solid rgba(212,175,55,.18);border-radius:14px;background:rgba(255,255,255,.02)}
+.xetab{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 6px;border:1px solid transparent;border-radius:10px;background:none;color:#b8b2a2;font:inherit;cursor:pointer;min-width:0}
+.xetab span{font-size:18px}.xetab b{font-size:14px;line-height:1.25;text-align:center}.xetab small{font-size:11px;color:#8b8676}
+.xetab:hover{background:rgba(212,175,55,.06)}.xetab.on{background:rgba(212,175,55,.12);border-color:rgba(212,175,55,.55);color:#f3e7c4}.xetab.on small{color:#d4af37}
+.xetab:focus-visible{outline:2px solid #d4af37;outline-offset:2px}.xepane{display:flex;flex-direction:column;gap:12px}.xepane[hidden]{display:none}
+.xedesc{margin:4px 0 10px;font-size:13px;line-height:1.65;color:#a9a392}.xefind{background:none;border:0;color:inherit;font:inherit;cursor:pointer;padding:0;text-decoration:underline dotted rgba(212,175,55,.5);text-underline-offset:3px}
+.xedcrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:10px}
+.xesigs{display:grid;gap:10px}.xeh5{margin:12px 0 6px;font-size:14px;color:#cfc8b8}.xesig{border:1px solid rgba(212,175,55,.18);border-left:3px solid #3a3a3a;border-radius:12px;padding:10px 12px;background:rgba(255,255,255,.02);font-variant-numeric:tabular-nums}
+.xesig.up{border-left-color:#22c55e}.xesig.dn{border-left-color:#ef4444}
+.xesh{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px}.xesh b{font-size:16px}.xesh span{color:#d4af37;font-size:13px}.xesh em{font-style:normal;font-weight:700}.xesh small{color:#8b8676;font-size:12px}.xesh i{font-style:normal;margin-left:auto;font-size:13px}
+.xelv{display:flex;flex-wrap:wrap;gap:2px 14px;margin-top:6px;font-size:13px;color:#cfc8b8}
 .xe{display:flex;flex-direction:column;gap:12px}.xehead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}.xehead>div>b{font-size:18px}.xehead span b{color:var(--ink,inherit)}
 .xeadd>.btn{flex:none!important;width:auto!important}#xeDlg,#xeDlg h3{color:#ece8df}.xehead span{display:block;color:var(--muted);font-size:13px;margin-top:4px}
 .xebox{border:1px solid var(--line,#383329);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}.xebox h4{margin:0;font-size:14.5px}
@@ -1467,7 +1478,7 @@ input[type=checkbox],input[type=radio],input[type=range]{accent-color:var(--g1)}
         <button class="btn" id="qCfgBtn" aria-expanded="false" aria-controls="qCfg" hidden>⚙ 浮盈／槓桿設定</button>
         <button class="btn" id="qSrvBtn" aria-expanded="false" aria-controls="qSrv">👤 我的設定</button>
       </div>
-      <div class="qver" id="qVer">網站版本 2026-11-22c</div>
+      <div class="qver" id="qVer">網站版本 2026-11-23a</div>
       <div class="qstat" id="qStat">按「立即掃描」或開啟自動掃描開始。</div>
       <div class="qprog"><i id="qBar"></i></div>
       <div class="qstat" id="qBtcNow" hidden></div>
@@ -3944,7 +3955,7 @@ async function srvPull() {
     if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.man = j.lt.man || []; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
-    $('qVer').textContent = `網站版本 2026-11-22c・伺服器版本 ${j.ver || '舊版（請更新）'}`;
+    $('qVer').textContent = `網站版本 2026-11-23a・伺服器版本 ${j.ver || '舊版（請更新）'}`;
     if (j.bx) renderBx(j.bx);
     if (j.notice) ntShow(j.notice);                     // 📢 擁有者發的更新通知
     $('qAnnBox').hidden = !OWN(); if (OWN() && !$('ann_t').value && !$('ann_x').value) annFill();
@@ -4445,7 +4456,7 @@ function tlCard(c) {
       ${step(1, `出現 ${N.hn} FVG＋OB　數值：${c.val.toFixed(2)}%`, tlZone(c, N))}
       ${step(2, s2t, s2d)}
       ${step(3, `${N.ln} 出現 CHoCH 或 BOS`, c.brkAt ? `${tlT(c.brkAt)}・${esc(c.tag || '')}` : ord === 3 ? '偵測中…' : '')}
-      ${step(4, '目標達成正在進場', c.entryAt ? `${tlT(c.entryAt)} 進場 ${tlPr(c.entry)}<br>止損 <span class="qr">${tlPr(c.sl)}</span>（OB ${up ? '下緣' : '上緣'}）・止盈 <span class="qg">${tlPr(c.tp)}</span>` : ord === 4 ? '偵測中…' : '')}
+      ${step(4, '目標達成正在進場', c.entryAt ? `${tlT(c.entryAt)} 進場 ${tlPr(c.entry)}<br>止損 <span class="qr">${tlPr(c.sl)}</span>（${c.slBy === 'fvg' ? 'FVG' : 'OB'} ${up ? '下緣' : '上緣'}）・止盈 <span class="qg">${tlPr(c.tp)}</span>` : ord === 4 ? '偵測中…' : '')}
     </ol>
     <div class="fvnext"><span>下一步</span>${next}</div>
     <footer class="fvcf"><span class="tlmut">${c.st === 'entry' ? `持倉中・${tlAgo(c.entryAt)}進場` : `⚠ ${N.hn} 實體收破 OB ${up ? '下緣' : '上緣'} ${tlPr(tlObEdge(c))} 就失效・${tlAgo(c.touchAt)}回踩`}</span>
@@ -7057,53 +7068,109 @@ $('mnpBill').addEventListener('click', async e => {
     if (t.dataset.rskip) { const n = prompt('這筆不退款？寫一下原因（選填）：', ''); if (n === null) return; await A('refundSkip', { id: t.dataset.rskip, note: n }); return biLoad(); }
   } catch (err) { alert(err.message); }
 });
-/* ---------- 🔔 額外進場：選幣、選訊號（暗流／折返／伏擊）、另外的 Discord 頻道；只通知不下單 ---------- */
-const XE = { d: null, timer: null, syms: [], dirty: false };
-const XE_T = [['zh', '🌊', '暗流', 'FLOW', '莊家淨額背離：4H／1H 收跌但淨額為正（吸貨）或收漲但淨額為負（出貨），之後 15M／5M 出現同方向 CHoCH／BOS'],
-  ['crt', '🔁', '折返', 'PIVOT', 'CRT：4H／1H 掃過前一根的高低點又收回來，之後 2 根內 15M／5M 結構轉向並回踩 FVG（附參考止損、1:1 止盈）'],
-  ['hunt', '🏹', '伏擊', 'AMBUSH', '掃流動性窗口：同一天連續兩根 4H／1H 前跌後漲且破前低（或相反），窗口內 15M／5M 出現同方向 CHoCH／BOS']];
-async function xeLoad() { try { XE.d = await srvFetch('/api/xent', { op: 'get' }); if (!XE.dirty) XE.syms = [...(XE.d.cfg.syms || [])]; xeRender(); } catch (e) { $('mnpXent').innerHTML = `<p class="mnmsg bad">${esc(e.message)}</p>`; } }
+/* ---------- 🔔 額外進場（重寫）：①「QEVRAX CRT」的 CRT 進場 ②「QEVRAX 8AM OF」的 8AM 開盤訂單流 ③ PhenLabs 的 AVWAP 回踩；三個分頁各自選幣、各自查詢、另外的 Discord 頻道；只通知不下單 ---------- */
+const XE = { d: null, timer: null, syms: { crt: [], o8: [], av: [] }, dirty: false, tab: '', q: null };
+async function xeLoad() { try { XE.d = await srvFetch('/api/xent', { op: 'get' }); if (!XE.dirty) XE.syms = { crt: [...(XE.d.cfg.syms || [])], o8: [...(XE.d.cfg.syms8 || [])], av: [...(XE.d.cfg.symsAv || [])] }; xeRender(); } catch (e) { $('mnpXent').innerHTML = `<p class="mnmsg bad">${esc(e.message)}</p>`; } }
+const XE_SYS = [   // 分頁：key、圖示、名稱、短名、幣種欄位、說明
+  ['crt', '🕯️', 'CRT 進場', 'CRT', 'syms', 'H4／H1 掃過前一根的高低點又收回來（前一根顏色相反）→ 之後 2 根內 M15／M5 出現 CHoCH／BOS → 回踩 FVG、收回 FVG 外就進場。<br>通知寫：幣種、M15／M5、做多／做空、TP1／TP2／TP3／SL。'],
+  ['o8', '🕗', '8AM 開盤訂單流', '8AM', 'syms8', '台北 08:00 開盤後，價格走出 0.25 日線 ATR 的波段時，量開盤價附近的淨 Δ（15 分 K 判斷）。<br>通知寫：Big 還是 Weak、Δ 數值、要不要掛單、掛單價（開盤價）、TP（波段極值）、SL（開盤價外加 0.1 ATR）。'],
+  ['av', '📐', 'AVWAP 回踩', 'AVWAP', 'symsAv', '錨定 VWAP 回踩（固定用 Balanced 這組）：從擺動低點（高點）算 VWAP，趨勢走出 1.4 ATR 後，價格回檔進 VWAP 價值帶又收回來就進場，要過趨勢效率、品質分數、回檔深度的過濾。<br>通知寫：幣種、M15／M5、做多／做空、品質分數、TP1／TP2／TP3／SL；到 TP1 後止損移到進場價。']];
 function xeRender() {
   const d = XE.d, c = d.cfg, host = $('mnpXent');
-  if (!$('xeSyms')) {
-    host.innerHTML = `<div class="xe"><div class="xehead"><div><b>🔔 額外進場</b><span>選好幣種和訊號，出現時傳 Discord 通知。<b>只提醒、不會自動下單。</b></span></div><button class="btn" id="xeDcBtn">💬 DC 設定</button></div>
-      <section class="xebox"><h4>1. 要看哪些幣（最多 30 個）</h4><div class="xeadd"><input id="xeIn" placeholder="輸入幣種，例如 BTC、ETH SOL（可一次打好幾個）" autocomplete="off" aria-label="新增幣種"><button class="btn primary" id="xeAdd">加入</button></div>
-        <div class="xechips" id="xeSyms"></div><div class="xequick" id="xeQuick"></div></section>
-      <section class="xebox"><h4>2. 出現哪些訊號要通知（可複選）</h4><div class="xetypes" id="xeTypes"></div>
-        <div class="xepairs"><label class="lvck"><input type="checkbox" id="xeH4"> 4H→15M</label><label class="lvck"><input type="checkbox" id="xeH1"> 1H→5M</label></div></section>
-      <div class="qsaverow"><button class="btn primary" id="xeSave">儲存</button><span class="qltmsg" id="xeMsg" role="status"></span></div>
-      <section class="xebox"><h4>最近的訊號（你關注的幣）</h4><div id="xeList"></div></section>
-      <dialog id="xeDlg" class="tldlg" aria-labelledby="xeDlgT"><div class="tldlgh"><h3 id="xeDlgT">💬 額外進場的 Discord 頻道</h3><button class="btn" id="xeDlgX">關閉</button></div>
-        <p class="tlsub">可以跟主要通知、特級咒具用不同的頻道。頻道設定 → 整合 → Webhook → 新增 → 複製網址。</p><p class="tlsub" id="xeHookSt"></p>
+  if (!XE.tab) { try { XE.tab = localStorage.getItem('quantXeTab') || 'crt'; } catch (e) { XE.tab = 'crt'; } }
+  if (!XE.q) XE.q = { crt: '', o8: '', av: '' };
+  if (!$('xeP_crt')) {
+    const tf = (k, a, b) => `<div class="xepairs"><label class="lvck"><input type="checkbox" id="${k}A"> ${a}</label><label class="lvck"><input type="checkbox" id="${k}B"> ${b}</label></div>`;
+    const pane = ([k, ic, nm, , , desc]) => `<div class="xepane" id="xeP_${k}" role="tabpanel" aria-labelledby="xeTab_${k}" hidden>
+        <section class="xebox"><h4>${ic} ${nm}</h4><p class="xedesc">${desc}</p>
+          <div class="xedcrow"><button class="btn" data-dc="${k}" id="xeDc_${k}">💬 這套的 DC 設定</button><span class="tlmut" id="xeDcSt_${k}"></span></div>
+          <label class="xetype"><input type="checkbox" id="xeT_${k}"><span><b>開啟這套的通知</b></span></label>
+          ${k === 'crt' ? tf('xeTf_crt', 'M15（看 H4 CRT）', 'M5（看 H1 CRT）') : k === 'av' ? tf('xeTf_av', 'M15', 'M5') : '<p class="tlmut xedesc">固定用 15 分 K 判斷，每天台北 08:00 開始。</p>'}
+          <h5 class="xeh5">要看哪些幣（最多 30 個）・點幣名可以直接查詢</h5><div class="xeadd"><input id="xeIn_${k}" placeholder="輸入幣種，例如 BTC、ETH SOL（可一次打好幾個）" autocomplete="off" aria-label="${nm}：新增幣種"><button class="btn primary" data-add="${k}">加入</button></div>
+          <div class="xechips" id="xeSyms_${k}"></div><div class="xequick" id="xeQuick_${k}"></div>
+          <div class="qsaverow"><button class="btn primary" data-save="${k}">儲存</button><span class="qltmsg" id="xeMsg_${k}" role="status"></span></div></section>
+        <section class="xebox"><h4>${ic} ${nm}・最近的訊號</h4>
+          <div class="tlfind"><button class="btn" id="xeBack_${k}" hidden>← 返回全部</button><input id="xeQ_${k}" type="search" autocomplete="off" placeholder="🔍 查詢幣種（例：BTC）" aria-label="${nm}：查詢幣種"><span class="tlmut" id="xeQn_${k}" role="status"></span></div>
+          <div id="xeList_${k}"></div></section></div>`;
+    host.innerHTML = `<div class="xe"><div class="xehead"><div><b>🔔 額外進場</b><span>三套進場訊號分開設定、各自選幣、各自的 Discord 頻道（可以用不同的 DC 機器人）。<b>只提醒、不會自動下單。</b></span></div></div>
+      <div class="xetabs" role="tablist" aria-label="進場程式">${XE_SYS.map(([k, ic, nm]) => `<button class="xetab" role="tab" id="xeTab_${k}" data-tab="${k}" aria-controls="xeP_${k}"><span>${ic}</span><b>${nm}</b><small id="xeTabN_${k}"></small></button>`).join('')}</div>
+      ${XE_SYS.map(pane).join('')}
+      <dialog id="xeDlg" class="tldlg" aria-labelledby="xeDlgT"><div class="tldlgh"><h3 id="xeDlgT">💬 Discord 頻道</h3><button class="btn" id="xeDlgX">關閉</button></div>
+        <p class="tlsub">三套各自有一個 Webhook。想用不同的機器人發送：在 Discord 頻道設定 → 整合 → Webhook → 新增，每個 Webhook 取不同的名字、換不同的頭像，再把網址貼到對應的分頁。</p><p class="tlsub" id="xeHookSt"></p>
         <div class="tlrow"><input id="xeHook" placeholder="https://discord.com/api/webhooks/…" autocomplete="off" spellcheck="false" aria-label="Discord Webhook 網址"><button class="btn primary" id="xeHookSave">儲存</button><button class="btn" id="xeHookTest">測試</button><button class="btn" id="xeHookDel">清除</button></div><p class="mnmsg" id="xeHookMsg" role="status"></p></dialog></div>`;
     const msg = (id, ok, t) => { $(id).className = 'mnmsg ' + (ok ? 'ok' : 'bad'); $(id).textContent = t; };
-    const mark = () => { XE.dirty = true; $('xeMsg').textContent = '● 有改動還沒儲存'; $('xeMsg').style.color = '#f1d77a'; };
-    const add = txt => { const L = String(txt).toUpperCase().split(/[\s,，、]+/).map(x => x.replace(/[^A-Z0-9]/g, '')).filter(Boolean).map(x => /USDT$/.test(x) ? x : x + 'USDT');
-      for (const x of L) if (!XE.syms.includes(x) && XE.syms.length < 30) XE.syms.push(x); mark(); xeRender(); };
-    $('xeAdd').onclick = () => { add($('xeIn').value); $('xeIn').value = ''; }; $('xeIn').onkeydown = e => { if (e.key === 'Enter') $('xeAdd').click(); };
-    $('xeSyms').onclick = e => { const b = e.target.closest('[data-rm]'); if (!b) return; XE.syms = XE.syms.filter(x => x !== b.dataset.rm); mark(); xeRender(); };
-    $('xeQuick').onclick = e => { const b = e.target.closest('[data-q]'); if (b) add(b.dataset.q); };
-    $('xeTypes').onchange = mark; $('xeH4').onchange = mark; $('xeH1').onchange = mark;
-    $('xeSave').onclick = async () => {
-      const body = { op: 'set', syms: XE.syms, h4: $('xeH4').checked, h1: $('xeH1').checked }; for (const [k] of XE_T) body[k] = $('xeT_' + k).checked;
-      try { await srvFetch('/api/xent', body); XE.dirty = false; $('xeMsg').textContent = `✅ 已儲存：${XE.syms.length} 個幣・${XE_T.filter(([k]) => body[k]).map(x => x[2]).join('、') || '沒有選訊號'}`; $('xeMsg').style.color = ''; xeLoad(); }
-      catch (e) { $('xeMsg').textContent = '❌ ' + e.message; $('xeMsg').style.color = '#ff9aa2'; }
-    };
-    $('xeDcBtn').onclick = () => $('xeDlg').showModal(); $('xeDlgX').onclick = () => $('xeDlg').close();
-    $('xeHookSave').onclick = async () => { try { await srvFetch('/api/xent', { op: 'hook', webhook: $('xeHook').value }); $('xeHook').value = ''; msg('xeHookMsg', 1, '已儲存，按「測試」試試看'); xeLoad(); } catch (e) { msg('xeHookMsg', 0, e.message); } };
-    $('xeHookTest').onclick = async () => { msg('xeHookMsg', 1, '傳送中…'); try { await srvFetch('/api/xent', { op: 'test' }); msg('xeHookMsg', 1, '✅ 傳送成功，看看頻道有沒有收到'); } catch (e) { msg('xeHookMsg', 0, '❌ ' + e.message); } };
-    $('xeHookDel').onclick = async () => { if (!confirm('要清除額外進場的 Discord 網址嗎？清除後就不會收到通知。')) return; await srvFetch('/api/xent', { op: 'hook', webhook: '' }); xeLoad(); };
+    const mark = k => { XE.dirty = true; $('xeMsg_' + k).textContent = '● 有改動還沒儲存'; $('xeMsg_' + k).style.color = '#f1d77a'; };
+    const add = (k, txt) => { const A = XE.syms[k], L = String(txt).toUpperCase().split(/[\s,，、]+/).map(x => x.replace(/[^A-Z0-9]/g, '')).filter(Boolean).map(x => /USDT$/.test(x) ? x : x + 'USDT');
+      for (const x of L) if (!A.includes(x) && A.length < 30) A.push(x); mark(k); xeRender(); };
+    const pick = (k, v) => { XE.q[k] = String(v || '').trim().toUpperCase().replace(/USDT$/, ''); if ($('xeQ_' + k).value.trim().toUpperCase() !== XE.q[k]) $('xeQ_' + k).value = XE.q[k]; xeList(k); };
+    host.querySelector('.xetabs').onclick = e => { const b = e.target.closest('[data-tab]'); if (!b) return; XE.tab = b.dataset.tab; try { localStorage.setItem('quantXeTab', XE.tab); } catch (er) {} xeRender(); };
+    host.querySelector('.xetabs').onkeydown = e => { if (!/^Arrow(Left|Right)$/.test(e.key)) return; const ks = XE_SYS.map(x => x[0]), i = (ks.indexOf(XE.tab) + (e.key === 'ArrowRight' ? 1 : ks.length - 1)) % ks.length; XE.tab = ks[i]; xeRender(); $('xeTab_' + XE.tab).focus(); };
+    for (const [k] of XE_SYS) {
+      $('xeIn_' + k).onkeydown = e => { if (e.key === 'Enter') host.querySelector(`[data-add="${k}"]`).click(); };
+      $('xeSyms_' + k).onclick = e => { const r = e.target.closest('[data-rm]'); if (r) { XE.syms[k] = XE.syms[k].filter(x => x !== r.dataset.rm); mark(k); xeRender(); return; }
+        const q = e.target.closest('[data-find]'); if (q) { pick(k, q.dataset.find); $('xeList_' + k).scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } };
+      $('xeQuick_' + k).onclick = e => { const b = e.target.closest('[data-q]'); if (b) add(k, b.dataset.q); };
+      $('xeT_' + k).onchange = () => mark(k);
+      $('xeQ_' + k).oninput = () => pick(k, $('xeQ_' + k).value);
+      $('xeQ_' + k).onkeydown = e => { if (e.key === 'Escape') pick(k, ''); };
+      $('xeBack_' + k).onclick = () => pick(k, '');
+    }
+    for (const id of ['xeTf_crtA', 'xeTf_crtB']) $(id).onchange = () => mark('crt');
+    for (const id of ['xeTf_avA', 'xeTf_avB']) $(id).onchange = () => mark('av');
+    host.querySelectorAll('[data-add]').forEach(b => b.onclick = () => { const k = b.dataset.add; add(k, $('xeIn_' + k).value); $('xeIn_' + k).value = ''; });
+    host.querySelectorAll('[data-save]').forEach(btn => btn.onclick = async () => {
+      const k = btn.dataset.save, body = { op: 'set', syms: XE.syms.crt, syms8: XE.syms.o8, symsAv: XE.syms.av, crt: $('xeT_crt').checked, o8: $('xeT_o8').checked, av: $('xeT_av').checked,
+        h4: $('xeTf_crtA').checked, h1: $('xeTf_crtB').checked, av15: $('xeTf_avA').checked, av5: $('xeTf_avB').checked };
+      try { await srvFetch('/api/xent', body); XE.dirty = false; const S = XE_SYS.find(x => x[0] === k); $('xeMsg_' + k).textContent = `✅ 已儲存：${S[2]} ${body[k] ? XE.syms[k].length + ' 個幣' : '（通知關閉）'}`; $('xeMsg_' + k).style.color = ''; xeLoad(); }
+      catch (e) { $('xeMsg_' + k).textContent = '❌ ' + e.message; $('xeMsg_' + k).style.color = '#ff9aa2'; }
+    });
+    host.querySelectorAll('[data-dc]').forEach(b => b.onclick = () => { XE.dc = b.dataset.dc; $('xeHookMsg').textContent = ''; xeDcSt(); $('xeDlg').showModal(); });
+    $('xeDlgX').onclick = () => $('xeDlg').close();
+    $('xeHookSave').onclick = async () => { try { await srvFetch('/api/xent', { op: 'hook', sys: XE.dc, webhook: $('xeHook').value }); $('xeHook').value = ''; msg('xeHookMsg', 1, '已儲存，按「測試」試試看'); xeLoad(); } catch (e) { msg('xeHookMsg', 0, e.message); } };
+    $('xeHookTest').onclick = async () => { msg('xeHookMsg', 1, '傳送中…'); try { await srvFetch('/api/xent', { op: 'test', sys: XE.dc }); msg('xeHookMsg', 1, '✅ 傳送成功，看看頻道有沒有收到'); } catch (e) { msg('xeHookMsg', 0, '❌ ' + e.message); } };
+    $('xeHookDel').onclick = async () => { const S = XE_SYS.find(x => x[0] === XE.dc); if (!confirm(`要清除「${S[2]}」的 Discord 網址嗎？清除後這套就不會收到通知。`)) return; await srvFetch('/api/xent', { op: 'hook', sys: XE.dc, webhook: '' }); xeLoad(); };
   }
-  $('xeSyms').innerHTML = XE.syms.length ? XE.syms.map(s => `<span class="xechip">${esc(s.replace(/USDT$/, ''))}<button data-rm="${esc(s)}" aria-label="移除 ${esc(s)}">✕</button></span>`).join('') : '<span class="tlmut">還沒有關注任何幣</span>';
-  $('xeQuick').innerHTML = '<span class="tlmut">快速加入：</span>' + ['BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'DOGE'].concat((d.uni || []).slice(0, 8).map(s => s.replace(/USDT$/, ''))).filter((v, i, a) => a.indexOf(v) === i).slice(0, 12).map(s => `<button class="btn" data-q="${esc(s)}">${esc(s)}</button>`).join('');
-  if (!XE.dirty) {
-    $('xeTypes').innerHTML = XE_T.map(([k, ic, nm, en, desc]) => `<label class="xetype"><input type="checkbox" id="xeT_${k}"${c[k] ? ' checked' : ''}><span><b>${ic} ${nm} <small>${en}</small></b><em>${desc}</em></span></label>`).join('');
-    $('xeH4').checked = c.h4 !== false; $('xeH1').checked = c.h1 !== false;
+  for (const [k] of XE_SYS) { const on = k === XE.tab; $('xeP_' + k).hidden = !on; $('xeTab_' + k).setAttribute('aria-selected', on); $('xeTab_' + k).tabIndex = on ? 0 : -1; $('xeTab_' + k).classList.toggle('on', on); }
+  const quick = ['BTC', 'ETH', 'SOL', 'BNB', 'XRP', 'DOGE'].concat((d.uni || []).slice(0, 8).map(s => s.replace(/USDT$/, ''))).filter((v, i, a) => a.indexOf(v) === i).slice(0, 12);
+  for (const [k, , , , f] of XE_SYS) {
+    $('xeSyms_' + k).innerHTML = XE.syms[k].length ? XE.syms[k].map(s => { const b = esc(s.replace(/USDT$/, '')); return `<span class="xechip"><button class="xefind" data-find="${b}" title="查詢 ${b} 的訊號">${b}</button><button data-rm="${esc(s)}" aria-label="移除 ${esc(s)}">✕</button></span>`; }).join('') : '<span class="tlmut">還沒有關注任何幣</span>';
+    $('xeQuick_' + k).innerHTML = '<span class="tlmut">快速加入：</span>' + quick.map(s => `<button class="btn" data-q="${esc(s)}">${esc(s)}</button>`).join('');
+    const on = c[k] !== false && (c[f] || []).length; $('xeTabN_' + k).textContent = on ? `${(c[f] || []).length} 個幣` : c[k] === false ? '關閉' : '沒選幣';
+    xeList(k);
   }
-  $('xeDcBtn').textContent = d.hook ? '💬 DC 設定（已設定）' : '💬 DC 設定（還沒設定）';
-  $('xeHookSt').innerHTML = d.hook ? `<span class="qg">已設定</span>${d.hookLast ? (d.hookLast.ok ? `・✅ 上次傳送成功 ${fmtT(d.hookLast.at).slice(-11)}` : `・<span class="qr">❌ 上次傳送失敗：${esc(d.hookLast.err)}</span>`) : ''}` : '<span class="qr">還沒設定，訊號出現時不會通知</span>';
-  const L = d.sigs || [], N = Object.fromEntries(XE_T.map(x => [x[0], x]));
-  $('xeList').innerHTML = L.length ? `<div class="tablewrap"><table class="tltab"><thead><tr><th>時間</th><th>幣種</th><th>訊號</th><th>方向</th><th>週期</th><th>收盤價</th><th>參考止損／止盈</th></tr></thead><tbody>${L.map(s => `<tr><td>${fmtT(s.t).slice(-11)}</td><td>${esc(s.sym.replace(/USDT$/, ''))}</td><td>${N[s.type][1]} ${N[s.type][2]}</td><td class="${s.dir > 0 ? 'qg' : 'qr'}">${s.dir > 0 ? '做多' : '做空'}</td><td>${s.pair === 'h4' ? '4H→15M' : '1H→5M'}</td><td>${fpx(s.px)}</td><td class="tlmut">${s.sl ? `${fpx(s.sl)}／${fpx(s.tp)}` : '—'}</td></tr>`).join('')}</tbody></table></div>` : `<p class="tlsub">還沒有訊號。${d.scan && d.scan.at ? `上次掃描 ${fmtT(d.scan.at).slice(-5)}，${d.scan.n} 個幣。` : '每根 5M／15M K 線收盤後掃描一次。'}</p>`;
+  if (!XE.dirty) { for (const [k] of XE_SYS) $('xeT_' + k).checked = c[k] !== false; $('xeTf_crtA').checked = c.h4 !== false; $('xeTf_crtB').checked = c.h1 !== false; $('xeTf_avA').checked = c.av15 !== false; $('xeTf_avB').checked = c.av5 !== false; }
+  for (const [k] of XE_SYS) { const H = (d.hooks || {})[k] || {}; $('xeDc_' + k).textContent = `💬 這套的 DC 設定（${H.on ? '已設定' : '還沒設定'}）`; $('xeDcSt_' + k).innerHTML = H.on ? (H.last && !H.last.ok ? '<span class="qr">上次傳送失敗</span>' : '') : '<span class="qr">沒設定就不會傳通知</span>'; }
+  if ($('xeDlg').open) xeDcSt();
+}
+function xeDcSt() {                                    // DC 視窗：顯示目前這一套的 Webhook 狀態
+  const k = XE.dc || 'crt', S = XE_SYS.find(x => x[0] === k), H = ((XE.d && XE.d.hooks) || {})[k] || {};
+  $('xeDlgT').textContent = `💬 ${S[1]} ${S[2]} 的 Discord 頻道`;
+  $('xeHookSt').innerHTML = H.on ? `<span class="qg">已設定</span>${H.last ? (H.last.ok ? `・✅ 上次傳送成功 ${fmtT(H.last.at).slice(-11)}` : `・<span class="qr">❌ 上次傳送失敗：${esc(H.last.err)}</span>`) : ''}` : '<span class="qr">還沒設定，這套的訊號出現時不會通知</span>';
+}
+function xeList(k) {                                   // 一個分頁的訊號清單（含查詢幣種）
+  const d = XE.d; if (!d || !$('xeList_' + k)) return;
+  const bs = x => x.replace(/USDT$/, ''), q = XE.q[k] || '', All = (d.sigs || []).filter(s => s.type === k && (k !== 'crt' || s.tp1)), L = All.filter(s => !q || bs(s.sym).includes(q));
+  $('xeBack_' + k).hidden = !q; $('xeQn_' + k).textContent = q ? `${q}：${L.length} 筆（全部 ${All.length} 筆）` : All.length ? `共 ${All.length} 筆` : '';
+  const lv = (n, v, on, cls) => `<span class="${on ? cls : ''}">${n} ${fpx(v)}${on ? (cls === 'qr' ? ' ✗' : ' ✓') : ''}</span>`;
+  const head = (s, tag, em, emc, res) => `<div class="xesh"><b>${esc(bs(s.sym))}</b><span>${tag}</span><em class="${emc}">${em}</em><small>${fmtT(s.t).slice(-11)}</small><i>${res}</i></div>`;
+  const tf = s => s.pair === 'h4' ? 'M15' : 'M5', dirT = s => s.dir > 0 ? '做多' : '做空', dirC = s => s.dir > 0 ? 'qg' : 'qr';
+  const card = s => {
+    if (k === 'o8') {
+      const r = !s.qual ? '<span class="tlmut">跳過</span>' : s.out > 0 ? '<span class="qg">停利 ✓</span>' : s.out < 0 ? '<span class="qr">停損 ✗</span>' : s.phase === 3 ? (s.exp ? '<span class="tlmut">當天沒結算</span>' : '已成交・持倉中') : s.exp ? '<span class="tlmut">當天沒回到開盤價</span>' : '<span class="tlmut">掛單中・等回測</span>';
+      return `<div class="xesig ${s.qual ? (s.dir > 0 ? 'up' : 'dn') : ''}">${head(s, '8AM 開盤', `${s.qual ? 'Big' : 'Weak'} ${s.dir < 0 ? '−Δ' : '+Δ'} ${s.imb > 0 ? '+' : ''}${(+s.imb).toFixed(1)}%`, s.qual ? dirC(s) : 'tlmut', r)}
+        <div class="xelv">${s.qual ? `<span>掛${s.dir < 0 ? '空' : '多'} @ ${fpx(s.px)}</span>${lv('TP', s.tgt || s.tp, s.out > 0, 'qg')}${lv('SL', s.sl, s.out < 0, 'qr')}` : `<span>不掛單（開盤價 ${fpx(s.px)}）</span>`}<span class="tlmut">區間量佔 ${(+s.share).toFixed(1)}%</span></div></div>`;
+    }
+    if (k === 'av') {
+      const r = s.old ? '<span class="tlmut">—</span>' : s.st === 1 ? '<span class="qg">TP3 ✓</span>' : s.st === -1 ? '<span class="qr">SL ✗</span>' : s.st === 2 ? `<span class="qg">TP${s.hit} ✓</span>・${s.be ? '保本出場' : s.flip ? '被新訊號取代' : '60 根到期'}` : s.st === 3 ? `<span class="tlmut">${s.flip ? '被新訊號取代' : '60 根到期'}</span>` : s.hit ? `<span class="qg">TP${s.hit} ✓</span>・進行中（止損已移到保本）` : '<span class="tlmut">進行中</span>';
+      return `<div class="xesig ${s.dir > 0 ? 'up' : 'dn'}">${head(s, `${tf(s)} AVWAP`, dirT(s), dirC(s), r)}
+        <div class="xelv"><span>進場 ${fpx(s.px)}</span>${lv('SL', s.sl, s.st === -1, 'qr')}<span class="tlmut">品質 ${s.q}%・趨勢效率 ${s.er}%</span></div><div class="xelv">${lv('TP1', s.tp1, s.hit >= 1, 'qg')}${lv('TP2', s.tp2, s.hit >= 2, 'qg')}${lv('TP3', s.tp3, s.hit >= 3, 'qg')}</div></div>`;
+    }
+    const r = s.old ? '<span class="tlmut">—</span>' : s.lost ? '<span class="qr">SL ✗</span>' : s.hit ? `<span class="qg">TP${s.hit} ✓</span>${s.done ? '' : '・進行中'}` : s.done ? '—' : '<span class="tlmut">進行中</span>';
+    return `<div class="xesig ${s.dir > 0 ? 'up' : 'dn'}">${head(s, `${tf(s)} CRT`, dirT(s), dirC(s), r)}
+      <div class="xelv"><span>進場 ${fpx(s.px)}</span>${lv('SL', s.sl, s.lost, 'qr')}</div><div class="xelv">${lv('TP1', s.tp1, s.hit >= 1, 'qg')}${lv('TP2', s.tp2, s.hit >= 2, 'qg')}${lv('TP3', s.tp3, s.hit >= 3, 'qg')}</div></div>`;
+  };
+  const scanTxt = k === 'o8' ? (d.scan8 && d.scan8.at ? `上次掃描 ${fmtT(d.scan8.at).slice(-5)}，${d.scan8.n} 個幣。` : '每根 15 分 K 收盤後掃描一次。') : (d.scan && d.scan.at ? `上次掃描 ${fmtT(d.scan.at).slice(-5)}，${d.scan.n} 個幣。` : '每根 M5／M15 K 線收盤後掃描一次。');
+  $('xeList_' + k).innerHTML = L.length ? `<div class="xesigs">${L.map(card).join('')}</div>` : q ? `<p class="tlsub">${esc(q)} 目前沒有這套的訊號。按「← 返回全部」看全部。</p>` : `<p class="tlsub">還沒有訊號。${scanTxt}</p>`;
 }
 /* ---------- ⚔ 作戰室（主畫面）：參考「AI 交易室」版面——上面 8 張角色卡、中間交易室動畫、資金曲線、分析圖＋條件表 ---------- */
 const WAR = { tool: null, toolAt: 0, btc: null, kl: {}, focus: null, ev: [], evAt: 0, raf: 0, ro: null };
@@ -7333,9 +7400,9 @@ function stick(g, X, Y, s, col, p, now, ph, alpha) {   // 畫火柴人：Y 是�
   g.fillStyle = '#0b1020'; g.beginPath(); g.arc(hx + s * 0.12 * (p.dir || 1), hy - s * 0.04, s * 0.065, 0, 7); g.fill();   // 眼睛朝前進的方向
   g.restore(); return hand;
 }
-/* ---- 🔔 額外進場的 3 個火柴人（休息區）：暗流 FLOW、折返 PIVOT、伏擊 AMBUSH；沒事就喝茶、看書、睡覺，有訊號就衝去報告總指揮 ---- */
-const XL = [['zh', 'FLOW', '暗流', '#d4af37', 'tea', '監聽中…'], ['crt', 'PIVOT', '折返', '#e9cf7a', 'book', '監聽中…'], ['hunt', 'AMBUSH', '伏擊', '#f5e6a8', 'sleep', '監聽中…']];
-const XHOME = { zh: [0.34, 0.93], crt: [0.51, 0.93], hunt: [0.68, 0.93] };
+/* ---- 🔔 額外進場的火柴人（休息區）：CRT、8AM、AVWAP；沒事就喝茶、看書、睡覺，有訊號就衝去報告總指揮 ---- */
+const XL = [['crt', 'CRT', 'CRT 進場', '#e9cf7a', 'book', '監聽中…'], ['o8', '8AM', '8AM 開盤', '#d4af37', 'tea', '監聽中…'], ['av', 'AVWAP', 'AVWAP 回踩', '#f5e6a8', 'sleep', '監聽中…']];
+const XHOME = { crt: [0.34, 0.93], o8: [0.51, 0.93], av: [0.68, 0.93] };
 async function warXent() {                             // 每 20 秒讀一次額外進場的訊號；新的訊號 → 那個火柴人衝去報告
   if (Date.now() - (WAR.xAt || 0) < 20000) return; WAR.xAt = Date.now();
   try {
@@ -7347,10 +7414,10 @@ async function warXent() {                             // 每 20 秒讀一次額
 }
 const xRecent = k => { const L = WAR.xent && WAR.xent.sigs || []; return L.find(x => x.type === k && Date.now() - x.t < 30 * 60000) || null; };
 function warXCards() {
-  const el = $('wxX'); if (!el) return; const d = WAR.xent, n = d ? (d.cfg.syms || []).length : 0;
-  el.innerHTML = `<div class="wxxh"><b>🔔 額外進場</b><span>${d ? `關注 ${n} 個幣${d.hook ? '' : '・DC 還沒設定'}` : '讀取中…'}</span><button class="btn" data-war="xent">設定</button></div>` + XL.map(([k, en, zh, col, , idle]) => {
-    const r = xRecent(k), on = d && d.cfg[k];
-    return `<div class="wxxc${r ? ' hot' : ''}" style="--xc:${col}"><b>${en}</b><small>${zh}</small><span>${!on ? '沒有開這個訊號' : r ? `<em>${esc(r.sym.replace(/USDT$/, ''))} ${r.dir > 0 ? '做多' : '做空'}</em>・${wAgo(r.t)}` : idle}</span></div>`; }).join('');
+  const el = $('wxX'); if (!el) return; const d = WAR.xent, n = d ? new Set([...(d.cfg.syms || []), ...(d.cfg.syms8 || []), ...(d.cfg.symsAv || [])]).size : 0;
+  el.innerHTML = `<div class="wxxh"><b>🔔 額外進場</b><span>${d ? `關注 ${n} 個幣${d.hooks && Object.values(d.hooks).some(h => h.on) ? '' : '・DC 還沒設定'}` : '讀取中…'}</span><button class="btn" data-war="xent">設定</button></div>` + XL.map(([k, en, zh, col, , idle]) => {
+    const r = xRecent(k), on = d && d.cfg[k] !== false && (d.cfg[k === 'o8' ? 'syms8' : k === 'av' ? 'symsAv' : 'syms'] || []).length;
+    return `<div class="wxxc${r ? ' hot' : ''}" style="--xc:${col}"><b>${en}</b><small>${zh}</small><span>${!on ? '沒有開或沒選幣' : r ? `<em>${esc(r.sym.replace(/USDT$/, ''))} ${r.type === 'o8' ? (r.qual ? 'Big Δ' : 'Weak Δ') : r.dir > 0 ? '做多' : '做空'}</em>・${wAgo(r.t)}` : idle}</span></div>`; }).join('');
 }
 function xPose(g, X, Y, s, col, mode, now, ph) {      // 休息中的樣子：喝茶（坐著舉杯）、看書（坐著翻頁）、睡覺（躺著冒 Z）
   g.save(); g.strokeStyle = col; g.fillStyle = col; g.lineWidth = Math.max(2, s * 0.16); g.lineCap = g.lineJoin = 'round'; g.shadowColor = col; g.shadowBlur = 10;
@@ -8103,8 +8170,16 @@ $('mnPwGo').onclick = async () => {
 mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-23a', title: '2026/11/23 更新（額外進場：CRT＋8AM＋AVWAP 三個分頁）', items: [
+    { ic: '💬', sp: true, t: '額外進場的三套訊號各自有自己的 Discord Webhook（每個分頁裡的「💬 這套的 DC 設定」），可以用不同名字、不同頭像的 DC 機器人發送。原本設定的 Webhook 留給 CRT 進場。' },
+    { ic: '📐', sp: true, t: '額外進場加入第三套「AVWAP 回踩」（PhenLabs 的錨定 VWAP 指標，固定用 Balanced 這組）：Discord 寫幣種、M15／M5、做多／做空、品質分數、TP1／TP2／TP3／SL，到 TP1 後止損移到進場價。' },
+    { ic: '🗂', sp: true, t: '額外進場分成 3 個分頁：CRT 進場、8AM 開盤、AVWAP 回踩，每頁有自己的說明、開關、幣種清單、最近的訊號，還有「🔍 查詢幣種」和「← 返回全部」；點幣種清單裡的幣名也能直接查詢。' },
+    { ic: '🕗', sp: true, t: '額外進場加入第二套「8AM 開盤訂單流」：台北 08:00 開盤後走出波段時，量開盤價附近的淨 Δ，Discord 寫 Big／Weak、Δ 數值、要不要掛單、掛單價、TP、SL。CRT 和 8AM 各自選幣。' },
+    { ic: '🔔', sp: true, t: '額外進場整個重寫：改用「QEVRAX CRT」指標的 CRT 進場（H4／H1 CRT 掃流動性 → M15／M5 CHoCH／BOS → 回踩 FVG 收針）。原本的暗流、折返、伏擊拿掉了，舊的訊號紀錄也清掉。Discord 通知寫：幣種、M15／M5、CRT 做多／做空、TP1／TP2／TP3／SL。' },
+    { ic: '🎯', t: 'TP1＝CRT 區間 50%、TP2＝區間另一端、TP3＝TP2 距離的兩倍，SL＝CRT 區間外（價位不在獲利那一邊時改用 1R／2R）。最近的訊號表會打勾：到 TP 顯示 ✓、碰到 SL 顯示 ✗。' }
+  ] },
   { id: '2026-11-22c', title: '2026/11/22 更新（特級咒具）', items: [
-    { ic: '🗡', sp: true, t: '特級咒具：點上面「等待回踩」的幣種標籤，就只看那個幣的卡片；新增「🔍 查詢幣種」，按「← 返回全部」回到全部幣種。下面那段步驟說明拿掉了。' }
+    { ic: '🗡', sp: true, t: '特級咒具：點上面「等待回踩」的幣種標籤，就只看那個幣的卡片；新增「🔍 查詢幣種」，按「← 返回全部」回到全部幣種。下面那段步驟說明拿掉了。卡片第 4 步的止損會寫清楚是放在 FVG 還是 OB 的邊緣。' }
   ] },
   { id: '2026-11-21d', title: '2026/11/21 更新（新手設定影片）', items: [
     { ic: '🎬', t: '選單多了「註冊與設定資金」：一支 50 秒的影片，教你在 Bitunix 建立 API、貼到 QEVRAX、設定特級交易的資金（每筆保證金建議設成總資產的 1/100）。新帳號第一次登入會自動播放。使用說明裡的 API、資金設定頁拿掉了，改看這支影片。' }
@@ -8563,7 +8638,7 @@ function gdPage2(p) {
     ${gdPt('<path d="M3 17l6-6 4 4 8-8"></path><path d="M15 7h6v6"></path>', SPONLY ? '<b>「☰ 選單 → 成功率」「資金曲線」</b>：看特級交易在你帳戶真正的賺賠、成功率、做多做空和報酬率曲線。' : '主畫面下方：<b>實盤</b>看你帳戶真正的賺賠、成功率、做多做空、資金曲線；<b>訊號模擬</b>看所有訊號照規則跑的成績。')}
     ${gdPt('<rect x="4" y="4" width="16" height="16" rx="2"></rect><path d="M4 10h16"></path><path d="M10 10v10"></path>', '<b>「☰ 選單 → 歷史紀錄」</b>：每一筆的進場價、最大浮盈浮虧、出場原因，點一行看圖表，也能匯出 CSV。')}
     ${gdPt('<circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path>', SPONLY ? '<b>「☰ 選單 → 回測數據」</b>：用過去的資料看特級咒具的規則以前會賺還是賠，也有 BTC 急漲急跌統計。' : '<b>「☰ 選單 → 回測數據」</b>：用過去的資料看這套規則以前會賺還是賠。')}`;
-  if (p === 'f3') { const DS = { pos: '持倉、開始／暫停交易、一鍵平倉', tool: SPONLY ? 'FVG／OB 回踩策略的卡片和特級交易（前面有一頁介紹）' : SRVLT.toolOk ? 'FVG／OB 回踩策略的卡片和特級交易（後面有一頁介紹）' : '開發中的新功能，需要擁有者給的密碼', xent: '暗流、折返、伏擊三種額外進場訊號，可以設定自己的 Discord 頻道', cards: '系統找到的進場機會', stats: SPONLY ? '特級交易的成功率、做多做空' : '實盤和訊號模擬的成功率', eq: SPONLY ? '特級交易的資金曲線（報酬率）' : '資金曲線（一般、特級、綜合）', hist: '每一筆交易的紀錄，可以匯出 CSV', bt: SPONLY ? '特級咒具回測、BTC 急漲急跌統計' : '回測、回測報告、BTC 急漲急跌統計', kline: '多格 K 線圖、畫圖、指標、Pine 編輯器、回放（後面有三頁介紹）', heat: '市場漲跌、資金費率、清算地圖', pat: '畫出走勢，找歷史上相似的段落', news: '新聞列表和新聞星圖', whale: '幣安的即時大單', bill: SPONLY ? '審核註冊：邀請人、待審核、全部帳號（只有擁有者和管理員看得到）' : '方案、付款、付款紀錄、退款（後面有一頁介紹）', set: 'Bitunix API、Discord 通知、交易設定、收回資金、改密碼', guide: '就是這份說明書，還有更新紀錄' };
+  if (p === 'f3') { const DS = { pos: '持倉、開始／暫停交易、一鍵平倉', tool: SPONLY ? 'FVG／OB 回踩策略的卡片和特級交易（前面有一頁介紹）' : SRVLT.toolOk ? 'FVG／OB 回踩策略的卡片和特級交易（後面有一頁介紹）' : '開發中的新功能，需要擁有者給的密碼', xent: 'CRT 進場、8AM 開盤訂單流、AVWAP 回踩三套通知，分頁各自選幣和查詢，可以設定自己的 Discord 頻道', cards: '系統找到的進場機會', stats: SPONLY ? '特級交易的成功率、做多做空' : '實盤和訊號模擬的成功率', eq: SPONLY ? '特級交易的資金曲線（報酬率）' : '資金曲線（一般、特級、綜合）', hist: '每一筆交易的紀錄，可以匯出 CSV', bt: SPONLY ? '特級咒具回測、BTC 急漲急跌統計' : '回測、回測報告、BTC 急漲急跌統計', kline: '多格 K 線圖、畫圖、指標、Pine 編輯器、回放（後面有三頁介紹）', heat: '市場漲跌、資金費率、清算地圖', pat: '畫出走勢，找歷史上相似的段落', news: '新聞列表和新聞星圖', whale: '幣安的即時大單', bill: SPONLY ? '審核註冊：邀請人、待審核、全部帳號（只有擁有者和管理員看得到）' : '方案、付款、付款紀錄、退款（後面有一頁介紹）', set: 'Bitunix API、Discord 通知、交易設定、收回資金、改密碼', guide: '就是這份說明書，還有更新紀錄' };
     return `<h2>右上角「☰ 選單」</h2><p class="gdsub">主畫面只放作戰室、持倉和成功率，其他功能都在右上角的選單裡，依「交易、數據、市場、其他」分類。</p>
     ${MN_ITEMS.map(([k, i, t]) => `<div class="gdfeat"><span class="gdic" style="font-size:20px;text-align:center" aria-hidden="true">${i}</span><div><b>${t}</b><p>${DS[k] || ''}</p></div></div>`).join('')}`; }
   if (p === 'f4') return gdPage('f1').replace('每 10 秒掃描幣安', '<b>「☰ 選單 → 訊號卡片」</b>：每 10 秒掃描幣安');
@@ -8580,7 +8655,7 @@ function gdPage2(p) {
     ${gdPt('<circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="4"></circle>', '中間的<b>金色核心</b>：自動交易開著顯示 <b style="color:#d4af37">● ARMED</b>，關著顯示 <b>○ STANDBY</b>。')}
     ${gdPt('<rect x="3" y="6" width="8" height="5" rx="1"></rect><rect x="13" y="13" width="8" height="5" rx="1"></rect><path d="M7 11v4h6"></path>', '外圍 8 個<b>金邊模組</b>是 8 個角色（總指揮、偵察、鑑定、情報、軍需、執行、守護、資料）。左邊的直條是狀態：<b style="color:#d4af37">金＝運作中</b>、<b style="color:#f59e0b">橘＝等待中</b>、<b style="color:#ef4444">紅＝有問題</b>、灰＝沒開；右邊是它現在的數字，下面是進度。')}
     ${gdPt('<path d="M4 12h6l2-4 2 8 2-4h4"></path>', '每次<b>接力</b>，一顆金色資料封包會沿著電路從一個角色經過核心傳到下一個；最後一棒會發出脈衝。電腦上還會跳出那個角色的小視窗，一個字一個字打出它在做的事。')}
-    ${gdPt('<path d="M12 3l4 9-4 9-4-9z"></path>', '左下 3 個<b>菱形哨兵</b>是額外進場（暗流 FLOW、折返 PIVOT、伏擊 AMBUSH）：有訊號時亮起來顯示 ALERT，並送封包給總指揮；IDLE＝監聽中、OFF＝沒開。')}
+    ${gdPt('<path d="M12 3l4 9-4 9-4-9z"></path>', '左下 3 個<b>菱形哨兵</b>是額外進場（CRT、8AM、AVWAP）：有訊號時亮起來顯示 ALERT，並送封包給總指揮；IDLE＝監聽中、OFF＝沒開。')}
     ${gdTip(SPONLY ? '動畫下面是 8 張角色卡和 BALANCE 資金曲線。總指揮卡片上的「🗡 特級」可以直接開關特級交易，開的時候會跳出確認視窗，要按「確定」才會開始。' : '動畫下面是 8 張角色卡和 BALANCE 資金曲線。總指揮卡片上的「⏸ 一般」「🗡 特級」可以直接開關兩條交易線，開特級時會跳出確認視窗，要按「確定」才會開始。')}`;
   if (p === 'kl1') return `<div class="gdmock"><div class="gdmrow sm"><span>1分 5分 15分 <b style="color:#60a5fa">1小時</b> 4小時 日 週</span><span><span class="gdchip">◧ 3 格</span> <span class="gdchip">ƒx 指標</span> <span class="gdchip">📝 Pine</span> <span class="gdchip">⏪ 回放</span></span></div><div class="gdmrow sm"><span><span class="gdchip">ƒx</span> <b>BTC ▾</b> <span class="gdchip">1小時 ▾</span> 75,821</span><span class="gdchip or">75,821 · 42:17</span></div></div>
     <h2>🕯 K 線圖：基本操作</h2><p class="gdsub">在「☰ 選單 → K 線圖」，會填滿整個視窗。</p>
