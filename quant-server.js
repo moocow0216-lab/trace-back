@@ -452,7 +452,7 @@ async function dcRun() {
       try {
         const r = await fetch(m.cfg.webhook, {
           method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(8000),
-          body: JSON.stringify({ content: m.content.slice(0, 1900), username: 'QEVRAX', allowed_mentions: { parse: [] } })
+          body: JSON.stringify({ ...(typeof m.content === 'string' ? { content: m.content.slice(0, 1900) } : m.content), ...(m.cfg.ownName ? {} : { username: 'QEVRAX' }), allowed_mentions: { parse: [] } })   // 字串＝一般訊息；物件＝卡片（embeds）
         });
         if (r.status === 429) { const j = await r.json().catch(() => ({})); await sleep(Math.ceil((+j.retry_after || 2) * 1000) + 200); continue; }   // Discord 限速，等一下再送
         if (!r.ok) { const tx = (await r.text().catch(() => '')).slice(0, 200); log('Discord 傳送失敗', r.status, tx); m.err = dcErr(r.status, tx); break; }
@@ -952,7 +952,7 @@ setInterval(() => { if (!SP_ONLY && !REP.busy && Date.now() >= (ST.rep.next || 0
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-11-23f';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-11-23g';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -2698,10 +2698,6 @@ async function xScan(pair) {                           // 每根 15 分／5 分 
   for (const [k, t] of Object.entries(X.seen)) if (now - t > 4 * 24 * HOUR) delete X.seen[k];
   X.scan = { ...X.scan, at: now, n }; dirty = true;
 }
-function xMsg(s) {                                     // 幣種・M5／M15・CRT・做多／做空・TP1／TP2／TP3／SL
-  const P = XP[s.pair];
-  return `🔔 **${mdEsc(s.sym.replace(/USDT$/, ''))}** ${P.tf} CRT ${s.dir > 0 ? '🟢 **做多**' : '🔴 **做空**'}\n進場 ${fpx(s.px)}（${tw(s.t).slice(-5)} 收盤）\nTP1 ${fpx(s.tp1)}｜TP2 ${fpx(s.tp2)}｜TP3 ${fpx(s.tp3)}\nSL ${fpx(s.sl)}${xTrLine(s)}`;
-}
 const XHK = { crt: 'hook', o8: 'hook8', av: 'hookAv' }, XNM = { crt: 'CRT 進場', o8: '8AM 開盤訂單流', av: 'AVWAP 回踩' };
 function xNotify(s) {                                  // 通知有關注這個幣（CRT 還要看週期）的人，送到他自己設定的頻道
   const o8 = s.type === 'o8', av = s.type === 'av', msg = o8 ? o8Msg(s) : av ? avMsg(s) : xMsg(s), seen = new Set();
@@ -2709,7 +2705,7 @@ function xNotify(s) {                                  // 通知有關注這個�
     const ok = o8 ? c.o8 && (c.syms8 || []).includes(s.sym) : av ? c.av && c[s.pair === 'h4' ? 'av15' : 'av5'] !== false && (c.symsAv || []).includes(s.sym) && avFor(c, s) : c[s.pair] && c.crt && (c.syms || []).includes(s.sym);
     const hk = c[XHK[s.type] || 'hook'];                 // 每套有自己的 Webhook（可以是不同的 DC 機器人）
     if (!ok || !hk || !ST.users.some(u => u.uid === uid)) continue;
-    let h = ''; try { h = dec(hk); } catch (e) {} if (!h || seen.has(h)) continue; seen.add(h); dcSend(msg, { webhook: h });
+    let h = ''; try { h = dec(hk); } catch (e) {} if (!h || seen.has(h)) continue; seen.add(h); dcSend(msg, { webhook: h, ownName: true });   // 用 Webhook 自己的名字和頭貼（不同的機器人）
   }
 }
 setInterval(async () => {
@@ -2874,12 +2870,38 @@ function xTrLine(s) {                                  // DC 訊息最後一行
   const w = xWith(s), cells = s.tr.c.map(x => x > 0 ? '🟩' : x < 0 ? '🟥' : '⬜').join('');
   return `\n🚦 ${cells}（M5→D1）${s.tr.up} 多 ${s.tr.dn} 空・${w > 0 ? '**順勢**' : w < 0 ? '**⚠️ 逆勢**' : '趨勢不明'}`;
 }
+// 💬 額外進場的 Discord 卡片（embed）：左邊色條＝方向（多綠、空紅、不掛單灰），價位排成格子，最下面一行是趨勢紅綠燈
+const XEC = { up: 0x22c55e, dn: 0xef4444, mute: 0x6b7280 };
+function xTrField(s) {                                 // 趨勢：順勢／逆勢放最前面，方向那邊的數字先寫；五個週期用箭頭
+  if (!s.tr || !s.tr.c) return null;
+  const T = s.tr, w = xWith(s), mine = s.dir > 0 ? `${T.up} 多 ${T.dn} 空` : `${T.dn} 空 ${T.up} 多`;
+  const arrows = ['M5', 'M15', 'H1', 'H4', 'D1'].map((n, i) => `${n}${T.c[i] > 0 ? '▲' : T.c[i] < 0 ? '▼' : '·'}`).join('  ');
+  return { name: '趨勢', value: `${w > 0 ? '🧭 **順勢**' : w < 0 ? '⚠️ **逆勢**' : '趨勢不明'}（${mine}）　\`${arrows}\``, inline: false };
+}
+const xF = (name, value, inline = true) => ({ name, value: String(value), inline });
+const xEmb = (title, color, fields, footer, t, desc) => ({ embeds: [{ title, color, ...(desc ? { description: desc } : {}), fields: fields.filter(Boolean), footer: { text: footer }, timestamp: new Date(t).toISOString() }] });
+function xMsg(s) {                                     // 🕯 CRT
+  const P = XP[s.pair], sym = s.sym.replace(/USDT$/, ''), d = s.dir > 0;
+  return xEmb(`🔔 ${sym}・${P.tf} CRT・${d ? '做多' : '做空'}`, d ? XEC.up : XEC.dn,
+    [xF('方向', d ? '🟢 做多' : '🔴 做空'), xF('進場', fpx(s.px)), xF('SL', fpx(s.sl)), xF('TP1', fpx(s.tp1)), xF('TP2', fpx(s.tp2)), xF('TP3', fpx(s.tp3)), xTrField(s)],
+    `${P.htfN} CRT → ${P.tf}・K 線收盤進場`, s.t);
+}
+function avMsg(s) {                                    // 📐 AVWAP
+  const P = XP[s.pair], E = AVPS[s.eng || 0], sym = s.sym.replace(/USDT$/, ''), d = s.dir > 0;
+  return xEmb(`📐 ${sym}・${P.tf} AVWAP 回踩・${d ? '做多' : '做空'}`, d ? XEC.up : XEC.dn,
+    [xF('方向', d ? '🟢 做多' : '🔴 做空'), xF('進場', fpx(s.px)), xF('SL', fpx(s.sl)), xF('TP1', fpx(s.tp1)), xF('TP2', fpx(s.tp2)), xF('TP3', fpx(s.tp3)), xTrField(s)],
+    `品質 ${s.q}%・${E.nm}${s.auto ? '・自動挑中' : ''}・到 TP1 後 SL 移到進場價`, s.t);
+}
+function o8Msg(s) {                                    // 🕗 8AM：Big 掛單／Weak 不掛單
+  const sym = s.sym.replace(/USDT$/, ''), dl = s.dir < 0 ? '−Δ' : '+Δ', v = `${s.imb > 0 ? '+' : ''}${s.imb.toFixed(1)}%`, foot = `區間量佔 ${s.share.toFixed(1)}%・台北 08:00 開盤`;
+  if (!s.qual) return xEmb(`🕗 ${sym}・8AM 開盤・Weak Δ ${v}`, XEC.mute, [xF('開盤價', fpx(s.px)), xF('區間量佔', `${s.share.toFixed(1)}%`), xTrField(s)], foot, s.t, '⏸ **不掛單**（Δ 不夠大，今天跳過）');
+  const d = s.dir > 0;
+  return xEmb(`🕗 ${sym}・8AM 開盤・Big ${dl} ${v}`, d ? XEC.up : XEC.dn,
+    [xF('掛單', d ? '🟢 多單' : '🔴 空單'), xF('掛單價', `${fpx(s.px)}`), xF('區間量佔', `${s.share.toFixed(1)}%`), xF('TP', `${fpx(s.tp)}`), xF('SL', fpx(s.sl)), xF('​', '​'), xTrField(s)],
+    `TP＝目前波段${d ? '高' : '低'}點（成交時會更新）・SL＝開盤價外加 0.1 ATR`, s.t);
+}
 const avMode = c => c.avMode === undefined || c.avMode === 'auto' ? 'auto' : Math.max(0, Math.min(5, +c.avMode || 0));
 const avFor = (c, s) => { const m = avMode(c); return m === 'auto' ? !!s.auto : s.eng === m; };   // 這個人要不要收這筆（看他選自動還是某一組）
-function avMsg(s) {
-  const P = XP[s.pair], E = AVPS[s.eng || 0];
-  return `📐 **${mdEsc(s.sym.replace(/USDT$/, ''))}** ${P.tf} AVWAP 回踩 ${s.dir > 0 ? '🟢 **做多**' : '🔴 **做空**'}（品質 ${s.q}%・${E.nm}${s.auto ? '・自動挑中' : ''}）\n進場 ${fpx(s.px)}（${tw(s.t).slice(-5)} 收盤）\nTP1 ${fpx(s.tp1)}｜TP2 ${fpx(s.tp2)}｜TP3 ${fpx(s.tp3)}\nSL ${fpx(s.sl)}（到 TP1 後移到進場價）${xTrLine(s)}`;
-}
 /* ======================== 🕗 額外進場②：8AM 開盤訂單流（照擁有者的 TradingView 指標「QEVRAX 8AM OF」的預設值）——只發 Discord 通知，不下單 ========================
    台北 08:00（＝UTC 00:00）開盤價；方向：開盤價在日線 EMA20（只用已收盤的日 K）下方只找空、上方只找多
    每根 15 分 K 收盤判斷：價格離開盤價 ≥ 0.25 × 日線 ATR14 → 波段形成，量「開盤價 ± 0.05 ATR」區間的淨 Δ（1 分 K：收紅＝買量、收黑＝賣量）
@@ -2945,11 +2967,6 @@ async function o8Scan() {
     } catch (e) { X.scan.err = `${sym}：${e.message}`; }
   }
   X.scan8 = { at: now, n }; dirty = true;
-}
-function o8Msg(s) {                                    // Big／Weak、數值、要不要掛單、掛單價、止盈止損
-  const sym = mdEsc(s.sym.replace(/USDT$/, '')), dl = s.dir < 0 ? '−Δ' : '+Δ', v = `${s.imb > 0 ? '+' : ''}${s.imb.toFixed(1)}%`, sh = `區間量佔 ${s.share.toFixed(1)}%`;
-  if (!s.qual) return `🕗 **${sym}** 8AM 開盤｜**Weak Δ** ${v}（${sh}）\n⏸ 不掛單（Δ 不夠大，今天跳過）${xTrLine(s)}`;
-  return `🕗 **${sym}** 8AM 開盤｜**Big ${dl}** ${v}（${sh}）\n${s.dir < 0 ? '🔴 掛**空單**' : '🟢 掛**多單**'} @ ${fpx(s.px)}（08:00 開盤價）\nTP ${fpx(s.tp)}（目前波段${s.dir < 0 ? '低' : '高'}點）｜SL ${fpx(s.sl)}${xTrLine(s)}`;
 }
 /* ---------------- 📅 數據公布（經濟數據行事曆，來源：Forex Factory 公開 JSON） ----------------
    只看美國（USD）的高影響數據；公布前 30 分鐘、公布時各發一次 Discord，之後讀到實際值再補一次 */
@@ -3781,7 +3798,7 @@ http.createServer(async (req, res) => {
         }
         const sys = XHK[b.sys] ? b.sys : 'crt', hf = XHK[sys];   // 三套各自的 Webhook：crt＝hook（原本那個）、o8＝hook8、av＝hookAv
         if (op === 'hook') { const w = String(b.webhook || '').trim(); if (w && !/^https:\/\/(discord|discordapp)\.com\/api\/webhooks\//.test(w)) return send(res, 400, { error: '這不是 Discord Webhook 網址' }); c[hf] = w ? enc(w) : ''; dirty = true; return send(res, 200, { ok: true }); }
-        if (op === 'test') { if (!c[hf]) return send(res, 400, { error: '還沒設定 Webhook' }); const r = await dcSend(`🔔 **額外進場｜${XNM[sys]}** 測試訊息：之後關注的幣出現${XNM[sys]}訊號，會傳到這個頻道`, { webhook: dec(c[hf]) }, true); return r === false ? send(res, 400, { error: '傳送失敗，請確認網址' }) : send(res, 200, { ok: true }); }
+        if (op === 'test') { if (!c[hf]) return send(res, 400, { error: '還沒設定 Webhook' }); const r = await dcSend(`🔔 **額外進場｜${XNM[sys]}** 測試訊息：之後關注的幣出現${XNM[sys]}訊號，會傳到這個頻道`, { webhook: dec(c[hf]), ownName: true }, true); return r === false ? send(res, 400, { error: '傳送失敗，請確認網址' }) : send(res, 200, { ok: true }); }
         return send(res, 400, { error: '不認得的操作' });
       }
       if (u.pathname === '/api/sim') {                    // 🧪 模擬盤：切換、存入／提出模擬資金、重置
