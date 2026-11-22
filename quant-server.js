@@ -952,7 +952,7 @@ setInterval(() => { if (!SP_ONLY && !REP.busy && Date.now() >= (ST.rep.next || 0
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-11-23e';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-11-23f';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -2672,7 +2672,7 @@ async function xScan(pair) {                           // 每根 15 分／5 分 
             const b = L[x.i], id = `${sym}|${pair}|crt|${b.t}|${x.dir}`; if (X.seen[id]) continue;
             X.seen[id] = now;
             const s = { id, sym, pair, type: 'crt', dir: x.dir, bt: b.t, t: b.t + P.lms, px: b.c, sl: x.sl, tp1: x.tp1, tp2: x.tp2, tp3: x.tp3, top: x.top, bot: x.bot, fvg: x.fvg, hit: 0, lost: false, done: false };
-            xTrack(s, L.slice(x.i + 1));
+            xTrack(s, L.slice(x.i + 1)); s.tr = await xTrend(sym);
             X.sigs.unshift(s); if (X.sigs.length > 400) X.sigs.length = 400; xNotify(s); dirty = true;
           }
         }
@@ -2689,7 +2689,7 @@ async function xScan(pair) {                           // 每根 15 分／5 分 
           if (x.i < last - 1) continue;                  // 只要剛收盤的（最多晚一根）
           const id = `${sym}|${pair}|av${x.eng}|${x.t}|${x.dir}`; if (X.seen[id]) continue;
           X.seen[id] = now;
-          const s = { id, sym, pair, type: 'av', eng: x.eng, auto: x.eng === R.sel, dir: x.dir, bt: x.t, t: x.t + P.lms, px: x.px, sl: x.sl, tp1: x.tp1, tp2: x.tp2, tp3: x.tp3, mag: x.mag, q: x.q, er: x.er, hit: x.hit, st: x.st, done: x.st !== 0 };
+          const tr = await xTrend(sym), s = { tr, id, sym, pair, type: 'av', eng: x.eng, auto: x.eng === R.sel, dir: x.dir, bt: x.t, t: x.t + P.lms, px: x.px, sl: x.sl, tp1: x.tp1, tp2: x.tp2, tp3: x.tp3, mag: x.mag, q: x.q, er: x.er, hit: x.hit, st: x.st, done: x.st !== 0 };
           X.sigs.unshift(s); if (X.sigs.length > 600) X.sigs.length = 600; xNotify(s); dirty = true;
         }
       }
@@ -2700,7 +2700,7 @@ async function xScan(pair) {                           // 每根 15 分／5 分 
 }
 function xMsg(s) {                                     // 幣種・M5／M15・CRT・做多／做空・TP1／TP2／TP3／SL
   const P = XP[s.pair];
-  return `🔔 **${mdEsc(s.sym.replace(/USDT$/, ''))}** ${P.tf} CRT ${s.dir > 0 ? '🟢 **做多**' : '🔴 **做空**'}\n進場 ${fpx(s.px)}（${tw(s.t).slice(-5)} 收盤）\nTP1 ${fpx(s.tp1)}｜TP2 ${fpx(s.tp2)}｜TP3 ${fpx(s.tp3)}\nSL ${fpx(s.sl)}`;
+  return `🔔 **${mdEsc(s.sym.replace(/USDT$/, ''))}** ${P.tf} CRT ${s.dir > 0 ? '🟢 **做多**' : '🔴 **做空**'}\n進場 ${fpx(s.px)}（${tw(s.t).slice(-5)} 收盤）\nTP1 ${fpx(s.tp1)}｜TP2 ${fpx(s.tp2)}｜TP3 ${fpx(s.tp3)}\nSL ${fpx(s.sl)}${xTrLine(s)}`;
 }
 const XHK = { crt: 'hook', o8: 'hook8', av: 'hookAv' }, XNM = { crt: 'CRT 進場', o8: '8AM 開盤訂單流', av: 'AVWAP 回踩' };
 function xNotify(s) {                                  // 通知有關注這個幣（CRT 還要看週期）的人，送到他自己設定的頻道
@@ -2855,11 +2855,30 @@ async function xKl(sym, iv, ms, want) {                // 回傳已收盤的最�
   }
   return C.bars.filter(b => b.t + ms <= now).slice(-want);
 }
+// 🚦 趨勢紅綠燈：5 格＝M5、M15、H1、H4、D1，每格用已收盤 K 線的 EMA20 和 EMA50 比：EMA20 在上＝多（綠）、在下＝空（紅）
+//    3 格以上跟訊號同方向＝順勢，3 格以上反方向＝逆勢（K 線用 Bitunix，1 分鐘內同一個幣共用結果）
+const XTF = [['M5', '5m', 5 * 60000], ['M15', '15m', 15 * 60000], ['H1', '1h', HOUR], ['H4', '4h', 4 * HOUR], ['D1', '1d', 24 * HOUR]];
+const XTC = {};
+async function xTrend(sym) {
+  const now = Date.now(); if (XTC[sym] && now - XTC[sym].at < 60000) return XTC[sym].v;
+  const c = [];
+  for (const [, iv, ms] of XTF) {
+    try { const B = await xKl(sym, iv, ms, 200); c.push(B.length < 60 ? 0 : o8Ema(B, 20) > o8Ema(B, 50) ? 1 : -1); } catch (e) { c.push(0); }
+  }
+  const v = { c, up: c.filter(x => x > 0).length, dn: c.filter(x => x < 0).length, at: now };
+  XTC[sym] = { at: now, v }; return v;
+}
+const xWith = s => !s.tr ? 0 : (s.tr.up >= 3 ? 1 : s.tr.dn >= 3 ? -1 : 0) === s.dir ? 1 : (s.tr.up >= 3 || s.tr.dn >= 3) ? -1 : 0;   // 1＝順勢、-1＝逆勢、0＝看不出來
+function xTrLine(s) {                                  // DC 訊息最後一行
+  if (!s.tr) return '';
+  const w = xWith(s), cells = s.tr.c.map(x => x > 0 ? '🟩' : x < 0 ? '🟥' : '⬜').join('');
+  return `\n🚦 ${cells}（M5→D1）${s.tr.up} 多 ${s.tr.dn} 空・${w > 0 ? '**順勢**' : w < 0 ? '**⚠️ 逆勢**' : '趨勢不明'}`;
+}
 const avMode = c => c.avMode === undefined || c.avMode === 'auto' ? 'auto' : Math.max(0, Math.min(5, +c.avMode || 0));
 const avFor = (c, s) => { const m = avMode(c); return m === 'auto' ? !!s.auto : s.eng === m; };   // 這個人要不要收這筆（看他選自動還是某一組）
 function avMsg(s) {
   const P = XP[s.pair], E = AVPS[s.eng || 0];
-  return `📐 **${mdEsc(s.sym.replace(/USDT$/, ''))}** ${P.tf} AVWAP 回踩 ${s.dir > 0 ? '🟢 **做多**' : '🔴 **做空**'}（品質 ${s.q}%・${E.nm}${s.auto ? '・自動挑中' : ''}）\n進場 ${fpx(s.px)}（${tw(s.t).slice(-5)} 收盤）\nTP1 ${fpx(s.tp1)}｜TP2 ${fpx(s.tp2)}｜TP3 ${fpx(s.tp3)}\nSL ${fpx(s.sl)}（到 TP1 後移到進場價）`;
+  return `📐 **${mdEsc(s.sym.replace(/USDT$/, ''))}** ${P.tf} AVWAP 回踩 ${s.dir > 0 ? '🟢 **做多**' : '🔴 **做空**'}（品質 ${s.q}%・${E.nm}${s.auto ? '・自動挑中' : ''}）\n進場 ${fpx(s.px)}（${tw(s.t).slice(-5)} 收盤）\nTP1 ${fpx(s.tp1)}｜TP2 ${fpx(s.tp2)}｜TP3 ${fpx(s.tp3)}\nSL ${fpx(s.sl)}（到 TP1 後移到進場價）${xTrLine(s)}`;
 }
 /* ======================== 🕗 額外進場②：8AM 開盤訂單流（照擁有者的 TradingView 指標「QEVRAX 8AM OF」的預設值）——只發 Discord 通知，不下單 ========================
    台北 08:00（＝UTC 00:00）開盤價；方向：開盤價在日線 EMA20（只用已收盤的日 K）下方只找空、上方只找多
@@ -2921,7 +2940,7 @@ async function o8Scan() {
       if (!r || r.phase < 2) continue;
       const s = old || { id, sym, type: 'o8', day, t: r.formedAt, dir: r.dir, px: r.open, imb: r.imb, share: r.share, qual: r.qual, tp: r.tp0, sl: r.sl, phase: 2, done: !r.qual };
       if (r.qual) Object.assign(s, { phase: r.phase, tgt: r.tgt, fillAt: r.fillAt, out: r.out, outAt: r.outAt, done: r.phase === 4 });
-      if (!old) { X.sigs.unshift(s); if (X.sigs.length > 300) X.sigs.length = 300; if (now - r.formedAt < 45 * 60000) xNotify(s); }
+      if (!old) { s.tr = await xTrend(sym); X.sigs.unshift(s); if (X.sigs.length > 300) X.sigs.length = 300; if (now - r.formedAt < 45 * 60000) xNotify(s); }
       dirty = true;
     } catch (e) { X.scan.err = `${sym}：${e.message}`; }
   }
@@ -2929,8 +2948,8 @@ async function o8Scan() {
 }
 function o8Msg(s) {                                    // Big／Weak、數值、要不要掛單、掛單價、止盈止損
   const sym = mdEsc(s.sym.replace(/USDT$/, '')), dl = s.dir < 0 ? '−Δ' : '+Δ', v = `${s.imb > 0 ? '+' : ''}${s.imb.toFixed(1)}%`, sh = `區間量佔 ${s.share.toFixed(1)}%`;
-  if (!s.qual) return `🕗 **${sym}** 8AM 開盤｜**Weak Δ** ${v}（${sh}）\n⏸ 不掛單（Δ 不夠大，今天跳過）`;
-  return `🕗 **${sym}** 8AM 開盤｜**Big ${dl}** ${v}（${sh}）\n${s.dir < 0 ? '🔴 掛**空單**' : '🟢 掛**多單**'} @ ${fpx(s.px)}（08:00 開盤價）\nTP ${fpx(s.tp)}（目前波段${s.dir < 0 ? '低' : '高'}點）｜SL ${fpx(s.sl)}`;
+  if (!s.qual) return `🕗 **${sym}** 8AM 開盤｜**Weak Δ** ${v}（${sh}）\n⏸ 不掛單（Δ 不夠大，今天跳過）${xTrLine(s)}`;
+  return `🕗 **${sym}** 8AM 開盤｜**Big ${dl}** ${v}（${sh}）\n${s.dir < 0 ? '🔴 掛**空單**' : '🟢 掛**多單**'} @ ${fpx(s.px)}（08:00 開盤價）\nTP ${fpx(s.tp)}（目前波段${s.dir < 0 ? '低' : '高'}點）｜SL ${fpx(s.sl)}${xTrLine(s)}`;
 }
 /* ---------------- 📅 數據公布（經濟數據行事曆，來源：Forex Factory 公開 JSON） ----------------
    只看美國（USD）的高影響數據；公布前 30 分鐘、公布時各發一次 Discord，之後讀到實際值再補一次 */
