@@ -913,6 +913,8 @@ header{align-items:center}
 .xetab:hover{background:rgba(212,175,55,.06)}.xetab.on{background:rgba(212,175,55,.12);border-color:rgba(212,175,55,.55);color:#f3e7c4}.xetab.on small{color:#d4af37}
 .xetab:focus-visible{outline:2px solid #d4af37;outline-offset:2px}.xepane{display:flex;flex-direction:column;gap:12px}.xepane[hidden]{display:none}
 .xedesc{margin:4px 0 10px;font-size:13px;line-height:1.65;color:#a9a392}.xefind{background:none;border:0;color:inherit;font:inherit;cursor:pointer;padding:0;text-decoration:underline dotted rgba(212,175,55,.5);text-underline-offset:3px}
+.xeavset{display:flex;flex-wrap:wrap;gap:8px 16px;margin:10px 0 4px}.xesel{display:flex;align-items:center;gap:8px;font-size:13px;color:#cfc8b8}.xesel select{background:#0d0d0d;color:inherit;border:1px solid #3e372a;border-radius:8px;padding:6px 8px;font:inherit;max-width:100%}
+.xepick{display:flex;flex-direction:column;gap:4px;margin:6px 0 8px;padding:10px 12px;border:1px dashed rgba(212,175,55,.3);border-radius:10px;font-size:13px;color:#cfc8b8}.xepick b{color:#f3e7c4;font-size:13px}.xepick em{font-style:normal;color:#d4af37}
 .xedcrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:10px}
 .xesigs{display:grid;gap:10px}.xeh5{margin:12px 0 6px;font-size:14px;color:#cfc8b8}.xesig{border:1px solid rgba(212,175,55,.18);border-left:3px solid #3a3a3a;border-radius:12px;padding:10px 12px;background:rgba(255,255,255,.02);font-variant-numeric:tabular-nums}
 .xesig.up{border-left-color:#22c55e}.xesig.dn{border-left-color:#ef4444}
@@ -7074,7 +7076,7 @@ async function xeLoad() { try { XE.d = await srvFetch('/api/xent', { op: 'get' }
 const XE_SYS = [   // 分頁：key、圖示、名稱、短名、幣種欄位、說明
   ['crt', '🕯️', 'CRT 進場', 'CRT', 'syms', 'H4／H1 掃過前一根的高低點又收回來（前一根顏色相反）→ 之後 2 根內 M15／M5 出現 CHoCH／BOS → 回踩 FVG、收回 FVG 外就進場。<br>通知寫：幣種、M15／M5、做多／做空、TP1／TP2／TP3／SL。'],
   ['o8', '🕗', '8AM 開盤訂單流', '8AM', 'syms8', '台北 08:00 開盤後，價格走出 0.25 日線 ATR 的波段時，量開盤價附近的淨 Δ（15 分 K 判斷）。<br>通知寫：Big 還是 Weak、Δ 數值、要不要掛單、掛單價（開盤價）、TP（波段極值）、SL（開盤價外加 0.1 ATR）。'],
-  ['av', '📐', 'AVWAP 回踩', 'AVWAP', 'symsAv', '錨定 VWAP 回踩（固定用 Balanced 這組）：從擺動低點（高點）算 VWAP，趨勢走出 1.4 ATR 後，價格回檔進 VWAP 價值帶又收回來就進場，要過趨勢效率、品質分數、回檔深度的過濾。<br>通知寫：幣種、M15／M5、做多／做空、品質分數、TP1／TP2／TP3／SL；到 TP1 後止損移到進場價。']];
+  ['av', '📐', 'AVWAP 回踩', 'AVWAP', 'symsAv', '錨定 VWAP 回踩：從擺動低點（高點）算 VWAP，趨勢走出 1.4 ATR 後，價格回檔進 VWAP 價值帶又收回來就進場。6 組參數同時跑，預設「自動最佳化」跟圖表一樣挑勝率最高的那組，只通知那組的訊號。<br>通知寫：幣種、M15／M5、做多／做空、品質分數、用哪一組、TP1／TP2／TP3／SL；到 TP1 後止損移到進場價。']];
 function xeRender() {
   const d = XE.d, c = d.cfg, host = $('mnpXent');
   if (!XE.tab) { try { XE.tab = localStorage.getItem('quantXeTab') || 'crt'; } catch (e) { XE.tab = 'crt'; } }
@@ -7085,14 +7087,14 @@ function xeRender() {
         <section class="xebox"><h4>${ic} ${nm}</h4><p class="xedesc">${desc}</p>
           <div class="xedcrow"><button class="btn" data-dc="${k}" id="xeDc_${k}">💬 這套的 DC 設定</button><span class="tlmut" id="xeDcSt_${k}"></span></div>
           <label class="xetype"><input type="checkbox" id="xeT_${k}"><span><b>開啟這套的通知</b></span></label>
-          ${k === 'crt' ? tf('xeTf_crt', 'M15（看 H4 CRT）', 'M5（看 H1 CRT）') : k === 'av' ? tf('xeTf_av', 'M15', 'M5') : '<p class="tlmut xedesc">固定用 15 分 K 判斷，每天台北 08:00 開始。</p>'}
+          ${k === 'crt' ? tf('xeTf_crt', 'M15（看 H4 CRT）', 'M5（看 H1 CRT）') : k === 'av' ? tf('xeTf_av', 'M15', 'M5') + `<div class="xeavset"><label class="xesel">參數組 <select id="xeAvMode"></select></label><label class="xesel" id="xeAvBarsW">圖表 K 棒數 <select id="xeAvBars"><option value="5000">5000（免費版）</option><option value="10000">10000（Essential／Plus）</option><option value="20000">20000（Premium）</option></select></label></div><p class="tlmut xedesc">要跟圖表一模一樣：TradingView 用 Bitunix 的圖、指標的「Pullback Filter Mode」選同一個，K 棒數選你 TradingView 方案能載入的根數（免費版 5000；自動最佳化是看整段歷史的勝率挑組）。</p><div id="xeAvPick"></div>` : '<p class="tlmut xedesc">固定用 15 分 K 判斷，每天台北 08:00 開始。</p>'}
           <h5 class="xeh5">要看哪些幣（最多 30 個）・點幣名可以直接查詢</h5><div class="xeadd"><input id="xeIn_${k}" placeholder="輸入幣種，例如 BTC、ETH SOL（可一次打好幾個）" autocomplete="off" aria-label="${nm}：新增幣種"><button class="btn primary" data-add="${k}">加入</button></div>
           <div class="xechips" id="xeSyms_${k}"></div><div class="xequick" id="xeQuick_${k}"></div>
           <div class="qsaverow"><button class="btn primary" data-save="${k}">儲存</button><span class="qltmsg" id="xeMsg_${k}" role="status"></span></div></section>
         <section class="xebox"><h4>${ic} ${nm}・最近的訊號</h4>
           <div class="tlfind"><button class="btn" id="xeBack_${k}" hidden>← 返回全部</button><input id="xeQ_${k}" type="search" autocomplete="off" placeholder="🔍 查詢幣種（例：BTC）" aria-label="${nm}：查詢幣種"><span class="tlmut" id="xeQn_${k}" role="status"></span></div>
           <div id="xeList_${k}"></div></section></div>`;
-    host.innerHTML = `<div class="xe"><div class="xehead"><div><b>🔔 額外進場</b><span>三套進場訊號分開設定、各自選幣、各自的 Discord 頻道（可以用不同的 DC 機器人）。<b>只提醒、不會自動下單。</b></span></div></div>
+    host.innerHTML = `<div class="xe"><div class="xehead"><div><b>🔔 額外進場</b><span>三套進場訊號分開設定、各自選幣、各自的 Discord 頻道（可以用不同的 DC 機器人）。K 線都用 Bitunix 的（跟你的 TradingView 圖表同一家）。<b>只提醒、不會自動下單。</b></span></div></div>
       <div class="xetabs" role="tablist" aria-label="進場程式">${XE_SYS.map(([k, ic, nm]) => `<button class="xetab" role="tab" id="xeTab_${k}" data-tab="${k}" aria-controls="xeP_${k}"><span>${ic}</span><b>${nm}</b><small id="xeTabN_${k}"></small></button>`).join('')}</div>
       ${XE_SYS.map(pane).join('')}
       <dialog id="xeDlg" class="tldlg" aria-labelledby="xeDlgT"><div class="tldlgh"><h3 id="xeDlgT">💬 Discord 頻道</h3><button class="btn" id="xeDlgX">關閉</button></div>
@@ -7116,11 +7118,11 @@ function xeRender() {
       $('xeBack_' + k).onclick = () => pick(k, '');
     }
     for (const id of ['xeTf_crtA', 'xeTf_crtB']) $(id).onchange = () => mark('crt');
-    for (const id of ['xeTf_avA', 'xeTf_avB']) $(id).onchange = () => mark('av');
+    for (const id of ['xeTf_avA', 'xeTf_avB', 'xeAvMode', 'xeAvBars']) $(id).onchange = () => mark('av');
     host.querySelectorAll('[data-add]').forEach(b => b.onclick = () => { const k = b.dataset.add; add(k, $('xeIn_' + k).value); $('xeIn_' + k).value = ''; });
     host.querySelectorAll('[data-save]').forEach(btn => btn.onclick = async () => {
       const k = btn.dataset.save, body = { op: 'set', syms: XE.syms.crt, syms8: XE.syms.o8, symsAv: XE.syms.av, crt: $('xeT_crt').checked, o8: $('xeT_o8').checked, av: $('xeT_av').checked,
-        h4: $('xeTf_crtA').checked, h1: $('xeTf_crtB').checked, av15: $('xeTf_avA').checked, av5: $('xeTf_avB').checked };
+        h4: $('xeTf_crtA').checked, h1: $('xeTf_crtB').checked, av15: $('xeTf_avA').checked, av5: $('xeTf_avB').checked, avMode: $('xeAvMode').value, avBars: +$('xeAvBars').value };
       try { await srvFetch('/api/xent', body); XE.dirty = false; const S = XE_SYS.find(x => x[0] === k); $('xeMsg_' + k).textContent = `✅ 已儲存：${S[2]} ${body[k] ? XE.syms[k].length + ' 個幣' : '（通知關閉）'}`; $('xeMsg_' + k).style.color = ''; xeLoad(); }
       catch (e) { $('xeMsg_' + k).textContent = '❌ ' + e.message; $('xeMsg_' + k).style.color = '#ff9aa2'; }
     });
@@ -7139,6 +7141,12 @@ function xeRender() {
     xeList(k);
   }
   if (!XE.dirty) { for (const [k] of XE_SYS) $('xeT_' + k).checked = c[k] !== false; $('xeTf_crtA').checked = c.h4 !== false; $('xeTf_crtB').checked = c.h1 !== false; $('xeTf_avA').checked = c.av15 !== false; $('xeTf_avB').checked = c.av5 !== false; }
+  const AN = d.avNames || [];
+  if (!$('xeAvMode').options.length) $('xeAvMode').innerHTML = '<option value="auto">自動最佳化（跟圖表預設一樣）</option>' + AN.map(([en, zh], i) => `<option value="${i}">${esc(en)}（${zh}）</option>`).join('');
+  if (!XE.dirty) { $('xeAvMode').value = String(c.avMode === undefined ? 'auto' : c.avMode); $('xeAvBars').value = String(d.avBars || 5000); }
+  $('xeAvBars').disabled = !d.owner; $('xeAvBarsW').title = d.owner ? '' : '全站共用，只有擁有者能改';
+  const PK = Object.entries(d.avPick || {}).sort();
+  $('xeAvPick').innerHTML = PK.length ? `<div class="xepick"><b>自動最佳化目前挑中</b>（拿來跟圖表右上角的「Auto:」對）${PK.map(([key, v]) => { const [sy, pr] = key.split('|'), S = v.stats[v.eng] || {}, wr = S.tot ? (S.win / S.tot * 100).toFixed(1) : '—'; return `<span>${esc(sy.replace(/USDT$/, ''))} ${pr === 'h4' ? 'M15' : 'M5'} → <em>${esc((AN[v.eng] || [])[0] || '')}</em> ${wr}%（${S.tot || 0} 筆）</span>`; }).join('')}</div>` : '';
   for (const [k] of XE_SYS) { const H = (d.hooks || {})[k] || {}; $('xeDc_' + k).textContent = `💬 這套的 DC 設定（${H.on ? '已設定' : '還沒設定'}）`; $('xeDcSt_' + k).innerHTML = H.on ? (H.last && !H.last.ok ? '<span class="qr">上次傳送失敗</span>' : '') : '<span class="qr">沒設定就不會傳通知</span>'; }
   if ($('xeDlg').open) xeDcSt();
 }
@@ -7162,7 +7170,7 @@ function xeList(k) {                                   // 一個分頁的訊號�
     }
     if (k === 'av') {
       const r = s.old ? '<span class="tlmut">—</span>' : s.st === 1 ? '<span class="qg">TP3 ✓</span>' : s.st === -1 ? '<span class="qr">SL ✗</span>' : s.st === 2 ? `<span class="qg">TP${s.hit} ✓</span>・${s.be ? '保本出場' : s.flip ? '被新訊號取代' : '60 根到期'}` : s.st === 3 ? `<span class="tlmut">${s.flip ? '被新訊號取代' : '60 根到期'}</span>` : s.hit ? `<span class="qg">TP${s.hit} ✓</span>・進行中（止損已移到保本）` : '<span class="tlmut">進行中</span>';
-      return `<div class="xesig ${s.dir > 0 ? 'up' : 'dn'}">${head(s, `${tf(s)} AVWAP`, dirT(s), dirC(s), r)}
+      return `<div class="xesig ${s.dir > 0 ? 'up' : 'dn'}">${head(s, `${tf(s)} AVWAP・${esc((((XE.d.avNames || [])[s.eng || 0]) || ['Balanced'])[0])}`, dirT(s), dirC(s), r)}
         <div class="xelv"><span>進場 ${fpx(s.px)}</span>${lv('SL', s.sl, s.st === -1, 'qr')}<span class="tlmut">品質 ${s.q}%・趨勢效率 ${s.er}%</span></div><div class="xelv">${lv('TP1', s.tp1, s.hit >= 1, 'qg')}${lv('TP2', s.tp2, s.hit >= 2, 'qg')}${lv('TP3', s.tp3, s.hit >= 3, 'qg')}</div></div>`;
     }
     const r = s.old ? '<span class="tlmut">—</span>' : s.lost ? '<span class="qr">SL ✗</span>' : s.hit ? `<span class="qg">TP${s.hit} ✓</span>${s.done ? '' : '・進行中'}` : s.done ? '—' : '<span class="tlmut">進行中</span>';
@@ -8171,6 +8179,8 @@ mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
   { id: '2026-11-23a', title: '2026/11/23 更新（額外進場：CRT＋8AM＋AVWAP 三個分頁）', items: [
+    { ic: '📊', sp: true, t: '額外進場三套（CRT、8AM、AVWAP）的 K 線都改用 Bitunix 的資料，跟 TradingView 上 Bitunix 的圖表同一家，價格和成交量才對得起來（原本是幣安）。' },
+    { ic: '🎯', sp: true, t: 'AVWAP 回踩改成跟 TradingView 圖表一模一樣：6 組參數同時跑，預設「自動最佳化」照指標的規則挑勝率最高的那組，圖表有訊號機器人才發。也可以固定選某一組；K 棒數可以設成跟你的 TradingView 方案一樣（5000／10000／20000），頁面會顯示每個幣目前自動挑中哪一組。' },
     { ic: '💬', sp: true, t: '額外進場的三套訊號各自有自己的 Discord Webhook（每個分頁裡的「💬 這套的 DC 設定」），可以用不同名字、不同頭像的 DC 機器人發送。原本設定的 Webhook 留給 CRT 進場。' },
     { ic: '📐', sp: true, t: '額外進場加入第三套「AVWAP 回踩」（PhenLabs 的錨定 VWAP 指標，固定用 Balanced 這組）：Discord 寫幣種、M15／M5、做多／做空、品質分數、TP1／TP2／TP3／SL，到 TP1 後止損移到進場價。' },
     { ic: '🗂', sp: true, t: '額外進場分成 3 個分頁：CRT 進場、8AM 開盤、AVWAP 回踩，每頁有自己的說明、開關、幣種清單、最近的訊號，還有「🔍 查詢幣種」和「← 返回全部」；點幣種清單裡的幣名也能直接查詢。' },
