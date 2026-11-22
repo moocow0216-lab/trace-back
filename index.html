@@ -915,6 +915,8 @@ header{align-items:center}
 .xedesc{margin:4px 0 10px;font-size:13px;line-height:1.65;color:#a9a392}.xefind{background:none;border:0;color:inherit;font:inherit;cursor:pointer;padding:0;text-decoration:underline dotted rgba(212,175,55,.5);text-underline-offset:3px}
 .xeavset{display:flex;flex-wrap:wrap;gap:8px 16px;margin:10px 0 4px}.xesel{display:flex;align-items:center;gap:8px;font-size:13px;color:#cfc8b8}.xesel select{background:#0d0d0d;color:inherit;border:1px solid #3e372a;border-radius:8px;padding:6px 8px;font:inherit;max-width:100%}
 .xepick{display:flex;flex-direction:column;gap:4px;margin:6px 0 8px;padding:10px 12px;border:1px dashed rgba(212,175,55,.3);border-radius:10px;font-size:13px;color:#cfc8b8}.xepick b{color:#f3e7c4;font-size:13px}.xepick em{font-style:normal;color:#d4af37}
+.xetr{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-top:8px;padding-top:8px;border-top:1px dashed rgba(212,175,55,.15);font-size:13px}.xetr small{color:#8b8676}
+.xetl{display:inline-grid;grid-template-columns:repeat(5,auto);gap:3px}.xetl i{font-style:normal;font-size:10px;font-weight:700;line-height:1;padding:5px 6px;border-radius:5px;background:#2a2826;color:#8b8676;min-width:30px;text-align:center}.xetl i.u{background:#14532d;color:#86efac}.xetl i.d{background:#5b1a1a;color:#fca5a5}
 .xedcrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:10px}
 .xesigs{display:grid;gap:10px}.xeh5{margin:12px 0 6px;font-size:14px;color:#cfc8b8}.xesig{border:1px solid rgba(212,175,55,.18);border-left:3px solid #3a3a3a;border-radius:12px;padding:10px 12px;background:rgba(255,255,255,.02);font-variant-numeric:tabular-nums}
 .xesig.up{border-left-color:#22c55e}.xesig.dn{border-left-color:#ef4444}
@@ -7177,8 +7179,13 @@ function xeList(k) {                                   // 一個分頁的訊號�
     return `<div class="xesig ${s.dir > 0 ? 'up' : 'dn'}">${head(s, `${tf(s)} CRT`, dirT(s), dirC(s), r)}
       <div class="xelv"><span>進場 ${fpx(s.px)}</span>${lv('SL', s.sl, s.lost, 'qr')}</div><div class="xelv">${lv('TP1', s.tp1, s.hit >= 1, 'qg')}${lv('TP2', s.tp2, s.hit >= 2, 'qg')}${lv('TP3', s.tp3, s.hit >= 3, 'qg')}</div></div>`;
   };
+  const trRow = s => {                                  // 🚦 趨勢紅綠燈：M5、M15、H1、H4、D1（EMA20 在 EMA50 上＝多）
+    if (!s.tr || !s.tr.c) return '';
+    const T = s.tr, maj = T.up >= 3 ? 1 : T.dn >= 3 ? -1 : 0, w = !maj ? 0 : maj === s.dir ? 1 : -1;
+    return `<div class="xetr"><span class="xetl" role="img" aria-label="趨勢 ${T.up} 多 ${T.dn} 空">${['M5', 'M15', 'H1', 'H4', 'D1'].map((n, i) => `<i class="${T.c[i] > 0 ? 'u' : T.c[i] < 0 ? 'd' : ''}">${n}</i>`).join('')}</span><b class="${w > 0 ? 'qg' : w < 0 ? 'qr' : 'tlmut'}">${w > 0 ? '順勢' : w < 0 ? '⚠️ 逆勢' : '趨勢不明'}</b><small>${T.up} 多 ${T.dn} 空</small></div>`;
+  };
   const scanTxt = k === 'o8' ? (d.scan8 && d.scan8.at ? `上次掃描 ${fmtT(d.scan8.at).slice(-5)}，${d.scan8.n} 個幣。` : '每根 15 分 K 收盤後掃描一次。') : (d.scan && d.scan.at ? `上次掃描 ${fmtT(d.scan.at).slice(-5)}，${d.scan.n} 個幣。` : '每根 M5／M15 K 線收盤後掃描一次。');
-  $('xeList_' + k).innerHTML = L.length ? `<div class="xesigs">${L.map(card).join('')}</div>` : q ? `<p class="tlsub">${esc(q)} 目前沒有這套的訊號。按「← 返回全部」看全部。</p>` : `<p class="tlsub">還沒有訊號。${scanTxt}</p>`;
+  $('xeList_' + k).innerHTML = L.length ? `<div class="xesigs">${L.map(s => card(s).replace(/<\/div>\s*$/, trRow(s) + '</div>')).join('')}</div>` : q ? `<p class="tlsub">${esc(q)} 目前沒有這套的訊號。按「← 返回全部」看全部。</p>` : `<p class="tlsub">還沒有訊號。${scanTxt}</p>`;
 }
 /* ---------- ⚔ 作戰室（主畫面）：參考「AI 交易室」版面——上面 8 張角色卡、中間交易室動畫、資金曲線、分析圖＋條件表 ---------- */
 const WAR = { tool: null, toolAt: 0, btc: null, kl: {}, focus: null, ev: [], evAt: 0, raf: 0, ro: null };
@@ -8179,6 +8186,7 @@ mnInit();
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
   { id: '2026-11-23a', title: '2026/11/23 更新（額外進場：CRT＋8AM＋AVWAP 三個分頁）', items: [
+    { ic: '🚦', sp: true, t: '新增趨勢紅綠燈：5 格＝M5、M15、H1、H4、D1，每格用 EMA20 和 EMA50 比（EMA20 在上＝多、綠；在下＝空、紅）。三套額外進場的訊號卡片和 Discord 通知都會附上這 5 格，3 格以上跟訊號同方向寫「順勢」、反方向寫「⚠️ 逆勢」。' },
     { ic: '📊', sp: true, t: '額外進場三套（CRT、8AM、AVWAP）的 K 線都改用 Bitunix 的資料，跟 TradingView 上 Bitunix 的圖表同一家，價格和成交量才對得起來（原本是幣安）。' },
     { ic: '🎯', sp: true, t: 'AVWAP 回踩改成跟 TradingView 圖表一模一樣：6 組參數同時跑，預設「自動最佳化」照指標的規則挑勝率最高的那組，圖表有訊號機器人才發。也可以固定選某一組；K 棒數可以設成跟你的 TradingView 方案一樣（5000／10000／20000），頁面會顯示每個幣目前自動挑中哪一組。' },
     { ic: '💬', sp: true, t: '額外進場的三套訊號各自有自己的 Discord Webhook（每個分頁裡的「💬 這套的 DC 設定」），可以用不同名字、不同頭像的 DC 機器人發送。原本設定的 Webhook 留給 CRT 進場。' },
