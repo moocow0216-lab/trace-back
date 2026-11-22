@@ -2660,10 +2660,11 @@ async function xScan(pair) {                           // 每根 15 分／5 分 
   const syms = [...new Set([...wC, ...wA])].slice(0, 100); let n = 0;
   for (const sym of syms) {
     try {
-      const L = await toolKl(sym, P.ltf, 600, P.lms); if (L.length < 120) continue; n++;
+      n++;
       if (wC.has(sym)) {
+        const L = await xKl(sym, P.ltf, P.lms, 600); if (L.length < 120) throw new Error('K 線不夠');
         for (const s of X.sigs) if (s.type === 'crt' && s.sym === sym && s.pair === pair && !s.done) { xTrack(s, L); if (!s.done && L[0].t > s.bt) { s.done = true; s.old = true; } dirty = true; }
-        const H = await toolKl(sym, P.htf, 60, P.hms);
+        const H = await xKl(sym, P.htf, P.hms, 60);
         if (H.length >= 4) {
           const sb = xStruct(L, 50), ib = xStruct(L, 5), atr = toolAtr(L, 14);
           for (const x of xCrt(L, H, P, sb, ib, atr)) {
@@ -2676,18 +2677,20 @@ async function xScan(pair) {                           // 每根 15 分／5 分 
           }
         }
       }
-      if (wA.has(sym)) {
-        const plans = avRun(L), byT = new Map(plans.map(x => [x.t, x]));
-        for (const s of X.sigs) if (s.type === 'av' && s.sym === sym && s.pair === pair && !s.done) {   // 之前的單：照最新的 K 線重算結果
-          const x = byT.get(s.bt); if (x && x.dir === s.dir) Object.assign(s, { hit: x.hit, st: x.st, be: !!x.be, flip: !!x.flip, done: x.st !== 0 }); else if (L[0].t > s.bt) { s.done = true; s.old = true; }
+      if (wA.has(sym)) {                                // 📐 6 組一起跑，自動最佳化挑一組（跟圖表一樣）
+        const LB = await xKl(sym, P.ltf, P.lms, X.avBars || 5000); if (LB.length < 300) throw new Error('AVWAP K 線不夠');
+        const R = avRun(LB), byK = new Map(R.plans.map(x => [`${x.eng}|${x.t}`, x])), last = LB.length - 1;
+        X.avPick = X.avPick || {}; X.avPick[`${sym}|${pair}`] = { eng: R.sel, stats: R.stats, at: now, n: LB.length };
+        for (const s of X.sigs) if (s.type === 'av' && s.sym === sym && s.pair === pair && !s.done) {   // 之前的單：照最新的 K 線更新結果
+          const x = byK.get(`${s.eng || 0}|${s.bt}`); if (x && x.dir === s.dir) Object.assign(s, { hit: x.hit, st: x.st, be: !!x.be, flip: !!x.flip, done: x.st !== 0 }); else if (LB[0].t > s.bt) { s.done = true; s.old = true; }
           dirty = true;
         }
-        for (const x of plans) {
-          if (x.i < L.length - 2) continue;
-          const id = `${sym}|${pair}|av|${x.t}|${x.dir}`; if (X.seen[id]) continue;
+        for (const x of R.plans) {
+          if (x.i < last - 1) continue;                  // 只要剛收盤的（最多晚一根）
+          const id = `${sym}|${pair}|av${x.eng}|${x.t}|${x.dir}`; if (X.seen[id]) continue;
           X.seen[id] = now;
-          const s = { id, sym, pair, type: 'av', dir: x.dir, bt: x.t, t: x.t + P.lms, px: x.px, sl: x.sl, tp1: x.tp1, tp2: x.tp2, tp3: x.tp3, mag: x.mag, q: x.q, er: x.er, hit: x.hit, st: x.st, done: x.st !== 0 };
-          X.sigs.unshift(s); if (X.sigs.length > 400) X.sigs.length = 400; xNotify(s); dirty = true;
+          const s = { id, sym, pair, type: 'av', eng: x.eng, auto: x.eng === R.sel, dir: x.dir, bt: x.t, t: x.t + P.lms, px: x.px, sl: x.sl, tp1: x.tp1, tp2: x.tp2, tp3: x.tp3, mag: x.mag, q: x.q, er: x.er, hit: x.hit, st: x.st, done: x.st !== 0 };
+          X.sigs.unshift(s); if (X.sigs.length > 600) X.sigs.length = 600; xNotify(s); dirty = true;
         }
       }
     } catch (e) { X.scan.err = `${sym}：${e.message}`; }
@@ -2703,7 +2706,7 @@ const XHK = { crt: 'hook', o8: 'hook8', av: 'hookAv' }, XNM = { crt: 'CRT 進場
 function xNotify(s) {                                  // 通知有關注這個幣（CRT 還要看週期）的人，送到他自己設定的頻道
   const o8 = s.type === 'o8', av = s.type === 'av', msg = o8 ? o8Msg(s) : av ? avMsg(s) : xMsg(s), seen = new Set();
   for (const [uid, c] of Object.entries(ST.xent.cfg)) {
-    const ok = o8 ? c.o8 && (c.syms8 || []).includes(s.sym) : av ? c.av && c[s.pair === 'h4' ? 'av15' : 'av5'] !== false && (c.symsAv || []).includes(s.sym) : c[s.pair] && c.crt && (c.syms || []).includes(s.sym);
+    const ok = o8 ? c.o8 && (c.syms8 || []).includes(s.sym) : av ? c.av && c[s.pair === 'h4' ? 'av15' : 'av5'] !== false && (c.symsAv || []).includes(s.sym) && avFor(c, s) : c[s.pair] && c.crt && (c.syms || []).includes(s.sym);
     const hk = c[XHK[s.type] || 'hook'];                 // 每套有自己的 Webhook（可以是不同的 DC 機器人）
     if (!ok || !hk || !ST.users.some(u => u.uid === uid)) continue;
     let h = ''; try { h = dec(hk); } catch (e) {} if (!h || seen.has(h)) continue; seen.add(h); dcSend(msg, { webhook: h });
@@ -2720,23 +2723,36 @@ setInterval(async () => {
   if (s8 > XR.o8) { XR.o8 = s8; XR.busy = true; try { await o8Scan(); } catch (e) { ST.xent.scan.err = e.message; } finally { XR.busy = false; } }
 }, 15000);
 /* ======================== 📐 額外進場③：錨定 VWAP 回踩（照「Anchored VWAP Pullback & Target Zones [PhenLabs]」，MPL 2.0）——只發 Discord 通知，不下單 ========================
-   固定用 Balanced 這組（1.0σ 價值帶、趨勢效率 ≥ 26%、品質 ≥ 52），不用自動最佳化（它是拿歷史挑勝率最高的那組，會一直換標準）
-   擺動低點（高點）當錨 → 從錨點算成交量加權 VWAP 和 σ 帶；離錨點 ≥ 1.4 ATR 才算有趨勢 → 回檔進到 VWAP＋1σ 以下（做空反過來）→ 收紅站回 VWAP、收在前高附近
-   → 過濾（趨勢效率、品質分數、回檔深度 12%～85%、5 根暴漲暴跌不做）→ 進場；每個錨最多 2 次
-   SL＝回檔低點和價值帶下緣較低的那個再往外 0.2 ATR（風險限制在 0.35～3 ATR）；TP1／TP2／TP3＝1R／2R／3R，前一波高（低）點在 1.3～2.4R 就當 TP2、2.4～4.5R 就當 TP3
-   到 TP1 後止損移到進場價；60 根沒結果就結束；出現新的進場訊號時舊的單結束 */
-const AVP = { swing: 10, maxPb: 2, minImp: 1.4, band: 1.0, outer: 2.0, minEr: 26, minQual: 52, slScale: 1.0, minRisk: 0.35, minAct: 0, slBuf: 0.2 };
-function avRun(B) {
-  const n = B.length, A = toolAtr(B, 14), cl = (v, a, b) => Math.min(Math.max(v, a), b), out = [];
-  const sw = AVP.swing, piv = (i, hi) => {                // ta.pivothigh／pivotlow(len, len)：第 i 根確認第 i−len 根
+   跟圖表一模一樣：6 組參數（Balanced、Conservative、Aggressive、Shallow、Deep Value、Volume Climax）同時跑，共用錨點（換錨看 Balanced 的次數），
+   每組各自記勝負；「自動最佳化」照指標的挑法（≥3 筆裡勝率最高 → 前三組只要有 1 筆也能比 → 都沒有就挑有交易的），圖表只畫被挑中那組的訊號，機器人也只通知那組。
+   K 線用 Bitunix（跟圖表同一家）、跟圖表一樣多的根數（免費版 5000），因為自動挑哪一組是看整段歷史的勝率 */
+const AVPS = [   // band、outer、minEr、minQual、slScale、minRisk、minAct
+  { nm: 'Balanced', zh: '平衡', band: 1.00, outer: 2.00, minEr: 26, minQual: 52, slScale: 1.00, minRisk: 0.35, minAct: 0 },
+  { nm: 'Conservative', zh: '保守', band: 0.80, outer: 1.75, minEr: 35, minQual: 60, slScale: 1.15, minRisk: 0.35, minAct: 0 },
+  { nm: 'Aggressive', zh: '積極', band: 1.25, outer: 2.30, minEr: 18, minQual: 44, slScale: 0.85, minRisk: 0.30, minAct: 0 },
+  { nm: 'Shallow Pullback', zh: '淺回檔', band: 0.65, outer: 1.60, minEr: 30, minQual: 55, slScale: 0.90, minRisk: 0.30, minAct: 0 },
+  { nm: 'Deep Value Reclaim', zh: '深回檔', band: 1.45, outer: 2.50, minEr: 22, minQual: 48, slScale: 1.25, minRisk: 0.40, minAct: 0 },
+  { nm: 'Volume Climax', zh: '爆量', band: 1.00, outer: 2.00, minEr: 24, minQual: 58, slScale: 0.95, minRisk: 0.32, minAct: 1.25 }];
+const AVC = { swing: 10, maxPb: 2, minImp: 1.4, slBuf: 0.2 };
+function avPick(E) {                                   // 指標的 Auto-Optimize 挑法
+  let wr0 = -1, net0 = -1e9, best = 0; const wr = e => e.win / e.tot * 100;
+  for (let k = 0; k < 6; k++) { const e = E[k]; if (e.tot >= 3 && (wr(e) > wr0 || (wr(e) === wr0 && e.net > net0))) { wr0 = wr(e); net0 = e.net; best = k; } }
+  for (let k = 0; k < 3; k++) { const e = E[k]; if (e.tot > 0 && (wr(e) > wr0 || (wr(e) === wr0 && e.net > net0))) { wr0 = wr(e); net0 = e.net; best = k; } }
+  if (wr0 < 0) for (let k = 0; k < 6; k++) { const e = E[k]; if (e.tot > 0 && (wr(e) > wr0 || (wr(e) === wr0 && e.net > net0))) { wr0 = wr(e); net0 = e.net; best = k; } }
+  return best;
+}
+function avRun(B) {                                    // 回傳 { plans: 每筆（含 eng）, sel: 最後一根被挑中的組, stats }
+  const n = B.length, A = toolAtr(B, 14), cl = (v, a, b) => Math.min(Math.max(v, a), b), out = [], sw = AVC.swing;
+  const piv = (i, hi) => {                              // ta.pivothigh／pivotlow(10, 10)
     const c = i - sw; if (c - sw < 0) return NaN; const v = hi ? B[c].h : B[c].l;
     for (let k = c - sw; k <= c + sw; k++) { if (k === c) continue; const x = hi ? B[k].h : B[k].l; if (hi ? (k < c ? x >= v : x > v) : (k < c ? x <= v : x < v)) return NaN; }
     return v; };
-  const bu = { on: false, bar: 0, px: NaN, wp: 0, wp2: 0, w: 0, vw: NaN, sd: 0, ext: NaN, arm: false }, be = { ...bu };
-  const E = { bIn: false, bPb: NaN, bUsed: 0, sIn: false, sPb: NaN, sUsed: 0 }; let plan = null;
+  const bu = { on: false, px: NaN, wp: 0, wp2: 0, w: 0, vw: NaN, sd: 0, ext: NaN, arm: false, bar: -1 }, be = { ...bu };
+  const E = AVPS.map((P, k) => ({ k, P, bIn: false, bPb: NaN, bUsed: 0, sIn: false, sPb: NaN, sUsed: 0, plan: null, tot: 0, win: 0, loss: 0, net: 0 }));
+  let vsum = 0;
   for (let i = 0; i < n; i++) {
     const b = B[i], atr = A[i] > 0 ? A[i] : Math.max(b.h - b.l, 1e-12), span = Math.max(b.h - b.l, 1e-12);
-    let vs = NaN; if (i >= 19) { let s = 0; for (let k = i - 19; k <= i; k++) s += B[k].v || 0; vs = s / 20; }
+    vsum += b.v || 0; if (i >= 20) vsum -= B[i - 20].v || 0; const vs = i >= 19 ? vsum / 20 : NaN;
     const real = b.v > 0 && vs > 0, rel = real ? b.v / vs : span / atr, actN = cl(rel / 2, 0, 1), wt = real ? Math.max(b.v, 1e-6) : Math.max(rel, 0.1);
     let er = 0; if (i >= 10) { let path = 0; for (let k = i - 9; k <= i; k++) path += Math.abs(B[k].c - B[k - 1].c); er = path > 0 ? cl(Math.abs(b.c - B[i - 10].c) / path * 100, 0, 100) : 0; }
     const erN = cl(er / 55, 0, 1), hlc = (b.h + b.l + b.c) / 3;
@@ -2744,84 +2760,106 @@ function avRun(B) {
     const qS = Math.round(cl((0.4 * cl((b.h - b.c) / span, 0, 1) + 0.35 * erN + 0.25 * actN) * 100 * (b.c < b.o ? 1 : 0.85), 0, 100) * 10) / 10;
     const mv5 = (b.c - (i >= 5 ? B[i - 5].c : b.c)) / atr, bearCrash = mv5 < -3.6 && b.c < b.o, bullCrash = mv5 > 3.6 && b.c > b.o;
     const pH = i ? B[i - 1].h : b.h, pL = i ? B[i - 1].l : b.l;
-    // A. 進行中的單：止損（TP1 後是保本）→ TP1／TP2／TP3 → 60 根到期
-    if (plan && plan.st === 0 && i > plan.i) {
-      const d = plan.dir, slHit = d > 0 ? b.l <= plan.asl : b.h >= plan.asl, reach = p => d > 0 ? b.h >= p : b.l <= p;
-      if (slHit) { plan.st = plan.hit ? 2 : -1; plan.end = b.t; plan.be = !!plan.hit; }
-      else {
-        if (plan.hit < 1 && reach(plan.tp1)) { plan.hit = 1; plan.asl = plan.px; }
-        if (plan.hit < 2 && reach(plan.tp2)) plan.hit = 2;
-        if (plan.hit < 3 && reach(plan.tp3)) { plan.hit = 3; plan.st = 1; plan.end = b.t; }
-        else if (i - plan.i >= 60) { plan.st = plan.hit ? 2 : 3; plan.end = b.t; }
+    // A. 每組進行中的單：止損（TP1 後是保本）→ TP1／TP2／TP3 → 60 根到期；同時記勝負（照指標算法）
+    for (const e of E) {
+      const p = e.plan; if (!p || p.st !== 0 || i <= p.i) continue;
+      const d = p.dir, reach = x => d > 0 ? b.h >= x : b.l <= x;
+      if (d > 0 ? b.l <= p.asl : b.h >= p.asl) {
+        if (p.hit) { p.st = 2; p.be = true; e.tot++; e.win++; e.net += p.hit >= 2 ? (1 + p.r2) * 0.5 : 0.5; } else { p.st = -1; e.tot++; e.loss++; e.net -= 1; }
+        p.end = b.t;
+      } else {
+        if (p.hit < 1 && reach(p.tp1)) { p.hit = 1; p.asl = p.px; }
+        if (p.hit < 2 && reach(p.tp2)) p.hit = 2;
+        if (p.hit < 3 && reach(p.tp3)) { p.hit = 3; p.st = 1; p.end = b.t; e.tot++; e.win++; e.net += p.r3; }
+        else if (i - p.i >= 60) { p.st = p.hit ? 2 : 3; p.end = b.t; e.tot++; if (p.hit) { e.win++; e.net += 1; } else { const r = d * (b.c - p.px) / Math.max(p.risk, 1e-12); if (r >= 0) e.win++; else e.loss++; e.net += r; } }
       }
     }
-    // B. 更新錨定 VWAP
-    if (bu.on) {
-      bu.wp += wt * hlc; bu.wp2 += wt * hlc * hlc; bu.w += wt; bu.vw = bu.wp / Math.max(bu.w, 1e-9); bu.sd = Math.max(Math.sqrt(Math.max(0, bu.wp2 / Math.max(bu.w, 1e-9) - bu.vw * bu.vw)), atr * 0.25);
-      if (isNaN(bu.ext) || b.h >= bu.ext) bu.ext = b.h;
-      if (!bu.arm && bu.ext - bu.px >= AVP.minImp * atr) bu.arm = true;
-      if (b.c < bu.px || b.c < bu.vw - 2.6 * bu.sd) { bu.on = false; bu.arm = false; E.bIn = false; }
+    // B. 更新錨定 VWAP（共用）
+    for (const [S, up] of [[bu, true], [be, false]]) {
+      if (!S.on) continue;
+      S.wp += wt * hlc; S.wp2 += wt * hlc * hlc; S.w += wt; S.vw = S.wp / Math.max(S.w, 1e-9); S.sd = Math.max(Math.sqrt(Math.max(0, S.wp2 / Math.max(S.w, 1e-9) - S.vw * S.vw)), atr * 0.25);
+      if (up) { if (isNaN(S.ext) || b.h >= S.ext) S.ext = b.h; if (!S.arm && S.ext - S.px >= AVC.minImp * atr) S.arm = true; if (b.c < S.px || b.c < S.vw - 2.6 * S.sd) { S.on = false; S.arm = false; for (const e of E) e.bIn = false; } }
+      else { if (isNaN(S.ext) || b.l <= S.ext) S.ext = b.l; if (!S.arm && S.px - S.ext >= AVC.minImp * atr) S.arm = true; if (b.c > S.px || b.c > S.vw + 2.6 * S.sd) { S.on = false; S.arm = false; for (const e of E) e.sIn = false; } }
     }
-    if (be.on) {
-      be.wp += wt * hlc; be.wp2 += wt * hlc * hlc; be.w += wt; be.vw = be.wp / Math.max(be.w, 1e-9); be.sd = Math.max(Math.sqrt(Math.max(0, be.wp2 / Math.max(be.w, 1e-9) - be.vw * be.vw)), atr * 0.25);
-      if (isNaN(be.ext) || b.l <= be.ext) be.ext = b.l;
-      if (!be.arm && be.px - be.ext >= AVP.minImp * atr) be.arm = true;
-      if (b.c > be.px || b.c > be.vw + 2.6 * be.sd) { be.on = false; be.arm = false; E.sIn = false; }
-    }
-    // C. 新的擺動點當錨（從錨點那根重算）
+    // C. 新的擺動點當錨（看 Balanced 用了幾次）
     const pb = i - sw, pl = piv(i, false), ph = piv(i, true);
     const seed = (S, p, hi) => {
       let wp = 0, wp2 = 0, w = 0, ext = hi ? b.l : b.h;
       for (let k = pb; k <= i; k++) { const x = B[k], sp = Math.max(x.h - x.l, 1e-12), wk = real ? Math.max(x.v || 0, 1e-6) : Math.max(sp / atr, 0.1), pk = (x.h + x.l + x.c) / 3;
         wp += wk * pk; wp2 += wk * pk * pk; w += wk; if (hi ? x.l <= ext : x.h >= ext) ext = hi ? x.l : x.h; }
       Object.assign(S, { on: true, bar: pb, px: p, wp, wp2, w, vw: wp / Math.max(w, 1e-9), ext });
-      S.sd = Math.max(Math.sqrt(Math.max(0, wp2 / Math.max(w, 1e-9) - S.vw * S.vw)), atr * 0.25); S.arm = hi ? p - ext >= AVP.minImp * atr : ext - p >= AVP.minImp * atr;
+      S.sd = Math.max(Math.sqrt(Math.max(0, wp2 / Math.max(w, 1e-9) - S.vw * S.vw)), atr * 0.25); S.arm = hi ? p - ext >= AVC.minImp * atr : ext - p >= AVC.minImp * atr;
     };
-    if (!isNaN(pl) && pb >= 0) {
-      const rep = !bu.on || pl < bu.px || E.bUsed >= AVP.maxPb || (bu.arm && pl > bu.px && b.h - pl >= AVP.minImp * atr);
-      if (rep && b.c > pl) { seed(bu, pl, false); E.bIn = false; E.bPb = NaN; E.bUsed = 0; }
-    }
-    if (!isNaN(ph) && pb >= 0) {
-      const rep = !be.on || ph > be.px || E.sUsed >= AVP.maxPb || (be.arm && ph < be.px && ph - b.l >= AVP.minImp * atr);
-      if (rep && b.c < ph) { seed(be, ph, true); E.sIn = false; E.sPb = NaN; E.sUsed = 0; }
-    }
-    // D. 回檔進價值帶 → 收回 → 過濾 → 進場
-    const openDir = plan && plan.st === 0 ? plan.dir : -99; let take = 0, q = 0;
-    if (bu.on && bu.arm && E.bUsed < AVP.maxPb && !isNaN(bu.vw)) {
-      const up = bu.vw + AVP.band * bu.sd, def = bu.vw - AVP.outer * bu.sd;
-      if (b.l <= up && b.c >= def && b.c > bu.px && b.h < bu.ext) { if (!E.bIn) { E.bIn = true; E.bPb = b.l; } else if (b.l < (isNaN(E.bPb) ? b.l : E.bPb)) E.bPb = b.l; }
-      else if (b.c < def) E.bIn = false;
-      if (E.bIn && b.c > bu.vw && b.c > b.o && b.c >= pH - 0.2 * atr && openDir !== 1) {
-        const leg = Math.max(bu.ext - bu.px, atr * 0.5), dep = (bu.ext - (isNaN(E.bPb) ? b.l : E.bPb)) / leg;
-        if (er >= AVP.minEr && qB >= AVP.minQual && rel >= AVP.minAct && dep >= 0.12 && dep <= 0.85 && !bearCrash) { take = 1; q = qB; } else E.bIn = false;
+    if (!isNaN(pl) && pb >= 0 && (!bu.on || pl < bu.px || E[0].bUsed >= AVC.maxPb || (bu.arm && pl > bu.px && b.h - pl >= AVC.minImp * atr)) && b.c > pl) { seed(bu, pl, false); for (const e of E) { e.bIn = false; e.bPb = NaN; e.bUsed = 0; } }
+    if (!isNaN(ph) && pb >= 0 && (!be.on || ph > be.px || E[0].sUsed >= AVC.maxPb || (be.arm && ph < be.px && ph - b.l >= AVC.minImp * atr)) && b.c < ph) { seed(be, ph, true); for (const e of E) { e.sIn = false; e.sPb = NaN; e.sUsed = 0; } }
+    // D. 每組：回檔進價值帶 → 收回 → 過濾 → 進場
+    for (const e of E) {
+      const P = e.P, openDir = e.plan && e.plan.st === 0 ? e.plan.dir : -99; let take = 0, q = 0;
+      if (bu.on && bu.arm && e.bUsed < AVC.maxPb && !isNaN(bu.vw)) {
+        const up = bu.vw + P.band * bu.sd, def = bu.vw - P.outer * bu.sd;
+        if (b.l <= up && b.c >= def && b.c > bu.px && b.h < bu.ext) { if (!e.bIn) { e.bIn = true; e.bPb = b.l; } else if (b.l < (isNaN(e.bPb) ? b.l : e.bPb)) e.bPb = b.l; }
+        else if (b.c < def) e.bIn = false;
+        if (e.bIn && b.c > bu.vw && b.c > b.o && b.c >= pH - 0.2 * atr && openDir !== 1) {
+          const leg = Math.max(bu.ext - bu.px, atr * 0.5), dep = (bu.ext - (isNaN(e.bPb) ? b.l : e.bPb)) / leg;
+          if (er >= P.minEr && qB >= P.minQual && rel >= P.minAct && dep >= 0.12 && dep <= 0.85 && !bearCrash) { take = 1; q = qB; } else e.bIn = false;
+        }
       }
-    }
-    if (!take && be.on && be.arm && E.sUsed < AVP.maxPb && !isNaN(be.vw)) {
-      const lo = be.vw - AVP.band * be.sd, def = be.vw + AVP.outer * be.sd;
-      if (b.h >= lo && b.c <= def && b.c < be.px && b.l > be.ext) { if (!E.sIn) { E.sIn = true; E.sPb = b.h; } else if (b.h > (isNaN(E.sPb) ? b.h : E.sPb)) E.sPb = b.h; }
-      else if (b.c > def) E.sIn = false;
-      if (E.sIn && b.c < be.vw && b.c < b.o && b.c <= pL + 0.2 * atr && openDir !== -1) {
-        const leg = Math.max(be.px - be.ext, atr * 0.5), dep = ((isNaN(E.sPb) ? b.h : E.sPb) - be.ext) / leg;
-        if (er >= AVP.minEr && qS >= AVP.minQual && rel >= AVP.minAct && dep >= 0.12 && dep <= 0.85 && !bullCrash) { take = -1; q = qS; } else E.sIn = false;
+      if (!take && be.on && be.arm && e.sUsed < AVC.maxPb && !isNaN(be.vw)) {
+        const lo = be.vw - P.band * be.sd, def = be.vw + P.outer * be.sd;
+        if (b.h >= lo && b.c <= def && b.c < be.px && b.l > be.ext) { if (!e.sIn) { e.sIn = true; e.sPb = b.h; } else if (b.h > (isNaN(e.sPb) ? b.h : e.sPb)) e.sPb = b.h; }
+        else if (b.c > def) e.sIn = false;
+        if (e.sIn && b.c < be.vw && b.c < b.o && b.c <= pL + 0.2 * atr && openDir !== -1) {
+          const leg = Math.max(be.px - be.ext, atr * 0.5), dep = ((isNaN(e.sPb) ? b.h : e.sPb) - be.ext) / leg;
+          if (er >= P.minEr && qS >= P.minQual && rel >= P.minAct && dep >= 0.12 && dep <= 0.85 && !bullCrash) { take = -1; q = qS; } else e.sIn = false;
+        }
       }
-    }
-    if (take) {
-      if (plan && plan.st === 0) { plan.st = plan.hit ? 2 : 3; plan.end = b.t; plan.flip = true; }
-      const d = take, S = d > 0 ? bu : be, e = b.c, buf = AVP.slBuf * AVP.slScale * atr;
-      const raw = d > 0 ? Math.min(isNaN(E.bPb) ? b.l : E.bPb, S.vw - AVP.band * S.sd) - buf : Math.max(isNaN(E.sPb) ? b.h : E.sPb, S.vw + AVP.band * S.sd) + buf;
-      const risk = cl(Math.abs(e - raw), atr * AVP.minRisk, atr * 3);
-      let tp2 = e + d * 2 * risk, tp3 = e + d * 3 * risk, mag = 0; const dR = d * (S.ext - e) / risk;
-      if (!isNaN(S.ext)) { if (dR >= 1.3 && dR <= 2.4) { tp2 = S.ext; mag = 2; } else if (dR > 2.4 && dR <= 4.5) { tp3 = S.ext; mag = 3; } }
-      plan = { i, t: b.t, dir: d, px: e, sl: e - d * risk, asl: e - d * risk, tp1: e + d * risk, tp2, tp3, mag, q: Math.round(q), er: Math.round(er), vw: S.vw, hit: 0, st: 0 };
-      out.push(plan);
-      if (d > 0) { E.bIn = false; E.bUsed++; } else { E.sIn = false; E.sUsed++; }
+      if (!take) continue;
+      const o = e.plan;
+      if (o && o.st === 0) { o.st = o.hit ? 2 : 3; o.end = b.t; o.flip = true; e.tot++; if (o.hit) { e.win++; e.net += 1; } else { const r = o.dir * (b.c - o.px) / Math.max(o.risk, 1e-12); if (r >= 0) e.win++; else e.loss++; e.net += r; } }
+      const d = take, S = d > 0 ? bu : be, px = b.c, buf = AVC.slBuf * P.slScale * atr;
+      const raw = d > 0 ? Math.min(isNaN(e.bPb) ? b.l : e.bPb, S.vw - P.band * S.sd) - buf : Math.max(isNaN(e.sPb) ? b.h : e.sPb, S.vw + P.band * S.sd) + buf;
+      const risk = cl(Math.abs(px - raw), atr * P.minRisk, atr * 3);
+      let tp2 = px + d * 2 * risk, tp3 = px + d * 3 * risk, r2 = 2, r3 = 3, mag = 0; const dR = d * (S.ext - px) / risk;
+      if (!isNaN(S.ext)) { if (dR >= 1.3 && dR <= 2.4) { tp2 = S.ext; r2 = Math.round(dR * 10) / 10; mag = 2; } else if (dR > 2.4 && dR <= 4.5) { tp3 = S.ext; r3 = Math.round(dR * 10) / 10; mag = 3; } }
+      e.plan = { eng: e.k, i, t: b.t, dir: d, px, risk, sl: px - d * risk, asl: px - d * risk, tp1: px + d * risk, tp2, tp3, r2, r3, mag, q: Math.round(q), er: Math.round(er), hit: 0, st: 0 };
+      out.push(e.plan);
+      if (d > 0) { e.bIn = false; e.bUsed++; } else { e.sIn = false; e.sUsed++; }
     }
   }
-  return out;
+  const sel = avPick(E);
+  return { plans: out, sel, stats: E.map(e => ({ tot: e.tot, win: e.win, loss: e.loss, net: Math.round(e.net * 100) / 100 })) };
 }
+// 額外進場的 K 線：改用 Bitunix（跟擁有者的 TradingView 圖表同一家），每次最多 200 根、用 endTime 往回翻；第一次補齊，之後每次只抓最新的接上
+const XKC = {};
+async function xKlPage(sym, iv, endTime) {
+  const r = await fetch(`${BXAPI}/api/v1/futures/market/kline?symbol=${sym}&interval=${iv}&limit=200${endTime ? `&endTime=${endTime}` : ''}`, { signal: AbortSignal.timeout(10000) }).then(x => x.json());
+  if (!r || r.code !== 0 || !Array.isArray(r.data)) throw new Error(`Bitunix K 線讀取失敗（${(r && (r.msg || r.code)) || '沒有回應'}）`);
+  return r.data.map(x => ({ t: +x.time, o: +x.open, h: +x.high, l: +x.low, c: +x.close, v: +x.baseVol || 0, qv: +x.quoteVol || 0 })).filter(b => b.t > 0 && b.h > 0).sort((a, b) => a.t - b.t);
+}
+async function xKl(sym, iv, ms, want) {                // 回傳已收盤的最後 want 根（舊 → 新）
+  const key = `${sym}|${iv}`, now = Date.now(); let C = XKC[key];
+  const full = async n => {
+    let all = [], end = 0;
+    while (all.length < n + 1) {
+      const r = await xKlPage(sym, iv, end); if (!r.length) break;
+      all = r.concat(all.filter(b => b.t > r[r.length - 1].t)); end = r[0].t; if (r.length < 200) break;
+      await new Promise(f => setTimeout(f, 120));      // Bitunix 限制每秒 10 次
+    }
+    return XKC[key] = { n, at: now, bars: all, ex: all.length < n + 1 };   // ex＝交易所沒有更多歷史了
+  };
+  if (!C || now - C.at > 12 * HOUR || (C.bars.length < want - 2 && !C.ex)) C = await full(want);
+  else {
+    const r = await xKlPage(sym, iv, 0), last = C.bars.length ? C.bars[C.bars.length - 1].t : 0;
+    if (r.length && last && r[0].t > last + ms) C = await full(Math.max(want, C.bars.length));   // 中間斷掉：重新補齊
+    else if (r.length) { C.bars = C.bars.filter(b => b.t < r[0].t).concat(r); if (C.bars.length > 25000) C.bars = C.bars.slice(-25000); }
+  }
+  return C.bars.filter(b => b.t + ms <= now).slice(-want);
+}
+const avMode = c => c.avMode === undefined || c.avMode === 'auto' ? 'auto' : Math.max(0, Math.min(5, +c.avMode || 0));
+const avFor = (c, s) => { const m = avMode(c); return m === 'auto' ? !!s.auto : s.eng === m; };   // 這個人要不要收這筆（看他選自動還是某一組）
 function avMsg(s) {
-  const P = XP[s.pair];
-  return `📐 **${mdEsc(s.sym.replace(/USDT$/, ''))}** ${P.tf} AVWAP 回踩 ${s.dir > 0 ? '🟢 **做多**' : '🔴 **做空**'}（品質 ${s.q}%）\n進場 ${fpx(s.px)}（${tw(s.t).slice(-5)} 收盤）\nTP1 ${fpx(s.tp1)}｜TP2 ${fpx(s.tp2)}｜TP3 ${fpx(s.tp3)}\nSL ${fpx(s.sl)}（到 TP1 後移到進場價）`;
+  const P = XP[s.pair], E = AVPS[s.eng || 0];
+  return `📐 **${mdEsc(s.sym.replace(/USDT$/, ''))}** ${P.tf} AVWAP 回踩 ${s.dir > 0 ? '🟢 **做多**' : '🔴 **做空**'}（品質 ${s.q}%・${E.nm}${s.auto ? '・自動挑中' : ''}）\n進場 ${fpx(s.px)}（${tw(s.t).slice(-5)} 收盤）\nTP1 ${fpx(s.tp1)}｜TP2 ${fpx(s.tp2)}｜TP3 ${fpx(s.tp3)}\nSL ${fpx(s.sl)}（到 TP1 後移到進場價）`;
 }
 /* ======================== 🕗 額外進場②：8AM 開盤訂單流（照擁有者的 TradingView 指標「QEVRAX 8AM OF」的預設值）——只發 Discord 通知，不下單 ========================
    台北 08:00（＝UTC 00:00）開盤價；方向：開盤價在日線 EMA20（只用已收盤的日 K）下方只找空、上方只找多
@@ -2829,10 +2867,6 @@ function avMsg(s) {
    Big Δ：同方向淨 Δ ≥ 20%、區間量 ≥ 波段總量 10% → 在開盤價掛限價單；SL＝開盤價外加 0.1 ATR；TP＝波段極值（成交時的低點／高點）
    Weak Δ：不掛單。同一根 K 同時碰到停利和停損，保守算停損 */
 const O8 = { tf: 15 * 60000, ema: 20, atr: 14, minLeg: 0.25, zone: 0.05, minImb: 20, minShare: 10, stop: 0.10 };
-async function o8Kl(sym, iv, q, ms) {
-  const r = await getJSON(`${BF}/fapi/v1/klines?symbol=${sym}&interval=${iv}&${q}`);
-  return (Array.isArray(r) ? r : []).map(x => ({ t: +x[0], o: +x[1], h: +x[2], l: +x[3], c: +x[4], v: +x[5] })).filter(b => b.t + ms <= Date.now());
-}
 function o8Ema(B, len) {                               // ta.ema（前 len 根用 SMA 起算）
   const a = 2 / (len + 1); let e = NaN, sum = 0;
   B.forEach((b, i) => { if (i < len) { sum += b.c; if (i === len - 1) e = sum / len; } else e = a * b.c + (1 - a) * e; });
@@ -2882,8 +2916,8 @@ async function o8Scan() {
     const id = `${sym}|o8|${day}`, old = X.sigs.find(s => s.id === id);
     if (old && old.done) continue;
     try {
-      if (!O8D[sym] || O8D[sym].day !== day) O8D[sym] = { day, D1: await o8Kl(sym, '1d', 'limit=400', 86400000) };
-      const M = await o8Kl(sym, '1m', `startTime=${day}&limit=1500`, 60000), r = o8Run(O8D[sym].D1, M, day, now); n++;
+      if (!O8D[sym] || O8D[sym].day !== day) O8D[sym] = { day, D1: await xKl(sym, '1d', 86400000, 400) };
+      const M = (await xKl(sym, '1m', 60000, Math.ceil((now - day) / 60000) + 5)).filter(b => b.t >= day), r = o8Run(O8D[sym].D1, M, day, now); n++;
       if (!r || r.phase < 2) continue;
       const s = old || { id, sym, type: 'o8', day, t: r.formedAt, dir: r.dir, px: r.open, imb: r.imb, share: r.share, qual: r.qual, tp: r.tp0, sl: r.sl, phase: 2, done: !r.qual };
       if (r.qual) Object.assign(s, { phase: r.phase, tgt: r.tgt, fillAt: r.fillAt, out: r.out, outAt: r.outAt, done: r.phase === 4 });
@@ -3715,14 +3749,16 @@ http.createServer(async (req, res) => {
       }
       if (u.pathname === '/api/xent') {                  // 🔔 額外進場：自己的關注清單、通知頻道
         const uid = meU ? meU.uid : ownerUid(), c = xCfg(uid), op = String(b.op || 'get');
-        if (op === 'get') { const m1 = new Set(c.syms || []), m8 = new Set(c.syms8 || []), mA = new Set(c.symsAv || []); return send(res, 200, { cfg: { syms: c.syms, crt: c.crt !== false, h4: c.h4, h1: c.h1, syms8: c.syms8 || [], o8: c.o8 !== false, symsAv: c.symsAv || [], av: c.av !== false, av15: c.av15 !== false, av5: c.av5 !== false }, hook: !!c.hook, hooks: Object.fromEntries(Object.entries(XHK).map(([k, f]) => [k, { on: !!c[f], last: (() => { try { return c[f] ? dcStat(dec(c[f])) : null; } catch (e) { return null; } })() }])),
-          sigs: ST.xent.sigs.filter(x => (x.type === 'o8' ? m8 : x.type === 'av' ? mA : m1).has(x.sym)).slice(0, 300), all: ST.xent.sigs.slice(0, 30), scan: ST.xent.scan, scan8: ST.xent.scan8 || null, uni: TOOLU.list.slice(0, 80), names: XN }); }
+        if (op === 'get') { const m1 = new Set(c.syms || []), m8 = new Set(c.syms8 || []), mA = new Set(c.symsAv || []); return send(res, 200, { cfg: { syms: c.syms, crt: c.crt !== false, h4: c.h4, h1: c.h1, syms8: c.syms8 || [], o8: c.o8 !== false, symsAv: c.symsAv || [], av: c.av !== false, av15: c.av15 !== false, av5: c.av5 !== false, avMode: avMode(c) }, avBars: ST.xent.avBars || 5000, avNames: AVPS.map(x => [x.nm, x.zh]), owner: !!owner,
+          avPick: Object.fromEntries(Object.entries(ST.xent.avPick || {}).filter(([k]) => mA.has(k.split('|')[0]))), hook: !!c.hook, hooks: Object.fromEntries(Object.entries(XHK).map(([k, f]) => [k, { on: !!c[f], last: (() => { try { return c[f] ? dcStat(dec(c[f])) : null; } catch (e) { return null; } })() }])),
+          sigs: ST.xent.sigs.filter(x => (x.type === 'o8' ? m8 : x.type === 'av' ? mA : m1).has(x.sym) && (x.type !== 'av' || avFor(c, x))).slice(0, 300), all: ST.xent.sigs.slice(0, 30), scan: ST.xent.scan, scan8: ST.xent.scan8 || null, uni: TOOLU.list.slice(0, 80), names: XN }); }
         if (op === 'set') {
           const norm = A => [...new Set((Array.isArray(A) ? A : []).map(x => String(x).toUpperCase().replace(/[^A-Z0-9]/g, '')).filter(Boolean).map(x => /USDT$/.test(x) ? x : x + 'USDT'))];
           const syms = norm(b.syms), syms8 = b.syms8 === undefined ? (c.syms8 || []) : norm(b.syms8), symsAv = b.symsAv === undefined ? (c.symsAv || []) : norm(b.symsAv);
           if (syms.length > 30 || syms8.length > 30 || symsAv.length > 30) return send(res, 400, { error: '每一套最多關注 30 個幣' });
           if ([...syms, ...syms8, ...symsAv].some(x => !/^[A-Z0-9]{2,20}USDT$/.test(x))) return send(res, 400, { error: '幣種格式不對' });
-          Object.assign(c, { syms, crt: b.crt !== false, h4: b.h4 !== false, h1: b.h1 !== false, syms8, o8: b.o8 === undefined ? c.o8 !== false : !!b.o8, symsAv, av: b.av === undefined ? c.av !== false : !!b.av, av15: b.av15 === undefined ? c.av15 !== false : !!b.av15, av5: b.av5 === undefined ? c.av5 !== false : !!b.av5 }); dirty = true; return send(res, 200, { ok: true });
+          Object.assign(c, { syms, crt: b.crt !== false, h4: b.h4 !== false, h1: b.h1 !== false, syms8, o8: b.o8 === undefined ? c.o8 !== false : !!b.o8, symsAv, avMode: b.avMode === undefined ? avMode(c) : b.avMode === 'auto' ? 'auto' : Math.max(0, Math.min(5, Math.round(+b.avMode) || 0)), av: b.av === undefined ? c.av !== false : !!b.av, av15: b.av15 === undefined ? c.av15 !== false : !!b.av15, av5: b.av5 === undefined ? c.av5 !== false : !!b.av5 }); if (owner && [5000, 10000, 20000].includes(+b.avBars)) ST.xent.avBars = +b.avBars;   // 圖表 K 棒數（全站共用，只有擁有者能改）
+          dirty = true; return send(res, 200, { ok: true });
         }
         const sys = XHK[b.sys] ? b.sys : 'crt', hf = XHK[sys];   // 三套各自的 Webhook：crt＝hook（原本那個）、o8＝hook8、av＝hookAv
         if (op === 'hook') { const w = String(b.webhook || '').trim(); if (w && !/^https:\/\/(discord|discordapp)\.com\/api\/webhooks\//.test(w)) return send(res, 400, { error: '這不是 Discord Webhook 網址' }); c[hf] = w ? enc(w) : ''; dirty = true; return send(res, 200, { ok: true }); }
