@@ -952,7 +952,7 @@ setInterval(() => { if (!SP_ONLY && !REP.busy && Date.now() >= (ST.rep.next || 0
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-11-21c';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-11-23a';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1666,7 +1666,7 @@ const toolUsers = () => SP_ONLY ? [...new Set([ownerUid(), ...ST.users.map(x => 
 const toolOk = (me, owner) => owner || (SP_ONLY && !!me) || !!(me && ST.tool.grants.includes(me.uid));
 async function toolKl(sym, iv, limit, ms) {           // 只要已經收盤的 K 棒
   const r = await getJSON(`${BF}/fapi/v1/klines?symbol=${sym}&interval=${iv}&limit=${limit}`);
-  return (Array.isArray(r) ? r : []).map(x => ({ t: +x[0], o: +x[1], h: +x[2], l: +x[3], c: +x[4], qv: +x[7], tb: +x[10] })).filter(b => b.t + ms <= Date.now());
+  return (Array.isArray(r) ? r : []).map(x => ({ t: +x[0], o: +x[1], h: +x[2], l: +x[3], c: +x[4], v: +x[5], qv: +x[7], tb: +x[10] })).filter(b => b.t + ms <= Date.now());
 }
 /* ======================== 🗡 特級咒具：FVG／OB 回踩策略（照擁有者的三套 TradingView 指標） ========================
    ① 4H／1H 出現 FVG／OB：照 BigBeluga「FVG Order Blocks」（缺口 % ＝數值，要在設定的範圍內）
@@ -2559,8 +2559,9 @@ setInterval(async () => {                              // 每分鐘：到期的�
     } catch (e) { log('試用到期處理失敗', r.uid, e.message); }
   }
 }, 60000);
-/* ======================== 🔔 額外進場：莊家淨額背離、H4/H1 CRT、獵殺（天神下凡）三種訊號——只發 Discord 通知，不下單 ========================
-   照擁有者的 TradingView 指標「莊家淨額 + CRT/SMC」和「無量空處」裡的天神下凡；每個人自己選要看哪些幣、哪幾種訊號、通知送到哪個頻道 */
+/* ======================== 🔔 額外進場（重寫）：照擁有者的 TradingView 指標「QEVRAX CRT」（莊家淨額 + CRT/SMC + 清算熱力圖）的 CRT 進場——只發 Discord 通知，不下單 ========================
+   用指標的預設值：嚴格模式（第一根顏色要相反）、CRT 確認後 2 根大週期內、Swing 50／Internal 5 結構武裝、FVG 保留 5 個、收針確認、最小風險 0.3 ATR、
+   止損＝CRT 區間外、三段止盈（TP1＝區間 50%、TP2＝區間另一端、TP3＝TP2 距離的兩倍；價位不在獲利那一邊就改用 1R／2R）。莊家進場之後再加。 */
 // CHoCH／BOS（照指標的 f_leg／f_structure）：每根 K 棒有沒有看漲、看跌結構突破
 function xStruct(B, len) {
   const n = B.length, bull = new Array(n).fill(false), bear = new Array(n).fill(false), tagB = new Array(n).fill(''), tagS = new Array(n).fill('');
@@ -2580,55 +2581,15 @@ function xStruct(B, len) {
   }
   return { bull, bear, tagB, tagS };
 }
-// 🎯 獵殺進場（天神下凡）：同一天（UTC）連續兩根 4H／1H：前跌後漲且後低破前低＝看漲窗口；前漲後跌且後高破前高＝看跌窗口 → 窗口內出現同方向 CHoCH/BOS，下一根標示進場
-function xHunt(L, P, sb, ib) {
-  const out = []; let day = [], curDay = null, acc = null, win = { dir: 0, trig: false }, pend = null;
-  for (let i = 0; i < L.length; i++) {
-    const b = L[i], slot = Math.floor(new Date(b.t).getUTCHours() / P.slotH) + 1, dayId = Math.floor(b.t / 86400000);
-    if (!acc || slot !== acc.slot || dayId !== acc.day) {
-      if (acc && dayId !== acc.day && win.dir && !win.trig) win = { dir: 0, trig: false };   // 新的一天：還沒觸發的窗口取消
-      if (acc) {
-        if (acc.day !== curDay) { day = []; curDay = acc.day; }
-        day.push(acc);
-        const n = day.length;
-        if (n >= 2) {
-          const p = day[n - 2], q = day[n - 1];
-          if (q.slot === p.slot + 1 && q.slot <= P.maxSlot) {
-            const lp = p.c < p.o && q.c > q.o && q.l < p.l, sp = p.c > p.o && q.c < q.o && q.h > p.h;
-            if (lp || sp) win = { dir: lp ? 1 : -1, trig: false };
-          }
-        }
-      }
-      acc = { o: b.o, h: b.h, l: b.l, c: b.c, slot, day: dayId };
-    } else { acc.h = Math.max(acc.h, b.h); acc.l = Math.min(acc.l, b.l); acc.c = b.c; }
-    if (win.dir && !win.trig) {
-      const brk = win.dir === 1 ? (sb.bull[i] || ib.bull[i]) : (sb.bear[i] || ib.bear[i]);
-      if (brk) { win.trig = true; pend = { dir: win.dir, i, tag: win.dir === 1 ? (ib.tagB[i] || sb.tagB[i]) : (ib.tagS[i] || sb.tagS[i]) }; }
-    }
-    if (pend && i === pend.i + 1) { out.push({ i, dir: pend.dir, tag: pend.tag }); pend = null; }
-  }
-  return out;
+// 三段止盈（指標的 f_pickTp）：價位在獲利那一邊、而且比前一段遠才用，不然改用盈虧比倍數
+function xTps(dir, e, top, bot) {
+  const sl = dir > 0 ? bot : top, risk = dir > 0 ? e - bot : top - e;
+  if (!(risk > 0)) return null;
+  const pick = (lvl, rr, prev) => dir * (lvl - e) > 0 && (prev == null || dir * (lvl - prev) > 0) ? lvl : e + dir * risk * rr;
+  const tp1 = pick((top + bot) / 2, 1, null), tp2 = pick(dir > 0 ? top : bot, 2, tp1), tp3 = e + (tp2 - e) * 2;
+  return { sl, tp1, tp2, tp3 };
 }
-// 💰 莊家進場：大週期 K 棒收跌但淨額為正＝吸貨背離、收漲但淨額為負＝出貨背離 → 小週期同方向 CHoCH/BOS（Internal）進場；反向結構出現就取消背離；每個背離只進場一次
-function xZh(L, P, ib) {
-  const out = []; let acc = null, setup = 0, used = false;
-  for (let i = 0; i < L.length; i++) {
-    const b = L[i], hs = Math.floor(b.t / P.hms) * P.hms; let bull = false, bear = false;
-    if (!acc || hs !== acc.t) {
-      if (acc && acc.full) { if (acc.c < acc.o && acc.net > 0) bull = true; if (acc.c > acc.o && acc.net < 0) bear = true; }
-      acc = { t: hs, o: b.o, c: b.c, net: 0, full: b.t === hs };   // 資料開頭不完整的那根大週期不判斷
-    }
-    acc.net += 2 * b.tb - b.qv; acc.c = b.c;
-    if (bull) { setup = 1; used = false; acc.div = 1; }
-    if (bear) { setup = -1; used = false; }
-    const bB = ib.bull[i], bS = ib.bear[i];
-    if (setup === 1 && !used && bB) { out.push({ i, dir: 1, tag: ib.tagB[i] }); used = true; }
-    if (setup === -1 && !used && bS) { out.push({ i, dir: -1, tag: ib.tagS[i] }); used = true; }
-    if ((setup === 1 && bS) || (setup === -1 && bB)) { setup = 0; used = false; }
-  }
-  return out;
-}
-// 🕯 H4/H1 CRT 進場：大週期掃前一根高低點再收回（嚴格：前一根顏色相反）→ 之後第 1～2 根大週期內，小週期結構轉向（武裝）後回踩 FVG，風險距離 ≥ 0.3 ATR → 進場；止盈＝盈虧比 1:1
+// 🕯 CRT 進場：大週期掃前一根高低點再收回（前一根顏色相反）→ 確認後第 1～2 根大週期內，小週期 CHoCH／BOS 武裝 → 回踩 FVG 收針（收回 FVG 外）→ 進場
 function xCrt(L, H, P, sb, ib, atr) {
   const st = []; let dir = 0, ci = -1, top = NaN, bot = NaN;
   for (let j = 0; j < H.length; j++) {
@@ -2643,7 +2604,7 @@ function xCrt(L, H, P, sb, ib, atr) {
   for (let i = 0; i < L.length; i++) {
     const b = L[i], ct = b.t + P.lms;
     while (k + 1 < H.length && H[k + 1].t + P.hms <= ct) k++;   // 這根小 K 收盤時，已經收盤的最後一根大週期（等同 lookahead_off）
-    const S = k >= 0 ? st[k] : null, since = S && S.ci >= 0 ? k - S.ci : NaN, act = !!(S && S.dir && since >= 1 && since <= 2), cdir = act ? S.dir : 0;
+    const S = k >= 0 ? st[k] : null, since = S && S.ci >= 0 ? k - S.ci : NaN, cdir = S && S.dir && since >= 1 && since <= 2 ? S.dir : 0;
     const anyB = sb.bull[i] || ib.bull[i], anyS = sb.bear[i] || ib.bear[i];
     if (anyB) { bias = 1; la = true; sa = false; }
     if (anyS) { bias = -1; sa = true; la = false; }
@@ -2654,51 +2615,98 @@ function xCrt(L, H, P, sb, ib, atr) {
       if (b.h < p2.l && p1.c < p2.l && -d > 0) { sz.unshift({ top: p2.l, bot: b.h, i }); if (sz.length > 5) sz.pop(); }
     }
     bz = bz.filter(z => !(b.c < z.bot)); sz = sz.filter(z => !(b.c > z.top));
-    const bh = Math.max(b.o, b.c), bl = Math.min(b.o, b.c), hit = Z => Z.some(z => z.i !== i && b.h >= z.bot && b.l <= z.top && !(bl <= z.bot && bh >= z.top));
-    const lh = hit(bz), sh = hit(sz), A = atr[i];
-    if (la && bias === 1 && lh && cdir === 1 && b.c - S.bot >= 0.3 * A) { out.push({ i, dir: 1, sl: S.bot, tp: b.c + (b.c - S.bot) }); la = false; }
-    if (sa && bias === -1 && sh && cdir === -1 && S.top - b.c >= 0.3 * A) { out.push({ i, dir: -1, sl: S.top, tp: b.c - (S.top - b.c) }); sa = false; }
+    const bh = Math.max(b.o, b.c), bl = Math.min(b.o, b.c), hit = Z => Z.find(z => z.i !== i && b.h >= z.bot && b.l <= z.top && !(bl <= z.bot && bh >= z.top));
+    const lz = hit(bz), szn = hit(sz), A = atr[i];
+    const goL = la && bias === 1 && lz && b.c >= lz.top && cdir === 1 && b.c - S.bot >= 0.3 * A;
+    const goS = sa && bias === -1 && szn && b.c <= szn.bot && cdir === -1 && S.top - b.c >= 0.3 * A;
+    if (goL) { const t = xTps(1, b.c, S.top, S.bot); if (t) out.push({ i, dir: 1, ...t, top: S.top, bot: S.bot, fvg: [lz.bot, lz.top] }); la = false; }
+    if (goS) { const t = xTps(-1, b.c, S.top, S.bot); if (t) out.push({ i, dir: -1, ...t, top: S.top, bot: S.bot, fvg: [szn.bot, szn.top] }); sa = false; }
   }
   return out;
 }
+// 每筆訊號之後的走勢（照指標的打勾規則）：沒到 TP1 就碰止損＝SL ✗；TP1 先到＝勝，之後回到止損就結束；到 TP3 結束
+function xTrack(s, L) {
+  for (const b of L) {
+    if (s.done) break;
+    if (b.t <= (s.chk || s.bt)) continue;
+    s.chk = b.t;
+    const slHit = s.dir > 0 ? b.l <= s.sl : b.h >= s.sl, fav = s.dir > 0 ? b.h : b.l;
+    if (slHit && !s.hit) { s.lost = true; s.done = true; s.endAt = b.t; continue; }
+    for (const [n, p] of [[1, s.tp1], [2, s.tp2], [3, s.tp3]]) if (s.hit < n && s.dir * (fav - p) >= 0) s.hit = n;
+    if (s.hit >= 3) { s.done = true; s.endAt = b.t; }
+    else if (slHit) { s.done = true; s.endAt = b.t; }
+  }
+}
 
-
-const XP = { h4: { ...TOOL_P.h4, slotH: 4, maxSlot: 5 }, h1: { ...TOOL_P.h1, slotH: 1, maxSlot: 23 } };
-const XN = { zh: { ic: '🌊', nm: '暗流', d: '淨額背離' }, crt: { ic: '🔁', nm: '折返', d: 'CRT 掃流動性收回' }, hunt: { ic: '🏹', nm: '伏擊', d: '掃流動性窗口' } };
+const XP = { h4: { ...TOOL_P.h4, tf: 'M15', htfN: 'H4' }, h1: { ...TOOL_P.h1, tf: 'M5', htfN: 'H1' } };
+const XN = { crt: { ic: '🕯', nm: 'CRT', d: 'CRT 掃流動性＋SMC 回踩 FVG' } };
 const DEF_XENT = { cfg: {}, sigs: [], seen: {}, scan: { at: 0, n: 0, err: '' } };
 ST.xent = { ...DEF_XENT, ...(ST.xent || {}) };
-const xCfg = uid => ST.xent.cfg[uid] || (ST.xent.cfg[uid] = { syms: [], zh: true, crt: true, hunt: true, h4: true, h1: true, hook: '' });
-const XR = { h4: 0, h1: 0, busy: false };
-async function xScan(pair) {                           // 每根 15 分／5 分 K 收盤後：掃所有人關注的幣
-  const P = XP[pair], X = ST.xent, now = Date.now(), want = {};
-  for (const [uid, c] of Object.entries(X.cfg)) { if (!c[pair] || !ST.users.some(u => u.uid === uid)) continue; for (const s of c.syms || []) { want[s] = want[s] || new Set(); for (const k of ['zh', 'crt', 'hunt']) if (c[k]) want[s].add(k); } }
-  const syms = Object.keys(want).slice(0, 60); let n = 0;
+if (ST.xent.v !== 2) {                                 // 重寫後：舊的訊號（暗流／折返／伏擊）全部清掉；CRT 是現在唯一的訊號，每個人都開著
+  ST.xent.sigs = []; ST.xent.seen = {}; ST.xent.v = 2;
+  for (const c of Object.values(ST.xent.cfg)) { c.crt = true; delete c.zh; delete c.hunt; }
+  dirty = true;
+}
+const xCfg = uid => ST.xent.cfg[uid] || (ST.xent.cfg[uid] = { syms: [], crt: true, h4: true, h1: true, syms8: [], o8: true, symsAv: [], av: true, av15: true, av5: true, hook: '' });
+const XR = { h4: 0, h1: 0, o8: 0, busy: false };
+async function xScan(pair) {                           // 每根 15 分／5 分 K 收盤後：掃所有人關注的幣（CRT、AVWAP 共用 K 線），順便更新之前訊號走到哪
+  const P = XP[pair], X = ST.xent, now = Date.now(), wC = new Set(), wA = new Set(), avK = pair === 'h4' ? 'av15' : 'av5';
+  for (const [uid, c] of Object.entries(X.cfg)) {
+    if (!ST.users.some(u => u.uid === uid)) continue;
+    if (c[pair] && c.crt) for (const s of c.syms || []) wC.add(s);
+    if (c.av && c[avK] !== false) for (const s of c.symsAv || []) wA.add(s);
+  }
+  for (const s of X.sigs) if (s.pair === pair && !s.done) (s.type === 'av' ? wA : wC).add(s.sym);
+  const syms = [...new Set([...wC, ...wA])].slice(0, 100); let n = 0;
   for (const sym of syms) {
     try {
-      const L = await toolKl(sym, P.ltf, 600, P.lms); if (L.length < 120) continue;
-      const H = want[sym].has('crt') ? await toolKl(sym, P.htf, 60, P.hms) : [];
-      const sb = xStruct(L, 50), ib = xStruct(L, 5), atr = toolAtr(L, 14), found = [];
-      if (want[sym].has('zh')) for (const x of xZh(L, P, ib)) found.push({ ...x, type: 'zh' });
-      if (want[sym].has('crt') && H.length > 3) for (const x of xCrt(L, H, P, sb, ib, atr)) found.push({ ...x, type: 'crt' });
-      if (want[sym].has('hunt')) for (const x of xHunt(L, P, sb, ib)) found.push({ ...x, type: 'hunt' });
-      n++;
-      for (const x of found) {
-        if (x.i < L.length - 2) continue;              // 只要剛收盤的（最多晚一根）
-        const b = L[x.i], id = `${sym}|${pair}|${x.type}|${b.t}|${x.dir}`; if (X.seen[id]) continue;
-        X.seen[id] = now; const s = { id, sym, pair, type: x.type, dir: x.dir, t: b.t + P.lms, px: b.c, sl: x.sl || 0, tp: x.tp || 0, tag: x.tag || '' };
-        X.sigs.unshift(s); if (X.sigs.length > 300) X.sigs.length = 300; xNotify(s); dirty = true;
+      const L = await toolKl(sym, P.ltf, 600, P.lms); if (L.length < 120) continue; n++;
+      if (wC.has(sym)) {
+        for (const s of X.sigs) if (s.type === 'crt' && s.sym === sym && s.pair === pair && !s.done) { xTrack(s, L); if (!s.done && L[0].t > s.bt) { s.done = true; s.old = true; } dirty = true; }
+        const H = await toolKl(sym, P.htf, 60, P.hms);
+        if (H.length >= 4) {
+          const sb = xStruct(L, 50), ib = xStruct(L, 5), atr = toolAtr(L, 14);
+          for (const x of xCrt(L, H, P, sb, ib, atr)) {
+            if (x.i < L.length - 2) continue;            // 只要剛收盤的（最多晚一根）
+            const b = L[x.i], id = `${sym}|${pair}|crt|${b.t}|${x.dir}`; if (X.seen[id]) continue;
+            X.seen[id] = now;
+            const s = { id, sym, pair, type: 'crt', dir: x.dir, bt: b.t, t: b.t + P.lms, px: b.c, sl: x.sl, tp1: x.tp1, tp2: x.tp2, tp3: x.tp3, top: x.top, bot: x.bot, fvg: x.fvg, hit: 0, lost: false, done: false };
+            xTrack(s, L.slice(x.i + 1));
+            X.sigs.unshift(s); if (X.sigs.length > 400) X.sigs.length = 400; xNotify(s); dirty = true;
+          }
+        }
+      }
+      if (wA.has(sym)) {
+        const plans = avRun(L), byT = new Map(plans.map(x => [x.t, x]));
+        for (const s of X.sigs) if (s.type === 'av' && s.sym === sym && s.pair === pair && !s.done) {   // 之前的單：照最新的 K 線重算結果
+          const x = byT.get(s.bt); if (x && x.dir === s.dir) Object.assign(s, { hit: x.hit, st: x.st, be: !!x.be, flip: !!x.flip, done: x.st !== 0 }); else if (L[0].t > s.bt) { s.done = true; s.old = true; }
+          dirty = true;
+        }
+        for (const x of plans) {
+          if (x.i < L.length - 2) continue;
+          const id = `${sym}|${pair}|av|${x.t}|${x.dir}`; if (X.seen[id]) continue;
+          X.seen[id] = now;
+          const s = { id, sym, pair, type: 'av', dir: x.dir, bt: x.t, t: x.t + P.lms, px: x.px, sl: x.sl, tp1: x.tp1, tp2: x.tp2, tp3: x.tp3, mag: x.mag, q: x.q, er: x.er, hit: x.hit, st: x.st, done: x.st !== 0 };
+          X.sigs.unshift(s); if (X.sigs.length > 400) X.sigs.length = 400; xNotify(s); dirty = true;
+        }
       }
     } catch (e) { X.scan.err = `${sym}：${e.message}`; }
   }
   for (const [k, t] of Object.entries(X.seen)) if (now - t > 4 * 24 * HOUR) delete X.seen[k];
   X.scan = { ...X.scan, at: now, n }; dirty = true;
 }
-function xNotify(s) {                                  // 通知有關注這個幣、這種訊號、這個週期的人（送到他自己設定的頻道）
-  const P = XP[s.pair], N = XN[s.type], seen = new Set();
-  const msg = `🔔 **額外進場**｜${N.ic} ${N.nm}（${N.d}）${s.dir > 0 ? '🟢 **做多**' : '🔴 **做空**'} **${mdEsc(s.sym)}**・${P.name}\n${tw(s.t)}（台北）收盤價 ${fpx(s.px)}${s.tag ? `・${P.ln} ${s.tag}` : ''}${s.sl ? `\n參考止損 ${fpx(s.sl)}・止盈 ${fpx(s.tp)}（1:1）` : ''}\n⚠️ 只是提醒，不會自動下單`;
+function xMsg(s) {                                     // 幣種・M5／M15・CRT・做多／做空・TP1／TP2／TP3／SL
+  const P = XP[s.pair];
+  return `🔔 **${mdEsc(s.sym.replace(/USDT$/, ''))}** ${P.tf} CRT ${s.dir > 0 ? '🟢 **做多**' : '🔴 **做空**'}\n進場 ${fpx(s.px)}（${tw(s.t).slice(-5)} 收盤）\nTP1 ${fpx(s.tp1)}｜TP2 ${fpx(s.tp2)}｜TP3 ${fpx(s.tp3)}\nSL ${fpx(s.sl)}`;
+}
+const XHK = { crt: 'hook', o8: 'hook8', av: 'hookAv' }, XNM = { crt: 'CRT 進場', o8: '8AM 開盤訂單流', av: 'AVWAP 回踩' };
+function xNotify(s) {                                  // 通知有關注這個幣（CRT 還要看週期）的人，送到他自己設定的頻道
+  const o8 = s.type === 'o8', av = s.type === 'av', msg = o8 ? o8Msg(s) : av ? avMsg(s) : xMsg(s), seen = new Set();
   for (const [uid, c] of Object.entries(ST.xent.cfg)) {
-    if (!c[s.pair] || !c[s.type] || !(c.syms || []).includes(s.sym) || !c.hook) continue;
-    let h = ''; try { h = dec(c.hook); } catch (e) {} if (!h || seen.has(h)) continue; seen.add(h); dcSend(msg, { webhook: h });
+    const ok = o8 ? c.o8 && (c.syms8 || []).includes(s.sym) : av ? c.av && c[s.pair === 'h4' ? 'av15' : 'av5'] !== false && (c.symsAv || []).includes(s.sym) : c[s.pair] && c.crt && (c.syms || []).includes(s.sym);
+    const hk = c[XHK[s.type] || 'hook'];                 // 每套有自己的 Webhook（可以是不同的 DC 機器人）
+    if (!ok || !hk || !ST.users.some(u => u.uid === uid)) continue;
+    let h = ''; try { h = dec(hk); } catch (e) {} if (!h || seen.has(h)) continue; seen.add(h); dcSend(msg, { webhook: h });
   }
 }
 setInterval(async () => {
@@ -2708,7 +2716,188 @@ setInterval(async () => {
     XR[pair] = slot; XR.busy = true;
     try { ST.xent.scan.err = ''; await xScan(pair); } catch (e) { ST.xent.scan.err = e.message; } finally { XR.busy = false; }
   }
+  const s8 = Math.floor(t / O8.tf);                    // 🕗 8AM：每根 15 分 K 收盤後
+  if (s8 > XR.o8) { XR.o8 = s8; XR.busy = true; try { await o8Scan(); } catch (e) { ST.xent.scan.err = e.message; } finally { XR.busy = false; } }
 }, 15000);
+/* ======================== 📐 額外進場③：錨定 VWAP 回踩（照「Anchored VWAP Pullback & Target Zones [PhenLabs]」，MPL 2.0）——只發 Discord 通知，不下單 ========================
+   固定用 Balanced 這組（1.0σ 價值帶、趨勢效率 ≥ 26%、品質 ≥ 52），不用自動最佳化（它是拿歷史挑勝率最高的那組，會一直換標準）
+   擺動低點（高點）當錨 → 從錨點算成交量加權 VWAP 和 σ 帶；離錨點 ≥ 1.4 ATR 才算有趨勢 → 回檔進到 VWAP＋1σ 以下（做空反過來）→ 收紅站回 VWAP、收在前高附近
+   → 過濾（趨勢效率、品質分數、回檔深度 12%～85%、5 根暴漲暴跌不做）→ 進場；每個錨最多 2 次
+   SL＝回檔低點和價值帶下緣較低的那個再往外 0.2 ATR（風險限制在 0.35～3 ATR）；TP1／TP2／TP3＝1R／2R／3R，前一波高（低）點在 1.3～2.4R 就當 TP2、2.4～4.5R 就當 TP3
+   到 TP1 後止損移到進場價；60 根沒結果就結束；出現新的進場訊號時舊的單結束 */
+const AVP = { swing: 10, maxPb: 2, minImp: 1.4, band: 1.0, outer: 2.0, minEr: 26, minQual: 52, slScale: 1.0, minRisk: 0.35, minAct: 0, slBuf: 0.2 };
+function avRun(B) {
+  const n = B.length, A = toolAtr(B, 14), cl = (v, a, b) => Math.min(Math.max(v, a), b), out = [];
+  const sw = AVP.swing, piv = (i, hi) => {                // ta.pivothigh／pivotlow(len, len)：第 i 根確認第 i−len 根
+    const c = i - sw; if (c - sw < 0) return NaN; const v = hi ? B[c].h : B[c].l;
+    for (let k = c - sw; k <= c + sw; k++) { if (k === c) continue; const x = hi ? B[k].h : B[k].l; if (hi ? (k < c ? x >= v : x > v) : (k < c ? x <= v : x < v)) return NaN; }
+    return v; };
+  const bu = { on: false, bar: 0, px: NaN, wp: 0, wp2: 0, w: 0, vw: NaN, sd: 0, ext: NaN, arm: false }, be = { ...bu };
+  const E = { bIn: false, bPb: NaN, bUsed: 0, sIn: false, sPb: NaN, sUsed: 0 }; let plan = null;
+  for (let i = 0; i < n; i++) {
+    const b = B[i], atr = A[i] > 0 ? A[i] : Math.max(b.h - b.l, 1e-12), span = Math.max(b.h - b.l, 1e-12);
+    let vs = NaN; if (i >= 19) { let s = 0; for (let k = i - 19; k <= i; k++) s += B[k].v || 0; vs = s / 20; }
+    const real = b.v > 0 && vs > 0, rel = real ? b.v / vs : span / atr, actN = cl(rel / 2, 0, 1), wt = real ? Math.max(b.v, 1e-6) : Math.max(rel, 0.1);
+    let er = 0; if (i >= 10) { let path = 0; for (let k = i - 9; k <= i; k++) path += Math.abs(B[k].c - B[k - 1].c); er = path > 0 ? cl(Math.abs(b.c - B[i - 10].c) / path * 100, 0, 100) : 0; }
+    const erN = cl(er / 55, 0, 1), hlc = (b.h + b.l + b.c) / 3;
+    const qB = Math.round(cl((0.4 * cl((b.c - b.l) / span, 0, 1) + 0.35 * erN + 0.25 * actN) * 100 * (b.c > b.o ? 1 : 0.85), 0, 100) * 10) / 10;
+    const qS = Math.round(cl((0.4 * cl((b.h - b.c) / span, 0, 1) + 0.35 * erN + 0.25 * actN) * 100 * (b.c < b.o ? 1 : 0.85), 0, 100) * 10) / 10;
+    const mv5 = (b.c - (i >= 5 ? B[i - 5].c : b.c)) / atr, bearCrash = mv5 < -3.6 && b.c < b.o, bullCrash = mv5 > 3.6 && b.c > b.o;
+    const pH = i ? B[i - 1].h : b.h, pL = i ? B[i - 1].l : b.l;
+    // A. 進行中的單：止損（TP1 後是保本）→ TP1／TP2／TP3 → 60 根到期
+    if (plan && plan.st === 0 && i > plan.i) {
+      const d = plan.dir, slHit = d > 0 ? b.l <= plan.asl : b.h >= plan.asl, reach = p => d > 0 ? b.h >= p : b.l <= p;
+      if (slHit) { plan.st = plan.hit ? 2 : -1; plan.end = b.t; plan.be = !!plan.hit; }
+      else {
+        if (plan.hit < 1 && reach(plan.tp1)) { plan.hit = 1; plan.asl = plan.px; }
+        if (plan.hit < 2 && reach(plan.tp2)) plan.hit = 2;
+        if (plan.hit < 3 && reach(plan.tp3)) { plan.hit = 3; plan.st = 1; plan.end = b.t; }
+        else if (i - plan.i >= 60) { plan.st = plan.hit ? 2 : 3; plan.end = b.t; }
+      }
+    }
+    // B. 更新錨定 VWAP
+    if (bu.on) {
+      bu.wp += wt * hlc; bu.wp2 += wt * hlc * hlc; bu.w += wt; bu.vw = bu.wp / Math.max(bu.w, 1e-9); bu.sd = Math.max(Math.sqrt(Math.max(0, bu.wp2 / Math.max(bu.w, 1e-9) - bu.vw * bu.vw)), atr * 0.25);
+      if (isNaN(bu.ext) || b.h >= bu.ext) bu.ext = b.h;
+      if (!bu.arm && bu.ext - bu.px >= AVP.minImp * atr) bu.arm = true;
+      if (b.c < bu.px || b.c < bu.vw - 2.6 * bu.sd) { bu.on = false; bu.arm = false; E.bIn = false; }
+    }
+    if (be.on) {
+      be.wp += wt * hlc; be.wp2 += wt * hlc * hlc; be.w += wt; be.vw = be.wp / Math.max(be.w, 1e-9); be.sd = Math.max(Math.sqrt(Math.max(0, be.wp2 / Math.max(be.w, 1e-9) - be.vw * be.vw)), atr * 0.25);
+      if (isNaN(be.ext) || b.l <= be.ext) be.ext = b.l;
+      if (!be.arm && be.px - be.ext >= AVP.minImp * atr) be.arm = true;
+      if (b.c > be.px || b.c > be.vw + 2.6 * be.sd) { be.on = false; be.arm = false; E.sIn = false; }
+    }
+    // C. 新的擺動點當錨（從錨點那根重算）
+    const pb = i - sw, pl = piv(i, false), ph = piv(i, true);
+    const seed = (S, p, hi) => {
+      let wp = 0, wp2 = 0, w = 0, ext = hi ? b.l : b.h;
+      for (let k = pb; k <= i; k++) { const x = B[k], sp = Math.max(x.h - x.l, 1e-12), wk = real ? Math.max(x.v || 0, 1e-6) : Math.max(sp / atr, 0.1), pk = (x.h + x.l + x.c) / 3;
+        wp += wk * pk; wp2 += wk * pk * pk; w += wk; if (hi ? x.l <= ext : x.h >= ext) ext = hi ? x.l : x.h; }
+      Object.assign(S, { on: true, bar: pb, px: p, wp, wp2, w, vw: wp / Math.max(w, 1e-9), ext });
+      S.sd = Math.max(Math.sqrt(Math.max(0, wp2 / Math.max(w, 1e-9) - S.vw * S.vw)), atr * 0.25); S.arm = hi ? p - ext >= AVP.minImp * atr : ext - p >= AVP.minImp * atr;
+    };
+    if (!isNaN(pl) && pb >= 0) {
+      const rep = !bu.on || pl < bu.px || E.bUsed >= AVP.maxPb || (bu.arm && pl > bu.px && b.h - pl >= AVP.minImp * atr);
+      if (rep && b.c > pl) { seed(bu, pl, false); E.bIn = false; E.bPb = NaN; E.bUsed = 0; }
+    }
+    if (!isNaN(ph) && pb >= 0) {
+      const rep = !be.on || ph > be.px || E.sUsed >= AVP.maxPb || (be.arm && ph < be.px && ph - b.l >= AVP.minImp * atr);
+      if (rep && b.c < ph) { seed(be, ph, true); E.sIn = false; E.sPb = NaN; E.sUsed = 0; }
+    }
+    // D. 回檔進價值帶 → 收回 → 過濾 → 進場
+    const openDir = plan && plan.st === 0 ? plan.dir : -99; let take = 0, q = 0;
+    if (bu.on && bu.arm && E.bUsed < AVP.maxPb && !isNaN(bu.vw)) {
+      const up = bu.vw + AVP.band * bu.sd, def = bu.vw - AVP.outer * bu.sd;
+      if (b.l <= up && b.c >= def && b.c > bu.px && b.h < bu.ext) { if (!E.bIn) { E.bIn = true; E.bPb = b.l; } else if (b.l < (isNaN(E.bPb) ? b.l : E.bPb)) E.bPb = b.l; }
+      else if (b.c < def) E.bIn = false;
+      if (E.bIn && b.c > bu.vw && b.c > b.o && b.c >= pH - 0.2 * atr && openDir !== 1) {
+        const leg = Math.max(bu.ext - bu.px, atr * 0.5), dep = (bu.ext - (isNaN(E.bPb) ? b.l : E.bPb)) / leg;
+        if (er >= AVP.minEr && qB >= AVP.minQual && rel >= AVP.minAct && dep >= 0.12 && dep <= 0.85 && !bearCrash) { take = 1; q = qB; } else E.bIn = false;
+      }
+    }
+    if (!take && be.on && be.arm && E.sUsed < AVP.maxPb && !isNaN(be.vw)) {
+      const lo = be.vw - AVP.band * be.sd, def = be.vw + AVP.outer * be.sd;
+      if (b.h >= lo && b.c <= def && b.c < be.px && b.l > be.ext) { if (!E.sIn) { E.sIn = true; E.sPb = b.h; } else if (b.h > (isNaN(E.sPb) ? b.h : E.sPb)) E.sPb = b.h; }
+      else if (b.c > def) E.sIn = false;
+      if (E.sIn && b.c < be.vw && b.c < b.o && b.c <= pL + 0.2 * atr && openDir !== -1) {
+        const leg = Math.max(be.px - be.ext, atr * 0.5), dep = ((isNaN(E.sPb) ? b.h : E.sPb) - be.ext) / leg;
+        if (er >= AVP.minEr && qS >= AVP.minQual && rel >= AVP.minAct && dep >= 0.12 && dep <= 0.85 && !bullCrash) { take = -1; q = qS; } else E.sIn = false;
+      }
+    }
+    if (take) {
+      if (plan && plan.st === 0) { plan.st = plan.hit ? 2 : 3; plan.end = b.t; plan.flip = true; }
+      const d = take, S = d > 0 ? bu : be, e = b.c, buf = AVP.slBuf * AVP.slScale * atr;
+      const raw = d > 0 ? Math.min(isNaN(E.bPb) ? b.l : E.bPb, S.vw - AVP.band * S.sd) - buf : Math.max(isNaN(E.sPb) ? b.h : E.sPb, S.vw + AVP.band * S.sd) + buf;
+      const risk = cl(Math.abs(e - raw), atr * AVP.minRisk, atr * 3);
+      let tp2 = e + d * 2 * risk, tp3 = e + d * 3 * risk, mag = 0; const dR = d * (S.ext - e) / risk;
+      if (!isNaN(S.ext)) { if (dR >= 1.3 && dR <= 2.4) { tp2 = S.ext; mag = 2; } else if (dR > 2.4 && dR <= 4.5) { tp3 = S.ext; mag = 3; } }
+      plan = { i, t: b.t, dir: d, px: e, sl: e - d * risk, asl: e - d * risk, tp1: e + d * risk, tp2, tp3, mag, q: Math.round(q), er: Math.round(er), vw: S.vw, hit: 0, st: 0 };
+      out.push(plan);
+      if (d > 0) { E.bIn = false; E.bUsed++; } else { E.sIn = false; E.sUsed++; }
+    }
+  }
+  return out;
+}
+function avMsg(s) {
+  const P = XP[s.pair];
+  return `📐 **${mdEsc(s.sym.replace(/USDT$/, ''))}** ${P.tf} AVWAP 回踩 ${s.dir > 0 ? '🟢 **做多**' : '🔴 **做空**'}（品質 ${s.q}%）\n進場 ${fpx(s.px)}（${tw(s.t).slice(-5)} 收盤）\nTP1 ${fpx(s.tp1)}｜TP2 ${fpx(s.tp2)}｜TP3 ${fpx(s.tp3)}\nSL ${fpx(s.sl)}（到 TP1 後移到進場價）`;
+}
+/* ======================== 🕗 額外進場②：8AM 開盤訂單流（照擁有者的 TradingView 指標「QEVRAX 8AM OF」的預設值）——只發 Discord 通知，不下單 ========================
+   台北 08:00（＝UTC 00:00）開盤價；方向：開盤價在日線 EMA20（只用已收盤的日 K）下方只找空、上方只找多
+   每根 15 分 K 收盤判斷：價格離開盤價 ≥ 0.25 × 日線 ATR14 → 波段形成，量「開盤價 ± 0.05 ATR」區間的淨 Δ（1 分 K：收紅＝買量、收黑＝賣量）
+   Big Δ：同方向淨 Δ ≥ 20%、區間量 ≥ 波段總量 10% → 在開盤價掛限價單；SL＝開盤價外加 0.1 ATR；TP＝波段極值（成交時的低點／高點）
+   Weak Δ：不掛單。同一根 K 同時碰到停利和停損，保守算停損 */
+const O8 = { tf: 15 * 60000, ema: 20, atr: 14, minLeg: 0.25, zone: 0.05, minImb: 20, minShare: 10, stop: 0.10 };
+async function o8Kl(sym, iv, q, ms) {
+  const r = await getJSON(`${BF}/fapi/v1/klines?symbol=${sym}&interval=${iv}&${q}`);
+  return (Array.isArray(r) ? r : []).map(x => ({ t: +x[0], o: +x[1], h: +x[2], l: +x[3], c: +x[4], v: +x[5] })).filter(b => b.t + ms <= Date.now());
+}
+function o8Ema(B, len) {                               // ta.ema（前 len 根用 SMA 起算）
+  const a = 2 / (len + 1); let e = NaN, sum = 0;
+  B.forEach((b, i) => { if (i < len) { sum += b.c; if (i === len - 1) e = sum / len; } else e = a * b.c + (1 - a) * e; });
+  return e;
+}
+// 跑一天：D1＝已收盤的日 K（到昨天），M＝今天的 1 分 K；用 15 分 K 當圖表週期（只算已收盤的）
+function o8Run(D1, M, day, now) {
+  if (D1.length < O8.ema + 5) return null;
+  const atr = toolAtr(D1, O8.atr).at(-1), ema = o8Ema(D1, O8.ema); if (!(atr > 0) || !(ema > 0)) return null;
+  const G = new Map(); for (const b of M) { if (b.t < day || b.t >= day + 86400000) continue; const k = Math.floor((b.t - day) / O8.tf); if (!G.has(k)) G.set(k, []); G.get(k).push(b); }
+  const bars = [...G.entries()].sort((a, b) => a[0] - b[0]).map(([k, g]) => ({ t: day + k * O8.tf, o: g[0].o, h: Math.max(...g.map(x => x.h)), l: Math.min(...g.map(x => x.l)), c: g[g.length - 1].c, sub: g })).filter(b => b.t + O8.tf <= now);
+  if (!bars.length || bars[0].t !== day) return null;
+  const open = bars[0].o, dir = open < ema ? -1 : 1, zHi = open + O8.zone * atr, zLo = open - O8.zone * atr;
+  const r = { open, atr, ema, dir, phase: 1, imb: null, share: null, qual: false, formedAt: 0, tp0: null, sl: open - dir * O8.stop * atr, tgt: null, fillAt: 0, out: 0, outAt: 0, at: bars[bars.length - 1].t + O8.tf };
+  let lo = bars[0].l, hi = bars[0].h, zD = 0, zV = 0, legV = 0;
+  for (const b of bars) {
+    let justFormed = false, justFilled = false, outcome = 0;
+    if (r.phase === 1 || r.phase === 2) {
+      if (r.phase === 1) for (const s of b.sub) { const d = s.c > s.o ? s.v : s.c < s.o ? -s.v : 0, p = (s.h + s.l) / 2; legV += s.v; if (p >= zLo && p <= zHi) { zD += d; zV += s.v; } }
+      lo = Math.min(lo, b.l); hi = Math.max(hi, b.h);
+    }
+    if (r.phase === 1) {
+      const ml = O8.minLeg * atr;
+      if ((dir === -1 && open - lo >= ml) || (dir === 1 && hi - open >= ml)) {
+        r.imb = zV > 0 ? zD / zV * 100 : 0; r.share = legV > 0 ? zV / legV * 100 : 0;
+        r.qual = (dir === -1 ? r.imb <= -O8.minImb : r.imb >= O8.minImb) && r.share >= O8.minShare;
+        r.phase = 2; r.formedAt = b.t + O8.tf; r.tp0 = dir === -1 ? lo : hi; justFormed = true;
+      }
+    }
+    if (r.phase === 2 && !justFormed && (dir === -1 ? b.h >= open : b.l <= open)) {
+      r.tgt = dir === -1 ? lo : hi; r.phase = 3; r.fillAt = b.t + O8.tf; justFilled = true;
+      if (dir === -1 ? b.h >= r.sl : b.l <= r.sl) outcome = -1;
+    }
+    if (r.phase === 3 && !justFilled) { if (dir === -1 ? b.h >= r.sl : b.l <= r.sl) outcome = -1; else if (dir === -1 ? b.l <= r.tgt : b.h >= r.tgt) outcome = 1; }
+    if (outcome) { r.phase = 4; r.out = outcome; r.outAt = b.t + O8.tf; }
+  }
+  r.lo = lo; r.hi = hi;
+  return r;
+}
+const O8D = {};                                        // 日 K 快取：每個幣一天抓一次
+async function o8Scan() {
+  const X = ST.xent, now = Date.now(), day = Math.floor(now / 86400000) * 86400000, want = new Set();
+  for (const s of X.sigs) if (s.type === 'o8' && !s.done && s.day < day) { s.done = true; s.exp = true; dirty = true; }   // 換日：沒成交／沒結算的收掉
+  for (const [uid, c] of Object.entries(X.cfg)) { if (!c.o8 || !ST.users.some(u => u.uid === uid)) continue; for (const s of c.syms8 || []) want.add(s); }
+  let n = 0;
+  for (const sym of [...want].slice(0, 60)) {
+    const id = `${sym}|o8|${day}`, old = X.sigs.find(s => s.id === id);
+    if (old && old.done) continue;
+    try {
+      if (!O8D[sym] || O8D[sym].day !== day) O8D[sym] = { day, D1: await o8Kl(sym, '1d', 'limit=400', 86400000) };
+      const M = await o8Kl(sym, '1m', `startTime=${day}&limit=1500`, 60000), r = o8Run(O8D[sym].D1, M, day, now); n++;
+      if (!r || r.phase < 2) continue;
+      const s = old || { id, sym, type: 'o8', day, t: r.formedAt, dir: r.dir, px: r.open, imb: r.imb, share: r.share, qual: r.qual, tp: r.tp0, sl: r.sl, phase: 2, done: !r.qual };
+      if (r.qual) Object.assign(s, { phase: r.phase, tgt: r.tgt, fillAt: r.fillAt, out: r.out, outAt: r.outAt, done: r.phase === 4 });
+      if (!old) { X.sigs.unshift(s); if (X.sigs.length > 300) X.sigs.length = 300; if (now - r.formedAt < 45 * 60000) xNotify(s); }
+      dirty = true;
+    } catch (e) { X.scan.err = `${sym}：${e.message}`; }
+  }
+  X.scan8 = { at: now, n }; dirty = true;
+}
+function o8Msg(s) {                                    // Big／Weak、數值、要不要掛單、掛單價、止盈止損
+  const sym = mdEsc(s.sym.replace(/USDT$/, '')), dl = s.dir < 0 ? '−Δ' : '+Δ', v = `${s.imb > 0 ? '+' : ''}${s.imb.toFixed(1)}%`, sh = `區間量佔 ${s.share.toFixed(1)}%`;
+  if (!s.qual) return `🕗 **${sym}** 8AM 開盤｜**Weak Δ** ${v}（${sh}）\n⏸ 不掛單（Δ 不夠大，今天跳過）`;
+  return `🕗 **${sym}** 8AM 開盤｜**Big ${dl}** ${v}（${sh}）\n${s.dir < 0 ? '🔴 掛**空單**' : '🟢 掛**多單**'} @ ${fpx(s.px)}（08:00 開盤價）\nTP ${fpx(s.tp)}（目前波段${s.dir < 0 ? '低' : '高'}點）｜SL ${fpx(s.sl)}`;
+}
 /* ---------------- 📅 數據公布（經濟數據行事曆，來源：Forex Factory 公開 JSON） ----------------
    只看美國（USD）的高影響數據；公布前 30 分鐘、公布時各發一次 Discord，之後讀到實際值再補一次 */
 const ECO = { list: [], at: 0, err: '', sent: {} };
@@ -3526,16 +3715,18 @@ http.createServer(async (req, res) => {
       }
       if (u.pathname === '/api/xent') {                  // 🔔 額外進場：自己的關注清單、通知頻道
         const uid = meU ? meU.uid : ownerUid(), c = xCfg(uid), op = String(b.op || 'get');
-        if (op === 'get') { const mine = new Set(c.syms || []); return send(res, 200, { cfg: { syms: c.syms, zh: c.zh, crt: c.crt, hunt: c.hunt, h4: c.h4, h1: c.h1 }, hook: !!c.hook, hookLast: (() => { try { return c.hook ? dcStat(dec(c.hook)) : null; } catch (e) { return null; } })(),
-          sigs: ST.xent.sigs.filter(x => mine.has(x.sym)).slice(0, 100), all: ST.xent.sigs.slice(0, 30), scan: ST.xent.scan, uni: TOOLU.list.slice(0, 80), names: XN }); }
+        if (op === 'get') { const m1 = new Set(c.syms || []), m8 = new Set(c.syms8 || []), mA = new Set(c.symsAv || []); return send(res, 200, { cfg: { syms: c.syms, crt: c.crt !== false, h4: c.h4, h1: c.h1, syms8: c.syms8 || [], o8: c.o8 !== false, symsAv: c.symsAv || [], av: c.av !== false, av15: c.av15 !== false, av5: c.av5 !== false }, hook: !!c.hook, hooks: Object.fromEntries(Object.entries(XHK).map(([k, f]) => [k, { on: !!c[f], last: (() => { try { return c[f] ? dcStat(dec(c[f])) : null; } catch (e) { return null; } })() }])),
+          sigs: ST.xent.sigs.filter(x => (x.type === 'o8' ? m8 : x.type === 'av' ? mA : m1).has(x.sym)).slice(0, 300), all: ST.xent.sigs.slice(0, 30), scan: ST.xent.scan, scan8: ST.xent.scan8 || null, uni: TOOLU.list.slice(0, 80), names: XN }); }
         if (op === 'set') {
-          const syms = [...new Set((Array.isArray(b.syms) ? b.syms : []).map(x => String(x).toUpperCase().replace(/[^A-Z0-9]/g, '')).filter(Boolean).map(x => /USDT$/.test(x) ? x : x + 'USDT'))];
-          if (syms.length > 30) return send(res, 400, { error: '最多關注 30 個幣' });
-          if (syms.some(x => !/^[A-Z0-9]{2,20}USDT$/.test(x))) return send(res, 400, { error: '幣種格式不對' });
-          Object.assign(c, { syms, zh: !!b.zh, crt: !!b.crt, hunt: !!b.hunt, h4: b.h4 !== false, h1: b.h1 !== false }); dirty = true; return send(res, 200, { ok: true });
+          const norm = A => [...new Set((Array.isArray(A) ? A : []).map(x => String(x).toUpperCase().replace(/[^A-Z0-9]/g, '')).filter(Boolean).map(x => /USDT$/.test(x) ? x : x + 'USDT'))];
+          const syms = norm(b.syms), syms8 = b.syms8 === undefined ? (c.syms8 || []) : norm(b.syms8), symsAv = b.symsAv === undefined ? (c.symsAv || []) : norm(b.symsAv);
+          if (syms.length > 30 || syms8.length > 30 || symsAv.length > 30) return send(res, 400, { error: '每一套最多關注 30 個幣' });
+          if ([...syms, ...syms8, ...symsAv].some(x => !/^[A-Z0-9]{2,20}USDT$/.test(x))) return send(res, 400, { error: '幣種格式不對' });
+          Object.assign(c, { syms, crt: b.crt !== false, h4: b.h4 !== false, h1: b.h1 !== false, syms8, o8: b.o8 === undefined ? c.o8 !== false : !!b.o8, symsAv, av: b.av === undefined ? c.av !== false : !!b.av, av15: b.av15 === undefined ? c.av15 !== false : !!b.av15, av5: b.av5 === undefined ? c.av5 !== false : !!b.av5 }); dirty = true; return send(res, 200, { ok: true });
         }
-        if (op === 'hook') { const w = String(b.webhook || '').trim(); if (w && !/^https:\/\/(discord|discordapp)\.com\/api\/webhooks\//.test(w)) return send(res, 400, { error: '這不是 Discord Webhook 網址' }); c.hook = w ? enc(w) : ''; dirty = true; return send(res, 200, { ok: true }); }
-        if (op === 'test') { if (!c.hook) return send(res, 400, { error: '還沒設定 Webhook' }); const r = await dcSend('🔔 **額外進場** 測試訊息：之後關注的幣出現訊號，會傳到這個頻道', { webhook: dec(c.hook) }, true); return r === false ? send(res, 400, { error: '傳送失敗，請確認網址' }) : send(res, 200, { ok: true }); }
+        const sys = XHK[b.sys] ? b.sys : 'crt', hf = XHK[sys];   // 三套各自的 Webhook：crt＝hook（原本那個）、o8＝hook8、av＝hookAv
+        if (op === 'hook') { const w = String(b.webhook || '').trim(); if (w && !/^https:\/\/(discord|discordapp)\.com\/api\/webhooks\//.test(w)) return send(res, 400, { error: '這不是 Discord Webhook 網址' }); c[hf] = w ? enc(w) : ''; dirty = true; return send(res, 200, { ok: true }); }
+        if (op === 'test') { if (!c[hf]) return send(res, 400, { error: '還沒設定 Webhook' }); const r = await dcSend(`🔔 **額外進場｜${XNM[sys]}** 測試訊息：之後關注的幣出現${XNM[sys]}訊號，會傳到這個頻道`, { webhook: dec(c[hf]) }, true); return r === false ? send(res, 400, { error: '傳送失敗，請確認網址' }) : send(res, 200, { ok: true }); }
         return send(res, 400, { error: '不認得的操作' });
       }
       if (u.pathname === '/api/sim') {                    // 🧪 模擬盤：切換、存入／提出模擬資金、重置
