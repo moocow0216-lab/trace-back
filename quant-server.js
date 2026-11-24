@@ -952,7 +952,7 @@ setInterval(() => { if (!SP_ONLY && !REP.busy && Date.now() >= (ST.rep.next || 0
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-11-23g';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-11-24a';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -3357,6 +3357,33 @@ const pwOk = (u, pw) => { const h = crypto.scryptSync(pw, u.salt, 64); const a =
 const tokHash = t => crypto.createHash('sha256').update(t).digest('hex');
 const FAILS = new Map();
 const ipOf = req => String(req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').split(',')[0].trim();
+/* ---------------- 📱 iPhone 主畫面小工具（Scriptable）：用「小工具金鑰」只能讀，不能下單、看不到 API 和設定 ---------------- */
+function widgetData(usr) {
+  const X = ctx(usr.uid), C = X.A.lt || {}, TR = X.A.ltTrades || [], now = Date.now();
+  const day = new Date(now + TZ).toISOString().slice(0, 10), d0 = Date.parse(day + 'T00:00:00Z') - TZ;   // 台北時間今天 00:00
+  const botIds = new Set(TR.filter(t => t.status === 'open' && t.positionId).map(t => t.positionId));
+  const pos = (X.BX.pos || []).map(p => {
+    const im = p.entry > 0 && p.qty > 0 && p.lev > 0 ? p.entry * p.qty / p.lev : (p.margin || 0), up = p.upnl || 0;   // 收益率跟 Bitunix 一樣：未實現損益 ÷ 起始保證金
+    return { s: p.sym.replace(/USDT$/, ''), d: p.dir, lev: p.lev, e: p.entry, px: PX.map[p.sym] || 0, u: +up.toFixed(2), r: im > 0 ? +(up / im * 100).toFixed(2) : 0, bot: botIds.has(p.id) };
+  }).sort((a, b) => Math.abs(b.u) - Math.abs(a.u));
+  let today = 0;                                       // 今日損益：自動單今天平掉的＋持有中的浮動，手動單今天平掉的＋持有中的浮動
+  for (const t of TR) { for (const c of t.closes || []) if (c.t >= d0) today += c.pnl || 0; if (t.status === 'open') today += t.upnl || 0; }
+  for (const m of (X.A.man && X.A.man.list) || []) if (m.at >= d0) today += m.pnl || 0;
+  for (const q of X.BX.pos || []) if (!botIds.has(q.id)) today += q.upnl || 0;
+  const eq = bxEquity(X) || 0, base0 = eq - today;
+  let w = 0, l = 0, be = 0;                            // 累積勝率：跟網站「成功率」同一套（保本出場 0%～−10% 不算勝也不算敗）
+  for (const t of TR) {
+    if (t.status === 'open' || !inStat(t, C.startAt || 0)) continue;
+    const q0 = t.qty0 || t.qty, im0 = t.entry > 0 && q0 > 0 && t.lev > 0 ? t.entry * q0 / t.lev : (t.m0 || C.margin || 0.3), roe = (t.realized || 0) / im0 * 100;
+    if (roe > 0) w++; else if (roe >= -10 && (t.pLk > 0 || t.reason === 'lock')) be++; else l++;
+  }
+  const sp = SP_ONLY || (C.spBudget > 0 && toolOkUid(X.uid)), E = sp ? ltSpEq(X) : ltBotEq(X);   // 累積報酬：特級（或一般）交易目前的資金 ÷ 投入資金
+  const base = sp ? (C.spBudget || 0) - (C.spWd || 0) : (C.budget > 0 ? C.budget : C.startCap || 0) - (C.wd || 0);
+  return { at: now, uid: usr.uid, eq: +eq.toFixed(2), err: X.BX.err ? 'Bitunix 讀取失敗' : '', pos,
+    today: { u: +today.toFixed(2), pct: base0 > 0 ? +(today / base0 * 100).toFixed(2) : 0 },
+    wr: { w, l, be, pct: w + l ? +(w / (w + l) * 100).toFixed(1) : null },
+    ret: { label: sp ? '特級累積報酬' : '累積報酬', u: +(E.eq - base).toFixed(2), pct: base > 0 ? +((E.eq - base) / base * 100).toFixed(2) : null } };
+}
 function locked(ip) { const f = FAILS.get(ip); return f && f.n >= 5 && Date.now() - f.t < 15 * 60000; }
 function failed(ip) { const f = FAILS.get(ip); FAILS.set(ip, { n: f && Date.now() - f.t < 15 * 60000 ? f.n + 1 : 1, t: Date.now() }); }
 function newSession(u) {
@@ -3679,6 +3706,13 @@ http.createServer(async (req, res) => {
       }
       return send(res, 200, { token: newSession(usr), uid: usr.uid, role: usr.role });
     }
+    if (req.method === 'GET' && u.pathname === '/api/widget') {   // 📱 小工具：只認小工具金鑰（跟登入分開，可以隨時重新產生讓舊的失效）
+      const wip = ipOf(req); if (locked(wip)) return send(res, 429, { error: '錯太多次，15 分鐘後再試' });
+      const k = String(u.searchParams.get('k') || ''), kb = Buffer.from(k);
+      const usr = k.length === 48 && ST.users.find(x => x.wk && x.wk.length === 48 && crypto.timingSafeEqual(Buffer.from(x.wk), kb));
+      if (!usr) { failed(wip); return send(res, 401, { error: '小工具金鑰不對，請到網站重新複製' }); }
+      return send(res, 200, widgetData(usr));
+    }
     const me = who(req), admin = keyOk(req) || (me && me.role === 'admin'), owner = keyOk(req) || (me && me.uid === ownerUid());   // 擁有者 ⊃ 灰色管理員 ⊃ 一般
     if (u.pathname.startsWith('/api/') && !me && !keyOk(req)) return send(res, 401, { error: '請先登入', needLogin: true, needSetup: !ST.users.length });
     if (me && needBind(me) && u.pathname !== '/api/me' && u.pathname !== '/api/bind') return send(res, 403, { error: '請先綁定 Google 信箱和手機號碼', needBind: true });
@@ -3738,7 +3772,7 @@ http.createServer(async (req, res) => {
     if (req.method === 'POST' && u.pathname.startsWith('/api/')) {
       // 個人設定：每個帳號都能改「自己的」；其他（掃描條件、浮盈規則、回測、帳號管理、AWS）只有管理員能改
       // 個人（每個帳號）：自己的 API、Discord、交易設定、平倉；管理員（灰色）：帳號管理；其他全站設定只有擁有者能改
-      const PERSONAL = ['/api/bind', '/api/bitunix', '/api/lt/config', '/api/lt/testOpen', '/api/lt/close', '/api/lt/closeAll', '/api/lt/adopt', '/api/notify', '/api/notify/test', '/api/me/password', '/api/tool', '/api/lt/withdraw', '/api/sim', '/api/xent', '/api/bill', '/api/chartcfg', '/api/chartlock'];
+      const PERSONAL = ['/api/widget/key', '/api/bind', '/api/bitunix', '/api/lt/config', '/api/lt/testOpen', '/api/lt/close', '/api/lt/closeAll', '/api/lt/adopt', '/api/notify', '/api/notify/test', '/api/me/password', '/api/tool', '/api/lt/withdraw', '/api/sim', '/api/xent', '/api/bill', '/api/chartcfg', '/api/chartlock'];
       const ADMIN = ['/api/users', '/api/users/delete', '/api/users/kick', '/api/check', '/api/trial', '/api/ref/admin'];
       if (ADMIN.includes(u.pathname) && !admin) return send(res, 403, { error: '這個功能只有管理員可以用' });
       if (!PERSONAL.includes(u.pathname) && !ADMIN.includes(u.pathname) && !owner) return send(res, 403, { error: '這個設定只有擁有者可以改' });
@@ -4273,6 +4307,13 @@ http.createServer(async (req, res) => {
         touchLT(X); log('收回資金', X.uid, sp ? '特級' : '一般', amt);
         dcX(X, `💸 **${sp ? '🗡 特級交易' : '一般交易'}收回資金 ${amt.toFixed(2)}U**：目前剩 ${Math.max(0, left).toFixed(2)}U${all ? `，${sp ? '特級交易' : '自動交易'}已暫停` : ''}${B.used > 0 ? `\n-# 還有持倉（保證金 ${B.used.toFixed(2)}U），之後的盈虧會繼續算進「目前」` : ''}`);
         return send(res, 200, { ok: true, amt, left: Math.max(0, left) });
+      }
+      if (u.pathname === '/api/widget/key') {           // 📱 小工具金鑰：get＝看目前的、new＝重新產生（舊的立刻失效）、del＝刪掉
+        if (!me) return send(res, 400, { error: '要用自己的帳號登入' });
+        const op = String(b.op || 'get');
+        if (op === 'new') { me.wk = crypto.randomBytes(24).toString('hex'); dirty = true; }
+        if (op === 'del') { delete me.wk; dirty = true; }
+        return send(res, 200, { key: me.wk || '' });
       }
       if (u.pathname === '/api/me/password') {         // 🔑 改自己的密碼：要先輸入目前的密碼；改完其他裝置登出，這台保持登入
         if (!me) return send(res, 400, { error: '用管理金鑰登入不能改密碼' });
