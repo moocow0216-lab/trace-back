@@ -952,7 +952,7 @@ setInterval(() => { if (!SP_ONLY && !REP.busy && Date.now() >= (ST.rep.next || 0
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-11-27a';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-11-27b';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -3389,6 +3389,37 @@ function widgetData(usr) {
     wr: { w, l, be, pct: w + l ? +(w / (w + l) * 100).toFixed(1) : null },
     ret: { label: sp ? '特級累積報酬' : '累積報酬', u: +(E.eq - base).toFixed(2), pct: base > 0 ? +((E.eq - base) / base * 100).toFixed(2) : null } };
 }
+/* ---------------- 🙂 Face ID／指紋登入（通行密鑰 WebAuthn）：臉和指紋不會離開手機，伺服器只驗證手機簽的名 ----------------
+   通行密鑰綁定網站的網域（例如 xxx.github.io）：更新網站或伺服器都不影響；換網域才要重新設定 */
+const PKC = new Map();                                   // 一次性的挑戰碼：5 分鐘內有效，用一次就作廢
+const b64u = b => Buffer.from(b).toString('base64url'), unb64u = v => Buffer.from(String(v || ''), 'base64url');
+const sha256 = b => crypto.createHash('sha256').update(b).digest();
+function pkOrigin(req) {                                 // 網頁的來源：要 https（本機測試的 localhost 例外），網域就是通行密鑰綁定的對象
+  try { const x = new URL(String(req.headers.origin || '')); if (x.protocol === 'https:' || x.hostname === 'localhost') return { origin: x.origin, rp: x.hostname }; } catch (e) {}
+  return null;
+}
+function pkChallenge(kind, uid, rp) {
+  const now = Date.now(); for (const [k, v] of PKC) if (v.exp < now) PKC.delete(k);
+  if (PKC.size > 5000) PKC.delete(PKC.keys().next().value);
+  const id = crypto.randomBytes(12).toString('hex'), ch = b64u(crypto.randomBytes(32));
+  PKC.set(id, { kind, uid, rp, ch, exp: now + 5 * 60000 }); return { id, ch };
+}
+function pkCheck(P, O, kind, cdj, ad, rp) {             // 共用檢查：挑戰碼、網頁來源、網域、使用者真的有驗證（Face ID／指紋／密碼鎖）
+  if (!P || P.exp < Date.now() || P.kind !== kind) throw new Error('驗證逾時，請再按一次');
+  if (!O || O.rp !== P.rp || O.rp !== rp) throw new Error('網址不對，請從原本的網站登入');
+  let c; try { c = JSON.parse(cdj.toString('utf8')); } catch (e) { throw new Error('驗證資料格式不對'); }
+  if (c.type !== (kind === 'reg' ? 'webauthn.create' : 'webauthn.get') || c.challenge !== P.ch || c.origin !== O.origin) throw new Error('驗證資料對不上，請再試一次');
+  if (ad.length < 37 || !ad.subarray(0, 32).equals(sha256(rp))) throw new Error('網域對不上');
+  if (!(ad[32] & 1) || !(ad[32] & 4)) throw new Error('裝置沒有完成 Face ID／指紋驗證');
+  return { cnt: ad.readUInt32BE(33) };
+}
+function pkDev(ua) {                                     // 裝置名稱（給「已啟用的裝置」清單看）
+  ua = String(ua || '');
+  const d = /iPhone/.test(ua) ? 'iPhone' : /iPad/.test(ua) ? 'iPad' : /Android/.test(ua) ? 'Android' : /Macintosh|Mac OS X/.test(ua) ? 'Mac' : /Windows/.test(ua) ? 'Windows' : /Linux/.test(ua) ? 'Linux' : '裝置';
+  const b = /EdgA?\//.test(ua) ? 'Edge' : /CriOS|Chrome\//.test(ua) ? 'Chrome' : /FxiOS|Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : '';
+  return b ? `${d}・${b}` : d;
+}
+const pkOut = u => (u.pk || []).map(k => ({ id: k.id, nm: k.nm, at: k.at, last: k.last || 0 }));
 function locked(ip) { const f = FAILS.get(ip); return f && f.n >= 5 && Date.now() - f.t < 15 * 60000; }
 function failed(ip) { const f = FAILS.get(ip); FAILS.set(ip, { n: f && Date.now() - f.t < 15 * 60000 ? f.n + 1 : 1, t: Date.now() }); }
 function newSession(u) {
@@ -3522,6 +3553,26 @@ http.createServer(async (req, res) => {
       return send(res, age < 10 * 60000 ? 200 : 503, { ok: age < 10 * 60000, scanAgeS: Math.round(age / 1000), up: Math.round((Date.now() - BOOT) / 1000) });
     }
     if (req.method === 'GET' && u.pathname === '/api/auth') return send(res, 200, { needSetup: !ST.users.length });
+    if (req.method === 'POST' && (u.pathname === '/api/pk/opt' || u.pathname === '/api/pk/login')) {   // 🙂 Face ID 登入（不用先登入）
+      const ip = ipOf(req), b = await readBody(req, 2e4), O = pkOrigin(req);
+      if (locked(ip)) return send(res, 429, { error: '錯太多次，請 15 分鐘後再試' });
+      if (!O) return send(res, 400, { error: '這個網址不能用 Face ID 登入（要 https）' });
+      if (u.pathname === '/api/pk/opt') { const c = pkChallenge('get', null, O.rp); return send(res, 200, { cid: c.id, challenge: c.ch, rpId: O.rp }); }
+      const P = PKC.get(String(b.cid || '')); PKC.delete(String(b.cid || ''));
+      const id = String(b.id || ''), usr = id && ST.users.find(x => (x.pk || []).some(k => k.id === id)), K = usr && usr.pk.find(k => k.id === id);
+      if (!K) { failed(ip); return send(res, 401, { error: '這把 Face ID 已經沒有綁定任何帳號（可能被移除了），請用密碼登入後重新啟用' }); }
+      try {
+        const cdj = unb64u(b.cdj), ad = unb64u(b.ad), sig = unb64u(b.sig);
+        const { cnt } = pkCheck(P, O, 'get', cdj, ad, K.rp);
+        if (b.uh && unb64u(b.uh).toString('utf8') !== usr.uid) throw new Error('帳號對不上');
+        const ok = crypto.verify('sha256', Buffer.concat([ad, sha256(cdj)]), { key: unb64u(K.pub), format: 'der', type: 'spki' }, sig);
+        if (!ok) throw new Error('簽章驗證失敗');
+        if ((cnt || K.cnt) && cnt <= K.cnt) throw new Error('這把通行密鑰的計數不對（可能被複製），已拒絕');
+        K.cnt = cnt; K.last = Date.now(); dirty = true;
+      } catch (e) { failed(ip); log('Face ID 登入失敗', usr.uid, e.message); return send(res, 401, { error: e.message }); }
+      FAILS.delete(ip); log('Face ID 登入', usr.uid);
+      return send(res, 200, { token: newSession(usr), uid: usr.uid, role: usr.role });
+    }
     if (req.method === 'POST' && ['/api/login', '/api/setup', '/api/logout', '/api/login/google', '/api/login/code', '/api/forgot', '/api/reset', '/api/trial/apply', '/api/buy', '/api/ref'].includes(u.pathname)) {
       const ip = ipOf(req), b = await readBody(req, 1e5);
       if (u.pathname === '/api/logout') { const m = String(req.headers.authorization || '').match(/^Bearer\s+(\w+)$/); if (m) { const h = tokHash(m[1]); ST.sessions = ST.sessions.filter(x => x.h !== h); dirty = true; } return send(res, 200, { ok: true }); }
@@ -3777,7 +3828,7 @@ http.createServer(async (req, res) => {
     if (req.method === 'POST' && u.pathname.startsWith('/api/')) {
       // 個人設定：每個帳號都能改「自己的」；其他（掃描條件、浮盈規則、回測、帳號管理、AWS）只有管理員能改
       // 個人（每個帳號）：自己的 API、Discord、交易設定、平倉；管理員（灰色）：帳號管理；其他全站設定只有擁有者能改
-      const PERSONAL = ['/api/widget/key', '/api/bind', '/api/bitunix', '/api/lt/config', '/api/lt/testOpen', '/api/lt/close', '/api/lt/closeAll', '/api/lt/adopt', '/api/notify', '/api/notify/test', '/api/me/password', '/api/tool', '/api/lt/withdraw', '/api/sim', '/api/xent', '/api/bill', '/api/chartcfg', '/api/chartlock'];
+      const PERSONAL = ['/api/pk', '/api/widget/key', '/api/bind', '/api/bitunix', '/api/lt/config', '/api/lt/testOpen', '/api/lt/close', '/api/lt/closeAll', '/api/lt/adopt', '/api/notify', '/api/notify/test', '/api/me/password', '/api/tool', '/api/lt/withdraw', '/api/sim', '/api/xent', '/api/bill', '/api/chartcfg', '/api/chartlock'];
       const ADMIN = ['/api/users', '/api/users/delete', '/api/users/kick', '/api/check', '/api/trial', '/api/ref/admin'];
       if (ADMIN.includes(u.pathname) && !admin) return send(res, 403, { error: '這個功能只有管理員可以用' });
       if (!PERSONAL.includes(u.pathname) && !ADMIN.includes(u.pathname) && !owner) return send(res, 403, { error: '這個設定只有擁有者可以改' });
@@ -4312,6 +4363,37 @@ http.createServer(async (req, res) => {
         touchLT(X); log('收回資金', X.uid, sp ? '特級' : '一般', amt);
         dcX(X, `💸 **${sp ? '🗡 特級交易' : '一般交易'}收回資金 ${amt.toFixed(2)}U**：目前剩 ${Math.max(0, left).toFixed(2)}U${all ? `，${sp ? '特級交易' : '自動交易'}已暫停` : ''}${B.used > 0 ? `\n-# 還有持倉（保證金 ${B.used.toFixed(2)}U），之後的盈虧會繼續算進「目前」` : ''}`);
         return send(res, 200, { ok: true, amt, left: Math.max(0, left) });
+      }
+      if (u.pathname === '/api/pk') {                  // 🙂 Face ID：opt＝拿註冊用的挑戰碼、reg＝這台裝置啟用、list＝已啟用的裝置、del＝移除
+        if (!me) return send(res, 400, { error: '要用自己的帳號登入' });
+        const op = String(b.op || 'list'), O = pkOrigin(req);
+        if (op === 'list') return send(res, 200, { list: pkOut(me) });
+        if (op === 'del') { me.pk = (me.pk || []).filter(k => k.id !== String(b.id || '')); dirty = true; log('移除 Face ID', me.uid); return send(res, 200, { list: pkOut(me) }); }
+        if (!O) return send(res, 400, { error: '這個網址不能用 Face ID（要 https）' });
+        if (op === 'opt') {
+          if ((me.pk || []).length >= 10) return send(res, 400, { error: '最多 10 台裝置，請先移除不用的' });
+          const c = pkChallenge('reg', me.uid, O.rp);
+          return send(res, 200, { cid: c.id, challenge: c.ch, rp: { id: O.rp, name: 'QEVRAX' }, user: { id: b64u(me.uid), name: me.uid, displayName: `QEVRAX ${me.uid}` }, exclude: (me.pk || []).filter(k => k.rp === O.rp).map(k => k.id) });
+        }
+        if (op === 'reg') {
+          const P = PKC.get(String(b.cid || '')); PKC.delete(String(b.cid || ''));
+          try {
+            if (!P || P.uid !== me.uid) throw new Error('驗證逾時，請再按一次');
+            const cdj = unb64u(b.cdj), ad = unb64u(b.ad), pub = unb64u(b.pub), alg = +b.alg, id = String(b.id || '');
+            const { cnt } = pkCheck(P, O, 'reg', cdj, ad, O.rp);
+            if (!(ad[32] & 64) || ad.length < 55) throw new Error('裝置沒有回傳通行密鑰');
+            const L = ad.readUInt16BE(53), cid = ad.subarray(55, 55 + L);
+            if (!id || b64u(cid) !== id) throw new Error('通行密鑰編號對不上');
+            if (alg !== -7 && alg !== -257) throw new Error('這台裝置的通行密鑰格式不支援');
+            const kp = crypto.createPublicKey({ key: pub, format: 'der', type: 'spki' });
+            if ((alg === -7) !== (kp.asymmetricKeyType === 'ec')) throw new Error('通行密鑰格式對不上');
+            if (ST.users.some(x => (x.pk || []).some(k => k.id === id))) throw new Error('這把通行密鑰已經綁定過了');
+            me.pk = (me.pk || []).concat({ id, pub: b64u(pub), alg, cnt, rp: O.rp, nm: pkDev(req.headers['user-agent']), at: Date.now(), last: 0 }); dirty = true;
+            log('啟用 Face ID', me.uid, pkDev(req.headers['user-agent']));
+            return send(res, 200, { ok: true, list: pkOut(me) });
+          } catch (e) { return send(res, 400, { error: e.message }); }
+        }
+        return send(res, 400, { error: '不支援的操作' });
       }
       if (u.pathname === '/api/widget/key') {           // 📱 小工具金鑰：get＝看目前的、new＝重新產生（舊的立刻失效）、del＝刪掉
         if (!me) return send(res, 400, { error: '要用自己的帳號登入' });
