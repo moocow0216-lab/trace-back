@@ -952,7 +952,7 @@ setInterval(() => { if (!SP_ONLY && !REP.busy && Date.now() >= (ST.rep.next || 0
    新註冊的帳號一開始全部是空的；訊號、回測、掃描條件、浮盈／鎖利規則大家共用 */
 const RT = new Map();
 const OWNER_UID = '852639358';
-const VER = '2026-11-24a';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
+const VER = '2026-11-25a';                         // 內建的擁有者帳號：永遠是管理員，不能被降級或刪除（密碼不寫在程式裡，repo 是公開的）
 function ownerUid() {                                  // 擁有者＝這台伺服器的主人（AWS 提醒、用管理金鑰登入都算他的）；轉讓後存在 ST.owner
   if (ST.owner && ST.users.some(u => u.uid === ST.owner)) return ST.owner;
   if (ST.users.some(u => u.uid === OWNER_UID)) return OWNER_UID;
@@ -1852,7 +1852,12 @@ async function toolUniverse(n) {                       // 成交額前 N 個 USD
 }
 function toolNotify(s) {                               // 進場通知（Discord）
   const P = TOOL_P[s.pair];
-  const msg = `🗡 **特級咒具**｜${s.dir > 0 ? '🟢 **做多**' : '🔴 **做空**'} **${mdEsc(s.sym)}**・🧱 FVG／OB 回踩（${P.name}）\n① ${P.hn} FVG／OB 數值 ${s.val.toFixed(2)}%・② ${({ fvg: '回踩 FVG', ob: '回踩 OB（實體突破 FVG）', both: '回踩 FVG、OB（插針收回）' })[s.rt] || '回踩'} ${tw(s.touchAt)}・③ ${P.ln} ${s.tag || 'CHoCH／BOS'}\n④ 進場 ${tw(s.entryAt)}（台北）・價格 ${fpx(s.entry)}\n止損 ${fpx(s.sl)}（${P.hn} ${s.slBy === 'fvg' ? 'FVG（失衡區）' : s.slBy === 'ob' ? 'OB' : 'FVG／OB'}${s.dir > 0 ? '下緣' : '上緣'}）・止盈 ${fpx(s.tp)}（1:1）\n🛡 價格每往有利方向走 1% 就套保一次（第 1 次保本）`;
+  const sym = s.sym.replace(/USDT$/, ''), d = s.dir > 0, B = ecoBlockInfo();   // 🗡 卡片（藍色邊框），樣式跟額外進場一樣
+  const rt = ({ fvg: 'FVG', ob: 'OB（實體突破 FVG）', both: 'FVG＋OB（插針收回）' })[s.rt] || 'FVG／OB';
+  const msg = xEmb(`🗡 ${sym}・${P.name} FVG／OB 回踩・${d ? '做多' : '做空'}`, 0x3b82f6,
+    [xF('方向', d ? '🟢 做多' : '🔴 做空'), xF('進場', fpx(s.entry)), xF('SL', fpx(s.sl)), xF('TP（1:1）', fpx(s.tp)), xF('回踩', rt), xF('結構', `${P.ln} ${s.tag || 'CHoCH／BOS'}`)],
+    `${P.hn} FVG／OB 數值 ${s.val.toFixed(2)}%・每走 1% 套保一次（第 1 次保本）`, s.entryAt || Date.now(),
+    B ? `⏸ **特級交易這筆不下單**：美國數據（${ecoNames(B.list)}）前後 4 小時停單，${tw(B.until).slice(-11)} 恢復` : '');
   const seen = new Set();
   for (const uid of toolUsers()) { let h = ''; try { h = dec(ST.tool.hooks[uid] || ''); } catch (e) {} if (!h || seen.has(h)) continue; seen.add(h); dcSend(msg, { webhook: h }); }
 }
