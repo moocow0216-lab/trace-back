@@ -1516,7 +1516,7 @@ input[type=checkbox],input[type=radio],input[type=range]{accent-color:var(--g1)}
             <label class="field">API Key<input id="qbx_key" type="password" autocomplete="new-password" data-lpignore="true" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
             <label class="field">Secret Key<input id="qbx_sec" type="password" autocomplete="new-password" data-lpignore="true" autocapitalize="off" autocorrect="off" spellcheck="false"></label>
             <label class="field" hidden>通知<span class="qtgck"><label><input type="checkbox" id="qbx_notify"> 開倉／平倉</label></span></label>
-            <label class="field">快爆倉提醒<span class="qtgck"><label><input type="checkbox" id="qbx_liq"> 離強平價 <input id="qbx_pct" type="number" min="0.5" max="50" step="0.5" style="width:60px"> % 內</label></span></label>
+            <label class="field" hidden>快爆倉提醒<span class="qtgck"><label><input type="checkbox" id="qbx_liq"> 離強平價 <input id="qbx_pct" type="number" min="0.5" max="50" step="0.5" style="width:60px"> % 內</label></span></label>
           </div>
           <div class="qbt" style="margin:8px 0 0">
             <button class="btn primary" id="qbx_save">儲存並測試</button>
@@ -4319,7 +4319,7 @@ function gdPage(p) {
     ${gdNum(4, 'IP 白名單填入伺服器的 IP，別人拿到金鑰也用不了：<div class="gdcode"><code>3.107.254.240</code><button class="gdbtn sm" id="gd_copyIp">複製</button></div>')}
     ${gdNum(5, '完成手機或信箱驗證後，複製 API Key 和 Secret Key，貼到上面。<b>Secret Key 只會顯示一次</b>，記得先存好。')}
     ${gdTip('還沒有 API 也沒關係，先按右上角「略過」。之後在<b>「☰ 選單 → 設定」</b>都可以再填。')}`;
-  if (p === 'dc') return `<h2>設定 Discord 通知</h2><p class="gdsub">新訊號、自動開倉、鎖利、平倉、快爆倉提醒，都會即時傳到你自己的 Discord 頻道，不用一直開著網站。</p>
+  if (p === 'dc') return `<h2>設定 Discord 通知</h2><p class="gdsub">新訊號、自動開倉、鎖利、平倉，都會即時傳到你自己的 Discord 頻道，不用一直開著網站。</p>
     <div class="gdbox">${GD.nt && GD.nt.hasHook ? '<p class="gdok">✓ 已經設定好 Discord 了。</p>' : ''}
       <label class="gdf">Discord Webhook 網址<input id="gd_hook" autocomplete="off" spellcheck="false" placeholder="https://discord.com/api/webhooks/…"></label>
       <div class="gd2"><button class="gdbtn pri" id="gd_dcSave">儲存</button><button class="gdbtn" id="gd_dcTest">傳測試訊息</button></div>
@@ -8817,7 +8817,7 @@ function gdPage2(p) {
     return `<h2>右上角「☰ 選單」</h2><p class="gdsub">主畫面只放作戰室、持倉和成功率，其他功能都在右上角的選單裡，依「交易、數據、市場、其他」分類。</p>
     ${MN_ITEMS.map(([k, i, t]) => `<div class="gdfeat"><span class="gdic" style="font-size:20px;text-align:center" aria-hidden="true">${i}</span><div><b>${t}</b><p>${DS[k] || ''}</p></div></div>`).join('')}`; }
   if (p === 'f4') return gdPage('f1').replace('每 10 秒掃描幣安', '<b>「☰ 選單 → 訊號卡片」</b>：每 10 秒掃描幣安');
-  if (p === 'f5') return gdPage('f4').replace('<h2>熱力圖：一眼看懂整個市場</h2>', '<h2>熱力圖：一眼看懂整個市場</h2><p class="gdsub">在「☰ 選單 → 熱力圖」。</p>') + gdTip('最上方的黃框是美國重要經濟數據，有高影響數據時，自動交易在<b>公布前後各 4 小時不開新單</b>，其他時間照常。Discord 會通知自動單的開倉、鎖利、平倉、快爆倉，手動單不通知。');
+  if (p === 'f5') return gdPage('f4').replace('<h2>熱力圖：一眼看懂整個市場</h2>', '<h2>熱力圖：一眼看懂整個市場</h2><p class="gdsub">在「☰ 選單 → 熱力圖」。</p>') + gdTip('最上方的黃框是美國重要經濟數據，有高影響數據時，自動交易在<b>公布前後各 4 小時不開新單</b>，其他時間照常。Discord 會通知自動單的開倉、鎖利、平倉，手動單不通知。');
   if (p === 'f6') return `<div class="gdmock" style="border-color:#7f1d1d"><div class="gdmrow"><b>🗡 特級咒具</b><span class="gdchip" style="border-color:#f5c542;color:#f5c542">FVG／OB 回踩</span><span class="gdchip">4H→15M</span><span class="gdchip">1H→5M</span></div></div>
     <h2>🗡 特級咒具與特級交易</h2>
     ${gdPt('<path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"></path>', '<b>「☰ 選單 → 特級咒具」</b>：4H／1H 的 FVG／OB 被價格回踩時出現卡片，卡片上一步一步寫出走到哪裡、下一步在等什麼。沒達成的移到「📜 特級咒具歷史」。右上「⚙ 設定」可以設定自己的 Discord 通知。')}
