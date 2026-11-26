@@ -678,6 +678,12 @@ body.quant-on #mnSheet #newsPanel{display:block!important}
 .mnpw label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
 .mnpw input{min-height:40px;border-radius:8px;border:1px solid var(--line);background:#161616;color:var(--ink);padding:0 10px;font:inherit}
 .mnpw .btn{align-self:flex-start}.mnpw small{color:var(--muted)}
+.qgpk{width:100%;margin-top:8px;border:1px solid rgba(212,175,55,.55)!important;color:#f0d77e!important;background:rgba(212,175,55,.08)!important;font-weight:600}
+.pkrow{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:13px}.pkrow span{flex:1;min-width:0}.pkrow small{display:block;color:var(--muted)}
+.pkask{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.6);backdrop-filter:blur(4px)}
+.pkask>div{width:100%;max-width:360px;background:#141210;border:1px solid rgba(212,175,55,.45);border-radius:16px;padding:22px 20px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.pkask .ic{font-size:40px;line-height:1}.pkask h3{margin:10px 0 6px;color:#f0d77e;font-size:18px}.pkask p{margin:0 0 16px;font-size:13.5px;line-height:1.6;color:#cfc6b4}
+.pkask .btn{width:100%;margin-top:8px}.pkask .lnk{background:none!important;border:0!important;color:var(--muted)!important;font-size:12.5px}
 .mnmsg{margin:0;font-size:13px;min-height:1em}.mnmsg.ok{color:#e0bd5e}.mnmsg.bad{color:#ff9aa2}
 body.mn #mnpSet{display:none}body.mn .mnpage #mnpSet{display:flex}
 @media (min-width:881px){body.quant-on.mn .app{grid-template-columns:minmax(0,1fr)!important}}
@@ -1300,6 +1306,7 @@ input[type=checkbox],input[type=radio],input[type=range]{accent-color:var(--g1)}
     <label id="qgPw2" hidden>再輸入一次密碼<input id="qg_pw2" type="password" autocomplete="new-password"></label>
     <details class="qgadv"><summary>伺服器網址</summary><label><input id="qg_url" type="url" autocapitalize="off" spellcheck="false"></label></details>
     <button class="btn primary" id="qg_go" type="submit">登入</button>
+    <button class="btn qgpk" id="qg_pk" type="button" hidden>🙂 用 Face ID 登入</button>
     <div id="qg2fa" hidden><p class="qgnote" id="qg2faNote"></p><div id="qg2faBtn"></div>
       <div id="qgCodeBox" hidden><label>信箱收到的 6 位數驗證碼<input id="qg_code" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></label><button class="btn primary" id="qg_codeGo" type="button">確認登入</button></div></div>
     <p class="qgerr" id="qgErr" role="alert"></p>
@@ -1839,6 +1846,11 @@ input[type=checkbox],input[type=radio],input[type=range]{accent-color:var(--g1)}
     <label>再輸入一次<input id="mnPw2" type="password" autocomplete="new-password"></label>
     <button class="btn primary" id="mnPwGo">更改密碼</button><p class="mnmsg" id="mnPwMsg" role="status"></p>
     <small>改完之後，其他裝置的登入會被登出，這台裝置保持登入。</small></div>
+  <div class="mnpw" id="pkBox"><b>🙂 Face ID 登入</b>
+    <small>開啟後，登入畫面按「用 Face ID 登入」刷一下臉就進去，不用打 UID 和密碼（Mac 用 Touch ID、Android 用指紋）。臉部資料不會離開你的手機，網站和伺服器都拿不到。</small>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px"><button class="btn primary" id="pkAdd">在這台裝置啟用</button></div>
+    <p class="mnmsg" id="pkMsg" role="status"></p>
+    <div id="pkList"></div></div>
   <div class="mnpw" id="wgBox"><b>📱 iPhone 小工具</b>
     <small>正方形：列出持倉中的倉位。長方形：目前的單＋今日損益＋累積勝率＋累積報酬。小工具只能「看」，不能下單。</small>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn primary" id="wgCopy">複製小工具程式</button><button class="btn" id="wgNew">重新產生金鑰</button><button class="btn" id="wgDel">停用小工具</button></div>
@@ -8246,7 +8258,7 @@ function mnOpen(k) {
   for (const pg of $('mnSheetBody').children) pg.hidden = pg.dataset.p !== k;
   $('mnTitle').textContent = it[1] + ' ' + it[2];
   const el = it[3] && $(it[3]); if (el) el.hidden = false;
-  if (k === 'set') { $('qSrv').hidden = false; mnAcct(); }
+  if (k === 'set') { $('qSrv').hidden = false; mnAcct(); pkLoad(); }
   if (k === 'heat') htStart();
   if (k === 'bt') tbLoad();                            // 🗡 特級咒具回測（有權限才顯示）
   clearInterval(TL.timer);
@@ -8338,6 +8350,10 @@ $('wgNew').onclick = async () => { try { await wgKey('new'); wgMsg('已換新金
 $('wgDel').onclick = async () => { try { await wgKey('del'); wgMsg('已停用，現有的小工具會顯示「金鑰不對」', true); } catch (err) { wgMsg(err.message); } };
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-27b', title: '2026/11/27 更新（Face ID 登入）', items: [
+    { ic: '🙂', t: '新增 Face ID 登入（Mac 用 Touch ID、Android 用指紋）：登入後網站會問一次要不要設定，設定好之後登入畫面按「用 Face ID 登入」刷一下臉就進去，不用打 UID 和密碼，登出後也一樣能用。臉部資料不會離開你的手機。已啟用的裝置可以在「☰ 選單 → 設定 → Face ID 登入」查看或移除。' },
+    { ic: '🔕', t: '拿掉「快爆倉」的 Discord 提醒。' }
+  ] },
   { id: '2026-11-24a', title: '2026/11/24 更新（iPhone 小工具＋作戰室核心換成駭客）', items: [
     { ic: '🕶', t: '作戰室中間的核心換成 QEVRAX 主視覺的兜帽駭客，融進金色六角框裡。自動交易開著時，X 眼和笑臉會亮金色呼吸閃爍；關著時變暗，偶爾會有故障閃一下的效果。' },
     { ic: '📱', t: '新增 iPhone 主畫面小工具：正方形列出持倉中的倉位，長方形顯示目前的單、今日損益、累積勝率和累積報酬。到「設定 → iPhone 小工具」按「複製小工具程式」，照步驟貼到免費的 Scriptable App 就能用。小工具只能看，不能下單。' }
@@ -10322,6 +10338,92 @@ $('qbx_pct').onchange = () => {
   if (!(v >= 0.5 && v <= 50)) { alert('要在 0.5～50 % 之間'); $('qbx_pct').value = SRVBX ? SRVBX.liqPct : 3; return; }
   tgCall('/api/bitunix', { liqPct: v });
 };
+/* ---------- 🙂 Face ID 登入（通行密鑰）：臉部資料不會離開手機，伺服器只驗證手機簽的名；通行密鑰綁定這個網站的網域 ---------- */
+const PK_OK = !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create && window.isSecureContext);
+const PK = { get: null, reg: null };                  // 先拿好挑戰碼：iPhone 的 Safari 要在按下按鈕的當下就叫出 Face ID
+const pkB = v => { v = String(v || '').replace(/-/g, '+').replace(/_/g, '/'); v += '='.repeat((4 - v.length % 4) % 4); return Uint8Array.from(atob(v), c => c.charCodeAt(0)); };
+const pkS = b => { let x = ''; for (const c of new Uint8Array(b)) x += String.fromCharCode(c); return btoa(x).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
+const pkSt = uid => (LS.get('pkAsk', {}) || {})[uid] || {};
+function pkMark(uid, v) { if (!uid) return; const A = LS.get('pkAsk', {}) || {}; A[uid] = Object.assign({}, A[uid], v); LS.set('pkAsk', A); }
+function pkErr(e) {
+  const m = String(e && e.message || e);
+  if (e && e.name === 'NotAllowedError') return '已取消，或這台裝置還沒啟用 Face ID 登入（請先用密碼登入，到「☰ 選單 → 設定」啟用）';
+  if (e && e.name === 'SecurityError') return '這個網址不能用 Face ID 登入';
+  return m === 'Failed to fetch' ? '連不到伺服器' : m;
+}
+async function pkPost(url, path, body) {
+  const r = await fetch(url + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || 'HTTP ' + r.status); return j;
+}
+async function pkPrepGet() { try { PK.get = { t: Date.now(), j: await pkPost(gateUrl(), '/api/pk/opt', {}) }; } catch (e) { PK.get = null; } }
+async function pkPrepReg() { try { PK.reg = { t: Date.now(), j: await srvFetch('/api/pk', { op: 'opt' }) }; } catch (e) { PK.reg = null; } }
+async function pkRegister() {                         // 這台裝置啟用：叫出 Face ID 建立通行密鑰，把公鑰交給伺服器
+  let R = PK.reg; PK.reg = null;
+  if (!R || Date.now() - R.t > 4 * 60000) R = { j: await srvFetch('/api/pk', { op: 'opt' }) };
+  const o = R.j;
+  try {
+    const c = await navigator.credentials.create({ publicKey: {
+      challenge: pkB(o.challenge), rp: o.rp, user: { id: pkB(o.user.id), name: o.user.name, displayName: o.user.displayName },
+      pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+      authenticatorSelection: { authenticatorAttachment: 'platform', residentKey: 'required', requireResidentKey: true, userVerification: 'required' },
+      attestation: 'none', timeout: 60000, excludeCredentials: (o.exclude || []).map(id => ({ type: 'public-key', id: pkB(id) })) } });
+    const r = c.response;
+    if (!r.getPublicKey || !r.getAuthenticatorData) throw new Error('瀏覽器版本太舊，請更新 iOS／瀏覽器後再試');
+    const pub = r.getPublicKey(); if (!pub) throw new Error('這台裝置的通行密鑰格式不支援');
+    const j = await srvFetch('/api/pk', { op: 'reg', cid: o.cid, id: pkS(c.rawId), cdj: pkS(r.clientDataJSON), ad: pkS(r.getAuthenticatorData()), pub: pkS(pub), alg: r.getPublicKeyAlgorithm() });
+    pkMark(SRV.uid, { has: 1 }); return j;
+  } catch (e) { if (e && e.name === 'InvalidStateError') { pkMark(SRV.uid, { has: 1 }); return { already: true }; } throw e; }
+}
+$('qg_pk').onclick = async () => {                    // 登入畫面：刷臉登入（不用輸入 UID）
+  const b = $('qg_pk'); $('qgErr').textContent = ''; b.disabled = true;
+  try {
+    let G = PK.get; PK.get = null;
+    if (!G || Date.now() - G.t > 4 * 60000) G = { j: await pkPost(gateUrl(), '/api/pk/opt', {}) };
+    const c = await navigator.credentials.get({ publicKey: { challenge: pkB(G.j.challenge), rpId: G.j.rpId, userVerification: 'required', timeout: 60000, allowCredentials: [] } });
+    const r = c.response;
+    const j = await pkPost(gateUrl(), '/api/pk/login', { cid: G.j.cid, id: pkS(c.rawId), cdj: pkS(r.clientDataJSON), ad: pkS(r.authenticatorData), sig: pkS(r.signature), uh: r.userHandle ? pkS(r.userHandle) : '' });
+    pkMark(j.uid, { has: 1 });
+    LS.set('quantSrv', Object.assign({}, SRV, { url: gateUrl(), token: j.token, uid: j.uid, role: j.role, on: true, key: '' })); location.reload();
+  } catch (e) { $('qgErr').textContent = pkErr(e); b.disabled = false; pkPrepGet(); }
+};
+async function pkAsk() {                              // 登入後問一次：這台裝置要不要設定 Face ID（以後再說＝3 天後再問；不要再問＝這台不再問）
+  if (!PK_OK || !SRV.uid || !SRV.token || document.querySelector('.pkask')) return;
+  const st = pkSt(SRV.uid); if (st.has || st.never || (st.later && Date.now() - st.later < 3 * 86400000)) return;
+  try { if (!(await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable())) return; } catch (e) { return; }
+  { const dl = document.querySelector('dialog[open]'); if (dl) { dl.addEventListener('close', () => setTimeout(pkAsk, 600), { once: true }); return; } }   // 新帳號的教學影片還開著：等它關掉再問
+  pkPrepReg();
+  const d = document.createElement('div'); d.className = 'pkask';
+  d.innerHTML = '<div role="dialog" aria-modal="true" aria-label="設定 Face ID 登入"><div class="ic">🙂</div><h3>要設定 Face ID 登入嗎？</h3><p>以後登入刷一下臉就好，不用再打 UID 和密碼。<br>臉部資料不會離開你的手機。</p>'
+    + '<button class="btn primary" data-a="go">設定 Face ID</button><button class="btn" data-a="later">以後再說</button><button class="btn lnk" data-a="never">這台裝置不要再問</button><p class="mnmsg" style="margin:8px 0 0"></p></div>';
+  document.body.appendChild(d);
+  d.onclick = async e => {
+    const a = e.target.closest('[data-a]'); if (!a) return; const m = d.querySelector('.mnmsg');
+    if (a.dataset.a === 'later') { pkMark(SRV.uid, { later: Date.now() }); return d.remove(); }
+    if (a.dataset.a === 'never') { pkMark(SRV.uid, { never: 1 }); return d.remove(); }
+    a.disabled = true; m.className = 'mnmsg'; m.textContent = '';
+    try { const r = await pkRegister(); m.className = 'mnmsg ok'; m.textContent = r.already ? '✅ 這台裝置已經設定過了' : '✅ 設定好了！下次登入按「用 Face ID 登入」就可以'; setTimeout(() => d.remove(), 2000); }
+    catch (err) { m.className = 'mnmsg bad'; m.textContent = pkErr(err); a.disabled = false; pkPrepReg(); }
+  };
+}
+function pkDraw(L) {
+  $('pkList').innerHTML = (L || []).length ? L.map(k => `<div class="pkrow"><span>📱 ${esc(k.nm || '裝置')}<small>啟用 ${esc(fmtT(k.at))}${k.last ? '・上次用 Face ID 登入 ' + esc(fmtT(k.last)) : '・還沒用過'}</small></span><button class="btn" data-pkdel="${esc(k.id)}">移除</button></div>`).join('') : '<small style="color:var(--muted)">還沒有裝置啟用</small>';
+}
+async function pkLoad() {                             // 設定頁：已啟用的裝置
+  if (!$('pkBox')) return; $('pkBox').hidden = !PK_OK || !SRV.token; if ($('pkBox').hidden) return;
+  try { pkDraw((await srvFetch('/api/pk', { op: 'list' })).list); } catch (e) { $('pkList').textContent = e.message; }
+  pkPrepReg();
+}
+$('pkAdd').onclick = async () => {
+  const m = $('pkMsg'); $('pkAdd').disabled = true; m.className = 'mnmsg'; m.textContent = '';
+  try { const r = await pkRegister(); m.className = 'mnmsg ok'; m.textContent = r.already ? '✅ 這台裝置已經啟用過了' : '✅ 已啟用！下次登入按「用 Face ID 登入」就可以'; if (r.list) pkDraw(r.list); }
+  catch (e) { m.className = 'mnmsg bad'; m.textContent = pkErr(e); }
+  $('pkAdd').disabled = false; pkPrepReg();
+};
+$('pkList').onclick = async e => {
+  const b = e.target.closest('[data-pkdel]'); if (!b) return;
+  if (!confirm('移除這台裝置的 Face ID 登入？移除後那台要用密碼登入，想用的話再重新啟用。')) return;
+  try { pkDraw((await srvFetch('/api/pk', { op: 'del', id: b.dataset.pkdel })).list); $('pkMsg').className = 'mnmsg ok'; $('pkMsg').textContent = '已移除'; } catch (err) { $('pkMsg').className = 'mnmsg bad'; $('pkMsg').textContent = err.message; }
+};
 /* ---------- 🔐 登入閘門：進網站前要輸入 Bitunix UID 和密碼（驗證在伺服器上做） ---------- */
 let GATE_SETUP = false;
 var RESET_ON = false;                                 // 從信裡的連結打開、正在設定新密碼：其他程式（背景更新）不能把畫面切回登入
@@ -10340,6 +10442,7 @@ function gateShow(msg) {
     $('qgSub').textContent = GATE_SETUP ? '建立第一個管理員帳號' : '請用 Bitunix UID 和密碼登入';
     $('qg_go').textContent = GATE_SETUP ? '建立並登入' : '登入';
     $('qg_forgot').hidden = GATE_SETUP;
+    $('qg_pk').hidden = !PK_OK || GATE_SETUP; if (!$('qg_pk').hidden) pkPrepGet();
   }).catch(() => { $('qgErr').textContent = (msg ? msg + '　' : '') + '連不到伺服器，請確認網路或伺服器網址。'; });
   setTimeout(() => { const f = document.activeElement; if (f && f.closest && f.closest('#qGate') && /INPUT|SELECT|TEXTAREA/.test(f.tagName)) return; $(GATE_SETUP ? 'qg_key' : 'qg_uid').focus(); }, 50);   // 已經在某一格打字就不搶游標
 }
@@ -10484,7 +10587,7 @@ $('qLogout').onclick = async () => {
     const j = await r.json(); SRV.role = j.role; SRV.uid = j.uid; SRV.owner = !!j.owner; SRV.key = ''; SRV.trialEnd = j.trialEnd || 0; SRV.bill = j.bill || null;
     LS.set('quantSrv', SRV);
     if (j.needBind) return bindShow(j);
-    gateHide();
+    gateHide(); setTimeout(pkAsk, 1200);   // 🙂 這台還沒設定 Face ID：問一次
   } catch (e) { gateShow('連不到伺服器，無法驗證登入'); }
 })();
 /* ---------- 帳號綁定：Google 信箱＋手機號碼，綁好才能用網站 ---------- */
