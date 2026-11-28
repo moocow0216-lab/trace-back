@@ -678,6 +678,10 @@ body.quant-on #mnSheet #newsPanel{display:block!important}
 .mnpw label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
 .mnpw input{min-height:40px;border-radius:8px;border:1px solid var(--line);background:#161616;color:var(--ink);padding:0 10px;font:inherit}
 .mnpw .btn{align-self:flex-start}.mnpw small{color:var(--muted)}
+.qacct{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:10px 0 4px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.02)}
+.qacct span{font-size:12.5px;color:var(--muted)}.qacct b{font-size:20px;color:#f0d77e;font-variant-numeric:tabular-nums}.qacct small{font-size:12px;color:var(--muted)}
+.qsplow{margin:8px 0 0;padding:8px 10px;border-radius:8px;font-size:13px;line-height:1.5;color:#f1d77a;background:rgba(241,215,122,.08);border:1px solid rgba(241,215,122,.3)}
+.mndel{border-color:rgba(255,120,120,.35)!important}.mndel b{color:#ff9aa2}.mndel .btn.danger{border-color:rgba(255,120,120,.6);color:#ff9aa2}
 .qgpk{width:100%;margin-top:8px;border:1px solid rgba(212,175,55,.55)!important;color:#f0d77e!important;background:rgba(212,175,55,.08)!important;font-weight:600}
 .pkrow{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:13px}.pkrow span{flex:1;min-width:0}.pkrow small{display:block;color:var(--muted)}
 .pkask{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.6);backdrop-filter:blur(4px)}
@@ -1149,7 +1153,7 @@ button.trialb{cursor:pointer;background:transparent}.trialb.bad{border-color:#ef
 .ntbody{white-space:pre-wrap;line-height:1.75;font-size:14.5px;overflow-wrap:anywhere}
 </style>
 <style id="spOnlyCss">/* 🗡 特級專用版：一般交易的介面全部藏起來 */
-body.sponly #qLtSt,body.sponly #qLtToggle,body.sponly #qLtMsg,body.sponly #qLtCfg,body.sponly #qMyTrade .params,body.sponly #qmt_note,body.sponly #qMyTrade .qwd,
+body.sponly #qLtSt,body.sponly #qLtToggle,body.sponly #qLtMsg,body.sponly #qLtCfg,body.sponly #qMyTrade,body.sponly #qMyTrade .params,body.sponly #qmt_note,body.sponly #qMyTrade .qwd,
 body.sponly #qScanBox,body.sponly #qCfg,body.sponly #qBtArea .qbtrow,body.sponly #qBtCmp,body.sponly #qPnl,body.sponly #qKpi,body.sponly .qdsrc,body.sponly #qSidePanel,body.sponly #qTabCards,
 body.sponly #qSrc,body.sponly #qAuto,body.sponly #qScan,body.sponly #qStat,body.sponly .qprog,body.sponly #qBtcNow,body.sponly label.tzsel:has(#qf_src),body.sponly #qTab th:nth-child(5),body.sponly #qTab td:nth-child(5),body.sponly label:has(>#qtg_entry),body.sponly label:has(>#qtg_exit),body.sponly .tlrow:has(#tlNewPw),body.sponly .tlrow:has(#tlNewPw)+.tlsub,body.sponly #qBxSum,body.sponly button[data-adopt],body.sponly button[data-a="lt"],body.sponly #qa_allOff,body.sponly #qa_allOn,body.sponly .qbxadopt{display:none!important}
 </style>
@@ -1551,20 +1555,19 @@ input[type=checkbox],input[type=radio],input[type=range]{accent-color:var(--g1)}
           <div class="qwd"><b>💸 收回資金</b><input id="wd_n" type="number" min="0" step="1" placeholder="金額（U），留空＝全部"><button class="btn" id="wd_nGo">收回</button><span class="qltmsg" id="wd_nMsg"></span></div>
         </div>
         <div class="qtg qspcfg" id="qSpCfg" hidden>
-          <b>🗡 特級交易設定</b><span id="qsp_stat"></span>
+          <b>💰 資金與交易設定</b><span id="qsp_stat"></span>
+          <div class="qacct"><span>合約帳戶資金</span><b id="sp_acct">—</b><small id="sp_acctNote"></small></div>
           <div class="params">
-            <label class="field">投入資金（U）<input id="sp_budget" type="number" min="1" step="10" placeholder="例如 50"></label>
+            <label class="field">投入資金（U）<input id="sp_budget" type="number" min="1" step="10" placeholder="例如 500"></label>
             <label class="field">每筆保證金（U）<input id="sp_margin" type="number" min="0.01" step="0.1"></label>
-            <label class="field">單日虧損上限（U）<input id="sp_dayLoss" type="number" min="0" step="1"></label>
             <label class="field">槓桿（倍）<input id="sp_lev" type="number" min="1" max="125" step="1"></label>
-            <label class="field" hidden>停利線：開始鎖利（浮盈達到幾 %）<input id="sp_tp" type="number" min="10" max="1000" step="10"></label>
-            <label class="field" hidden>鎖利線上調（浮盈每多幾 %，0＝不上調）<input id="sp_step" type="number" min="0" max="1000" step="10"></label>
-            <label class="field" hidden>停損線（浮虧幾 % 就平倉）<input id="sp_sl" type="number" min="10" max="1000" step="10"></label>
+            <label class="field">單日虧損上限（U）<input id="sp_dayLoss" type="number" min="0" step="1" placeholder="0＝不限"></label>
             <label class="field">持有天數<input id="sp_hold" type="number" min="0.5" max="30" step="0.5"></label>
+            <input id="sp_tp" type="hidden"><input id="sp_step" type="hidden"><input id="sp_sl" type="hidden">
           </div>
-          <div class="qbt" style="margin:8px 0 0"><button class="btn primary qspbtn" id="sp_save">儲存</button><button class="btn" id="sp_restart" title="目前資金改回投入資金，之前的特級盈虧和手動單虧損分攤不再扣著">↺ 從投入資金重新開始</button><span class="qltmsg" id="sp_msg"></span></div>
-          <div class="qwd"><b>💸 收回資金</b><input id="wd_sp" type="number" min="0" step="1" placeholder="金額（U），留空＝全部"><button class="btn qspbtn" id="wd_spGo">收回</button><span class="qltmsg" id="wd_spMsg"></span></div>
-          <div class="qcfgnote">改投入資金＝加碼／減碼，之前的盈虧照算（例如 500U 賺到 713U，改成 1000U 就是 1213U）；想從頭算或資金已經虧完，按「↺ 從投入資金重新開始」・止損＝只回踩失衡區（FVG）放 FVG 外緣、回踩到 OB 放 OB 外緣・止盈 1:1・每 +1% 價格套保一次（100x＝+100%）・同幣反向訊號會反手。</div>
+          <p class="qsplow" id="sp_low" hidden></p>
+          <div class="qbt" style="margin:8px 0 0"><button class="btn primary qspbtn" id="sp_save">儲存</button><button class="btn qspbtn" id="sp_wdAll">💸 收回全部資金</button><span class="qltmsg" id="sp_msg" role="status"></span></div>
+          <div class="qcfgnote">・<b>投入資金</b>：改多＝加碼、改少＝收回差額（例如 500U 改成 200U＝收回 300U），之前的盈虧照算。<br>・<b>收回全部資金</b>：特級交易的錢全部拿回來並暫停；之後重新填投入資金，就從那個金額重新開始。<br>・<b>每筆保證金</b>建議是投入資金的 1/100。<b>單日虧損上限</b>：今天虧到這個數字就暫停（0＝不限）。<b>持有天數</b>：開倉超過這麼久還沒出場就平倉。<br>・止損放 FVG／OB 外緣、止盈 1:1、每 +1% 價格套保一次，同幣反向訊號會反手。</div>
         </div>
         <div class="qtg" id="qAnnBox" hidden>
           <b>📢 更新通知</b><span>（只有擁有者看得到）按「發送」之後，所有帳號都會收到</span>
@@ -1863,6 +1866,16 @@ input[type=checkbox],input[type=radio],input[type=range]{accent-color:var(--g1)}
       <li>長按小工具 → 編輯小工具 → Script 選 QEVRAX</li>
     </ol>
     <small>大約每 5 分鐘更新一次（iPhone 會自己決定確切時間）。金鑰外流就按「重新產生金鑰」，舊的立刻失效，再重新複製貼上一次。</small></div>
+  <div class="mnpw mndel" id="delBox"><b>🗑 刪除帳號</b>
+    <small>刪除後，登入、Bitunix API 金鑰、交易紀錄、資金曲線、Discord 和 Face ID 設定都會永久清除，<b>沒辦法復原</b>。已付的方案天數不會退。還有特級交易的持倉時不能刪除。</small>
+    <button class="btn danger" id="delOpen">刪除我的帳號…</button>
+    <div id="delForm" hidden>
+      <label>輸入密碼<input id="delPw" type="password" autocomplete="current-password"></label>
+      <label>在下面打「刪除帳號」四個字<input id="delTxt" autocomplete="off" placeholder="刪除帳號"></label>
+      <label style="display:flex;flex-direction:row;gap:8px;align-items:center;font-size:13px;margin:4px 0 8px"><input type="checkbox" id="delAck" style="width:18px;height:18px;margin:0;flex:none"><span>我了解刪除後所有資料都會清除，沒辦法復原</span></label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn danger" id="delGo" disabled>永久刪除帳號</button><button class="btn" id="delCancel">取消</button></div>
+    </div>
+    <p class="mnmsg" id="delMsg" role="status"></p></div>
 </div>
 <script type="text/plain" id="wgSrc">// QEVRAX 小工具（Scriptable）：正方形＝持倉中的倉位；長方形＝目前的單＋今日損益＋累積勝率＋累積報酬
 // 這段程式只會「讀」你的持倉資料，不能下單。金鑰外流的話，到網站「設定 → iPhone 小工具」按「重新產生」，舊的就失效。
@@ -4064,7 +4077,7 @@ async function srvPull() {
     if (j.rep) SRVREP.rep = j.rep;
     SRV.sim = j.sim || null; simUi();
     SRV.ref = j.me ? j.me.ref || null : null;           // 🎟 邀請碼審核狀態（沒開邀請碼制＝null）
-    if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.man = j.lt.man || []; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
+    if (j.lt) { const btc0 = SRVLT.cfg ? SRVLT.cfg.btcF : undefined; SRVLT.cfg = j.lt.cfg; { const t0 = SRVLT.toolOk; SRVLT.toolOk = !!j.lt.toolOk; SRVLT.spSkip = j.lt.spSkip || []; SRVLT.pause = j.lt.pause || null; SRVLT.bud = j.lt.bud || null; SRVLT.spLow = j.lt.spLow || null; SRVLT.low = j.lt.low || null; SRVLT.spBot = j.lt.spBot; SRVLT.man = j.lt.man || []; SRVLT.spDay = j.lt.spDay; if (t0 !== SRVLT.toolOk) { EQC = null; renderHist(); } }   /* 🗡 有沒有特級咒具權限 */ if (btc0 !== undefined && btc0 !== SRVLT.cfg.btcF) { renderCards(); renderHist(); } SRVLT.msg = j.lt.msg; SRVLT.day = j.lt.dayPnl; SRVLT.bot = j.lt.bot; SRVLT.acctEq = j.lt.acctEq; syncT(j); renderLt(); }   // 還沒設 API 也要顯示「我的交易設定」
     if (j.ltTrades) { SRVLT.trades = j.ltTrades; SV.lv = j.lt.v; }
     if (j.eco) { SRVECO = j.eco; renderEco(j.eco); }
     $('qVer').textContent = `網站版本 2026-11-23a・伺服器版本 ${j.ver || '舊版（請更新）'}`;
@@ -4342,7 +4355,7 @@ function gdPage(p) {
     ${gdNum(3, '按「新 Webhook」，再按「複製 Webhook 網址」，貼到上面。')}
     ${gdTip('略過的話就收不到通知，但自動交易照常運作。之後在<b>「☰ 選單 → 設定」</b>可以再填。')}`;
   if (p === 'fund' && SPONLY) return `<h2>🗡 特級交易的資金與下單</h2><p class="gdsub">決定特級交易可以用多少錢、每一筆下多少、用幾倍槓桿。止損、止盈由策略決定（FVG／OB 的低點止損、1:1 止盈）。</p>
-    ${gdHasApi() ? '' : gdTip('你還沒設定 Bitunix API，系統讀不到你的帳戶資金，<b>這一步可以先略過</b>。之後在<b>「☰ 選單 → 設定 → 🗡 特級交易設定」</b>都能再調整。', true)}
+    ${gdHasApi() ? '' : gdTip('你還沒設定 Bitunix API，系統讀不到你的帳戶資金，<b>這一步可以先略過</b>。之後在<b>「☰ 選單 → 設定 → 💰 資金與交易設定」</b>都能再調整。', true)}
     <div class="gdbox">
       <label class="gdf">特級交易投入資金（U）<input id="gd_budget" type="number" min="0" step="10" placeholder="例如 50" value="${C.spBudget > 0 ? C.spBudget : ''}"${gdHasApi() ? '' : ' disabled'}><small>特級交易最多只用這麼多，不能超過你的合約帳戶資金${SRVLT.acctEq ? `（目前約 ${(+SRVLT.acctEq).toFixed(2)}U）` : ''}。要填才能開始特級交易。</small></label>
       <label class="gdf">每筆下單保證金（U）<input id="gd_margin" type="number" min="0.01" step="0.1" value="${C.spMargin || C.margin || 0.3}"><small>每出現一個特級進場，就用這麼多保證金開一筆。</small></label>
@@ -4464,7 +4477,7 @@ async function gdNext() {
       const m = +$('gd_margin').value, lev = +$('gd_lev').value, bud = $('gd_budget').value === '' ? 0 : +$('gd_budget').value;
       if (!(m > 0)) { $('gdMsg').className = 'gdmsg bad'; $('gdMsg').textContent = '每筆保證金要大於 0。'; return; }
       if (!(lev >= 1 && lev <= 125)) { $('gdMsg').className = 'gdmsg bad'; $('gdMsg').textContent = '槓桿要在 1～125 倍之間。'; return; }
-      if (SPONLY) { const set = { margin: m, lev }; if (gdHasApi() && bud > 0 && bud !== +((SRVLT.cfg || {}).spBudget || 0)) set.budget = bud; if (!(await gdSave({ path: '/api/lt/config', data: { sp_set: set } }, '已儲存。'))) return; }   // 🗡 特級專用版：存到特級交易設定
+      if (SPONLY) { const set = { margin: m, lev }; if (gdHasApi() && bud > 0 && (bud !== +((SRVLT.cfg || {}).spBudget || 0) || (SRVLT.cfg || {}).spOut)) set.budget = bud; if (!(await gdSave({ path: '/api/lt/config', data: { sp_set: set } }, '已儲存。'))) return; }   // 🗡 特級專用版：存到特級交易設定
       const data = { margin: m, lev }; if (gdHasApi() && bud > 0 && bud !== +((SRVLT.cfg || {}).budget || 0)) data.budget = bud;   // 只有真的改了投入資金才送（沒填、沒改都不動）
       if (!SPONLY && !(await gdSave({ path: '/api/lt/config', data }, '已儲存。'))) return;
     }
@@ -8258,7 +8271,7 @@ function mnOpen(k) {
   for (const pg of $('mnSheetBody').children) pg.hidden = pg.dataset.p !== k;
   $('mnTitle').textContent = it[1] + ' ' + it[2];
   const el = it[3] && $(it[3]); if (el) el.hidden = false;
-  if (k === 'set') { $('qSrv').hidden = false; mnAcct(); pkLoad(); }
+  if (k === 'set') { $('qSrv').hidden = false; mnAcct(); pkLoad(); delReset(); }
   if (k === 'heat') htStart();
   if (k === 'bt') tbLoad();                            // 🗡 特級咒具回測（有權限才顯示）
   clearInterval(TL.timer);
@@ -8350,6 +8363,13 @@ $('wgNew').onclick = async () => { try { await wgKey('new'); wgMsg('已換新金
 $('wgDel').onclick = async () => { try { await wgKey('del'); wgMsg('已停用，現有的小工具會顯示「金鑰不對」', true); } catch (err) { wgMsg(err.message); } };
 /* ---------- 📰 版本更新：登入後第一次進畫面跳一次（只列這次更新了哪裡）；之後在使用說明的「更新紀錄」看。sp: true 的項目只有特級咒具權限的人看得到 ---------- */
 const CHANGELOG = [
+  { id: '2026-11-28a', title: '2026/11/28 更新（資金設定整合、刪除帳號）', items: [
+    { ic: '💰', t: '設定頁的「合約總資金」和「特級交易設定」合併成「💰 資金與交易設定」：上面直接顯示合約帳戶資金，下面是投入資金、每筆保證金、槓桿、單日虧損上限、持有天數。' },
+    { ic: '💸', t: '投入資金改多＝加碼、改少＝收回差額（例如 500U 改成 200U＝收回 300U），存之前會再跟你確認一次。原本的「收回資金」改成一顆「收回全部資金」：特級交易暫停，之後重新填投入資金就從那個金額重新開始。' },
+    { ic: '⚠️', t: '特級交易的資金比合約帳戶多（手動單虧損、從合約轉出）時，不再停止開單，改成在設定頁提醒你調低投入資金；真的沒錢時「可用餘額不足」還是會擋。' },
+    { ic: '🛡', t: '每筆保證金比投入資金還大（一筆都開不了）時，存檔會直接擋下來並建議金額。' },
+    { ic: '🗑', t: '新增「刪除帳號」（☰ 選單 → 設定最下面）：要輸入密碼、打「刪除帳號」、勾選確認，最後再確認一次才會刪。還有特級持倉時不能刪。' }
+  ] },
   { id: '2026-11-27b', title: '2026/11/27 更新（Face ID 登入）', items: [
     { ic: '🙂', t: '新增 Face ID 登入（Mac 用 Touch ID、Android 用指紋）：登入後網站會問一次要不要設定，設定好之後登入畫面按「用 Face ID 登入」刷一下臉就進去，不用打 UID 和密碼，登出後也一樣能用。臉部資料不會離開你的手機。已啟用的裝置可以在「☰ 選單 → 設定 → Face ID 登入」查看或移除。' },
     { ic: '🔕', t: '拿掉「快爆倉」的 Discord 提醒。' }
@@ -8838,7 +8858,7 @@ function gdPage2(p) {
     <h2>🗡 特級咒具與特級交易</h2>
     ${gdPt('<path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"></path>', '<b>「☰ 選單 → 特級咒具」</b>：4H／1H 的 FVG／OB 被價格回踩時出現卡片，卡片上一步一步寫出走到哪裡、下一步在等什麼。沒達成的移到「📜 特級咒具歷史」。右上「⚙ 設定」可以設定自己的 Discord 通知。')}
     ${gdPt('<path d="M8 5v14l11-7z"></path>', SPONLY ? '持倉區「<b>🗡 開始特級交易</b>」：用這些訊號自動下單。關掉網頁、手機鎖螢幕，伺服器照樣 24 小時運作；同一個幣出現反方向的特級訊號會反手。' : '持倉區「<b>🗡 開始特級交易</b>」：用這些訊號自動下單，跟一般交易分開開關。同一個幣出現反方向的特級訊號會反手。')}
-    ${gdPt('<circle cx="12" cy="12" r="3"></circle><path d="M12 2v3"></path><path d="M12 19v3"></path><path d="M2 12h3"></path><path d="M19 12h3"></path>', '<b>「☰ 選單 → 設定 → 🗡 特級交易設定」</b>：自己的投入資金、每筆保證金、槓桿、持有天數、單日虧損上限，還有收回資金。止損、止盈由策略決定（只回踩失衡區放 FVG 外緣、回踩到 OB 放 OB 外緣；止盈 1:1）。')}
+    ${gdPt('<circle cx="12" cy="12" r="3"></circle><path d="M12 2v3"></path><path d="M12 19v3"></path><path d="M2 12h3"></path><path d="M19 12h3"></path>', '<b>「☰ 選單 → 設定 → 💰 資金與交易設定」</b>：自己的投入資金、每筆保證金、槓桿、持有天數、單日虧損上限，還有收回資金。止損、止盈由策略決定（只回踩失衡區放 FVG 外緣、回踩到 OB 放 OB 外緣；止盈 1:1）。')}
     ${gdPt('<path d="M3 17l6-6 4 4 8-8"></path>', SPONLY ? '持倉區的紅框「特級持倉」是特級交易開的單；「☰ 選單 → 資金曲線」的<b style="color:#f87171">紅線</b>是特級交易的報酬率。止損＝4H／1H FVG／OB 的低點（做空＝高點），止盈 1:1，交易所也會掛好止損。' : '主畫面的紅框「特級持倉」「特級交易」是特級自己的成績；資金曲線三條線：<b style="color:#60a5fa">一般藍</b>、<b style="color:#f87171">特級紅</b>、<b style="color:#c084fc">綜合紫</b>（都用報酬率）。')}
     ${gdTip(SPONLY ? '你自己在 App 開的單是手動單，系統不會動它。Bitunix 是「雙向持倉」時，特級單和手動單可以多空雙開；單向持倉會自動跳過。「☰ 選單 → 回測數據」可以做特級咒具的回測。' : 'Bitunix 是「雙向持倉」時，一般單和特級單可以多空雙開；單向持倉會自動跳過。「☰ 選單 → 回測數據」可以做特級咒具的回測。')}`;
   if (p === 'war') return `<div class="gdmock" style="background:#070604;border-color:#5c4a1a"><div class="gdmrow"><b style="color:#f5e6a8;letter-spacing:.2em">QEVRAX VAULT</b><span class="gdchip" style="border-color:#d4af37;color:#d4af37">● ARMED</span><span class="gdchip">NODES 8/8 ONLINE</span><span class="gdchip">RELAY #012</span></div></div>
@@ -8896,7 +8916,7 @@ const SETUP_STEPS = [
   ['①', 'Bitunix：頭像 → 個人中心 → API管理 → 創建API'],
   ['②', '權限勾「交易」・<b>不要開「提現」</b>・IP 白名單 <b>3.107.254.240</b>'],
   ['③', '複製 API Key、Secret Key（Secret Key 只顯示一次）→ QEVRAX「☰ 選單 → 設定 → Bitunix API」貼上，按「儲存並測試」'],
-  ['④', '「特級交易設定」填投入資金；<b>每筆保證金建議設成總資產的 1/100</b>（總資產 1000U → 每筆 10U），按「儲存」'],
+  ['④', '「💰 資金與交易設定」填投入資金；<b>每筆保證金建議設成總資產的 1/100</b>（總資產 1000U → 每筆 10U），按「儲存」'],
   ['⑤', '審核通過後，回首頁按「▶ 特級」開始']];
 function setupHtml() {
   return `<div class="suwrap"><video class="suvid" src="${SETUP_VID}" controls playsinline preload="metadata" onerror="this.outerHTML='<div class=&quot;suerr&quot;>⚠️ 影片載入失敗<br><small>請確認 setup-guide.mp4 已上傳到網站（與 index.html 同一個資料夾）</small></div>'"></video>
@@ -10424,6 +10444,27 @@ $('pkList').onclick = async e => {
   if (!confirm('移除這台裝置的 Face ID 登入？移除後那台要用密碼登入，想用的話再重新啟用。')) return;
   try { pkDraw((await srvFetch('/api/pk', { op: 'del', id: b.dataset.pkdel })).list); $('pkMsg').className = 'mnmsg ok'; $('pkMsg').textContent = '已移除'; } catch (err) { $('pkMsg').className = 'mnmsg bad'; $('pkMsg').textContent = err.message; }
 };
+/* ---------- 🗑 刪除自己的帳號：密碼＋打「刪除帳號」＋勾選＋最後再確認一次 ---------- */
+function delReset() { $('delForm').hidden = true; $('delOpen').hidden = false; $('delPw').value = $('delTxt').value = ''; $('delAck').checked = false; $('delGo').disabled = true; }
+const delCheck = () => { $('delGo').disabled = !($('delPw').value && $('delTxt').value.trim() === '刪除帳號' && $('delAck').checked); };
+$('delOpen').onclick = () => {
+  const own = !!SRV.owner;
+  $('delMsg').className = 'mnmsg'; $('delMsg').textContent = '';
+  if (own) { $('delMsg').className = 'mnmsg bad'; $('delMsg').textContent = '擁有者帳號不能刪除，要先把網站轉讓給別人。'; return; }
+  $('delForm').hidden = false; $('delOpen').hidden = true; $('delPw').focus();
+};
+$('delCancel').onclick = () => { delReset(); $('delMsg').textContent = ''; };
+$('delPw').oninput = $('delTxt').oninput = $('delAck').onchange = delCheck;
+$('delGo').onclick = async () => {
+  if (!confirm(`最後確認：真的要永久刪除帳號 ${SRV.uid} 嗎？\n\n所有資料都會清除，沒辦法復原。`)) return;
+  const m = $('delMsg'); $('delGo').disabled = true; m.className = 'mnmsg'; m.textContent = '刪除中…';
+  try {
+    await srvFetch('/api/me/delete', { password: $('delPw').value, confirm: $('delTxt').value.trim() });
+    try { const A = LS.get('pkAsk', {}) || {}; delete A[SRV.uid]; LS.set('pkAsk', A); localStorage.removeItem('quantVid:' + SRV.uid); } catch (e) {}
+    LS.set('quantSrv', Object.assign({}, SRV, { token: '', uid: '', role: '' }));
+    alert('你的帳號已經刪除。建議也到 Bitunix 把給 QEVRAX 用的那組 API 刪掉。'); location.reload();
+  } catch (e) { m.className = 'mnmsg bad'; m.textContent = e.message; delCheck(); }
+};
 /* ---------- 🔐 登入閘門：進網站前要輸入 Bitunix UID 和密碼（驗證在伺服器上做） ---------- */
 let GATE_SETUP = false;
 var RESET_ON = false;                                 // 從信裡的連結打開、正在設定新密碼：其他程式（背景更新）不能把畫面切回登入
@@ -10832,9 +10873,16 @@ function renderLt() {
   { const ok = !!(SRVLT.toolOk && MINE()), SB = SRVLT.spBot;   // 🗡 特級交易設定：只有特級咒具權限的人看得到
     $('qSpCfg').hidden = !ok;
     if (ok) {
-      const v = { budget: C.spBudget || '', margin: C.spMargin, dayLoss: C.spDayLoss, lev: C.spLev, tp: C.spTp, step: C.spStep, sl: C.spSl, hold: Math.round((C.spHold || 168) / 24 * 10) / 10 };
+      const out = !!C.spOut, v = { budget: out ? '' : C.spBudget || '', margin: C.spMargin, dayLoss: C.spDayLoss, lev: C.spLev, tp: C.spTp, step: C.spStep, sl: C.spSl, hold: Math.round((C.spHold || 168) / 24 * 10) / 10 };   // 收回全部之後：投入資金欄空著，等重新填
       for (const k of Object.keys(v)) { const el = $('sp_' + k); if (el && document.activeElement !== el && !el.dataset.dirty) el.value = v[k] ?? ''; }
-      $('qsp_stat').textContent = C.spBudget > 0 ? `目前 ${SB ? SB.eq.toFixed(2) : '—'}U／投入 ${C.spBudget}U${SB && SB.man < -0.005 ? `（含手動單虧損分攤 −${Math.abs(SB.man).toFixed(2)}U）` : ''}・可用 ${SB ? Math.max(0, SB.free).toFixed(2) : '—'}U・今日 ${(SRVLT.spDay || 0) >= 0 ? '+' : '−'}${Math.abs(SRVLT.spDay || 0).toFixed(2)}U` : `今日 ${(SRVLT.spDay || 0) >= 0 ? '+' : '−'}${Math.abs(SRVLT.spDay || 0).toFixed(2)}U`;
+      const day = `今日 ${(SRVLT.spDay || 0) >= 0 ? '+' : '−'}${Math.abs(SRVLT.spDay || 0).toFixed(2)}U`;
+      $('qsp_stat').textContent = out ? `已收回全部資金・${day}` : C.spBudget > 0 ? `特級目前 ${SB ? SB.eq.toFixed(2) : '—'}U（投入 ${C.spBudget}U）・可用 ${SB ? Math.max(0, SB.free).toFixed(2) : '—'}U・${day}` : day;
+      const AE = SRVLT.acctEq || 0, api = !!(SRVBX && SRVBX.set);
+      $('sp_acct').textContent = api ? AE.toFixed(2) + 'U' : '—';
+      $('sp_acctNote').textContent = !api ? '先設定上面的 Bitunix API 才讀得到' : out ? '特級資金已全部收回，填投入資金後按儲存就重新開始' : C.spBudget > 0 && SB ? (AE - SB.eq >= 0.01 ? `其中 ${SB.eq.toFixed(2)}U 給特級交易，另外 ${(AE - SB.eq).toFixed(2)}U 沒動用` : SB.eq - AE >= 0.01 ? `比特級交易的資金 ${SB.eq.toFixed(2)}U 少` : '全部給特級交易') : '還沒填投入資金';
+      const LW = SRVLT.spLow; $('sp_low').hidden = !LW;
+      if (LW) $('sp_low').textContent = `⚠️ 特級交易的資金 ${LW.eq}U 比合約帳戶 ${LW.acct}U 多了 ${LW.diff}U（可能是手動單虧損，或從合約帳戶轉出了錢）。交易照常，但建議把投入資金調低 ${Math.ceil(LW.diff)}U，資金和報酬率才會準。`;
+      $('sp_wdAll').disabled = out || !(C.spBudget > 0);
     }
   }
   { const ok = !!(SRVLT.toolOk && MINE());              // 🗡 特級交易：只有特級咒具權限的人看得到
@@ -10885,28 +10933,29 @@ async function wdGo(kind) {                           // 💸 收回資金
   catch (e) { msg.textContent = '❌ ' + e.message; msg.style.color = '#ff9aa2'; }
 }
 $('wd_nGo').onclick = () => wdGo('n');
-$('wd_spGo').onclick = () => wdGo('sp');
-for (const k of ['budget', 'margin', 'dayLoss', 'lev', 'tp', 'step', 'sl', 'hold']) { $('sp_' + k).oninput = e => { e.target.dataset.dirty = '1'; e.target.classList.add('dirty'); $('sp_msg').textContent = '● 有改動還沒儲存'; $('sp_msg').style.color = '#f1d77a'; }; $('sp_' + k).onkeydown = e => { if (e.key === 'Enter') $('sp_save').click(); }; }   // 改到一半不要被每 3 秒的更新蓋掉
-$('sp_restart').onclick = async () => {               // ↺ 特級交易從投入資金重新開始（虧完、或想重算的時候）
-  const v = +$('sp_budget').value, m = $('sp_msg');
-  if (!(v > 0)) { m.textContent = '❌ 投入資金要填大於 0 的數字'; m.style.color = '#ff9aa2'; return; }
-  if (!confirm(`特級交易要從 ${v}U 重新開始嗎？\n\n・目前資金會變成 ${v}U\n・之前的特級盈虧、手動單虧損分攤、加碼紀錄都不再算進去\n・成功率、歷史紀錄照常保留\n・已經開著的單照常管理`)) return;
+$('sp_wdAll').onclick = async () => {                 // 💸 特級交易：收回全部資金（部分收回＝把投入資金改小）
+  const C = SRVLT.cfg || {}, SB = SRVLT.spBot || {}, m = $('sp_msg'), nOpen = SRVBX ? SRVBX.pos.filter(p => p.bot).length : 0;
+  if (!confirm(`要收回特級交易的全部資金（目前約 ${Math.max(0, SB.eq || 0).toFixed(2)}U）嗎？\n\n・特級交易會暫停，不再開新單\n・錢本來就在你的合約帳戶，這裡只是不再讓機器人使用\n${nOpen ? `・還有 ${nOpen} 筆持倉會照原本的止損、止盈管理到出場\n` : ''}・之後想再交易：重新填投入資金並儲存，就從那個金額重新開始`)) return;
   m.textContent = '處理中…'; m.style.color = '';
-  try { await srvFetch('/api/lt/config', { sp_set: { budget: v, restart: true } }); delete $('sp_budget').dataset.dirty; $('sp_budget').classList.remove('dirty'); m.textContent = `✅ 特級交易已從 ${v}U 重新開始`; SV.lv = 0; srvPull(); }
+  try { const r = await srvFetch('/api/lt/withdraw', { kind: 'sp' }); delete $('sp_budget').dataset.dirty; $('sp_budget').classList.remove('dirty'); m.textContent = `✅ 已收回 ${r.amt.toFixed(2)}U，特級交易已暫停`; SV.lv = 0; srvPull(); }
   catch (e) { m.textContent = '❌ ' + e.message; m.style.color = '#ff9aa2'; }
 };
+for (const k of ['budget', 'margin', 'dayLoss', 'lev', 'tp', 'step', 'sl', 'hold']) { $('sp_' + k).oninput = e => { e.target.dataset.dirty = '1'; e.target.classList.add('dirty'); $('sp_msg').textContent = '● 有改動還沒儲存'; $('sp_msg').style.color = '#f1d77a'; }; $('sp_' + k).onkeydown = e => { if (e.key === 'Enter') $('sp_save').click(); }; }   // 改到一半不要被每 3 秒的更新蓋掉
 $('sp_save').onclick = async () => {
   if (!(+$('sp_budget').value > 0)) { $('sp_msg').textContent = '❌ 投入資金要填大於 0 的數字'; $('sp_msg').style.color = '#ff9aa2'; return; }
-  const bd = !!$('sp_budget').dataset.dirty;   // 改過投入資金才送：特級交易從這個金額重新開始
+  const bd = !!$('sp_budget').dataset.dirty || !!(SRVLT.cfg && SRVLT.cfg.spOut);   // 改過投入資金才送；收回全部之後一定要送（從這個金額重新開始）
+  const C0 = SRVLT.cfg || {}, old = +C0.spBudget || 0, nb = +$('sp_budget').value;
+  if (bd && old > 0 && !C0.spOut && nb !== old && !confirm(nb > old ? `投入資金從 ${old}U 改成 ${nb}U＝加碼 ${+(nb - old).toFixed(2)}U，之前的盈虧照算。確定嗎？` : `投入資金從 ${old}U 改成 ${nb}U＝收回 ${+(old - nb).toFixed(2)}U，之前的盈虧照算。確定嗎？`)) return;
+  { const hd = +$('sp_hold').value; if ($('sp_hold').value !== '' && !(hd >= 0.5 && hd <= 30)) { $('sp_msg').textContent = '❌ 持有天數要在 0.5～30 天之間'; $('sp_msg').style.color = '#ff9aa2'; return; } }
   const g = k => $('sp_' + k).value, set = { budget: bd ? g('budget') : undefined, margin: g('margin'), dayLoss: g('dayLoss') || 0, lev: g('lev'), tp: g('tp'), step: g('step'), sl: g('sl'), hold: g('hold') ? Math.round(+g('hold') * 24) : undefined };
   const m = $('sp_msg'); m.textContent = '儲存中…'; m.style.color = '';
-  try { await srvFetch('/api/lt/config', { sp_set: set }); for (const k of ['budget', 'margin', 'dayLoss', 'lev', 'tp', 'step', 'sl', 'hold']) { delete $('sp_' + k).dataset.dirty; $('sp_' + k).classList.remove('dirty'); } m.textContent = `✅ 已儲存${set.budget ? `，特級投入資金改成 ${set.budget}U（之前的盈虧照算）` : ''}`; SV.lv = 0; srvPull(); }
+  try { await srvFetch('/api/lt/config', { sp_set: set }); for (const k of ['budget', 'margin', 'dayLoss', 'lev', 'tp', 'step', 'sl', 'hold']) { delete $('sp_' + k).dataset.dirty; $('sp_' + k).classList.remove('dirty'); } m.textContent = `✅ 已儲存${set.budget ? (C0.spOut || !(old > 0) ? `，特級交易從 ${set.budget}U 開始` : +set.budget > old ? `，加碼 ${+(set.budget - old).toFixed(2)}U` : +set.budget < old ? `，收回 ${+(old - set.budget).toFixed(2)}U` : '') : ''}`; SV.lv = 0; srvPull(); }
   catch (e) { m.textContent = '❌ ' + e.message; m.style.color = '#ff9aa2'; }
 };
 $('qSpToggle').onclick = () => {
   const C = SRVLT.cfg || {};
   if (C.sp) { if (!confirm('確定要暫停 🗡 特級交易嗎？\n\n暫停後不會開新的特級單，已經開著的單照常管理到平倉。')) return; return ltCall('/api/lt/config', { sp: false }, '已暫停特級交易，已經開著的單照常管理。'); }
-  if (!confirm(`確定要開始「🗡 特級交易」嗎？\n\n特級咒具的 FVG／OB 回踩進場，會用你的 Bitunix 帳戶「真實下單」，照「🗡 特級交易設定」：\n・每筆 ${C.spMargin}U、${C.spLev}x 全倉\n・止損＝4H／1H FVG／OB 的低點（做空＝高點），止盈 1:1\n・持有 ${Math.round(C.spHold / 24 * 10) / 10} 天到期\n${C.spBudget > 0 ? `・投入資金 ${C.spBudget}U\n` : ''}${C.spDayLoss > 0 ? `・單日虧損上限 ${C.spDayLoss}U\n` : ''}\n同一個幣出現反方向訊號會反手（只動特級交易自己的單）。全倉的虧損可能超過單筆保證金，請確認你能承擔。`)) return;
+  if (!confirm(`確定要開始「🗡 特級交易」嗎？\n\n特級咒具的 FVG／OB 回踩進場，會用你的 Bitunix 帳戶「真實下單」，照「💰 資金與交易設定」：\n・每筆 ${C.spMargin}U、${C.spLev}x 全倉\n・止損＝4H／1H FVG／OB 的低點（做空＝高點），止盈 1:1\n・持有 ${Math.round(C.spHold / 24 * 10) / 10} 天到期\n${C.spBudget > 0 ? `・投入資金 ${C.spBudget}U\n` : ''}${C.spDayLoss > 0 ? `・單日虧損上限 ${C.spDayLoss}U\n` : ''}\n同一個幣出現反方向訊號會反手（只動特級交易自己的單）。全倉的虧損可能超過單筆保證金，請確認你能承擔。`)) return;
   spStart(C);
 };
 async function spStart(C) {                            // 開始特級交易；資金已經虧完的話，問要不要直接從投入資金重新開始
